@@ -34,6 +34,18 @@ assert.equal(
   `<AIVV_UNTRUSTED_${first}_SESSION_CONTEXT>\n${payload}\n</AIVV_UNTRUSTED_${first}_SESSION_CONTEXT>\n`,
 );
 
+const newlinePayload = `${payload}\n`;
+const wrappedNewline = spawnSync(process.execPath, [helper, '--wrap', first, 'SESSION_CONTEXT'], {
+  input: newlinePayload,
+  encoding: 'utf8',
+});
+assert.equal(wrappedNewline.status, 0, wrappedNewline.stderr);
+assert.equal(
+  wrappedNewline.stdout,
+  `<AIVV_UNTRUSTED_${first}_SESSION_CONTEXT>\n${newlinePayload}</AIVV_UNTRUSTED_${first}_SESSION_CONTEXT>\n`,
+  'a newline-terminated value should not gain an extra blank line before its closing fence',
+);
+
 for (const [badNonce, badField] of [['short', 'BODY'], [first, 'bad-field'], ['ABCDEF0123456789ABCDEF0123456789', 'BODY'], [first, 'lowerField']]) {
   const invalid = spawnSync(process.execPath, [helper, '--wrap', badNonce, badField], { input: 'x', encoding: 'utf8' });
   assert.equal(invalid.status, 2);

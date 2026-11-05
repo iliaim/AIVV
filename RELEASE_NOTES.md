@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.2.1 — guard and prompt-boundary fixes
+
+- Clarify how investigator probes follow each host's tool restrictions.
+- Keep newline-terminated prompt values inside their nonce fences without an extra blank line.
+- Tighten path confinement for dash-prefixed paths and clarify guard regression coverage.
+- Remove an unsupported Git flag from the guard's deny pattern.
+
 ## 0.2.0 — public preview
 
 - Publish the AIVV plugin source and user documentation under the MIT License.

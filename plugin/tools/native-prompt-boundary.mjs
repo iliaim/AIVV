@@ -21,7 +21,7 @@ if (mode === '--nonce' && process.argv.length === 3) {
   }
   const tag = 'AIVV_UNTRUSTED_' + nonce + '_' + field;
   const value = readFileSync(0, 'utf8');
-  process.stdout.write('<' + tag + '>\n' + value + '\n</' + tag + '>\n');
+  process.stdout.write('<' + tag + '>\n' + value + (value.endsWith('\n') ? '' : '\n') + '</' + tag + '>\n');
 } else {
   process.stderr.write('Usage: node native-prompt-boundary.mjs --nonce\n');
   process.stderr.write('       node native-prompt-boundary.mjs --wrap <nonce> <FIELD>  # reads value from stdin\n');
