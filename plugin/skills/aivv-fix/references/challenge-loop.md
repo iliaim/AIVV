@@ -1,0 +1,84 @@
+# Step 4.5 CHALLENGE — trigger, dispatch, and verdict handling
+
+Detail relocated from `skills/aivv-fix/SKILL.md` Step 4.5 CHALLENGE. The inline skeleton keeps the step intro (when CHALLENGE runs relative to Step 4.4 / the W10 Auto-eligible gate) and a one-line pointer. This reference is the canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder construction), and the 4.5.3 verdict handling + counter semantics. The challenger **prompt** itself lives in [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md). The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
+
+## 4.5.1 — Trigger evaluation (per batch)
+
+**CHALLENGE fires** when ANY of these holds for any finding in the batch:
+- `fix_confidence != "high"` (medium or low)
+- `recommended_next_step ∈ {fix-now, investigate-first}` (regardless of fix_confidence); legacy findings without `recommended_next_step` fall back to `severity ∈ {CRITICAL, MAJOR}`
+- finding has `class_signature` populated
+- finding has `scope_search_seed` populated
+- finding is L1-source (per the regex in [`polish-and-l1-source-policy.md`](polish-and-l1-source-policy.md)); if declared `project_context` makes the cited statute inapplicable, keep forced-show rendering but do not treat the bare citation as a manual-review batch-refusal reason
+- fix authors NEW verification code (`fix_proposal.description` or `files_to_modify` triggers the `authors_new_verification_code` predicate; see [apply-policy-and-gates.md](apply-policy-and-gates.md))
+- `prevention_plan.mechanism != "none-new"`; a new prevention artifact always requires Axis 9 approval with a valid `eligibility_basis` and non-empty concrete `eligibility_evidence`
+- finding has `predecessor_finding_match: true` (this finding maps to a prior round's finding — recurring across rounds)
+- final `architectural_remediation_assessment.required == true` or `architectural_remediation_check.triggered == true`
+
+**CHALLENGE skipped** (trivial-fix carve-out) when ALL hold for ALL findings in the batch:
+- `fix_confidence == "high"` for every finding
+- `recommended_next_step ∈ {document, defer-with-rationale, accept-risk}` for every finding; legacy findings without `recommended_next_step` fall back to `severity ∈ {MINOR, POLISH}`
+- single-file edit, single-occurrence text edit (typo, rename, prose tweak)
+- NOT L1-source
+- NOT round ≥ 2
+- every `prevention_plan.mechanism == "none-new"`
+
+**Gate-fusion skip:** if Gate 1 already ran a cold adversarial investigator for the same finding in this invocation, and the recorded second-opinion output explicitly agreed on both root cause and the proposed fix direction, Step 4.5 may skip a separate challenger only when every pending write intent in the batch is safe high-confidence plain prose (`detector_result.verdict: "pass"`, no `content_shapes`, `detection_confidence: "high"`), every `prevention_plan.mechanism == "none-new"`, and no new consequence predicate appeared after Gate 1. Record `challenge_status: "gate-fused-safe"` in the decision ledger. Any code edit, schema content, shell/content detector trigger, shared-interface touch, L1-source finding, predecessor recurrence, architectural-remediation seed, or new prevention mechanism disables this fusion and runs the normal challenger.
+
+**Token-budget circuit-breaker:** `max_challenges_per_invocation: 10` (default; configurable via user-preferences key `max_challenges_per_invocation`). When the cap is hit:
+- Remaining batches proceed to Step 5 without challenge only when every `write_intents[]` entry is safe high-confidence plain prose (`detector_result.verdict: "pass"`, `detector_result.content_shapes: []`, `detector_result.detection_confidence: "high"`, and no required assertions) and every `prevention_plan.mechanism == "none-new"`.
+- Risky, unclassified, low/medium-confidence, bypassed, or near-miss write-intent batches HALT before write as `challenge-budget-exhausted-write-intent-risk`. Record warning code `challenge_budget_exhausted_write_intent_risk` and final-report status `challenge-budget-halted-risky` / `challenge-budget-halted-risky-write-intent`.
+- Reason phrase for deterministic logs: `challenge-budget-halted-risky-write-intent` means a risky write intent could not receive exact-content challenge coverage because the challenge budget was exhausted.
+- Safe skipped batches get one note in the final report: `[Step 4.5 skipped — challenge budget exhausted at N batches; safe high-confidence plain-prose write intents only; re-run with narrower argument to get coverage]` and status `challenge-skipped-safe`.
+- Emit a `challenge_budget_exhausted` calibration record in Step 7.
+
+## 4.5.2 — Dispatch
+
+Before spawning challengers, apply the lifecycle pre-spawn cleanup rule from Host Adapter Mapping. This is the same AIVV-owned-handle-only cleanup used before investigator dispatch; preserve any cleanup warning in `session_changes.warnings` when possible.
+
+<!-- CLAUDE-CODE-SPECIFIC -->
+On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer` and the prompt from `fix-challenger-prompt-template.md` (fill ALL `{placeholder}` values from session state before sending). Cold context; NO conversation history.
+
+On Codex: subagent dispatch via `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` with the fix-challenger prompt. Same cold-context requirement.
+
+**Dispatch granularity:** per-batch. One challenger sees all approved findings in the batch plus their fix proposals. Independent batches may be challenged in parallel (same rules as Step 3 investigator parallel dispatch).
+
+Track each challenger handle with `batch_id`, `role: "challenger"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 4.5.3 parses APPROVE, REVISE, or REJECT and records the decision. Close consumed challenger handles before looping to Step 3 or proceeding to Step 5.
+
+**Prompt construction:** use `fix-challenger-prompt-template.md`. Fill:
+- `{batch_id}`: e.g., `B1`
+- `{finding_id_list}`: e.g., `F001, F002`
+- `{For each finding}` block: one block per finding with investigator fields from Step 3 output
+- `{round_number_block}`: `"(none — this is cycle 1)"` on cycle 1; `"Round N (predecessor review: <id>)"` on cycle ≥ 2
+- `{predecessor_findings_summary}`: empty on cycle 1; prior-round findings + outcomes on cycle ≥ 2
+- `{target_project}`: session target project path. If `session_changes.target_project` already exists because this is a resumed or post-Step-5 challenge loop, fill it directly. Use the canonical target/storage context bound before maintenance; do not infer a provisional target from findings. **Worktree-CWD note:** challenger subagents inherit the orchestrator's shell CWD, which may be a git worktree at a different commit than `target_project`. The template's `## Working Directory` block instructs absolute-path file operations anchored on this value — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint), so the challenger searches the real target tree rather than a stale inherited CWD.
+- `{write_intents}`: escaped inert data snapshot of the Step 4.4 `write_intents[]` entries for the batch. Include `content_sha` values for the full proposed content; do not substitute `fix_proposal.description` for exact proposed bytes.
+- `{session_class_context}`: compact bullet list of root-cause classes from findings NOT in the current batch. For each finding outside this batch (from the in-memory Step 4 PLAN approved-finding records — NOT from `session_changes.changes_summary`, which is not yet written at Step 4.5 dispatch time and does not carry these fields), collect `root_cause_category` + `class_signature` (null → `"n/a"`) from the finding's `root_cause_analysis` as integrated from the investigator output. Deduplicate by `root_cause_category`. Format each as `- [F-ID]: <root_cause_category> (grep: <class_signature>)`. When the current batch is the only batch this session (all approved findings are in this batch), populate as `"(none — this is the only batch this session)"`. **Note:** dedup is by `root_cause_category`; when two out-of-batch findings share a `root_cause_category` but have different `class_signature` patterns, only one signature is retained — follow-on cycles may miss sibling instances matching the dropped signature.
+- `{alternative_approaches}` (inside each `{For each finding}` block): JSON-serialize `fix_proposal.alternative_approaches[]` from the investigator output; emit `"(none provided — run Axis 9 minimum-sufficient-remediation checks; skip only alternative-to-alternative comparison)"` when the field is absent or empty. Architecture-required findings also run Axis 8 from the architectural remediation fields.
+- `{prevention_plan}` (inside each `{For each finding}` block): JSON-serialize the complete investigator `prevention_plan` decision, including `mechanism` and either the `none-new` rationale or the structured `eligibility_basis`, concrete `eligibility_evidence`, and implementation details for a new mechanism. Never summarize or omit it: Axis 9 must receive the same prevention decision that Step 5 would execute.
+
+**Output format contract:** the challenger prompt template's `## OUTPUT FORMAT OVERRIDE — READ THIS FIRST` block explicitly supersedes the `aivv:reviewer` agent's `aivv:methodology`-preloaded output format. Do NOT modify or remove that override block when filling placeholders. The orchestrator in Step 4.5.3 parses the challenger's response as pure JSON `{batch_id, verdict, per_finding[]}` — if the override block is missing or stripped, the reviewer will emit the methodology prose+JSONL sidecar format instead, making Step 4.5 a silent no-op.
+
+## 4.5.3 — Verdict handling
+
+After parsing the challenger's JSON verdict and recording the decision, mark that challenger handle `output_consumed: true`. Close consumed challenger handles before any Step 3 loop or before proceeding to Step 5.
+
+**APPROVE:** proceed to Step 4.6 RED-GREEN TEST GATE (then Step 5 EXECUTE).
+
+**REVISE:** loop to Step 3 INVESTIGATE with the challenger's `concerns` appended to the investigator prompt as an explicit "Address these specific concerns:" block. Increment `challenge_iterations` (NOT `cycle_count` — see counter semantics below). If `--dangerously-auto-apply` was confirmed, record `CHALLENGE` plus the challenger's concrete concerns as bypass reasons for the affected findings, but still discard affected write intents and re-enter Step 3 per the write-intent invalidation contract; the bypass suppresses the user decision prompt, not stale/rejected-intent regeneration.
+
+**REJECT:** loop to Step 3 INVESTIGATE with the challenger's `concerns[].alternative` as the primary fix direction. Increment `challenge_iterations`. If `--dangerously-auto-apply` was confirmed, record `CHALLENGE` plus the challenger's concrete concerns/alternatives as bypass reasons for the affected findings, but still discard affected write intents and re-enter Step 3 per the write-intent invalidation contract; the bypass suppresses the user decision prompt, not stale/rejected-intent regeneration.
+
+**Immediate targeted-follow-up exception:** If the next immediate step requires targeted interactive follow-up with a specific challenger, keep that challenger's `output_consumed` value `false` until the follow-up response is integrated. Surface and persist the reason in `session_changes.warnings` when possible. This is the only valid reason to leave a completed challenger subagent open after its current response.
+
+**Escalation gate:** if the SAME finding receives REJECT in two successive Step 4.5 evaluations within one invocation, halt and present BOTH challengers' analyses to the user as a contradiction. Do NOT auto-proceed to a third attempt.
+
+**Counter semantics — `challenge_iterations` (NEW) vs `cycle_count` (EXISTING):**
+- `challenge_iterations`: NEW top-level field on fix-log, initialized to 0 at Step 4.5 entry. Bumps on every batch REVISE/REJECT verdict. Per-invocation budget cap = 3. When cap reached, halt Step 4.5 looping — unresolved REVISE/REJECT findings escalate to user: `"challenger and investigator did not converge after 3 challenge iterations — your call."` The field must be added to the fix-log schema in Task 8 alongside the type-enum extension.
+- `cycle_count`: EXISTING field; bumps ONLY on Step 6 verifier re-entry (post-EXECUTE) and Step 4 root-cause backtrack. NOT incremented by Step 4.5. Collapsing the two counters would let per-batch challenger churn exhaust the Step 6 3-cycle convergence gate before any code is written.
+- Same-finding double-REJECT escalation fires independently of `challenge_iterations` — it is a per-finding ping-pong guard (max 2 REJECT per finding per invocation), not the per-invocation budget counter.
+- Total worst-case loop budget on one finding: 3 challenge iterations (Step 4.5) + 3 verification cycles (Step 6) = 6 LLM passes, surfacing as 2 separate escalation prompts.
+
+**Calibration (deferred to Step 7):**
+- When REVISE/REJECT led to a fix change AND Step 6 verifier confirms the revised fix resolved the finding → emit `challenger_caught_issue` record.
+- When the user explicitly overrides a REVISE/REJECT concern AND Step 6 verifier confirms the original fix was correct → emit `challenger_false_positive` record.

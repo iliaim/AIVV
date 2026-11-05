@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an AIVV improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Problem or need
+      description: What user problem would this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: false

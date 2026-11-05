@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIVV Adapter Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "name", "status", "capabilities", "operations", "execution"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["host", "provider", "packaging"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["experimental", "draft", "supported", "deprecated"]
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/capabilityStatus"
+      }
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "boolean", "number", "array", "object", "null"]
+      }
+    }
+  },
+  "$defs": {
+    "capabilityStatus": {
+      "type": "string",
+      "enum": [
+        "available",
+        "conditional",
+        "partial",
+        "degraded",
+        "unsupported",
+        "unverified"
+      ]
+    }
+  }
+}

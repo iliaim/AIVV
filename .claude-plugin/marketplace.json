@@ -1,0 +1,29 @@
+{
+  "name": "aivv",
+  "metadata": {
+    "description": "Agentic Independent Validation & Verification marketplace — ships the AIVV plugin for agent-driven code review, remediation, and continuous audit in Claude Code."
+  },
+  "owner": {
+    "name": "Ilia Imerlishvili"
+  },
+  "plugins": [
+    {
+      "name": "aivv",
+      "description": "Agentic Independent Validation & Verification — dual-agent code review, remediation, and continuous audit for Claude Code.",
+      "version": "0.2.0",
+      "source": "./plugin",
+      "author": {
+        "name": "Ilia Imerlishvili"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/iliaim/AIVV",
+      "keywords": [
+        "code-review",
+        "verification-and-validation",
+        "audit",
+        "consensus",
+        "advisory-review"
+      ]
+    }
+  ]
+}

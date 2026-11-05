@@ -1,0 +1,388 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "local-issue.json",
+  "title": "AIVV Local Issue Lifecycle Record",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "external_id",
+    "status",
+    "title",
+    "body_hash",
+    "rca_status",
+    "accepted_unverified_rationale",
+    "evidence",
+    "sync",
+    "owner",
+    "due_at",
+    "acceptance_criteria",
+    "closure_criteria",
+    "closure_gates",
+    "labels",
+    "links",
+    "timeline"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "closed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "closure_decision"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "rca-reviewed"
+          },
+          "rca_status": {
+            "const": "accepted-unverified"
+          }
+        },
+        "required": [
+          "status",
+          "rca_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "accepted_unverified_rationale": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^ISS-[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "external_id": {
+      "type": "string",
+      "pattern": "^aivv:issue:ISS-[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "status": {
+      "enum": [
+        "drafted",
+        "rca-pending",
+        "rca-reviewed",
+        "fix-planned",
+        "fix-implemented",
+        "prevention-verified",
+        "closed"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "body_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "rca_status": {
+      "enum": [
+        "not-started",
+        "draft",
+        "reviewed",
+        "confirmed",
+        "blocked",
+        "accepted-unverified"
+      ]
+    },
+    "accepted_unverified_rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "lifecycle-evidence.json"
+      }
+    },
+    "sync": {
+      "type": "object",
+      "required": [
+        "mode",
+        "status",
+        "github",
+        "last_synced_at",
+        "last_checked_at",
+        "stale_after",
+        "sync_hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "local-only",
+            "github-preferred"
+          ]
+        },
+        "status": {
+          "enum": [
+            "local-only",
+            "pending-user-confirmation",
+            "synced",
+            "conflict",
+            "sync-failed"
+          ]
+        },
+        "github": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "host",
+                "owner",
+                "repo",
+                "number"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "host": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "owner": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "repo": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "number": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          ]
+        },
+        "last_synced_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_checked_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stale_after": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sync_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "due_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "closure_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "closure_gates": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "closure-gate.json"
+      }
+    },
+    "closure_decision": {
+      "type": "object",
+      "required": [
+        "closed_at",
+        "closed_by",
+        "rationale",
+        "evidence_links"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "closed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "closed_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_links": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "labels": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "incident-followup",
+          "corrective-action",
+          "provider"
+        ]
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "lifecycle-link.json"
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "ts",
+          "kind",
+          "summary"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "transition"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "transitioned_at",
+                "transitioned_by",
+                "transition_source",
+                "from_status",
+                "to_status"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "enum": [
+              "transition",
+              "observed",
+              "note"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "transitioned_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "transitioned_by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "transition_source": {
+            "enum": [
+              "auto",
+              "agent",
+              "user",
+              "github-sync",
+              "verifier",
+              "external"
+            ]
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "$ref": "#/properties/status"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to_status": {
+            "$ref": "#/properties/status"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.local/schemas/remediation-request/v1.json",
+  "title": "AIVV Remediation Request",
+  "description": "Immutable, user-selected Action Inbox request. It authorizes investigation only; /aivv-fix revalidates before any write.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "request_id", "review_id", "requested_at", "expires_at", "target_project", "target_repository", "source_revision", "workspace_state_sha256", "finding_ids", "decisions", "status"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "kind": {"type": "string", "const": "aivv.remediation-request.v1"},
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "review_id": {"type": "string", "minLength": 1},
+    "requested_at": {"type": "string", "minLength": 1},
+    "expires_at": {"type": "string", "minLength": 1},
+    "target_project": {"type": "string", "minLength": 1},
+    "target_repository": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{7,64}$"},
+    "workspace_state_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "finding_ids": {"type": "array", "minItems": 1, "maxItems": 50, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 160}},
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["finding_id", "notes"],
+        "properties": {
+          "finding_id": {"type": "string", "minLength": 1, "maxLength": 160},
+          "notes": {"type": ["string", "null"], "maxLength": 2000}
+        }
+      }
+    },
+    "status": {"type": "string", "const": "queued"}
+  }
+}

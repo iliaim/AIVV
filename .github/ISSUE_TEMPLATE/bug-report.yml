@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible AIVV problem
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, confidential code, or private review artifacts. Report suspected vulnerabilities privately using SECURITY.md.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host and version
+      placeholder: Claude Code version and AIVV release
+    validations:
+      required: true

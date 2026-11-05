@@ -1,0 +1,4278 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/standards-index.mjs",
+  "rule_id_prefixes": [
+    "A11Y",
+    "AS",
+    "COMP",
+    "CQ",
+    "DP",
+    "HEU",
+    "I18N",
+    "IS",
+    "MC",
+    "RTV",
+    "UJ",
+    "UX",
+    "VD",
+    "VVT"
+  ],
+  "rules": [
+    {
+      "rule_id": "A11Y-045",
+      "title": "Accordion — paired `<button aria-expanded>` + `aria-controls`",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 7,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-046",
+      "title": "Alert — `role=\"alert\"` for time-sensitive, transient announcements",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 40,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-047",
+      "title": "Alertdialog — `role=\"alertdialog\"` requires name + describedby + focus trap",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 64,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-048",
+      "title": "Combobox — input + popup with full ARIA pattern",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 96,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-049",
+      "title": "Dialog (Modal) — focus trap + initial focus + Esc + return focus",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 134,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-050",
+      "title": "Disclosure — `<button aria-expanded>` toggling a region",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 167,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-051",
+      "title": "Listbox — `role=\"listbox\"` + `role=\"option\"` + `aria-selected`",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 198,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-052",
+      "title": "Menu / Menubar — `role=\"menu\"` + `role=\"menuitem\"` + roving-tabindex",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 220,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-053",
+      "title": "Menu Button — `<button aria-haspopup aria-expanded aria-controls>`",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 246,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-054",
+      "title": "Radio Group — `<fieldset><legend>` or `role=\"radiogroup\"` with name",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 277,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-055",
+      "title": "Slider — `role=\"slider\"` + `aria-valuemin/max/now` + `aria-valuetext` where needed",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 305,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-056",
+      "title": "Switch — `role=\"switch\"` + `aria-checked`",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 336,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-057",
+      "title": "Tabs — `role=\"tablist\"` + `role=\"tab\"` + `role=\"tabpanel\"` + roving tabindex",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 361,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-058",
+      "title": "Toolbar — `role=\"toolbar\"` + arrow-key + roving tabindex",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 384,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-059",
+      "title": "Tooltip — `role=\"tooltip\"` + `aria-describedby` + hover + focus + Esc",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 410,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-060",
+      "title": "Tree View — `role=\"tree\"` + `role=\"treeitem\"` + `aria-expanded` / `aria-level`",
+      "file": ".aivv/standards/accessibility/aria/apg-widgets.md",
+      "line": 439,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-024",
+      "title": "Prefer native HTML over ARIA (first rule of ARIA)",
+      "file": ".aivv/standards/accessibility/aria/fundamentals.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-025",
+      "title": "Do not put `aria-hidden=\"true\"` on focusable elements or their ancestors",
+      "file": ".aivv/standards/accessibility/aria/fundamentals.md",
+      "line": 31,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-026",
+      "title": "`aria-label` / `aria-labelledby` require a valid target element",
+      "file": ".aivv/standards/accessibility/aria/fundamentals.md",
+      "line": 58,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-027",
+      "title": "Accessible name must include visible label text (Label in Name)",
+      "file": ".aivv/standards/accessibility/aria/fundamentals.md",
+      "line": 87,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-028",
+      "title": "`role=\"alert\"` / `role=\"status\"` / `aria-live` must be present before content changes",
+      "file": ".aivv/standards/accessibility/aria/fundamentals.md",
+      "line": 111,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-029",
+      "title": "Use `disabled` on native controls; `aria-disabled` only when needed",
+      "file": ".aivv/standards/accessibility/aria/fundamentals.md",
+      "line": 140,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-073",
+      "title": "Avoid `role=\"application\"` except for true app-like contexts",
+      "file": ".aivv/standards/accessibility/aria/sr-divergence.md",
+      "line": 7,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-074",
+      "title": "Don't override implicit `aria-live` defaults on `alert`/`status`/`log` roles",
+      "file": ".aivv/standards/accessibility/aria/sr-divergence.md",
+      "line": 32,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-032",
+      "title": "Do not convey information by color alone",
+      "file": ".aivv/standards/accessibility/color-motion.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-033",
+      "title": "Respect `prefers-reduced-motion`",
+      "file": ".aivv/standards/accessibility/color-motion.md",
+      "line": 32,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-034",
+      "title": "Do not disable viewport zoom",
+      "file": ".aivv/standards/accessibility/color-motion.md",
+      "line": 61,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-035",
+      "title": "Error notifications must not auto-dismiss",
+      "file": ".aivv/standards/accessibility/color-motion.md",
+      "line": 83,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-070",
+      "title": "Respect `prefers-reduced-motion` for animations",
+      "file": ".aivv/standards/accessibility/color-motion.md",
+      "line": 108,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-071",
+      "title": "Respect `prefers-color-scheme` for theme",
+      "file": ".aivv/standards/accessibility/color-motion.md",
+      "line": 154,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-001",
+      "title": "`<html>` element must have a `lang` attribute",
+      "file": ".aivv/standards/accessibility/document-language.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-002",
+      "title": "Document must have a non-empty, descriptive `<title>`",
+      "file": ".aivv/standards/accessibility/document-language.md",
+      "line": 31,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-003",
+      "title": "Language change within content needs `lang` attribute",
+      "file": ".aivv/standards/accessibility/document-language.md",
+      "line": 56,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-072",
+      "title": "Prefer BCP 47 region-qualified `lang` values for screen-reader pronunciation",
+      "file": ".aivv/standards/accessibility/document-language.md",
+      "line": 79,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-009",
+      "title": "Every form control must have a programmatic label",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-010",
+      "title": "Related controls must be grouped with `<fieldset>`/`<legend>`",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 32,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-011",
+      "title": "Common inputs should declare `autocomplete`",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 59,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-012",
+      "title": "Required fields must be programmatically indicated",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 86,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-013",
+      "title": "Error messages must be associated with their inputs",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 109,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-014",
+      "title": "Do not use `autofocus` on page load",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 136,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-042",
+      "title": "Do not require redundant entry of previously-provided information",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 156,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-043",
+      "title": "Authentication must not require cognitive function tests without alternative",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 191,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-044",
+      "title": "Authentication must not rely solely on object/media recognition",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 230,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-061",
+      "title": "Use HTML `autocomplete` attribute on personal-information fields",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 250,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-062",
+      "title": "Pair HTML `required` with `aria-required` redundantly for assistive-tech coverage",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 282,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-063",
+      "title": "Multi-step processes must indicate current step via `aria-current=\"step\"`",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 313,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-064",
+      "title": "Destructive actions require confirmation OR undo",
+      "file": ".aivv/standards/accessibility/forms.md",
+      "line": 345,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-020",
+      "title": "Every `<img>` must have an `alt` attribute",
+      "file": ".aivv/standards/accessibility/images-media.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-021",
+      "title": "Inline SVG needs accessible naming or hiding",
+      "file": ".aivv/standards/accessibility/images-media.md",
+      "line": 30,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-022",
+      "title": "`<video>` and `<audio>` must not autoplay with sound",
+      "file": ".aivv/standards/accessibility/images-media.md",
+      "line": 60,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-023",
+      "title": "Video needs a captions `<track>`",
+      "file": ".aivv/standards/accessibility/images-media.md",
+      "line": 82,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-015",
+      "title": "Use the correct element — link vs button",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-016",
+      "title": "`<button>` must declare `type`",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 29,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-017",
+      "title": "Custom controls built from `<div>`/`<span>` must wire keyboard support",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 51,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-018",
+      "title": "Do not use positive `tabindex` values",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 81,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-019",
+      "title": "Links that open in a new tab/window must announce that",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 106,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-039",
+      "title": "Provide a single-pointer alternative for any dragging-based interaction",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 131,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-040",
+      "title": "Pointer targets must be at least 24×24 CSS pixels (or have ≥24px spacing)",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 161,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-068",
+      "title": "When media autoplays audio for >3 seconds, provide pause/stop or independent volume control",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 196,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-069",
+      "title": "Session timeout warning + extend mechanism BEFORE expiration",
+      "file": ".aivv/standards/accessibility/interactive-elements.md",
+      "line": 230,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-030",
+      "title": "Never remove focus outline without providing a replacement",
+      "file": ".aivv/standards/accessibility/keyboard-focus.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-031",
+      "title": "Do not make hidden content focusable",
+      "file": ".aivv/standards/accessibility/keyboard-focus.md",
+      "line": 33,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-036",
+      "title": "Sticky/fixed elements must not fully obscure focused content",
+      "file": ".aivv/standards/accessibility/keyboard-focus.md",
+      "line": 59,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-037",
+      "title": "Focused element must be fully visible (Enhanced)",
+      "file": ".aivv/standards/accessibility/keyboard-focus.md",
+      "line": 87,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-038",
+      "title": "Focus indicator must meet thickness and contrast minimums",
+      "file": ".aivv/standards/accessibility/keyboard-focus.md",
+      "line": 103,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-004",
+      "title": "Use landmark elements for page regions",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 5,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-005",
+      "title": "Provide a skip link to bypass repeated navigation",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 34,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-006",
+      "title": "Heading hierarchy must be logical and not skip levels",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 60,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-007",
+      "title": "Use list elements for list content",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 89,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-008",
+      "title": "Tabular data must use `<table>` with header cells",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 115,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-041",
+      "title": "Help mechanism placement must be consistent across pages",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 149,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-065",
+      "title": "Each page should have a clear, descriptive `<h1>` (typically one) near the top of main content",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 173,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-066",
+      "title": "Heading levels in source order should not skip (best practice)",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 205,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "A11Y-067",
+      "title": "Breadcrumb navigation uses `<nav aria-label=\"breadcrumb\">` + `aria-current=\"page\"`",
+      "file": ".aivv/standards/accessibility/semantic-structure.md",
+      "line": 234,
+      "family": "accessibility"
+    },
+    {
+      "rule_id": "AS-001",
+      "title": "Oversized module — god-file mixing separable responsibilities",
+      "file": ".aivv/standards/architecture.md",
+      "line": 15,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-002",
+      "title": "Module-boundary fit — information leakage across files",
+      "file": ".aivv/standards/architecture.md",
+      "line": 37,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-003",
+      "title": "Cross-file knowledge duplication — one fact in N files",
+      "file": ".aivv/standards/architecture.md",
+      "line": 57,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-004",
+      "title": "File-tree fights the domain",
+      "file": ".aivv/standards/architecture.md",
+      "line": 77,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-005",
+      "title": "Cyclic dependency between modules",
+      "file": ".aivv/standards/architecture.md",
+      "line": 95,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-006",
+      "title": "Dependency-direction / layering inversion",
+      "file": ".aivv/standards/architecture.md",
+      "line": 113,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-007",
+      "title": "Mixed-responsibility file — one file, multiple actors",
+      "file": ".aivv/standards/architecture.md",
+      "line": 133,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "AS-008",
+      "title": "Missing index/registry for a file collection",
+      "file": ".aivv/standards/architecture.md",
+      "line": 151,
+      "family": "architecture"
+    },
+    {
+      "rule_id": "CQ-001",
+      "title": "Chesterton's Fence — understand before changing",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 15,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-002",
+      "title": "Behavior preservation — tests pass unmodified",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 32,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-003",
+      "title": "Scope to what changed — no drive-by refactors",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 50,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-004",
+      "title": "Incremental application — one simplification per commit",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 67,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-005",
+      "title": "Project conventions over external preferences",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 84,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-010",
+      "title": "Cognitive complexity — deep nesting >3 levels",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 104,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-011",
+      "title": "Long parameter list >4 — options object or data clump",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 122,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-012",
+      "title": "Boolean flag arguments — separate functions or options object",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 140,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-013",
+      "title": "Function size — peer-L3 divergent decision-point",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 157,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-014",
+      "title": "Nested ternaries — replace with if/else, switch, or lookup object",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 174,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-015",
+      "title": "Spaghetti-condition growth — scattered special-cases signal a missing model",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 192,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-020",
+      "title": "Dead code — delete, don't comment out",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 212,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-021",
+      "title": "Duplication vs wrong abstraction — DRY is about knowledge",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 231,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-022",
+      "title": "Comments — what (delete) vs why (keep)",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 248,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-023",
+      "title": "Speculative generality / YAGNI",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 266,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-025",
+      "title": "Refactor relocates complexity rather than removing it",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 285,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "CQ-024",
+      "title": "Premature optimization — Knuth 97%/3% framing (DEFERRED)",
+      "file": ".aivv/standards/code-quality.md",
+      "line": 307,
+      "family": "code-quality"
+    },
+    {
+      "rule_id": "COMP-APG-01",
+      "title": "Carousel — `aria-roledescription=\"carousel\"` + rotation control + per-slide naming",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 15,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-02",
+      "title": "Checkbox (tri-state / mixed) — `role=\"checkbox\"` + `aria-checked=\"mixed\"` cycle",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 56,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-03",
+      "title": "Combobox — `role=\"combobox\"` + `aria-expanded` + `aria-activedescendant` + popup `role=\"listbox\"`",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 95,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-04",
+      "title": "Feed — `role=\"feed\"` + `aria-busy` + per-article `aria-posinset` / `aria-setsize`",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 150,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-05",
+      "title": "Grid — `role=\"grid\"` + cell navigation keyboard model + `aria-rowindex` / `aria-colindex` for virtual grids",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 192,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-06",
+      "title": "Spinbutton — `role=\"spinbutton\"` + `aria-valuemin/max/now` + arrow-key step",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 241,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-07",
+      "title": "Date Picker Dialog — text input + button trigger + dialog with `role=\"grid\"` calendar + full keyboard model",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 288,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-08",
+      "title": "Slider (Multi-thumb) — each thumb is `role=\"slider\"` with independent valuenow + mutually-constrained min/max",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 342,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-09",
+      "title": "Treegrid — `role=\"treegrid\"` + `aria-expanded` on parent rows + `aria-level` + cell navigation with expand/collapse",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 393,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-10",
+      "title": "Meter — `role=\"meter\"` + `aria-valuenow/min/max` for static measurement (NOT progress)",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 440,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-11",
+      "title": "Window Splitter — `role=\"separator\"` + `aria-controls` + arrow-key resize + Enter to collapse/restore",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 478,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-12",
+      "title": "Tabs (full keyboard model) — automatic-vs-manual activation choice + full keyboard set",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 525,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-13",
+      "title": "Listbox (multi-select with virtual focus) — `aria-multiselectable` + `aria-activedescendant` + range-extending keyboard model",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 603,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-14",
+      "title": "Dialog (Modal) — initial-focus selection rule + return-focus exceptions",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 667,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-APG-15",
+      "title": "Table (interactive sorting) — `aria-sort` on `columnheader` + grid-role when interactivity dominates",
+      "file": ".aivv/standards/compliance/aria-apg-full.md",
+      "line": 715,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-01",
+      "title": "GDPR Article 13 — disclose required information at point of data collection",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 15,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-02",
+      "title": "GDPR Article 17 — provide a working \"right to erasure\" mechanism",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 67,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-03",
+      "title": "CCPA / CPRA — provide a \"Do Not Sell or Share My Personal Information\" link",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 124,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-04",
+      "title": "FTC Endorsement Guides — disclose material connections clearly + conspicuously",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 178,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-05",
+      "title": "Children's privacy — verifiable parental consent for users below the consent-age threshold",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 225,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-06",
+      "title": "ADA Title III — public-accommodation digital accessibility (WCAG 2.1 AA as practical baseline)",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 277,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-07",
+      "title": "Section 508 — US federal procurement accessibility minimum (revised 2018, WCAG 2.0 AA)",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 306,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-08",
+      "title": "GDPR Article 20 — provide data portability mechanism (structured, machine-readable export)",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 328,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-LEGAL-09",
+      "title": "EU Accessibility Act 2025 — accessibility requirements for in-scope products + services (effective June 28 2025)",
+      "file": ".aivv/standards/compliance/legal-risk.md",
+      "line": 351,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-01",
+      "title": "Text contrast ratio ≥ 7:1 (Enhanced)",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 11,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-02",
+      "title": "Visual presentation of text blocks (user-controllable colors, max 80 chars/line, no-justify, 1.5× leading, 200% zoom)",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 43,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-03",
+      "title": "Avoid images-of-text except for pure-decoration or essential-presentation",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 84,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-04",
+      "title": "Full keyboard operability (No Exception — no path-dependent input)",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 125,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-05",
+      "title": "No timing constraints on essential interactions (except synchronized media + real-time events)",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 167,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-06",
+      "title": "No flashing more than 3 times per second regardless of brightness/size",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 209,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-07",
+      "title": "Identify purpose of UI components, icons, and regions",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 251,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-08",
+      "title": "Re-authenticating must preserve user data",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 291,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-09",
+      "title": "Provide location information within a set of pages",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 342,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-10",
+      "title": "Link purpose identifiable from link text alone",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 384,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-11",
+      "title": "Context changes only on user request",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 424,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-12",
+      "title": "Error prevention for all submissions (reversible / checked / confirmed)",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 473,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-13",
+      "title": "Context-sensitive help is available",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 520,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-14",
+      "title": "Section headings organize the content",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 558,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "COMP-WCAG-AAA-15",
+      "title": "Warn users of inactivity timeouts that could cause data loss",
+      "file": ".aivv/standards/compliance/wcag-aaa.md",
+      "line": 600,
+      "family": "compliance"
+    },
+    {
+      "rule_id": "DP-A11Y-01",
+      "title": "Accessibility-overlay widgets claiming WCAG compliance",
+      "file": ".aivv/standards/dark-patterns/accessibility-trap.md",
+      "line": 5,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-A11Y-02",
+      "title": "\"Skip to content\" link visually hidden permanently",
+      "file": ".aivv/standards/dark-patterns/accessibility-trap.md",
+      "line": 23,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-A11Y-03",
+      "title": "ARIA-roles used to suppress accessibility warnings",
+      "file": ".aivv/standards/dark-patterns/accessibility-trap.md",
+      "line": 41,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-A11Y-04",
+      "title": "Color-contrast falsely claimed via theme metadata",
+      "file": ".aivv/standards/dark-patterns/accessibility-trap.md",
+      "line": 59,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-A11Y-05",
+      "title": "Auto-translate / TTS as accessibility substitute",
+      "file": ".aivv/standards/dark-patterns/accessibility-trap.md",
+      "line": 77,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-A11Y-06",
+      "title": "\"Disability assistance\" gated behind extra steps",
+      "file": ".aivv/standards/dark-patterns/accessibility-trap.md",
+      "line": 95,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-01",
+      "title": "Pre-checked opt-in for non-essential cookies",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 5,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-02",
+      "title": "Asymmetric Accept/Reject buttons",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 23,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-03",
+      "title": "\"Necessary\" cookie misclassification",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 41,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-04",
+      "title": "Hidden \"Reject\" in \"Manage preferences\"",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 59,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-05",
+      "title": "Re-prompting after rejection",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 77,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-06",
+      "title": "Confirmshaming in privacy choices",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 95,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-07",
+      "title": "Privacy-policy link absent from consent surface",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 113,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-08",
+      "title": "Tracking before consent",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 131,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-09",
+      "title": "Withdrawal at least as hard as consent",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 149,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-10",
+      "title": "Bundled consent (forced action)",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 167,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-11",
+      "title": "Personalization gated behind consent without alternative",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 185,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-CONSENT-12",
+      "title": "Dark-patterned data-portability request flows",
+      "file": ".aivv/standards/dark-patterns/consent-privacy.md",
+      "line": 203,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-01",
+      "title": "Streak-shame to coerce return",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 5,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-02",
+      "title": "Variable-reward push notifications",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 23,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-03",
+      "title": "Endless scroll / no stopping cues",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 41,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-04",
+      "title": "Pull-to-refresh as Skinner-box mechanic",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 59,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-05",
+      "title": "Achievement-locked notification flood",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 77,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-06",
+      "title": "Default-loud sound / vibration on engagement events",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 95,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-07",
+      "title": "FOMO-engineered \"Limited time event\" features",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 113,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-08",
+      "title": "Default re-enable of notifications",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 131,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-09",
+      "title": "Read receipts / \"last seen\" without symmetric disclosure",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 149,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-GAME-10",
+      "title": "Sunk-cost emphasis in upgrade flows",
+      "file": ".aivv/standards/dark-patterns/gamification.md",
+      "line": 167,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-01",
+      "title": "FTC Negative Option Rule — easy cancellation",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 7,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-02",
+      "title": "FTC Channel-Asymmetric Cancellation",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 28,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-03",
+      "title": "FTC Misrepresentation of Pricing",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 48,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-04",
+      "title": "FTC Trial-to-Paid Disclosure",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 66,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-05",
+      "title": "GDPR Article 7 — Active Consent",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 84,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-06",
+      "title": "GDPR Cookie Consent",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 105,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-07",
+      "title": "EU DSA Article 25 — Online Interface Design",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 126,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-08",
+      "title": "GDPR Article 13 — Transparency at Collection",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 145,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-09",
+      "title": "GDPR Article 7(3) — Withdrawal as Easy as Consent",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 165,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-10",
+      "title": "FTC Endorsement Guides — Sponsored Disclosure",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 185,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-11",
+      "title": "FTC Green Guides — Environmental Claims",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 205,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-12",
+      "title": "FTC Health Claims Disclosure",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 223,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-LEGAL-13",
+      "title": "State-Level UDAP / \"All Consumers Act\" Patterns",
+      "file": ".aivv/standards/dark-patterns/legal.md",
+      "line": 242,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-01",
+      "title": "Greenwashing in product copy",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 5,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-02",
+      "title": "AI-washing in feature copy",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 23,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-03",
+      "title": "Diversity / inclusion claims without practice",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 41,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-04",
+      "title": "Fake \"we listen to feedback\" UX",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 59,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-05",
+      "title": "Charity / donation washing",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 77,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-06",
+      "title": "Misleading user-count / scale claims",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 95,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-07",
+      "title": "Survey-bias reporting",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 113,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PR-08",
+      "title": "Press / award badges with no link to source",
+      "file": ".aivv/standards/dark-patterns/pr-washing.md",
+      "line": 131,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-01",
+      "title": "Drip pricing — surcharges revealed only at checkout",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 7,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-02",
+      "title": "Hidden mandatory fees",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 26,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-03",
+      "title": "Fake \"compare\" / strike-through pricing",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 45,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-04",
+      "title": "Anchor-pricing manipulation in tiered plans",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 64,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-05",
+      "title": "Per-unit price obfuscation",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 83,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-06",
+      "title": "Currency / unit switching mid-flow",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 101,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-07",
+      "title": "Tax-inclusive vs tax-exclusive inconsistency",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 119,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-08",
+      "title": "Trial-to-paid price obscured",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 138,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-09",
+      "title": "Renewal price hike without notice",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 156,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-10",
+      "title": "Free / freemium with credit-card-required",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 174,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-11",
+      "title": "Bait-and-switch pricing across devices",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 192,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-PRICE-12",
+      "title": "Coupon-code field as friction lever",
+      "file": ".aivv/standards/dark-patterns/pricing.md",
+      "line": 210,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-01",
+      "title": "Fake or undisclosed sponsored reviews",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 5,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-02",
+      "title": "Cherry-picked review filtering",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 23,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-03",
+      "title": "Fabricated user counts / testimonials",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 41,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-04",
+      "title": "\"Verified buyer\" without verification",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 59,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-05",
+      "title": "Manipulated review-summary statistics",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 77,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-06",
+      "title": "Stale activity feeds",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 95,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-07",
+      "title": "\"X friends like this\" without friend-list access",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 113,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SOCIAL-08",
+      "title": "Asymmetric review-response visibility",
+      "file": ".aivv/standards/dark-patterns/social-proof.md",
+      "line": 131,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-01",
+      "title": "Hard-to-find cancel",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 5,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-02",
+      "title": "Cancellation requires extra confirmation steps",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 24,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-03",
+      "title": "Retention offer interstitials",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 42,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-04",
+      "title": "Cancellation requires phone / chat / email",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 60,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-05",
+      "title": "Pre-checked \"auto-renew\" with no opt-out",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 78,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-06",
+      "title": "Trial silently converts to paid",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 96,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-07",
+      "title": "Account deletion = subscription cancellation entanglement",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 114,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-08",
+      "title": "Auto-resubscribe on payment-method update",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 132,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-09",
+      "title": "Downgrade hidden behind cancel",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 150,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SUB-10",
+      "title": "Subscription-status surface omissions",
+      "file": ".aivv/standards/dark-patterns/subscription.md",
+      "line": 168,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-01",
+      "title": "Fake countdown timers",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 7,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-02",
+      "title": "\"Ends today!\" with no actual end",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 25,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-03",
+      "title": "\"Last chance!\" without scarcity backing",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 43,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-04",
+      "title": "Cart-expiration countdowns",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 61,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-05",
+      "title": "Push notifications timed for urgency",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 79,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-06",
+      "title": "Browser-tab manipulation for urgency",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 97,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-07",
+      "title": "Toast notifications for fake urgency",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 115,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-URGENCY-08",
+      "title": "\"Hurry!\" framing in confirmation modals",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 133,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SCARCITY-01",
+      "title": "Fake \"only N left in stock!\"",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 153,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SCARCITY-02",
+      "title": "\"N people viewing this\"",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 171,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SCARCITY-03",
+      "title": "\"N booked in the last 24 hours\"",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 189,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SCARCITY-04",
+      "title": "\"Limited edition\" with no actual limit",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 207,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SCARCITY-05",
+      "title": "Scarcity messaging in checkout",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 225,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "DP-SCARCITY-06",
+      "title": "\"Locked-in\" pricing manipulation",
+      "file": ".aivv/standards/dark-patterns/urgency-scarcity.md",
+      "line": 243,
+      "family": "dark-patterns"
+    },
+    {
+      "rule_id": "I18N-FMT-01",
+      "title": "Dates use `Intl.DateTimeFormat` with explicit locale (never hardcoded `MM/DD/YYYY` or `DD/MM/YYYY`)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 5,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-02",
+      "title": "Numbers use `Intl.NumberFormat` with explicit locale (never hardcoded `1,000.00` or `1.000,00`)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 55,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-03",
+      "title": "Currency uses `Intl.NumberFormat({style: \"currency\"})` with explicit currency code (never hardcoded `$` prefix or assumed-USD display)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 102,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-04",
+      "title": "Relative time uses `Intl.RelativeTimeFormat` (never hardcoded \"3 hours ago\" / \"in 2 days\" English phrasing)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 150,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-05",
+      "title": "Joining lists of items uses `Intl.ListFormat` (never hardcoded `\", \"` + English `\"and\"` / `\"or\"`)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 198,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-06",
+      "title": "Language / region / script / currency display-names use `Intl.DisplayNames` (never hardcoded English \"German\" / \"France\" / \"Latin\")",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 239,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-07",
+      "title": "Text segmentation (grapheme/word/sentence) uses `Intl.Segmenter` (never `String.prototype.split(\" \")` or per-character iteration)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 291,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-08",
+      "title": "Locale tag handling uses `Intl.Locale` for canonical BCP 47 manipulation (never substring-based parsing)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 338,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-09",
+      "title": "Date storage + transport in UTC; display in user's IANA timezone (never `new Date()` arithmetic in local TZ)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 386,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-FMT-10",
+      "title": "Locale detection prefers explicit user preference; falls through to `Accept-Language` server-side / `navigator.languages` client-side (never trust `navigator.language` alone)",
+      "file": ".aivv/standards/i18n/formatters.md",
+      "line": 432,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-01",
+      "title": "`<html dir=\"rtl\">` is set when the active locale is RTL (auto-mirror entry-point)",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 5,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-02",
+      "title": "Use CSS logical properties (`margin-inline-start`, `padding-inline-end`, etc.) instead of physical properties",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 48,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-03",
+      "title": "Inline bidi isolation for opposite-direction embedded text — use `<bdi>` or `dir=\"auto\"` (never naïve concatenation)",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 91,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-04",
+      "title": "Directional icons mirror under RTL; non-directional icons do NOT mirror",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 139,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-05",
+      "title": "Use HTML bidi markup (`<bdi>` / `dir`) — never bare Unicode bidi control characters (U+202A..U+202E, U+2066..U+2069)",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 194,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-06",
+      "title": "Form-control alignment respects `dir` attribute — native controls auto-handle; custom controls need explicit logical alignment",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 236,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-07",
+      "title": "Dir-attribute propagation crosses SPAs / iframes / shadow-DOM boundaries on locale change",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 286,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-08",
+      "title": "Prefer HTML `dir` attribute over CSS `direction` property for typical RTL toggling",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 358,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-09",
+      "title": "RTL-aware animations + transforms — slide-in originates from logical-inline-start (`translateX` mirrors under RTL)",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 406,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-RTL-10",
+      "title": "Mixed-direction layouts — global nav LTR + RTL content (or vice versa) via per-region `dir` attribute + bidi isolation",
+      "file": ".aivv/standards/i18n/rtl-bidi.md",
+      "line": 470,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-01",
+      "title": "All user-facing strings must use a translation function (no hardcoded language)",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 5,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-02",
+      "title": "Pluralization must use CLDR-aware library (NOT `if count === 1` or `count !== 1`)",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 41,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-03",
+      "title": "Runtime `<html lang>` value matches the active user-language locale (composes with A11Y-001)",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 85,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-04",
+      "title": "Gender / grammatical agreement uses ICU `select` (not English-only conditionals)",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 132,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-05",
+      "title": "Never concatenate translated fragments — use a single message with placeholders",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 180,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-06",
+      "title": "Locale fallback chain follows CLDR parent-locale inheritance — never English-as-default for non-English locales",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 220,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-07",
+      "title": "Locale-aware sorting uses `Intl.Collator` (not `Array.sort()` default lexicographic order)",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 271,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-08",
+      "title": "Accent-insensitive search/comparison uses `Intl.Collator` with `sensitivity: \"base\"`",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 311,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-09",
+      "title": "Missing-translation handling must signal the defect — never silently render empty / fallback-to-English-only",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 356,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "I18N-STR-10",
+      "title": "Message keys use stable namespaced identifiers — never embed presentation data or feature-prefix branding",
+      "file": ".aivv/standards/i18n/strings.md",
+      "line": 409,
+      "family": "i18n"
+    },
+    {
+      "rule_id": "IS-013",
+      "title": "Async list must handle initial / loading / empty / populated / error",
+      "file": ".aivv/standards/interaction-states/async-lists.md",
+      "line": 5,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-014",
+      "title": "Empty states must guide the user toward content creation",
+      "file": ".aivv/standards/interaction-states/async-lists.md",
+      "line": 24,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-015",
+      "title": "Loading states should match the shape of the loaded content",
+      "file": ".aivv/standards/interaction-states/async-lists.md",
+      "line": 43,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-016",
+      "title": "Stale data should be marked while refreshing",
+      "file": ".aivv/standards/interaction-states/async-lists.md",
+      "line": 62,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-017",
+      "title": "Error states must offer recovery, not dead-end",
+      "file": ".aivv/standards/interaction-states/async-lists.md",
+      "line": 81,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-018",
+      "title": "Pagination must preserve scroll position on back-nav",
+      "file": ".aivv/standards/interaction-states/async-lists.md",
+      "line": 100,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-001",
+      "title": "Async-action button must render a loading state",
+      "file": ".aivv/standards/interaction-states/buttons-ctas.md",
+      "line": 5,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-002",
+      "title": "Async-action button must clear loading state in `finally`",
+      "file": ".aivv/standards/interaction-states/buttons-ctas.md",
+      "line": 26,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-003",
+      "title": "Disabled buttons must communicate why",
+      "file": ".aivv/standards/interaction-states/buttons-ctas.md",
+      "line": 45,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-004",
+      "title": "Destructive button must require explicit confirmation",
+      "file": ".aivv/standards/interaction-states/buttons-ctas.md",
+      "line": 64,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-005",
+      "title": "Focus state must be visible on all interactive controls",
+      "file": ".aivv/standards/interaction-states/buttons-ctas.md",
+      "line": 83,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-019",
+      "title": "Modal must trap focus while open",
+      "file": ".aivv/standards/interaction-states/dialogs-modals.md",
+      "line": 5,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-020",
+      "title": "Modal must restore focus on close",
+      "file": ".aivv/standards/interaction-states/dialogs-modals.md",
+      "line": 24,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-021",
+      "title": "Modal must close via Esc",
+      "file": ".aivv/standards/interaction-states/dialogs-modals.md",
+      "line": 43,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-022",
+      "title": "Modal close affordance must be keyboard-reachable",
+      "file": ".aivv/standards/interaction-states/dialogs-modals.md",
+      "line": 62,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-023",
+      "title": "Confirmation dialog title must name the object and consequence",
+      "file": ".aivv/standards/interaction-states/dialogs-modals.md",
+      "line": 81,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-006",
+      "title": "Form fields must support all standard states",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 5,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-007",
+      "title": "Validation errors must display inline at the field",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 24,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-008",
+      "title": "Validation must run after first interaction, not on render",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 43,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-009",
+      "title": "Forms must guard against double-submit",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 62,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-010",
+      "title": "Long-running forms must surface progress",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 81,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-011",
+      "title": "Password fields must support show/hide toggle",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 100,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-012",
+      "title": "Autofocus must be used sparingly",
+      "file": ".aivv/standards/interaction-states/form-fields.md",
+      "line": 118,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-024",
+      "title": "Navigation must indicate current location",
+      "file": ".aivv/standards/interaction-states/navigation.md",
+      "line": 5,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-025",
+      "title": "Back-nav must preserve form / filter state",
+      "file": ".aivv/standards/interaction-states/navigation.md",
+      "line": 24,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-026",
+      "title": "External links must be marked",
+      "file": ".aivv/standards/interaction-states/navigation.md",
+      "line": 43,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-027",
+      "title": "Toasts must be dismissible",
+      "file": ".aivv/standards/interaction-states/notifications.md",
+      "line": 5,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-028",
+      "title": "Toasts must not stack indefinitely",
+      "file": ".aivv/standards/interaction-states/notifications.md",
+      "line": 24,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-029",
+      "title": "Live-region announcements must respect priority",
+      "file": ".aivv/standards/interaction-states/notifications.md",
+      "line": 43,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "IS-030",
+      "title": "Critical errors must surface persistently, not via auto-dismissed toast",
+      "file": ".aivv/standards/interaction-states/notifications.md",
+      "line": 62,
+      "family": "interaction-states"
+    },
+    {
+      "rule_id": "MC-006",
+      "title": "Buttons start with verbs that describe the specific action",
+      "file": ".aivv/standards/microcopy/buttons-ctas.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-007",
+      "title": "Destructive action buttons name the consequence, not just the verb",
+      "file": ".aivv/standards/microcopy/buttons-ctas.md",
+      "line": 26,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-008",
+      "title": "Reserve \"Cancel\" for \"abandon this dialog without changes\"",
+      "file": ".aivv/standards/microcopy/buttons-ctas.md",
+      "line": 45,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-009",
+      "title": "One primary CTA per screen / dialog / form",
+      "file": ".aivv/standards/microcopy/buttons-ctas.md",
+      "line": 63,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-010",
+      "title": "Button labels in sentence case (not Title Case, not ALL CAPS)",
+      "file": ".aivv/standards/microcopy/buttons-ctas.md",
+      "line": 81,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-026",
+      "title": "Destructive-confirmation prose names the object and the consequence",
+      "file": ".aivv/standards/microcopy/confirmations.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-027",
+      "title": "Confirm destructive actions; don't gate non-destructive actions",
+      "file": ".aivv/standards/microcopy/confirmations.md",
+      "line": 24,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-028",
+      "title": "Offer undo for reversible destructive actions when possible",
+      "file": ".aivv/standards/microcopy/confirmations.md",
+      "line": 42,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-029",
+      "title": "Confirmation buttons re-state the destructive action",
+      "file": ".aivv/standards/microcopy/confirmations.md",
+      "line": 60,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-022",
+      "title": "Empty states explain what the user will see + how to create the first item",
+      "file": ".aivv/standards/microcopy/empty-states.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-023",
+      "title": "Empty states for filter/search results explain \"what didn't match\"",
+      "file": ".aivv/standards/microcopy/empty-states.md",
+      "line": 33,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-024",
+      "title": "Distinguish \"you have no X yet\" from \"this list is empty for now (try later)\"",
+      "file": ".aivv/standards/microcopy/empty-states.md",
+      "line": 51,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-025",
+      "title": "Don't dead-end the user — empty states have a path forward",
+      "file": ".aivv/standards/microcopy/empty-states.md",
+      "line": 69,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-016",
+      "title": "Error messages tell the user what's wrong AND what to do",
+      "file": ".aivv/standards/microcopy/errors.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-017",
+      "title": "Don't expose stack traces, error codes, or exception class names to users",
+      "file": ".aivv/standards/microcopy/errors.md",
+      "line": 24,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-018",
+      "title": "Validation error placement: next to the field, not in a top banner only",
+      "file": ".aivv/standards/microcopy/errors.md",
+      "line": 43,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-019",
+      "title": "Color is not the only carrier of error state",
+      "file": ".aivv/standards/microcopy/errors.md",
+      "line": 66,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-020",
+      "title": "Distinguish \"couldn't\" (system) from \"can't\" (rule)",
+      "file": ".aivv/standards/microcopy/errors.md",
+      "line": 84,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-021",
+      "title": "Don't show errors before the user has had a chance to act",
+      "file": ".aivv/standards/microcopy/errors.md",
+      "line": 102,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-011",
+      "title": "Field labels are nouns describing what the field captures",
+      "file": ".aivv/standards/microcopy/labels-fields.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-012",
+      "title": "Mark required fields visibly; do not rely on optional-marking alone",
+      "file": ".aivv/standards/microcopy/labels-fields.md",
+      "line": 23,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-013",
+      "title": "Don't use placeholder text as the only label",
+      "file": ".aivv/standards/microcopy/labels-fields.md",
+      "line": 42,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-014",
+      "title": "Help text describes format / constraints / examples — not field purpose",
+      "file": ".aivv/standards/microcopy/labels-fields.md",
+      "line": 58,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-015",
+      "title": "Don't capitalize random words in labels",
+      "file": ".aivv/standards/microcopy/labels-fields.md",
+      "line": 76,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-030",
+      "title": "Async ops over ~1 second show a loading indicator",
+      "file": ".aivv/standards/microcopy/loading-progress.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-031",
+      "title": "Loading prose names what's happening, not just \"Loading…\"",
+      "file": ".aivv/standards/microcopy/loading-progress.md",
+      "line": 23,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-032",
+      "title": "Long-running ops show progress, not just \"in progress\"",
+      "file": ".aivv/standards/microcopy/loading-progress.md",
+      "line": 41,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-033",
+      "title": "Toasts auto-dismiss; persistent notifications remain until acknowledged",
+      "file": ".aivv/standards/microcopy/notifications.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-034",
+      "title": "Notifications include a dismiss control",
+      "file": ".aivv/standards/microcopy/notifications.md",
+      "line": 23,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-035",
+      "title": "Notifications convey severity through more than color",
+      "file": ".aivv/standards/microcopy/notifications.md",
+      "line": 42,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-036",
+      "title": "One trailing punctuation rule per surface; default to no period on labels and buttons",
+      "file": ".aivv/standards/microcopy/punctuation.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-037",
+      "title": "Use straight quotes in code, curly quotes in body prose (when project supports it)",
+      "file": ".aivv/standards/microcopy/punctuation.md",
+      "line": 23,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-038",
+      "title": "Use the en dash for ranges, em dash for asides — set consistently",
+      "file": ".aivv/standards/microcopy/punctuation.md",
+      "line": 41,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-001",
+      "title": "Use plain, conversational language at a consistent reading level",
+      "file": ".aivv/standards/microcopy/voice-tone.md",
+      "line": 5,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-002",
+      "title": "Address the user as \"you\", refer to the product/team as \"we\"",
+      "file": ".aivv/standards/microcopy/voice-tone.md",
+      "line": 24,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-003",
+      "title": "Prefer active voice over passive voice",
+      "file": ".aivv/standards/microcopy/voice-tone.md",
+      "line": 43,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-004",
+      "title": "Avoid blaming the user for system errors",
+      "file": ".aivv/standards/microcopy/voice-tone.md",
+      "line": 62,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "MC-005",
+      "title": "Match the product's established voice consistently across surfaces",
+      "file": ".aivv/standards/microcopy/voice-tone.md",
+      "line": 81,
+      "family": "microcopy"
+    },
+    {
+      "rule_id": "RTV-AXE-01",
+      "title": "Run axe-core against rendered DOM with `tags: ['wcag2a', 'wcag2aa']` baseline",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 15,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-02",
+      "title": "Axe-core violations of `serious` or `critical` impact map to MAJOR or CRITICAL severity",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 32,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-03",
+      "title": "`color-contrast` rule violations must cite computed ratio + WCAG SC",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 48,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-04",
+      "title": "`focus-order-semantics` and `tabindex` violations require keyboard-navigation reproduction",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 64,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-05",
+      "title": "ARIA-applied-vs-declared mismatch (runtime axe-core catches what static cannot)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 80,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-06",
+      "title": "`region`, `landmark-one-main`, and structural-landmark rules require rendered-DOM verification",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 97,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-07",
+      "title": "Form-label association rules require rendered-form runtime walk",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 114,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-08",
+      "title": "`image-alt` runtime check catches dynamic `alt` defects",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 131,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-09",
+      "title": "`link-name` runtime check catches empty-link defects at render-time",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 148,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-AXE-10",
+      "title": "`html-has-lang` runtime verification catches SPA lang-switching defects",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 165,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-01",
+      "title": "Verify computed contrast for text on dynamic-color backgrounds",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 183,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-02",
+      "title": "Focus-indicator contrast against adjacent colors",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 200,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-03",
+      "title": "UI component contrast for icon-only buttons + form controls",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 217,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-04",
+      "title": "AAA-enhanced 7:1 contrast verification",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 234,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-05",
+      "title": "State-color contrast (hover, active, disabled)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 250,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-06",
+      "title": "Placeholder text contrast (the canonical low-contrast antipattern)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 266,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-CONTRAST-07",
+      "title": "Disabled form-control + button contrast",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 282,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-01",
+      "title": "Baseline screenshot capture at canonical viewport (1280×800)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 300,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-02",
+      "title": "Multi-viewport baseline batch (desktop + tablet + mobile)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 316,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-03",
+      "title": "Animation-frozen screenshots via `prefers-reduced-motion`",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 332,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-04",
+      "title": "Font-loading wait via `page.waitForLoadState('networkidle')`",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 348,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-05",
+      "title": "Pixel-diff threshold + tolerance per visual-element type",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 364,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-06",
+      "title": "Baseline-blessing requires explicit user confirmation",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 380,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-07",
+      "title": "Theme-switched baseline pairs (light + dark)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 396,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "RTV-DIFF-08",
+      "title": "Cross-browser baseline (Chromium + Firefox + WebKit)",
+      "file": ".aivv/standards/runtime-visual.md",
+      "line": 412,
+      "family": "runtime-visual"
+    },
+    {
+      "rule_id": "UX-030",
+      "title": "Offer guest checkout (do not force account creation)",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 7,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-031",
+      "title": "Use a single name field, not split first-name + last-name",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 37,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-032",
+      "title": "Collapse \"Address Line 2\" by default",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 62,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-033",
+      "title": "Collapse coupon / promo code field by default",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 92,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-034",
+      "title": "Disambiguate shipping vs billing addresses via `autocomplete` mode prefix; never `autocomplete=\"off\"` on payment",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 121,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-035",
+      "title": "Use `inputmode=\"numeric\"` on numeric-only payment inputs",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 157,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-036",
+      "title": "Preserve entered form data on validation failure",
+      "file": ".aivv/standards/ui-ux/checkout-payment.md",
+      "line": 185,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-022",
+      "title": "Filter / sort / pagination state persists in the URL",
+      "file": ".aivv/standards/ui-ux/data-performance.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-023",
+      "title": "Never lazy-load the LCP / above-the-fold image",
+      "file": ".aivv/standards/ui-ux/data-performance.md",
+      "line": 28,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-024",
+      "title": "Images require meaningful `alt` text (or `alt=\"\"` if decorative)",
+      "file": ".aivv/standards/ui-ux/data-performance.md",
+      "line": 53,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-025",
+      "title": "Use a \"Load more\" button over pure infinite scroll for task-oriented lists",
+      "file": ".aivv/standards/ui-ux/data-performance.md",
+      "line": 76,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-026",
+      "title": "Responsive tables use an overflow container, card layout, or priority columns — not silent clipping",
+      "file": ".aivv/standards/ui-ux/data-performance.md",
+      "line": 98,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-012",
+      "title": "Destructive actions need confirmation or a reliable undo",
+      "file": ".aivv/standards/ui-ux/feedback-confirmation.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-013",
+      "title": "Toast/snackbar notifications must have a minimum 5s dwell and be screen-reader-announceable",
+      "file": ".aivv/standards/ui-ux/feedback-confirmation.md",
+      "line": 31,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-014",
+      "title": "Modal dialogs must trap focus, close on Escape, and restore focus on close",
+      "file": ".aivv/standards/ui-ux/feedback-confirmation.md",
+      "line": 59,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-001",
+      "title": "Every input must have a programmatically-associated `<label>`",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-002",
+      "title": "Do not use placeholder text as the only label",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 28,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-003",
+      "title": "Submit buttons must disable during in-flight submission",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 51,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-004",
+      "title": "Validate on blur, show errors inline next to the field",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 75,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-005",
+      "title": "Error messages must be specific, plain-language, and actionable",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 100,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-006",
+      "title": "Use the `autocomplete` attribute on standard fields",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 132,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-007",
+      "title": "Mark optional fields, or all-required-by-default",
+      "file": ".aivv/standards/ui-ux/forms.md",
+      "line": 157,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-015",
+      "title": "Current page / section indicated with `aria-current`",
+      "file": ".aivv/standards/ui-ux/navigation.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-016",
+      "title": "Provide a skip-link to main content",
+      "file": ".aivv/standards/ui-ux/navigation.md",
+      "line": 27,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-017",
+      "title": "Use `<a>` for navigation and `<button>` for actions",
+      "file": ".aivv/standards/ui-ux/navigation.md",
+      "line": 51,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-027",
+      "title": "Forms target a real `action` / server handler, not only JS",
+      "file": ".aivv/standards/ui-ux/progressive-enhancement.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-028",
+      "title": "Error message copy must use forward-looking framing",
+      "file": ".aivv/standards/ui-ux/progressive-enhancement.md",
+      "line": 30,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-029",
+      "title": "Transient errors should attempt silent auto-retry before surfacing to the user",
+      "file": ".aivv/standards/ui-ux/progressive-enhancement.md",
+      "line": 61,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-018",
+      "title": "Include the viewport meta tag; don't disable user scaling",
+      "file": ".aivv/standards/ui-ux/responsive-touch.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-019",
+      "title": "Interactive targets must have a minimum 24×24 CSS-pixel hit area",
+      "file": ".aivv/standards/ui-ux/responsive-touch.md",
+      "line": 27,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-042",
+      "title": "Search inputs are wrapped in `<search>` (or `<form role=\"search\">`) with a descriptive accessible name",
+      "file": ".aivv/standards/ui-ux/search-filter-status.md",
+      "line": 7,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-043",
+      "title": "Result counts after a filter / search / sort change are announced via `role=\"status\"` (WCAG 4.1.3 Status Messages, AA)",
+      "file": ".aivv/standards/ui-ux/search-filter-status.md",
+      "line": 45,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-044",
+      "title": "Tri-state \"Select all\" checkbox uses `aria-checked=\"mixed\"` (or DOM `indeterminate`) when some-but-not-all rows are selected",
+      "file": ".aivv/standards/ui-ux/search-filter-status.md",
+      "line": 82,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-045",
+      "title": "Filter-panel UX framing for grouped checkboxes — single-vs-multi-fieldset choice, visually-hidden-legend acceptability, facet labelling (defers to A11Y-010 for baseline semantics)",
+      "file": ".aivv/standards/ui-ux/search-filter-status.md",
+      "line": 131,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-046",
+      "title": "Search inputs use `<input type=\"search\">` rather than `type=\"text\"` for native clear-button + browser search semantics",
+      "file": ".aivv/standards/ui-ux/search-filter-status.md",
+      "line": 173,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-008",
+      "title": "Async views must render a distinct loading state",
+      "file": ".aivv/standards/ui-ux/state-handling.md",
+      "line": 5,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-009",
+      "title": "Skeletons for full-page loads under 10s; spinners for 2-10s actions; progress bars for >10s",
+      "file": ".aivv/standards/ui-ux/state-handling.md",
+      "line": 30,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-010",
+      "title": "Empty states must include a recovery / next-step CTA",
+      "file": ".aivv/standards/ui-ux/state-handling.md",
+      "line": 49,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-011",
+      "title": "Error states must offer a recovery path",
+      "file": ".aivv/standards/ui-ux/state-handling.md",
+      "line": 75,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-037",
+      "title": "Sortable column headers communicate sort state via `aria-sort`",
+      "file": ".aivv/standards/ui-ux/tables-pagination.md",
+      "line": 7,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-038",
+      "title": "Use `role=\"grid\"` only for interactive cell-navigation widgets; basic data tables use plain `<table>`",
+      "file": ".aivv/standards/ui-ux/tables-pagination.md",
+      "line": 47,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-039",
+      "title": "Grid widgets follow the ARIA APG keyboard model — Arrow keys + Home/End + Ctrl+Home/End + single tab stop via roving tabindex",
+      "file": ".aivv/standards/ui-ux/tables-pagination.md",
+      "line": 87,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-040",
+      "title": "Pagination wraps in `<nav aria-label=\"Pagination\">` with `aria-current=\"page\"` on the active page",
+      "file": ".aivv/standards/ui-ux/tables-pagination.md",
+      "line": 164,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-041",
+      "title": "Previous / Next pagination links use `rel=\"prev\"` / `rel=\"next\"` + visually-hidden \"page\" suffix for screen-reader clarity",
+      "file": ".aivv/standards/ui-ux/tables-pagination.md",
+      "line": 194,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-020",
+      "title": "Button labels describe the resulting action, not \"OK\" / \"Submit\" / \"Yes\"",
+      "file": ".aivv/standards/ui-ux/ux-microcopy.md",
+      "line": 7,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UX-021",
+      "title": "Error microcopy uses plain language, not codes or \"hostile\" wording",
+      "file": ".aivv/standards/ui-ux/ux-microcopy.md",
+      "line": 29,
+      "family": "ui-ux"
+    },
+    {
+      "rule_id": "UJ-AC-01a",
+      "title": "AC text describes implementation invariant",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 17,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-AC-01b",
+      "title": "AC text user-perceptible but reviewer cites code-side evidence",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 40,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-DISC-01",
+      "title": "Feature has no visible entry point for a zero-knowledge user",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 65,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-DISC-02",
+      "title": "Feature activatable only via unmarked keyboard shortcut",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 84,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-DISC-03",
+      "title": "Feature entry point requires hover to become visible",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 102,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-DISC-04",
+      "title": "Feature requires keyword recall without in-context hint",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 121,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-ACT-01",
+      "title": "No visible feedback when the primary activation action fires",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 141,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-ACT-02",
+      "title": "Activation feedback appears outside common viewport boundaries",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 160,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-ACT-03",
+      "title": "Pre-state and post-state are visually indistinguishable",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 178,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-TFS-01",
+      "title": "Task completion requires external instruction",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 199,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "UJ-TFS-02",
+      "title": "Task completion requires multi-step undocumented sequence with no breadcrumb or next-step prompt",
+      "file": ".aivv/standards/user-journey.md",
+      "line": 222,
+      "family": "user-journey"
+    },
+    {
+      "rule_id": "HEU-COG-curiosity-gap",
+      "title": "Curiosity Gap",
+      "file": ".aivv/standards/ux-heuristics/cognitive-biases.md",
+      "line": 7,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-COG-confirmation-bias",
+      "title": "Confirmation Bias",
+      "file": ".aivv/standards/ux-heuristics/cognitive-biases.md",
+      "line": 26,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-COG-default-effect",
+      "title": "Default Effect",
+      "file": ".aivv/standards/ux-heuristics/cognitive-biases.md",
+      "line": 45,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-COG-feedback-loop",
+      "title": "Feedback Loop",
+      "file": ".aivv/standards/ux-heuristics/cognitive-biases.md",
+      "line": 65,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-COG-novelty",
+      "title": "Novelty Effect",
+      "file": ".aivv/standards/ux-heuristics/cognitive-biases.md",
+      "line": 84,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-hicks",
+      "title": "Hick's Law",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/decision-choice.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-occams-razor",
+      "title": "Occam's Razor",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/decision-choice.md",
+      "line": 25,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-pareto",
+      "title": "Pareto Principle (80/20)",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/decision-choice.md",
+      "line": 44,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-tesler",
+      "title": "Tesler's Law (Law of Conservation of Complexity)",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/decision-choice.md",
+      "line": 63,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-goal-gradient",
+      "title": "Goal-Gradient Effect",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/engagement-attention.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-flow",
+      "title": "Flow",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/engagement-attention.md",
+      "line": 24,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-aesthetic-usability",
+      "title": "Aesthetic-Usability Effect",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/engagement-attention.md",
+      "line": 43,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-selective-attention",
+      "title": "Selective Attention (Banner Blindness)",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/engagement-attention.md",
+      "line": 59,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-prox",
+      "title": "Law of Proximity",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/gestalt-grouping.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-similarity",
+      "title": "Law of Similarity",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/gestalt-grouping.md",
+      "line": 24,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-common-region",
+      "title": "Law of Common Region",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/gestalt-grouping.md",
+      "line": 43,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-uniform-connectedness",
+      "title": "Law of Uniform Connectedness",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/gestalt-grouping.md",
+      "line": 62,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-pragnanz",
+      "title": "Law of Prägnanz",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/gestalt-grouping.md",
+      "line": 80,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-von-restorff",
+      "title": "Von Restorff Effect (Isolation Effect)",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/gestalt-grouping.md",
+      "line": 99,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-millers",
+      "title": "Miller's Law",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-working-memory",
+      "title": "Working Memory",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 26,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-chunking",
+      "title": "Chunking",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 45,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-cognitive-load",
+      "title": "Cognitive Load",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 64,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-peak-end",
+      "title": "Peak-End Rule",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 83,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-serial-position",
+      "title": "Serial Position Effect",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 102,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-zeigarnik",
+      "title": "Zeigarnik Effect",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/memory-cognition.md",
+      "line": 121,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-jakob",
+      "title": "Jakob's Law",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/mental-models.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-postel",
+      "title": "Postel's Law (Robustness Principle)",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/mental-models.md",
+      "line": 25,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-mental-model",
+      "title": "Mental Model",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/mental-models.md",
+      "line": 45,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-paradox-active-user",
+      "title": "Paradox of the Active User",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/mental-models.md",
+      "line": 64,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-doherty",
+      "title": "Doherty Threshold",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/timing-perception.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-fitts",
+      "title": "Fitts's Law",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/timing-perception.md",
+      "line": 24,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-LUX-parkinson",
+      "title": "Parkinson's Law",
+      "file": ".aivv/standards/ux-heuristics/laws-of-ux/timing-perception.md",
+      "line": 43,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN1",
+      "title": "Visibility of system status",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN2",
+      "title": "Match between system and the real world",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 27,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN3",
+      "title": "User control and freedom",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 47,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN4",
+      "title": "Consistency and standards",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 69,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN5",
+      "title": "Error prevention",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 89,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN6",
+      "title": "Recognition rather than recall",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 109,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN7",
+      "title": "Flexibility and efficiency of use",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 131,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN8",
+      "title": "Aesthetic and minimalist design",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 152,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN9",
+      "title": "Help users recognize, diagnose, and recover from errors",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 171,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-NN10",
+      "title": "Help and documentation",
+      "file": ".aivv/standards/ux-heuristics/nielsen.md",
+      "line": 191,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH1",
+      "title": "Strive for consistency",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 5,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH2",
+      "title": "Seek universal usability",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 24,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH3",
+      "title": "Offer informative feedback",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 43,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH4",
+      "title": "Design dialogs to yield closure",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 62,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH5",
+      "title": "Prevent errors",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 81,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH6",
+      "title": "Permit easy reversal of actions",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 99,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH7",
+      "title": "Keep users in control (internal locus of control)",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 118,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "HEU-SCH8",
+      "title": "Reduce short-term memory load",
+      "file": ".aivv/standards/ux-heuristics/schneiderman.md",
+      "line": 138,
+      "family": "ux-heuristics"
+    },
+    {
+      "rule_id": "VD-COLOR-01",
+      "title": "Color tokens, not hex literals",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 5,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-02",
+      "title": "Semantic color naming at consumption",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 24,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-03",
+      "title": "Opacity as state signal",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 43,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-04",
+      "title": "Color-only state signaling (defer-to A11Y-032)",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 62,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-05",
+      "title": "Dark-mode token coverage",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 81,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-06",
+      "title": "Hardcoded brand colors",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 103,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-07",
+      "title": "Gradient stop choice",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 121,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-08",
+      "title": "Modern CSS color syntax",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 142,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-09",
+      "title": "Color contrast at token level (compliance is runtime-deferred)",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 163,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-10",
+      "title": "Hover/focus state contrast",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 184,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-11",
+      "title": "Color-coding in data viz",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 202,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-12",
+      "title": "Color as decoration vs signal",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 221,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-13",
+      "title": "Theme override surface",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 239,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-COLOR-14",
+      "title": "Focus ring color contrast against multiple backgrounds",
+      "file": ".aivv/standards/visual-design/color.md",
+      "line": 258,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-01",
+      "title": "Single icon set consistency",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 7,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-02",
+      "title": "Icon + label for ambiguous icons",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 26,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-03",
+      "title": "Accessible icon-only buttons (defer-to A11Y-021 + A11Y-026 + A11Y-027)",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 45,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-04",
+      "title": "Filled vs outline state consistency",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 64,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-05",
+      "title": "Icon sizing via em not px",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 82,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-06",
+      "title": "SVG sprite vs inline tradeoffs",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 100,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-07",
+      "title": "Decorative icons hidden from assistive tech",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 118,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-ICON-08",
+      "title": "Icon style consistency at multiple sizes",
+      "file": ".aivv/standards/visual-design/iconography.md",
+      "line": 136,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-01",
+      "title": "Container queries over media queries",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 5,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-02",
+      "title": "Intrinsic sizing keywords",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 23,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-03",
+      "title": "aspect-ratio over padding hacks",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 41,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-04",
+      "title": "gap over margin for flex/grid spacing",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 59,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-05",
+      "title": "grid-template-areas for named regions",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 77,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-06",
+      "title": "Mobile-first breakpoint declarations",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 102,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-07",
+      "title": "clamp() for fluid type/space",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 120,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-08",
+      "title": "viewport units pitfalls (dvh / svh / lvh)",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 138,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-09",
+      "title": "CSS Logical Properties for i18n",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 156,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-10",
+      "title": "Sticky positioning context awareness",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 175,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-11",
+      "title": "Scrollbar gutter stability",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 193,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-12",
+      "title": "Z-index scale, not magic numbers",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 211,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-13",
+      "title": "Overflow hidden vs clip",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 230,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-14",
+      "title": "Print stylesheet basics",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 248,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-15",
+      "title": "Safe-area-inset for notched devices",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 266,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-16",
+      "title": "Grid fallback for older browsers (when applicable)",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 284,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-LAYOUT-17",
+      "title": "Avoid fixed pixel breakpoints",
+      "file": ".aivv/standards/visual-design/layout.md",
+      "line": 308,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-01",
+      "title": "Duration range for UI transitions",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 5,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-02",
+      "title": "Easing curves, not linear",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 24,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-03",
+      "title": "prefers-reduced-motion (defer-to A11Y-033)",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 43,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-04",
+      "title": "GPU-only animated properties",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 69,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-05",
+      "title": "will-change overuse",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 90,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-06",
+      "title": "Animation jank from layout-triggering CSS",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 108,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-07",
+      "title": "Animation fill-mode correctness",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 128,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-08",
+      "title": "Spring / physics-based motion",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 147,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-09",
+      "title": "Sequential motion choreography",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 166,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-10",
+      "title": "Hover transition coverage",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 184,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-11",
+      "title": "Loading-state motion ergonomics",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 202,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-MOTION-12",
+      "title": "Auto-advance / carousel motion ethics",
+      "file": ".aivv/standards/visual-design/motion.md",
+      "line": 221,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-01",
+      "title": "Baseline spacing scale",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 5,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-02",
+      "title": "Vertical rhythm via line-height not margin",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 24,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-03",
+      "title": "Padding inside, margin between",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 43,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-04",
+      "title": "Touch target minimums",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 62,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-05",
+      "title": "Whitespace as visual grouping",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 81,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-06",
+      "title": "Asymmetric padding for visual weight",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 99,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-07",
+      "title": "Negative space in compositions",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 117,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-08",
+      "title": "Spacing-token consumption consistency",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 136,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-09",
+      "title": "Optical alignment vs mathematical alignment",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 155,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-SPACE-10",
+      "title": "Layout breakpoint spacing scales",
+      "file": ".aivv/standards/visual-design/spacing.md",
+      "line": 173,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-01",
+      "title": "Modular type scale",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 5,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-02",
+      "title": "Body text minimum 16px",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 25,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-03",
+      "title": "Line-height for body vs headings",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 44,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-04",
+      "title": "Font-weight pairing",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 63,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-05",
+      "title": "Font-family stack robustness",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 81,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-06",
+      "title": "Web-font loading strategy",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 100,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-07",
+      "title": "Variable-font axes vs static-weight files",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 122,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-08",
+      "title": "Optical line length 45-75ch",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 140,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-09",
+      "title": "text-wrap balance / pretty",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 159,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-10",
+      "title": "Numeric and tabular figures",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 177,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-11",
+      "title": "Heading hierarchy weight + size",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 196,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VD-TYPE-12",
+      "title": "Hyphenation control",
+      "file": ".aivv/standards/visual-design/typography.md",
+      "line": 215,
+      "family": "visual-design"
+    },
+    {
+      "rule_id": "VVT-026",
+      "title": "ARIA attribute additions or modifications",
+      "file": ".aivv/standards/visual-verification-triggers/accessibility-code.md",
+      "line": 5,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-027",
+      "title": "Role or landmark changes",
+      "file": ".aivv/standards/visual-verification-triggers/accessibility-code.md",
+      "line": 21,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-028",
+      "title": "Semantic element swap (div → button / a)",
+      "file": ".aivv/standards/visual-verification-triggers/accessibility-code.md",
+      "line": 37,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-029",
+      "title": "tabindex changes",
+      "file": ".aivv/standards/visual-verification-triggers/accessibility-code.md",
+      "line": 53,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-030",
+      "title": "Language, direction, or locale attribute changes",
+      "file": ".aivv/standards/visual-verification-triggers/accessibility-code.md",
+      "line": 69,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-062",
+      "title": "CSS `forced-colors` media-query handling — Baseline Widely available since September 2022",
+      "file": ".aivv/standards/visual-verification-triggers/accessibility-code.md",
+      "line": 85,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-020",
+      "title": "New or replaced image / icon / SVG",
+      "file": ".aivv/standards/visual-verification-triggers/assets.md",
+      "line": 5,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-021",
+      "title": "SVG structure or viewBox change",
+      "file": ".aivv/standards/visual-verification-triggers/assets.md",
+      "line": 25,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-022",
+      "title": "Video, audio, or embedded-media addition",
+      "file": ".aivv/standards/visual-verification-triggers/assets.md",
+      "line": 41,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-051",
+      "title": "HTML `loading=\"lazy\"` attribute on `<img>` / `<iframe>` — Baseline Widely available since March 2022",
+      "file": ".aivv/standards/visual-verification-triggers/assets.md",
+      "line": 60,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-052",
+      "title": "HTML `<img>` `decoding` + `fetchpriority` attribute additions — `decoding` Baseline Widely available since January 2020; `fetchpriority` Baseline 2024 Newly available since October 2024 (progressive enhancement framing)",
+      "file": ".aivv/standards/visual-verification-triggers/assets.md",
+      "line": 83,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-010",
+      "title": "Swapped layout primitive or wrapper component",
+      "file": ".aivv/standards/visual-verification-triggers/component-composition.md",
+      "line": 5,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-011",
+      "title": "Children prop / slot restructure",
+      "file": ".aivv/standards/visual-verification-triggers/component-composition.md",
+      "line": 20,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-012",
+      "title": "Portal, teleport, or detached-DOM usage",
+      "file": ".aivv/standards/visual-verification-triggers/component-composition.md",
+      "line": 35,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-013",
+      "title": "Conditional rendering of layout regions",
+      "file": ".aivv/standards/visual-verification-triggers/component-composition.md",
+      "line": 51,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-067",
+      "title": "HTML `<dialog>` element + `.showModal()` / `.show()` API — Baseline Widely available since March 2022",
+      "file": ".aivv/standards/visual-verification-triggers/component-composition.md",
+      "line": 66,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-001",
+      "title": "New or modified positioning rules",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 5,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-002",
+      "title": "z-index changes",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 22,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-003",
+      "title": "Transform, filter, or opacity added to a layout ancestor",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 39,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-004",
+      "title": "Breakpoint additions or media-query edits",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 54,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-005",
+      "title": "Flex or grid structural changes",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 71,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-006",
+      "title": "New or modified animations / transitions",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 88,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-007",
+      "title": "Font, font-family, or font-loading changes",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 106,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-008",
+      "title": "Color, contrast, or theme-token changes",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 124,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-009",
+      "title": "Overflow, clip-path, or mask changes",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 141,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-048",
+      "title": "CSS `@starting-style` rule additions — Baseline 2024",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 157,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-049",
+      "title": "CSS `field-sizing: content` declarations — Limited availability (progressive enhancement only)",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 181,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-050",
+      "title": "CSS `text-wrap: balance` / `text-wrap: pretty` declarations — Baseline 2024",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 203,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-053",
+      "title": "CSS `font-display` descriptor additions or modifications — Baseline 2020",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 224,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-054",
+      "title": "CSS `prefers-reduced-motion` media-query handling — Baseline 2020",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 247,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-057",
+      "title": "CSS `color-scheme` property + `<meta name=\"color-scheme\">` additions or changes — Baseline Widely available since January 2022",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 271,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-058",
+      "title": "CSS `light-dark()` color function — Baseline 2024 Newly available since May 2024",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 294,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-060",
+      "title": "CSS `accent-color` property additions or changes — Limited availability (progressive enhancement only)",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 317,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-061",
+      "title": "CSS `prefers-contrast` media-query handling — Baseline Widely available since May 2022",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 340,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-066",
+      "title": "CSS `appearance` property additions or changes — Baseline Widely available since March 2022",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 363,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-068",
+      "title": "CSS `oklch()` / `oklab()` perceptually-uniform color functions — Baseline Widely available since May 2023",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 387,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-069",
+      "title": "CSS scroll-driven animations (`animation-timeline`, `scroll-timeline-name`, `view-timeline-name`) — Limited availability (progressive enhancement only)",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 412,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-070",
+      "title": "CSS `@scope` at-rule — Baseline 2025 Newly available since December 2025",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 436,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-071",
+      "title": "CSS `interpolate-size` property — Limited availability (progressive enhancement only)",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 459,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-072",
+      "title": "CSS `text-spacing-trim` property — Limited availability (progressive enhancement only)",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 482,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-073",
+      "title": "CSS Anchor Positioning (`anchor-name`, `position-anchor`, `anchor()`, `position-area`) — split Baseline 2-vs-2 (`anchor-name` + `position-area` Newly Jan 2026; `position-anchor` + `anchor()` Limited)",
+      "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
+      "line": 505,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-043",
+      "title": "React Suspense boundary additions / changes (explicit + implicit)",
+      "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
+      "line": 9,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-044",
+      "title": "Shadow DOM encapsulation (imperative `attachShadow` + Declarative Shadow DOM) + Custom Element lifecycle",
+      "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
+      "line": 33,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-045",
+      "title": "`IntersectionObserver`-driven UI changes — Baseline widely available since March 2019",
+      "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
+      "line": 59,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-046",
+      "title": "`ResizeObserver`-driven UI changes — Baseline widely available since July 2020",
+      "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
+      "line": 83,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-031",
+      "title": "CSS container queries (`@container`, `container-type`, `container-name`)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 9,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-032",
+      "title": "CSS `:has()` selector usage",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 31,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-033",
+      "title": "CSS cascade layers (`@layer`) — Baseline widely available since March 2022",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 52,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-034",
+      "title": "CSS logical properties (`*-inline-start`, `*-block-end`, etc.) replacing physical (`left`, `top`)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 73,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-035",
+      "title": "CSS anchor positioning (`anchor-name`, `position-anchor`, `position-area`)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 95,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-036",
+      "title": "CSS subgrid (`grid-template-columns: subgrid`, `grid-template-rows: subgrid`)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 115,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-037",
+      "title": "CSS / JS view transitions (`document.startViewTransition`, `view-transition-name`, `@view-transition`, framework wrappers)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 134,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-038",
+      "title": "CSS `aspect-ratio` property additions or changes",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 157,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-039",
+      "title": "HTML `popover` attribute / Popover API usage — Baseline 2024 (Newly available since April 2024)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 176,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-040",
+      "title": "HTML `inert` attribute additions",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 200,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-041",
+      "title": "CSS native nesting (`& selector` inside a rule) — Baseline 2023 (Newly available since December 2023)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 222,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-042",
+      "title": "CSS `content-visibility` property (`auto`, `hidden`, `visible`)",
+      "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
+      "line": 243,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-023",
+      "title": "Viewport meta or document-level scaling change",
+      "file": ".aivv/standards/visual-verification-triggers/responsive.md",
+      "line": 5,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-024",
+      "title": "Touch-target sizing or hit-area change",
+      "file": ".aivv/standards/visual-verification-triggers/responsive.md",
+      "line": 22,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-025",
+      "title": "Orientation- or hover-capability-specific code",
+      "file": ".aivv/standards/visual-verification-triggers/responsive.md",
+      "line": 37,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-065",
+      "title": "CSS scroll-snap (`scroll-snap-type`, `scroll-snap-align`) additions or changes — Baseline Widely available since April 2022",
+      "file": ".aivv/standards/visual-verification-triggers/responsive.md",
+      "line": 52,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-014",
+      "title": "New or modified form validation logic",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 5,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-015",
+      "title": "Loading, skeleton, or pending-state implementation",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 23,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-016",
+      "title": "Error boundary or error-state UI added or modified",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 39,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-017",
+      "title": "Focus management code",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 55,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-018",
+      "title": "Keyboard event handler additions",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 74,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-019",
+      "title": "Dialog, modal, popover, or tooltip behavior change",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 92,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-047",
+      "title": "CSS `:user-valid` / `:user-invalid` pseudo-class additions — Baseline 2023",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 111,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-055",
+      "title": "HTML `inputmode` attribute additions or changes — Baseline Widely available since December 2021",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 134,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-056",
+      "title": "HTML `enterkeyhint` attribute additions or changes — Baseline Widely available since November 2021",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 157,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-059",
+      "title": "HTML `autocomplete` token-list attribute additions or changes — Baseline Widely available since July 2015 (per IDL property page)",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 180,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-063",
+      "title": "CSS `:focus-visible` pseudo-class additions or changes — Baseline Widely available since March 2022",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 203,
+      "family": "visual-verification-triggers"
+    },
+    {
+      "rule_id": "VVT-064",
+      "title": "HTML `<details>` / `<summary>` element additions or changes — Baseline Widely available since January 2020",
+      "file": ".aivv/standards/visual-verification-triggers/state-interaction.md",
+      "line": 227,
+      "family": "visual-verification-triggers"
+    }
+  ]
+}

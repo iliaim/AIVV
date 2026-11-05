@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "aivv_version": "0.2.0",
+  "updated_at": "2026-05-28",
+  "_note": "Model IDs are best-effort defaults (API keys unavailable at authoring time — fallback IDs used per dev.80+ discipline). MUST be re-verified against provider /v1/models before v0.2.0 ships: resolve AIVV_ROOT through the shared runtime-root contract, then run 'node <AIVV_ROOT>/tools/dispatch.mjs --probe --provider <name> --provider-egress-consent' for each provider with valid API keys. Update this catalog with verified IDs and commit. Gemini fallback bumped 2026-05-28 from gemini-2.0-flash to gemini-2.5-flash: 2.0-flash silently halves reasoning quality on the IV&V workload (Pro→Flash drop is already a degradation; doubling back to a prior generation compounds it). Empirical CLI v0.42.0 + OAuth probe confirms 2.5-pro and 2.5-flash route; gemini-3.x IDs return 404 from the CLI dispatch path and are not safe defaults until CLI/auth support lands.",
+  "roles": {
+    "reviewer.primary": {
+      "aivv_recommended": "claude-opus-4-7",
+      "fallback": "claude-sonnet-4-6",
+      "provider": "anthropic",
+      "family_prefix": "claude-opus"
+    },
+    "reviewer.secondary": {
+      "aivv_recommended": "gpt-5.5",
+      "fallback": "gpt-5",
+      "provider": "openai",
+      "family_prefix": "gpt-5"
+    },
+    "reviewer.fast": {
+      "aivv_recommended": "gemini-2.5-pro",
+      "fallback": "gemini-2.5-flash",
+      "provider": "gemini",
+      "family_prefix": "gemini-2"
+    }
+  },
+  "deprecation_sentinel": []
+}

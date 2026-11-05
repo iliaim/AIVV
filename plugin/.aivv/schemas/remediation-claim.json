@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.local/schemas/remediation-claim/v1.json",
+  "title": "AIVV Remediation Request Claim",
+  "description": "Exclusive immutable claim proving one receiver accepted an Action Inbox request after canonical target, revision, and workspace-state validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "request_id", "claimed_at", "target_project", "source_revision", "workspace_state_sha256"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "kind": {"type": "string", "const": "aivv.remediation-claim.v1"},
+    "request_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "claimed_at": {"type": "string", "minLength": 1},
+    "target_project": {"type": "string", "minLength": 1},
+    "source_revision": {"type": "string", "pattern": "^[0-9a-f]{7,64}$"},
+    "workspace_state_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,246 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.dev/schemas/finding.json",
+  "title": "AIVV Finding Envelope",
+  "description": "Machine-parseable envelope for a single IV&V finding. Emitted as JSONL by aivv:reviewer AFTER the prose review. Consumed by /aivv-fix Step 1 COLLECT, wont-fix registry fingerprinting, and multi-reviewer consensus dedup. Envelope only — the full investigator schema (skills/aivv-fix/references/json-schema.md) extends this with root-cause analysis, codebase scan, fix proposal, and prevention mechanism fields. Citation evidence per dev.18 reviewer-grounding methodology may be carried in two forms: the typed `grounded_by` array (preferred, dev.31+) or as legacy free-form `grounded_by:{<source_type>:<source_ref>}` substrings inside `summary` (accepted during the migration window). Readers MUST handle both forms.",
+  "type": "object",
+  "required": ["id", "severity", "confidence", "category", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^F[0-9]{3,}$",
+      "description": "Finding ID assigned by the reviewer or orchestrator. Format: F001, F002, ..., F999+."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH"],
+      "description": "Severity classification. CRITICAL: immediate blocker or safety issue. MAJOR: real issue requiring fix. MINOR: low-impact, may defer. POLISH (dev.39+): improvement opportunity / value-add suggestion (NOT a defect tier — orthogonal to CRITICAL/MAJOR/MINOR). Reviewer must establish verified present need, a specific Improvement, and positive net Value per the Improvement-articulation pass in .aivv/methodology.md; if any is missing, drop the finding rather than emit POLISH."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW"],
+      "description": "Reviewer confidence in the finding. HIGH: directly observed in code/evidence. MEDIUM: strong inference. LOW: speculative — should pair with additional context."
+    },
+    "likelihood": {
+      "type": "string",
+      "enum": ["CERTAIN", "PROBABLE", "POSSIBLE", "UNLIKELY"],
+      "description": "Probability the harmful condition is reached and triggered at the current real-world inputs — reasoned through reachability × exposure × trigger-conditionality (will-it-manifest). Distinct from `confidence`, which is existence-certainty (is-it-real): a finding can be HIGH-confidence-real yet UNLIKELY to trigger, or vice-versa. CERTAIN: triggers on every / the common path. PROBABLE: triggers under ordinary real-world conditions. POSSIBLE: needs a specific but reachable condition. UNLIKELY: rare path, narrow input, or seldom-hit branch. Optional; consumed by the impact×likelihood severity model (`severity_model: impact_likelihood`) where it pairs with `impact_tier` in the 4×4 cell-map. Absent under the default `legacy_4pass`. See the project's severity-model decision records."
+    },
+    "impact_tier": {
+      "type": "string",
+      "enum": ["CATASTROPHIC", "SEVERE", "MODERATE", "NEGLIGIBLE"],
+      "description": "Magnitude of harm if the finding is real AND triggered — reasonable worst-case, anchored to observable harm categories (data loss/corruption, auth/authz bypass, financial loss, core-task failure, legal/compliance exposure, cosmetic) and NEVER to reviewer prose tone. CATASTROPHIC: data loss/corruption, auth/authz bypass, or equivalent irreversible/financial harm. SEVERE: core-task failure or significant legal/compliance exposure. MODERATE: degraded-but-recoverable experience. NEGLIGIBLE: cosmetic / no functional harm. Optional; pairs with `likelihood` in the impact×likelihood severity model's 4×4 cell-map (`severity_model: impact_likelihood`). Absent under the default `legacy_4pass`. See the project's severity-model decision records."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "code-bug",
+        "design-flaw",
+        "process-violation",
+        "documentation-gap",
+        "clarification-needed",
+        "improvement"
+      ],
+      "description": "Finding category aligned with /aivv-fix Step 2 triage classification. `improvement` (dev.146+): a behaviour-preserving betterment (clarity, complexity reduction, redundancy removal, ergonomics) rather than a defect — orthogonal to defect severity. Renders as POLISH and may be prioritized by optional `value`/`effort` metadata (Quick Wins); a behaviour-preserving betterment is never a defect tier. Routes to Step 5 Branch F (scoped simplification, behaviour-preserving)."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 8,
+      "description": "One-line human-readable summary of the finding. Keep under ~200 characters for readable diff output."
+    },
+    "value": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Optional improvement-track prominence metadata. Use only for `category: improvement` / POLISH findings after verified present need and positive net value are established: high = clearly valuable simplification, maintainability, or clarity now; medium = useful but not urgent; low = marginal. Hypothetical future-proofing alone is insufficient. Used only for sorting/prominence within POLISH, never as a defect severity tier."
+    },
+    "effort": {
+      "type": "string",
+      "enum": ["trivial", "moderate", "invasive"],
+      "description": "Optional improvement-track cost metadata. Use only for `category: improvement` / POLISH findings: trivial = small localized edit; moderate = bounded multi-step change; invasive = broad or structural change. Used with `value` for Quick-Win prominence; invasive improvements remain advisory unless separately authorized."
+    },
+    "quality_profile": {
+      "type": "string",
+      "enum": ["modern"],
+      "description": "When present, this finding uses the strict modern new-write profile. Legacy findings may omit this field and remain readable."
+    },
+    "scope_ref": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["process", "session", "artifact", "user-journey", "project"]
+        },
+        "ref": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "description": "Stable non-file scope for process/session/artifact findings. Use instead of inventing fake file paths."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["kind", "ref"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["internal-repo", "websearch", "webfetch", "runtime", "command", "state-log", "thread", "unverified", "unverifiable"]
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "description": "Concrete evidence that makes the finding reproducible."
+    },
+    "impact": {
+      "type": "string",
+      "minLength": 12
+    },
+    "severity_rationale": {
+      "type": "string",
+      "minLength": 12
+    },
+    "recommended_next_step": {
+      "type": "string",
+      "enum": ["fix-now", "investigate-first", "document", "defer-with-rationale", "accept-risk"]
+    },
+    "verification_path": {
+      "type": "string",
+      "minLength": 8
+    },
+    "proportional_remediation": {
+      "type": "object",
+      "required": [
+        "present_problem",
+        "simplest_viable_correction",
+        "net_complexity",
+        "why_current_shape_insufficient"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "present_problem": {
+          "type": "string",
+          "minLength": 8
+        },
+        "simplest_viable_correction": {
+          "type": "string",
+          "minLength": 8
+        },
+        "net_complexity": {
+          "type": "string",
+          "minLength": 8
+        },
+        "why_current_shape_insufficient": {
+          "type": "string",
+          "minLength": 8
+        }
+      },
+      "description": "The minimum-sufficient-remediation decision for this recommended change. New modern findings must state the current problem, smallest adequate correction, added/removed moving pieces, and why no change or a smaller local correction is insufficient."
+    },
+    "file": {
+      "type": ["string", "null"],
+      "description": "File path (repo-relative) where the finding is located. Omit or null for findings without a code location (e.g., process, documentation-gap on the whole project)."
+    },
+    "line": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "1-indexed line number within `file`. Omit or null if not applicable."
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "Reviewer label. 'alpha', 'beta', 'gamma', ... for N-way consensus runs; 'solo' for N=1. Enables cross-reviewer dedup and consensus synthesis."
+    },
+    "lens": {
+      "type": "string",
+      "enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
+      "default": "code",
+      "description": "Review lens. Shipped lenses (one entry per lens file under .aivv/lenses/): code (default), sec (security; dev.22+), visual (UI/a11y/component correctness; dev.22+), ux (heuristic walkthrough + microcopy + interaction states; dev.43+), polish (improvement-articulation / value-add; dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk subset; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (UJ-* rules; dev.121). Forward-look planned lenses retained for compatibility with calibration corpora that may pre-emit them: perf (performance review; planned Tier 2/3), a11y (pure-a11y split distinct from visual lens's UI-a11y; planned Tier 2/3). Pre-dev.43 findings without this field default to 'code'."
+    },
+    "rule_id": {
+      "type": "string",
+      "pattern": "^(A11Y|UX|MC|VVT|VD|DP|COMP|I18N|RTV|SEC|HEU|IS|UJ|AS|CQ)-[A-Za-z0-9.-]+$",
+      "description": "Optional stable rule identifier from .aivv/standards/<file>.md. Pattern enforces the documented prefix space (per .aivv/standards/README.md rule-ID prefix table): A11Y-* (accessibility.md), UX-* (ui-ux.md), MC-* (microcopy.md), VVT-* (visual-verification-triggers.md), HEU-* (ux-heuristics.md, shipped dev.46), IS-* (interaction-states.md, shipped dev.46), VD-* (visual-design.md, shipped dev.54), DP-*/COMP-*/I18N-*/RTV-* (planned standards files), SEC-* (security rule-ID space), UJ-* (user-journey.md, shipped dev.121), AS-* (architecture.md cross-file/structure catalog, shipped dev.147), CQ-* (code-quality.md code-simplification catalog, shipped dev.109 — prefix added to this pattern at dev.148, correcting a dev.109 omission). Forward-look prefixes (DP/COMP/I18N/RTV/SEC) are accepted today so reviewers can cite them once their backing standards files ship; lens files instruct reviewers to use grounded_by[*].source_type='unverifiable' for pre-shipped prefixes (see .aivv/lenses/ux.md Forward-reference rule). Read by the orchestrator for L1-source forced-override (per skills/aivv-fix/references/polish-and-l1-source-policy.md L1-source detection logic) and by per-rule FP/TP calibration aggregators (per .aivv/calibration/README.md). Pre-dev.41 findings emitted without rule_id remain valid; the field is optional everywhere."
+    },
+    "devils_advocate": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if the finding was surfaced by the Devil's Advocate Challenge (pre-mortem / assumption inventory / inversion test / simpler-path test). Two+ reviewers independently marking true is the highest-confidence adversarial signal."
+    },
+    "grounded_by": {
+      "type": "array",
+      "description": "Structured citation evidence backing the finding (graduated to typed field in dev.31; previously a free-form substring in `summary` per dev.18 reviewer-grounding methodology). PREFERRED form for dev.31+ emissions. The legacy `grounded_by:{<source_type>:<source_ref>}` substring form inside `summary` remains accepted during the migration window — readers MUST handle both forms. Absence is valid: not every finding rests on a groundable claim.",
+      "items": {
+        "type": "object",
+        "required": ["source_type", "source_ref"],
+        "additionalProperties": false,
+        "properties": {
+          "source_type": {
+            "type": "string",
+            "enum": ["websearch", "webfetch", "context7", "runtime", "unverified", "unverifiable", "internal-repo"],
+            "description": "Citation source category. `websearch` / `webfetch` for URLs surfaced via WebSearch / WebFetch. `context7` for library identifiers from Context7 MCP (form: `<library-id>@<version>`). `runtime` for orchestrator-captured runtime artifacts such as axe-core output, computed-style contrast records, screenshots, or screenshot diffs. `internal-repo` for repo-relative paths used as evidence (verify by Grep, not external source). `unverified` when no external grounding was applied. `unverifiable` when the claim was attempted-but-failed to ground (no authoritative source located). The `unverifiable` value is preserved for parity with skills/methodology/SKILL.md emission contract."
+          },
+          "source_ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "URL, library identifier (`<id>@<version>` for context7), or repo-relative path (for internal-repo). For `unverified` / `unverifiable`, a one-line label describing what was not grounded."
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Optional short excerpt or quote from the source supporting the claim. Helps consumers verify the citation without re-fetching."
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "quality_profile": {
+            "const": "modern"
+          }
+        },
+        "required": ["quality_profile"]
+      },
+      "then": {
+        "required": [
+          "evidence",
+          "impact",
+          "severity_rationale",
+          "recommended_next_step",
+          "verification_path"
+        ],
+        "oneOf": [
+          {
+            "required": ["file"],
+            "not": {"required": ["scope_ref"]},
+            "properties": {
+              "file": {"type": "string", "pattern": "\\S"}
+            }
+          },
+          {
+            "required": ["scope_ref"],
+            "not": {
+              "anyOf": [
+                {"required": ["file"]},
+                {"required": ["line"]}
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

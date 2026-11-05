@@ -1,0 +1,457 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "problem.json",
+  "title": "AIVV Problem Lifecycle Record",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "status",
+    "summary",
+    "recurrence_keys",
+    "incident_ids",
+    "evidence",
+    "promotion_decision",
+    "rca_status",
+    "root_cause_analysis",
+    "incident_context",
+    "prevention_plan",
+    "source_fix_ref",
+    "lifecycle_evidence_refs",
+    "closure_gates",
+    "retire_when",
+    "links",
+    "timeline"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "closed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "closure_decision"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^PROB-[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "status": {
+      "enum": [
+        "candidate",
+        "investigating",
+        "prevention-active",
+        "monitoring",
+        "closed"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recurrence_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "incident_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "lifecycle-evidence.json"
+      }
+    },
+    "promotion_decision": {
+      "type": "object",
+      "required": [
+        "promoted_at",
+        "promoted_by",
+        "decision_source",
+        "rationale",
+        "evidence_links",
+        "linked_incident_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "promoted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "promoted_by": {
+          "enum": [
+            "agent-suggested-user-confirmed",
+            "user",
+            "agent"
+          ]
+        },
+        "decision_source": {
+          "enum": [
+            "host-user-confirmation",
+            "agent",
+            "verifier",
+            "external"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_links": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "linked_incident_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "rca_status": {
+      "enum": [
+        "not-started",
+        "draft",
+        "reviewed",
+        "confirmed",
+        "blocked",
+        "accepted-unverified"
+      ]
+    },
+    "root_cause_analysis": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "problem_specification": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "surface_symptom": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why_1": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why_2": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why_3": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why_4": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why_5": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "root_cause": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "root_cause_category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "confidence": {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                null
+              ]
+            },
+            "verification_method": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "verification_evidence": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "confidence_gap": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "confidence_gap_shape": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "class_signature": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "scope_search_seed": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "incident_context": {
+      "type": "object",
+      "required": [
+        "detection_failure",
+        "contributing_factors"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "detection_failure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "contributing_factors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "prevention_plan": {
+      "type": [
+        "string",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "source_fix_ref": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "fix_id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "fix_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "finding_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "lifecycle_evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "closure_gates": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "closure-gate.json"
+      }
+    },
+    "closure_decision": {
+      "type": "object",
+      "required": [
+        "closed_at",
+        "closed_by",
+        "rationale",
+        "evidence_links"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "closed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "closed_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_links": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "retire_when": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "lifecycle-link.json"
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "ts",
+          "kind",
+          "summary"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "transition"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "transitioned_at",
+                "transitioned_by",
+                "transition_source",
+                "from_status",
+                "to_status"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "enum": [
+              "transition",
+              "observed",
+              "note"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "transitioned_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "transitioned_by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "transition_source": {
+            "enum": [
+              "auto",
+              "agent",
+              "user",
+              "github-sync",
+              "verifier",
+              "external"
+            ]
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "$ref": "#/properties/status"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to_status": {
+            "$ref": "#/properties/status"
+          }
+        }
+      }
+    }
+  }
+}

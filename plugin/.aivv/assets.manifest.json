@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "path": ".aivv/runtime-contract.md",
+      "kind": "file",
+      "required": true
+    },
+    {
+      "path": ".aivv/methodology.md",
+      "kind": "file",
+      "required": true
+    },
+    {
+      "path": ".aivv/host-adapters/hermes-agent.md",
+      "kind": "file",
+      "required": true
+    },
+    {
+      "path": ".aivv/adapters/hermes.json",
+      "kind": "file",
+      "required": true
+    },
+    {
+      "path": ".aivv/schemas/hermes-review-capability-proof.json",
+      "kind": "file",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,646 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIVV User Preferences (Golden Additive Schema)",
+  "description": "Golden additive schema for .aivv/config.json (project) and ~/.aivv/config.json (user). This is the current authoring target for all config keys. Legacy config.vN.schema.json files remain compatibility artifacts, but new additive keys are added here without claiming a new config.vN counter. Unknown keys are allowed for forward compatibility and surfaced by validate.sh unknown-key lint.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 6,
+      "description": "Compatibility/minimum-reader metadata. Additive config-key work does not bump this value; bump only for a genuine breaking config format change."
+    },
+    "default_reviewers": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9,
+      "default": 1
+    },
+    "default_lenses": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "default": "code"
+    },
+    "severity_threshold": {
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "MAJOR",
+        "MINOR"
+      ],
+      "default": "MINOR"
+    },
+    "auto_chain_fix": {
+      "type": "string",
+      "enum": [
+        "always",
+        "ask",
+        "never"
+      ],
+      "default": "ask"
+    },
+    "apply_polish_mode": {
+      "type": "string",
+      "enum": [
+        "always",
+        "ask",
+        "never"
+      ],
+      "default": "ask"
+    },
+    "fix_apply_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {
+        "code-bug": "auto",
+        "design-flaw": "auto",
+        "process-violation": "auto",
+        "documentation-gap": "auto",
+        "improvement": "ask",
+        "clarification-needed": "ask"
+      },
+      "description": "Per-category /aivv-fix apply policy. Values: auto=eligible for automatic application only after confidence/challenge/consequence gates pass; ask=route to the batched decision queue; skip=do not apply unless severity/disposition safety floors require escalation. improvement and clarification-needed default to ask. Invasive improvements are never auto-eligible. The schema default is the runtime default for omitted policy keys.",
+      "properties": {
+        "code-bug": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "skip"
+          ]
+        },
+        "design-flaw": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "skip"
+          ]
+        },
+        "process-violation": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "skip"
+          ]
+        },
+        "documentation-gap": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "skip"
+          ]
+        },
+        "improvement": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "skip"
+          ]
+        },
+        "clarification-needed": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "skip"
+          ]
+        }
+      }
+    },
+    "polish_collapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "post_review_html_viewer": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true, /aivv renders a static HTML report after durable review/fix state is available. Recommended default for readability; first interactive setup asks before persisting the preference. Browser-open failures never fail review/fix workflows. Pair with post_review_html_open_mode to control link-only vs auto-open behavior."
+    },
+    "post_review_html_open_mode": {
+      "type": "string",
+      "enum": [
+        "link",
+        "open"
+      ],
+      "default": "link",
+      "description": "Controls what happens after a post-review HTML report is generated. link: show a clear Open report link/path without changing browser focus (recommended). open: also best-effort open the report, preferring a Codex in-app browser local-served URL when available and falling back to the OS opener."
+    },
+    "default_lens_replicate": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 2
+    },
+    "default_M": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 2,
+      "description": "Deprecated v1 spelling for default_lens_replicate. Readers should map this to default_lens_replicate when the modern key is absent; new writes should use default_lens_replicate."
+    },
+    "runtime_driver_optin": {
+      "type": "boolean",
+      "default": false
+    },
+    "default_target": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "rule_id_back_fill": {
+      "type": "boolean",
+      "default": false
+    },
+    "project_kind": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "ui",
+        "backend",
+        "mixed",
+        "library",
+        null
+      ],
+      "default": null
+    },
+    "outer_loop_mode": {
+      "type": "string",
+      "enum": [
+        "off",
+        "until_clean"
+      ],
+      "default": "off"
+    },
+    "outer_loop_max_cycles": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 5,
+      "default": 3
+    },
+    "outer_loop_severity_floor": {
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "MAJOR"
+      ],
+      "default": "MAJOR",
+      "description": "Legacy fallback floor for outer-loop continuation when a finding lacks recommended_next_step. Current action gates prefer DISPOSITION (recommended_next_step fix-now/investigate-first) and consult this severity floor only for historical or incomplete findings."
+    },
+    "lens_detection_mode": {
+      "type": "string",
+      "enum": [
+        "ask",
+        "smart",
+        "off"
+      ],
+      "default": "ask",
+      "description": "Smart lens detection (dev.154). ask=prompt for non-obvious ceiling additions (floor always auto-applies); smart=auto-apply ceiling; off=legacy detect-and-report. See 2026-05-29-smart-lens-detection."
+    },
+    "severity_model": {
+      "type": "string",
+      "enum": [
+        "legacy_4pass",
+        "impact_likelihood"
+      ],
+      "default": "legacy_4pass",
+      "description": "Selects the severity-derivation model. legacy_4pass: the current 4-pass blast-radius→tone→source-class→improvement inference (the shipped default). impact_likelihood: the forthcoming impact×likelihood model, under active rollout. Optional; absent ⇒ legacy_4pass."
+    },
+    "project_context": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {},
+      "description": "Optional environmental context for impact×likelihood severity calibration and legal-applicability gating. deployment feeds the EXPOSURE sub-factor of likelihood. data_classes, jurisdictions, and compliance_targets tell reviewers when hard-statute compliance rules are applicable, inapplicable, or undeclared-context findings.",
+      "properties": {
+        "deployment": {
+          "type": "string",
+          "enum": [
+            "personal",
+            "internal",
+            "public"
+          ],
+          "description": "Deployment exposure profile. personal starts exposure low, internal starts medium, public can be high for ordinary/customer-facing paths."
+        },
+        "data_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "none",
+              "pii",
+              "payments",
+              "health",
+              "financial",
+              "credentials",
+              "confidential",
+              "children"
+            ]
+          },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Declared data classes handled by the project. pii/payments/health/financial/credentials/confidential/children can raise impact and determine whether statute-specific privacy or safety rules are applicable; none means no regulated data class declared and is mutually exclusive with every other data class.",
+          "allOf": [
+            {
+              "if": {
+                "contains": {
+                  "const": "none"
+                }
+              },
+              "then": {
+                "maxItems": 1
+              }
+            }
+          ]
+        },
+        "jurisdictions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Declared legal or market jurisdictions such as EU, US, UK, CA, or project-specific region tags. Used as applicability context; absence means the reviewer must state an applicability assumption rather than auto-applying a legal floor."
+        },
+        "compliance_targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Declared compliance commitments or contractual standards such as gdpr, ccpa, coppa, ada, section-508, eaa, wcag-aa, or project-specific target names. A declared target can turn an otherwise advisory rule into a required DISPOSITION floor."
+        }
+      }
+    },
+    "severity_cell_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional team override for the impact_likelihood defect-track 4x4 lookup table. Omitted cells use the shipped default in .aivv/methodology.md.",
+      "patternProperties": {
+        "^(CATASTROPHIC|SEVERE|MODERATE|NEGLIGIBLE)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(CERTAIN|PROBABLE|POSSIBLE|UNLIKELY)$": {
+              "type": "string",
+              "enum": [
+                "CRITICAL",
+                "MAJOR",
+                "MINOR",
+                "DROP"
+              ]
+            }
+          }
+        }
+      },
+      "default": {}
+    },
+    "thoroughness": {
+      "type": "string",
+      "enum": [
+        "fast",
+        "balanced",
+        "thorough",
+        "exhaustive"
+      ],
+      "default": "balanced",
+      "description": "Persisted thoroughness dial tier. Resolved precedence: --thoroughness flag > repo key > user key > built-in default (balanced). balanced is the identity overlay (no behavior change). exhaustive is the runtime top tier (see skills/aivv/references/thoroughness-dial.md). Optional; absent ⇒ balanced."
+    },
+    "direction": {
+      "type": "boolean",
+      "default": true,
+      "description": "Toggles the graduated direction-challenge posture (fit-to-goal + negative-space reasoning). true (default after the R19 maintainer eval passed) = posture active; false = pre-feature review behavior. Flag --no-direction/--direction overrides this key for one invocation. Optional; absent ⇒ true."
+    },
+    "scope_confirmation_mode": {
+      "type": "string",
+      "enum": [
+        "ask",
+        "announce"
+      ],
+      "default": "ask",
+      "description": "Scope-confirmation gate (W8). ask=announce trivial scope + prompt (pre-filled proposal) when non-trivial; announce=always announce + never prompt (best-guess for non-trivial). The announcement is a baseline guarantee — no 'off'. v1–v5 configs predate the key and resolve to 'ask' on read. See 2026-05-30-scope-confirmation."
+    },
+    "issue_sync_mode": {
+      "type": "string",
+      "enum": [
+        "off",
+        "draft-local",
+        "confirm-github",
+        "auto-github"
+      ],
+      "default": "confirm-github",
+      "description": "Controls GitHub issue sync for local issue lifecycle mirrors. off=no GitHub operations; draft-local=local records only; confirm-github=plan remote operations but require explicit --confirm; auto-github=allow eligible non-sensitive operations without per-operation confirmation."
+    },
+    "issue_sync_public_repo_policy": {
+      "type": "string",
+      "enum": [
+        "block-sensitive",
+        "confirm-sensitive",
+        "allow"
+      ],
+      "default": "block-sensitive",
+      "description": "Controls publishing sensitive lifecycle issue content to public GitHub repositories. block-sensitive refuses sensitive records on public repos; confirm-sensitive requires explicit --confirm-sensitive; allow permits publication when the ordinary sync mode allows it."
+    },
+    "_provenance": {
+      "type": "string",
+      "enum": [
+        "wizard",
+        "manual",
+        "default"
+      ],
+      "default": "default"
+    },
+    "_setup_hint_shown_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "_walkthrough_hints_shown": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "default": {}
+    },
+    "multi_model_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Feature gate for multi-model dispatch. When false (default), /aivv behavior is identical to v0.1."
+    },
+    "model_policy": {
+      "type": "string",
+      "enum": [
+        "aivv-recommended",
+        "family-latest",
+        "pinned"
+      ],
+      "default": "aivv-recommended",
+      "description": "Global model selection policy. aivv-recommended: use model-catalog.json defaults (stable, updated per AIVV release). family-latest: query provider /v1/models at session start, pick newest in family (accepts ~500ms startup). pinned: use reviewer_primary/secondary/fast as exact model IDs."
+    },
+    "reviewer_primary": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override for reviewer.primary slot. null = use model-catalog.json aivv_recommended. Set to an exact model ID string when model_policy=pinned."
+    },
+    "reviewer_secondary": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override for reviewer.secondary slot. null (default) = secondary reviewer inactive. Non-null string = explicit model ID override."
+    },
+    "reviewer_fast": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override for reviewer.fast slot. null (default) = fast reviewer inactive. Non-null string = explicit model ID override."
+    },
+    "dispatch_strategy": {
+      "type": "string",
+      "enum": [
+        "single",
+        "parallel",
+        "cascade",
+        "auto"
+      ],
+      "default": "single",
+      "description": "How reviewer slots are activated. single: reviewer.primary only. parallel: all enabled slots. cascade: fast first, escalate to primary on low-findings+complex-diff. auto: rule-based routing (lens+security-pattern+size)."
+    },
+    "synthesis_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "When true, run the blind synthesis pass (Stage 6) to merge findings from multiple reviewers into a single attributed description."
+    },
+    "parallel_quorum": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1,
+      "default": 0.67,
+      "description": "Minimum fraction of dispatched reviewers that must respond before synthesis proceeds. floor(N * parallel_quorum) reviewers required."
+    },
+    "reviewer_timeout_seconds": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 600,
+      "default": 300,
+      "description": "Per-reviewer hard timeout in seconds. AbortController cancels the fetch after this duration."
+    },
+    "routing_rules": {
+      "type": "array",
+      "maxItems": 4,
+      "default": [],
+      "description": "User override routing rules (max 4). Each rule is a structured object with when + strategy/slots. Rules evaluated in order; first match wins.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "when": {
+            "type": "object"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "single",
+              "parallel",
+              "cascade"
+            ]
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "escalate": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "auth_mode": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "api_key"
+      ],
+      "default": "auto",
+      "description": "Global auth resolution mode. auto (default): try CLI OAuth first (Google agy or legacy gemini / codex auth), then env var API key — no API key required by default. api_key: skip CLI path, require env var API key."
+    },
+    "auth_mode_anthropic": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "auto",
+            "cli",
+            "api_key"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Per-provider auth override for Anthropic. null = inherit global auth_mode. auto: claude CLI subprocess (uses existing OAuth session) → ANTHROPIC_API_KEY. cli: claude CLI subprocess only. api_key: ANTHROPIC_API_KEY only."
+    },
+    "auth_mode_gemini": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "auto",
+            "cli",
+            "api_key"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Per-provider auth override for Gemini. null = inherit global auth_mode. auto: Google CLI subprocesses (agy, then legacy gemini) → api_key. cli: Google CLI subprocesses only. api_key: GEMINI_API_KEY env var only."
+    },
+    "auth_mode_openai": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "auto",
+            "cli",
+            "api_key"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Per-provider auth override for OpenAI/Codex. null = inherit global auth_mode. auto: cli → api_key. cli: codex CLI subprocess only (requires codex auth). api_key: OPENAI_API_KEY env var only. (~/.codex/config.json apiKey fallback is documented in .aivv/platform-adapters/openai.md as a Cycle 2 design — not yet shipped as of dev.124.)"
+    },
+    "reviewer_provider_priority": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "anthropic",
+          "openai",
+          "gemini"
+        ]
+      },
+      "uniqueItems": true,
+      "default": [
+        "anthropic",
+        "openai",
+        "gemini"
+      ],
+      "description": "Priority order for selecting providers in Case D multi-model dispatch. When the effective reviewer count N (--reviewers=N or default_reviewers) is less than the number of available providers, the orchestrator selects the first N providers from this list that are also in providers_available. Reorder to change which providers fire by default; omit a provider entirely to disable it even when available."
+    },
+    "multi_model_fallback_strategy": {
+      "type": "string",
+      "enum": [
+        "subagents",
+        "none",
+        "ask"
+      ],
+      "default": "ask",
+      "description": "What to do when a provider fails (quota, timeout, auth). ask (default): prompt the user with 4 choices (skip / replicate-with-default-provider / always-skip / always-replicate) — the last two persist the choice by rewriting this key to 'none' or 'subagents' respectively. subagents: dispatch one independent reviewer using reviewer_provider_priority[0] (default: anthropic) per failed provider to maintain reviewer count — same behavior as --reviewers=N for the failed slots. none: proceed with only the successful providers' findings."
+    },
+    "multi_model_disclosure_shown": {
+      "type": "boolean",
+      "default": false,
+      "description": "Suppresses the data egress disclosure banner after first showing. Set to true manually or via the one-time banner prompt."
+    },
+    "workspace_drift_policy": {
+      "type": "string",
+      "enum": [
+        "investigate",
+        "warn",
+        "void"
+      ],
+      "default": "investigate",
+      "description": "Behavior when workspace SHA drift is detected during reviewer dispatch. 'void' = original behavior (void the review immediately). 'warn' = continue with a warning banner. 'investigate' = orchestrator checks whether drifted files are in session scope AND whether any reviewer declared write tools; voids only when both checks indicate out-of-scope external write. Default 'investigate' reduces false-void noise from concurrent orchestrator state writes."
+    },
+    "max_challenges_per_invocation": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 10,
+      "description": "Token-budget circuit-breaker for Step 4.5 CHALLENGE. When N batches have been challenged in a single /aivv-fix invocation, remaining batches proceed to Step 5 without challenge."
+    },
+    "class_breadth_triage_cap": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 10,
+      "description": "Consumed by the class-breadth variant scan (Step 5 pre-loop). Max number of class_signature variant-scan sibling sites triaged+fixed per finding per cycle. Anchored to ~3x the >3-files high-blast-radius threshold. Above this count WITH duplicated-contract evidence routes to the architectural-remediation lane; above WITHOUT it defers the overflow as next-cycle sub-findings."
+    },
+    "ambiguous_escalation_cap": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 3,
+      "description": "Consumed by the class-breadth variant scan (Step 5 pre-loop). Max number of AMBIGUOUS class-sibling triage verdicts escalated to a full per-site investigator dispatch per finding. Beyond this, remaining AMBIGUOUS sites drop to class_sibling_triage[] verdict 'ambiguous-deferred' / reason 'escalation-budget-exhausted'. 0 = never escalate (defer all ambiguous)."
+    },
+    "shared_interface_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "default": [
+        "api/",
+        "auth/",
+        "middleware/",
+        "schemas?/",
+        "migrations?/",
+        "interfaces?/",
+        "public-api/"
+      ],
+      "description": "Regex patterns for detecting shared interfaces in fix_proposal.files_to_modify. Paths matching any pattern trigger the 'touches_shared_interface' fix_confidence demotion predicate in Step 4."
+    },
+    "enable_step_57_execution": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, Step 5.7 ORCHESTRATOR EXECUTION runs new build-script / ci-gate / verification-method scripts post-EXECUTE and captures execution evidence for the verifier. Default false for the first 3 dogfood cycles per default-off ship discipline."
+    }
+  }
+}

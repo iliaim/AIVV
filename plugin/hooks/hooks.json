@@ -1,0 +1,16 @@
+{
+  "description": "Restrict AIVV read-only native agents to simple read-only shell commands.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/tools/investigator-bash-guard.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+name: Public tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-agent-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify the read-only agent Bash guard
+        run: node tests/security/investigator-bash-guard.test.mjs
+      - name: Verify native prompt boundary nonce generation
+        run: node tests/security/native-prompt-boundary.test.mjs

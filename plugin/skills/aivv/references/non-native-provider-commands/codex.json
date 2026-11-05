@@ -1,0 +1,5 @@
+{
+  "provider": "openai",
+  "dispatch": "node \"$AIVV_ROOT/tools/dispatch.mjs\" --provider openai --model <model> --reviewer-id alpha --provider-egress-consent",
+  "notes": "Uses OpenAI adapter path: codex CLI or OPENAI_API_KEY depending on auth mode."
+}

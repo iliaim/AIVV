@@ -1,0 +1,370 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.dev/schemas/calibration.json",
+  "title": "AIVV Calibration Record",
+  "description": "Machine-parseable envelope for a single calibration record. As of per-invocation sharding contract () a lens's records are sharded one JSONL file per invocation at `.aivv/calibration/<lens>/<invocation-id>.jsonl`; the legacy shared `.aivv/calibration/<lens>.jsonl` remains readable and readers union both. This schema validates ONE record (one JSONL line); a shard file is a sequence of such lines validated line-by-line, NOT a single JSON document (a bare `ajv validate` against a whole shard file will not work — validate each line). Append-only JSON Lines — one record per line. The prose-source-of-truth for human readers is `.aivv/calibration/README.md`; this JSON Schema is the machine-readable contract emitted by `/aivv` Step 7 and `/aivv-fix` Step 7 and consumed by `/aivv-calibrate` (dev.31+). Schema graduation: dev.32 (trigger: `/aivv-calibrate` shipped in dev.31, satisfying the README's prior 'deferred to v0.2 when read-side analytics ship' precondition). Universally-required base fields: `lens`, `kind`, `ts`. Kind-specific required fields are enforced via the `oneOf` discriminator. Convergence-kind suffix tolerance per dev.31 policy: kinds prefixed `dual_<true|false>_positive` or `n_way_<true|false>_positive(_agreement)` admit an optional trailing `_<context>` suffix opaque to the schema. Citation evidence per dev.18 reviewer-grounding methodology may be carried in two forms: the typed `grounded_by` array (preferred, dev.31+) or as legacy free-form `grounded_by:{<source_type>:<source_ref>}` substrings inside any string field (accepted during the migration window). Severity values are case-insensitive — both UPPER (`CRITICAL`) and lower (`critical`) appear in extant corpora; both are accepted without normalization.",
+  "type": "object",
+  "required": ["lens", "kind", "ts"],
+  "additionalProperties": true,
+  "properties": {
+    "lens": {
+      "type": "string",
+      "enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
+      "description": "Review lens. Shipped: code (default, dev.1+), sec + visual (dev.22+), ux + polish (dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (user-journey lens; dev.121). Forward-look planned: perf, a11y (Tier 2/3+). Enum mirrors finding.json envelope's lens enum; calibration corpora group by lens directory (e.g., .aivv/calibration/code/<invocation-id>.jsonl shards, plus any legacy .aivv/calibration/code.jsonl)."
+    },
+    "kind": {
+      "type": "string",
+      "description": "Calibration category. Bare canonical forms: false_positive, dual_false_positive, n_way_false_positive, true_positive, dual_true_positive, n_way_true_positive_agreement, false_negative, bad_fix, auto_deferred_at_cap, review_meta, fix_introduced_bug, challenger_caught_issue, challenger_false_positive, recurring_class_missed, challenge_budget_exhausted, pre_write_validator_caught, pre_write_validator_false_positive, manual_bypass_approved, pre_write_unsupported_shape. Convergence kinds may carry an operator-extended `_<context>` suffix (e.g., `dual_true_positive_on_orchestrator_defaults`) — readers MUST treat any kind whose prefix matches a canonical convergence form as the canonical kind. HISTORICAL: `auto_deferred_at_cap` is no longer emitted — its producer (the `/aivv-fix` Step 4 cap-disposition rule, dev.110) was removed at dev.157 when the narrative-drift surfacers it keyed on (`validate.sh` Stages 15/17/18/19/20) were deleted at dev.155; the kind + its `oneOf` branch are retained for read-compat of existing calibration records.",
+      "pattern": "^(false_positive|dual_false_positive(_.+)?|n_way_false_positive(_.+)?|true_positive|dual_true_positive(_.+)?|n_way_true_positive_agreement(_.+)?|false_negative|bad_fix|auto_deferred_at_cap|review_meta|fix_introduced_bug|challenger_caught_issue|challenger_false_positive|recurring_class_missed|challenge_budget_exhausted|pre_write_validator_caught|pre_write_validator_false_positive|manual_bypass_approved|pre_write_unsupported_shape)$"
+    },
+    "ts": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$",
+      "description": "RFC 3339 UTC timestamp with `Z` suffix. When the record was written. Pattern matches `2026-04-22T08:07:11.147952Z` and `2026-04-22T08:07:11Z`."
+    },
+    "finding": {
+      "type": "string",
+      "description": "One-line summary. Present on FP-family and TP-family kinds."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH", "critical", "major", "minor", "polish"],
+      "description": "Severity as flagged by the reviewer. Case-insensitive accepted (extant corpora carry both UPPER and lower forms). POLISH (dev.41+) is an orthogonal value-add tier — not on the defect axis CRITICAL/MAJOR/MINOR; see .aivv/methodology.md Severity model. Present on FP-family and TP-family kinds."
+    },
+    "impact_tier": {
+      "type": "string",
+      "enum": ["CATASTROPHIC", "SEVERE", "MODERATE", "NEGLIGIBLE"],
+      "description": "Optional legacy-schema compatibility rules DEFECT-track impact tier captured when calibrating a finding emitted under `severity_model: impact_likelihood`. Mirrors finding.json and is stored alongside `likelihood` so reviewers can later audit whether the severity cell-map was applied correctly."
+    },
+    "likelihood": {
+      "type": "string",
+      "enum": ["CERTAIN", "PROBABLE", "POSSIBLE", "UNLIKELY"],
+      "description": "Optional legacy-schema compatibility rules DEFECT-track likelihood captured when calibrating a finding emitted under `severity_model: impact_likelihood`. Mirrors finding.json and is stored alongside `impact_tier` so calibration can distinguish high-impact rare defects from high-impact common defects."
+    },
+    "manifestation": {
+      "type": "string",
+      "enum": ["observed", "not_observed", "unknown"],
+      "description": "Optional impact-likelihood outcome evidence. `observed` means the defect or harm mode manifested in runtime, tests, user report, incident evidence, or a reproduced failure. `not_observed` means the finding was confirmed real but no manifestation was observed in the available evidence window. `unknown` preserves that no manifestation evidence is available and is excluded from likelihood-calibration percentages. FP/TP adjudication is reviewer-correctness evidence, not a substitute for this field."
+    },
+    "value": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Optional legacy-schema compatibility rules IMPROVEMENT-track value rating for POLISH findings. Mirrors finding.json and supports Quick-Win calibration without promoting behavior-preserving improvements to defect tiers."
+    },
+    "effort": {
+      "type": "string",
+      "enum": ["trivial", "moderate", "invasive"],
+      "description": "Optional legacy-schema compatibility rules IMPROVEMENT-track effort rating for POLISH findings. Mirrors finding.json and pairs with `value`; `value: high` plus `effort: trivial` is the Quick-Win shape."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Free-form explanation. Common on FP records (why dismissed) and on convergence records (signal interpretation). Either `reason` or `evidence` (or both) typically present on FP/TP records."
+    },
+    "evidence": {
+      "type": "string",
+      "description": "Free-form supporting detail. Common on TP records (why a real defect) and on FP records (verification context). Either `reason` or `evidence` (or both) typically present on FP/TP records."
+    },
+    "bug": {
+      "type": "string",
+      "description": "Bug description. Required on `false_negative` records."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["correctness", "security", "edge-case"],
+      "description": "Bug category. Present on `false_negative` records."
+    },
+    "fix_regression": {
+      "type": "string",
+      "description": "What broke after the fix was applied. Required on `bad_fix` records."
+    },
+    "root_cause_of_bad_fix": {
+      "type": "string",
+      "description": "Why the fix went wrong. Free-form (per dev.29 calibration README guidance). Example values observed so far: `prerequisite-not-met`, `other`. Required on `bad_fix` records. Promotion to formal enum gated on N≥3 distinct empirical values per Operating Principle 1."
+    },
+    "findings_produced": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "`findings_produced` is integer >=0; count of the in-memory canonical findings array Step 7.5 will write to the review log. For `cold_multi_review` and `cold_multi_model`, use the post-dedup synthesized finding count from Step 6, not the sum of per-reviewer or per-provider raw findings; for `cold_single_review` and `same_agent_review`, use parsed JSONL sidecar count. Zero-finding clean reviews emit 0."
+    },
+    "reviewers": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of reviewers in the session. Mirrors `review_log.reviewers`. Required on `review_meta` records."
+    },
+    "review_id": {
+      "type": "string",
+      "description": "Invocation ID linking the record back to `<target>/.aivv/state/review-<id>.json` (or `fix-<id>.json` when `/aivv-fix` writes the record per the de-dup contract). Unique key for the `review_meta` corpus. Required on `review_meta` records."
+    },
+    "excerpt": {
+      "type": "string",
+      "description": "Optional short excerpt or quote supporting the record. Free-form."
+    },
+    "original_fix_finding_id": {
+      "type": "string",
+      "description": "Finding ID from the prior /aivv-fix session whose fix introduced the regression. Required on `fix_introduced_bug` records."
+    },
+    "regression_summary": {
+      "type": "string",
+      "description": "One-line description of the regression introduced by the prior fix. Required on `fix_introduced_bug` records."
+    },
+    "caught_by_round": {
+      "type": "integer",
+      "description": "Cycle number (cycle_count) at which the regression was caught by the verifier. Required on `fix_introduced_bug` records."
+    },
+    "predecessor_review_id": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9a-f]{4}$",
+      "description": "ID of the predecessor review session that introduced the regression. Format matches the review-log `id` field pattern. Required on `fix_introduced_bug` records (non-null); null on records emitted from within-invocation Case A regressions when no prior /aivv review preceded the fix-cycle."
+    },
+    "fix_confidence_at_plan": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Optional on per-fix-finding kinds (fix_introduced_bug, challenger_caught_issue, challenger_false_positive); carries the fix_confidence value computed at Step 4 PLAN (Change 2). NOT in required[] — added when emitting the per-fix record."
+    },
+    "fix_outcome": {
+      "type": "string",
+      "enum": ["resolved", "regression-introduced", "verifier-pass-with-residual-warning", "escalated", "abandoned"],
+      "description": "Optional on per-fix-finding kinds; carries the Step 6 verifier outcome. NOT in required[] — added when emitting the per-fix record."
+    },
+    "finding_id": {
+      "type": "string",
+      "description": "The finding ID this calibration record refers to. Required on `challenger_caught_issue`, `challenger_false_positive`, and `recurring_class_missed` records."
+    },
+    "challenger_verdict": {
+      "type": "string",
+      "description": "The verdict returned by the Step 4.5 challenger (REVISE or REJECT). Required on `challenger_caught_issue` records."
+    },
+    "concern_kind": {
+      "type": "string",
+      "description": "The concern kind from the challenger (e.g., regression-risk, unverified-execution-claim). Required on `challenger_caught_issue` and `challenger_false_positive` records."
+    },
+    "fix_revised": {
+      "type": "boolean",
+      "description": "Whether the fix was revised after the challenger's REVISE/REJECT verdict. Required on `challenger_caught_issue` records."
+    },
+    "user_override_reason": {
+      "type": "string",
+      "description": "Explanation of why the user overrode the challenger's concern. Required on `challenger_false_positive` records."
+    },
+    "class_signature": {
+      "type": "string",
+      "description": "Grep-pattern (≤120 chars) describing the generalizable class this finding belongs to. Required on `recurring_class_missed` records."
+    },
+    "sibling_locations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "File:line locations matching the class_signature that were NOT in the original fix scope. Required on `recurring_class_missed` records."
+    },
+    "invocation_id": {
+      "type": "string",
+      "description": "The /aivv-fix invocation ID where the challenge budget was exhausted. Required on `challenge_budget_exhausted` records."
+    },
+    "max_challenges": {
+      "type": "integer",
+      "description": "The max_challenges_per_invocation value that was hit. Required on `challenge_budget_exhausted` records."
+    },
+    "batches_skipped": {
+      "type": "integer",
+      "description": "Number of batches that did not receive a challenger due to budget exhaustion. Required on `challenge_budget_exhausted` records."
+    },
+    "context": {
+      "type": "object",
+      "description": "Optional structured context for calibration records. For B4 challenge_budget_exhausted records this may include write_intent_risk, detector_verdicts, batches_skipped_safe, and batches_halted_risky.",
+      "properties": {
+        "write_intent_risk": {"type": "boolean"},
+        "detector_verdicts": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "batches_skipped_safe": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "batches_halted_risky": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "reason_code": {"type": "string"}
+      }
+    },
+    "validator_check": {
+      "type": "string",
+      "enum": ["jq-parses", "schema-coherence", "line-cite-valid", "shell-syntax-valid"],
+      "description": "Which Step 5.4 sub-check caught the defect. Required on `pre_write_validator_caught` records. (The proposed 4th kind `count-matches-enumeration` was dropped per 2026-05-22 user gate — count-vs-enumeration drift is addressed by eliminating bare-count-in-prose at authoring time per maintainer guidance dev.119+, not by deterministic validation.)"
+    },
+    "would_have_been_n_class": {
+      "type": "string",
+      "description": "One-line description of the defect class that would have shipped if Step 5.4 hadn't caught it (e.g., 'dotted-string property key', 'L<N> drift'). Required on `pre_write_validator_caught` records."
+    },
+    "grounded_by": {
+      "type": "array",
+      "description": "Optional structured citation evidence. Same shape as `finding.json#/properties/grounded_by`. The legacy `grounded_by:{<source_type>:<source_ref>}` substring form inside any string field remains accepted during the migration window — readers MUST handle both forms. Absence is valid: not every record rests on a groundable claim.",
+      "items": {
+        "type": "object",
+        "required": ["source_type", "source_ref"],
+        "additionalProperties": false,
+        "properties": {
+          "source_type": {
+            "type": "string",
+            "enum": ["websearch", "webfetch", "context7", "runtime", "unverified", "unverifiable", "internal-repo"]
+          },
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "excerpt": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "write_intent_id": {
+      "type": "string",
+      "description": "B4 write intent ID associated with bypass or unsupported-shape calibration records."
+    },
+    "shape": {
+      "type": "string",
+      "description": "Detected B4 content shape, e.g. unsupported-risky-shape."
+    },
+    "approval_event_id": {
+      "type": "string",
+      "description": "Host user input event ID for a manual bypass approval."
+    },
+    "content_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Approved write-intent content hash for B4 bypass calibration records."
+    },
+    "false_positive_reason": {
+      "type": "string",
+      "description": "Why a pre-write validator halt was later determined harmless."
+    }
+  },
+  "oneOf": [
+    {
+      "title": "FP family (false_positive + dual/n_way convergence + suffix-extended forms)",
+      "description": "False-positive records — the reviewer flagged a finding that turned out not to be a real defect. Convergence forms (`dual_false_positive`, `n_way_false_positive`) plus operator-extended suffixed forms.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "pattern": "^(false_positive|dual_false_positive(_.+)?|n_way_false_positive(_.+)?)$"
+        }
+      },
+      "required": ["kind", "finding", "severity"]
+    },
+    {
+      "title": "TP family (true_positive + dual/n_way convergence + suffix-extended forms)",
+      "description": "True-positive records — the reviewer flagged a finding that was confirmed as a real defect. Convergence forms (`dual_true_positive`, `n_way_true_positive_agreement`) plus operator-extended suffixed forms.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "pattern": "^(true_positive|dual_true_positive(_.+)?|n_way_true_positive_agreement(_.+)?)$"
+        }
+      },
+      "required": ["kind", "finding", "severity"]
+    },
+    {
+      "title": "false_negative — missed bug recorded post-ship",
+      "description": "A real defect that the reviewer(s) failed to catch. Recorded after the fact (post-ship empirical evidence).",
+      "properties": {
+        "kind": {
+          "const": "false_negative"
+        }
+      },
+      "required": ["kind", "bug", "category"]
+    },
+    {
+      "title": "bad_fix — regression introduced by /aivv-fix (dev.29+)",
+      "description": "A fix proposed and executed by `/aivv-fix` later found to have introduced a regression. Distinct from FP (fix wasn't needed) and FN (fix didn't catch a real bug).",
+      "properties": {
+        "kind": {
+          "const": "bad_fix"
+        }
+      },
+      "required": ["kind", "fix_regression", "root_cause_of_bad_fix"]
+    },
+    {
+      "title": "auto_deferred_at_cap — Phase 1 cap-residual auto-disposition (dev.110+, AIVV-self only)",
+      "description": "Records a cycle-3 cap-residual finding auto-classified by the /aivv-fix Step 4 three-gate auto-disposition rule: severity ∈ {MINOR, POLISH}, grounded_by exclusively cites validate.sh Stage 15-19, target-project marker-file check returns AIVV-self. Per-cycle ephemeral — does NOT populate wont-fix-registry; the same finding may re-surface and be auto-deferred again.",
+      "properties": {
+        "kind": {"const": "auto_deferred_at_cap"},
+        "grounded_by": {"minItems": 1}
+      },
+      "required": ["kind", "finding", "severity", "grounded_by"]
+    },
+    {
+      "title": "review_meta — per-review-session metadata (dev.31+)",
+      "description": "One record per `/aivv` invocation regardless of finding count. Provides the `findings_produced` denominator for the 'findings per review' trend. Excluded from FP/TP-rate denominators.",
+      "properties": {
+        "kind": {
+          "const": "review_meta"
+        },
+        "fix_confidence_distribution": {
+          "type": "object",
+          "description": "Optional. Distribution of fix_confidence scores across all findings in the session. Populated by /aivv-fix Step 7 when fix_confidence was computed for at least one finding.",
+          "properties": {
+            "high": {"type": "integer", "minimum": 0},
+            "medium": {"type": "integer", "minimum": 0},
+            "low": {"type": "integer", "minimum": 0}
+          }
+        },
+        "thoroughness": {
+          "type": "string",
+          "enum": ["fast", "balanced", "thorough", "exhaustive"],
+          "description": "Optional. The resolved thoroughness dial tier for this review session. Enforced enum (the branch lives inside the kind-discriminated oneOf)."
+        }
+      },
+      "required": ["kind", "findings_produced", "reviewers", "review_id"]
+    },
+    {
+      "title": "fix_introduced_bug — regression introduced by a prior /aivv-fix cycle",
+      "description": "Auto-emitted by Step 6 when a regression finding's file matches a files_modified entry from the prior round's session_changes. Captures fix-quality post-mortems without manual annotation.",
+      "properties": {"kind": {"const": "fix_introduced_bug"}},
+      "required": ["kind", "original_fix_finding_id", "regression_summary", "caught_by_round", "predecessor_review_id"]
+    },
+    {
+      "title": "challenger_caught_issue — Step 4.5 REVISE/REJECT led to a corrected fix",
+      "description": "Auto-emitted by Step 7 when the fix-challenger returned REVISE/REJECT, a revised fix was applied, and Step 6 verifier confirmed the revised fix resolved the finding.",
+      "properties": {"kind": {"const": "challenger_caught_issue"}},
+      "required": ["kind", "finding_id", "challenger_verdict", "concern_kind", "fix_revised"]
+    },
+    {
+      "title": "challenger_false_positive — challenger concern overridden by user; original fix correct",
+      "description": "Auto-emitted by Step 7 when the challenger raised a concern that the user explicitly overrode AND Step 6 verifier confirmed the original fix was correct.",
+      "properties": {"kind": {"const": "challenger_false_positive"}},
+      "required": ["kind", "finding_id", "concern_kind", "user_override_reason"]
+    },
+    {
+      "title": "recurring_class_missed — a finding's class_signature matched a regression's location",
+      "description": "Auto-emitted by Step 6 when a regression finding's location matches a prior finding's class_signature pattern.",
+      "properties": {"kind": {"const": "recurring_class_missed"}},
+      "required": ["kind", "finding_id", "class_signature", "sibling_locations"]
+    },
+    {
+      "title": "challenge_budget_exhausted — token-budget circuit-breaker fired in Step 4.5",
+      "description": "Informational. Emitted by Step 4.5 when max_challenges_per_invocation is reached; remaining batches skip the challenger.",
+      "properties": {"kind": {"const": "challenge_budget_exhausted"}},
+      "required": ["kind", "invocation_id", "max_challenges", "batches_skipped"]
+    },
+    {
+      "title": "pre_write_validator_caught — Step 5.4 PRE-WRITE-VALIDATE deterministically caught a defect (dev.124+)",
+      "properties": {"kind": {"const": "pre_write_validator_caught"}},
+      "required": ["lens", "kind", "ts", "finding_id", "validator_check", "would_have_been_n_class"]
+    },
+    {
+      "title": "pre_write_validator_false_positive — B4 pre-write halt later determined harmless",
+      "properties": {"kind": {"const": "pre_write_validator_false_positive"}},
+      "required": ["lens", "kind", "ts", "finding_id", "validator_check", "false_positive_reason"]
+    },
+    {
+      "title": "manual_bypass_approved — host user approved a per-intent unsupported-risky-shape bypass",
+      "properties": {"kind": {"const": "manual_bypass_approved"}, "shape": {"const": "unsupported-risky-shape"}},
+      "required": ["lens", "kind", "ts", "finding_id", "write_intent_id", "shape", "approval_event_id", "content_sha", "reason"]
+    },
+    {
+      "title": "pre_write_unsupported_shape — unsupported risky shape halted without bypass",
+      "properties": {"kind": {"const": "pre_write_unsupported_shape"}, "shape": {"const": "unsupported-risky-shape"}},
+      "required": ["lens", "kind", "ts", "finding_id", "write_intent_id", "shape", "reason"]
+    }
+  ]
+}

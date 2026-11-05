@@ -1,0 +1,5 @@
+{
+  "provider": "gemini",
+  "dispatch": "node \"$AIVV_ROOT/tools/dispatch.mjs\" --provider gemini --model <model> --reviewer-id alpha --provider-egress-consent",
+  "notes": "Uses Gemini adapter path: Antigravity agy CLI, legacy gemini CLI, or GEMINI_API_KEY depending on auth mode."
+}

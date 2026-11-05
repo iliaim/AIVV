@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.local/schemas/state-compat-index/v1.json",
+  "title": "AIVV Derived State Compatibility Index",
+  "description": "Read-side compatibility artifact for deterministic historical review/fix-log backfills, including canonical fix-log source_review_id proposals and review-log fix_invocation_id proposals when a single joined fix log is unambiguous. This schema describes proposed derived values only; it never authorizes in-place mutation of historical logs.",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "policy", "state_dir", "counts", "review_backfills", "fix_backfills", "unsafe"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "state_dir": {"type": "string", "minLength": 1},
+    "policy": {
+      "type": "object",
+      "required": ["mode", "original_log_mutation", "refresh_owner", "fingerprint_algorithm"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {"type": "string", "const": "derived_index"},
+        "original_log_mutation": {"type": "boolean", "const": false},
+        "refresh_owner": {"type": "string", "const": "tools/state-compat-index.mjs"},
+        "fingerprint_algorithm": {
+          "type": "string",
+          "const": "git-hash-object-v1:<location_identifier>:<lowercased_description>"
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["reviews_scanned", "fix_logs_scanned", "review_backfills", "fix_backfills", "unsafe"],
+      "additionalProperties": false,
+      "properties": {
+        "reviews_scanned": {"type": "integer", "minimum": 0},
+        "fix_logs_scanned": {"type": "integer", "minimum": 0},
+        "review_backfills": {"type": "integer", "minimum": 0},
+        "fix_backfills": {"type": "integer", "minimum": 0},
+        "unsafe": {"type": "integer", "minimum": 0}
+      }
+    },
+    "review_backfills": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/backfill"}
+    },
+    "fix_backfills": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/backfill"}
+    },
+    "unsafe": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/unsafe"}
+    }
+  },
+  "definitions": {
+    "backfill": {
+      "type": "object",
+      "required": ["record_type", "file", "record_id", "path", "value", "derived_from", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {"type": "string", "enum": ["review", "fix"]},
+        "file": {"type": "string", "minLength": 1},
+        "record_id": {"type": "string", "minLength": 1},
+        "finding_id": {"type": ["string", "null"]},
+        "path": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1},
+        "derived_from": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "unsafe": {
+      "type": "object",
+      "required": ["record_type", "file", "record_id", "path", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {"type": "string", "enum": ["review", "fix"]},
+        "file": {"type": "string", "minLength": 1},
+        "record_id": {"type": "string", "minLength": 1},
+        "finding_id": {"type": ["string", "null"]},
+        "path": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

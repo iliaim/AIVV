@@ -1,0 +1,561 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.local/schemas/canonical-envelope/v2.json",
+  "title": "AIVV Canonical Envelope",
+  "description": "Schema for the canonical envelope emitted by view-loader.sh --json (schema_version: 2). Covers Phase 0 loader output plus v1a additive investigation-surface properties.",
+  "type": "object",
+  "required": ["schema_version", "review_id", "review_meta", "findings", "loader_warnings"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "description": "Always 2 in Phase 0 (post-v1a additive migration).",
+      "type": "integer",
+      "const": 2
+    },
+    "review_id": {
+      "description": "The review identifier from the source file, e.g. 'YYYY-MM-DDTHH-MM-SS-<suffix>'. Null when the source file has no top-level review_id.",
+      "type": ["string", "null"]
+    },
+    "review_meta": {
+      "description": "Top-level review metadata projected from the source file.",
+      "type": "object",
+      "required": ["lens", "reviewers", "review_mode", "invoked_at", "completed_at", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "lens": {
+          "description": "Lens(es) used for this review, e.g. 'code', 'ux,visual'.",
+          "type": ["string", "null"]
+        },
+        "reviewers": {
+          "description": "Number of reviewers as a string or integer, e.g. '2'. Null when absent in source.",
+          "type": ["string", "integer", "null"]
+        },
+        "review_mode": {
+          "description": "Review mode string, e.g. 'session', 'file', 'idea'.",
+          "type": ["string", "null"]
+        },
+        "invoked_at": {
+          "description": "ISO 8601 timestamp when the review was invoked.",
+          "type": ["string", "null"]
+        },
+        "completed_at": {
+          "description": "ISO 8601 timestamp when the review completed.",
+          "type": ["string", "null"]
+        },
+        "status": {
+          "description": "Terminal status of the review, e.g. 'complete', 'partial'.",
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "provider_trust": {
+      "description": "Provider trust posture for provider-backed review logs. Null for historical local/native reviews.",
+      "type": ["object", "null"],
+      "additionalProperties": true,
+      "properties": {
+        "allowed": {"type": "boolean"},
+        "provider": {"type": "string"},
+        "model": {"type": ["string", "null"]},
+        "auth_mode": {"type": "string"},
+        "destination_shape": {"type": "string"},
+        "evidence_classes": {"type": "array", "items": {"type": "string"}},
+        "source_classes": {"type": "array", "items": {"type": "string"}},
+        "policy_sha256": {"type": "string"},
+        "prompt_sha256": {"type": "string"},
+        "prompt_bytes": {"type": "integer"},
+        "trust_signature": {"type": "string"},
+        "blocked_paths": {"type": "array"},
+        "redactions": {"type": "array"},
+        "warnings": {"type": "array"}
+      }
+    },
+    "review_scope": {
+      "description": "Optional persisted audit context describing the reviewed subject and explicit scope boundaries.",
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "plan_review": {
+      "description": "Optional persisted provenance for forward-looking /aivv --plan reviews.",
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "review_prompt_profile": {
+      "description": "Optional persisted reviewer prompt metadata. Raw full prompts may be omitted or redacted.",
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "reviewer_evidence_packet": {
+      "description": "Optional persisted reviewer evidence packet metadata, hash, and redacted/omitted content marker.",
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "reviewer_roster": {
+      "description": "Optional roster of reviewer dispatch attempts and outcomes.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "findings": {
+      "description": "Array of projected findings, one per source finding object.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/finding"
+      }
+    },
+    "loader_warnings": {
+      "description": "Structured warnings emitted during projection. See loader-warnings.md for taxonomy.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/loader_warning"
+      }
+    },
+    "lifecycle": {
+      "$ref": "#/definitions/lifecycle"
+    }
+  },
+  "definitions": {
+    "lifecycle": {
+      "description": "Read-only lifecycle projection joined from sibling AIVV lifecycle state.",
+      "type": "object",
+      "required": ["incidents", "problems", "issues", "loader_warnings"],
+      "additionalProperties": false,
+      "properties": {
+        "incidents": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/lifecycle_incident"}
+        },
+        "problems": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/lifecycle_problem"}
+        },
+        "issues": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/lifecycle_issue"}
+        },
+        "loader_warnings": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/loader_warning"}
+        }
+      }
+    },
+    "lifecycle_incident": {
+      "description": "Viewer-facing incident summary projected from .aivv/state/incidents records.",
+      "type": "object",
+      "required": [
+        "id", "status", "severity", "summary", "detected_at", "resolved_at",
+        "trigger", "recurrence_key", "occurrence_count", "rca_status",
+        "closure_profile", "links", "evidence_count", "sensitive"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "status": {"type": "string"},
+        "status_label": {"type": "string"},
+        "severity": {"type": "string"},
+        "severity_label": {"type": "string"},
+        "summary": {"type": "string"},
+        "detected_at": {"type": "string"},
+        "resolved_at": {"type": ["string", "null"]},
+        "trigger": {"type": "string"},
+        "recurrence_key": {"type": "string"},
+        "occurrence_count": {"type": "integer"},
+        "rca_status": {"type": "string"},
+        "rca_status_label": {"type": "string"},
+        "closure_profile": {"type": "string"},
+        "closure_profile_label": {"type": "string"},
+        "links": {
+          "type": "array",
+          "items": {"type": "object", "additionalProperties": true}
+        },
+        "evidence_count": {"type": "integer"},
+        "sensitive": {"type": "boolean"}
+      }
+    },
+    "lifecycle_problem": {
+      "description": "Viewer-facing problem-cluster summary projected from .aivv/state/problems records.",
+      "type": "object",
+      "required": [
+        "id", "status", "summary", "rca_status", "recurrence_keys",
+        "incident_ids", "closure_gate_statuses", "retire_when", "links",
+        "evidence_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "status": {"type": "string"},
+        "summary": {"type": "string"},
+        "rca_status": {"type": "string"},
+        "recurrence_keys": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "incident_ids": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "closure_gate_statuses": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "retire_when": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "links": {
+          "type": "array",
+          "items": {"type": "object", "additionalProperties": true}
+        },
+        "evidence_count": {"type": "integer"}
+      }
+    },
+    "lifecycle_issue": {
+      "description": "Viewer-facing local issue summary projected from .aivv/state/issues records.",
+      "type": "object",
+      "required": [
+        "id", "external_id", "status", "title", "sync_status", "github",
+        "owner", "due_at", "acceptance_criteria", "closure_criteria",
+        "labels", "closure_gate_statuses", "links", "evidence_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string"},
+        "external_id": {"type": "string"},
+        "status": {"type": "string"},
+        "title": {"type": "string"},
+        "sync_status": {"type": "string"},
+        "github": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "owner": {"type": ["string", "null"]},
+        "due_at": {"type": ["string", "null"]},
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "closure_criteria": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "labels": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "closure_gate_statuses": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "links": {
+          "type": "array",
+          "items": {"type": "object", "additionalProperties": true}
+        },
+        "evidence_count": {"type": "integer"}
+      }
+    },
+    "finding": {
+      "description": "Single projected finding in canonical form.",
+      "type": "object",
+      "required": [
+        "id", "severity", "confidence", "category", "summary", "title",
+        "file", "scope_ref", "location_label", "line", "reviewer", "lens", "rule_id", "devils_advocate",
+        "grounded_by", "quality_profile", "evidence", "runtime_evidence", "impact", "severity_rationale",
+        "recommended_next_step", "verification_path", "proportional_remediation", "agreement", "reviewer_attribution", "fingerprint",
+        "impact_tier", "likelihood", "improvement", "value", "effort", "suggested_action", "fix_status",
+        "decision", "calibration", "resolution", "wont_fix"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Projected from `ref` (priority) then `id`. Null when neither present. Note: real-corpus `ref` values appear in two forms — slug-form (e.g. 'F1-iconography-xref-drift') and base-form (e.g. 'F001'). Fix-log `findings_addressed[]` entries use base/zero-padded forms (e.g. 'F1', 'F001'). The loader normalizes both sides (slug-strip + zero-pad) when resolving `resolution.addressed`; the raw projected id preserves the source value.",
+          "type": ["string", "null"]
+        },
+        "severity": {
+          "description": "Severity level. Projected directly; default 'MINOR' fires field_default_applied warning. Both upper- and lower-case appear in the historical corpus.",
+          "type": "string",
+          "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH", "critical", "major", "minor", "polish"]
+        },
+        "impact_tier": {
+          "description": "legacy-schema compatibility rules impact axis emitted by impact_likelihood reviews, e.g. CATASTROPHIC, SEVERE, MODERATE, or NEGLIGIBLE. Null for legacy reviews and findings that do not emit the axis.",
+          "type": ["string", "null"]
+        },
+        "likelihood": {
+          "description": "legacy-schema compatibility rules likelihood axis emitted by impact_likelihood reviews, e.g. CERTAIN, PROBABLE, POSSIBLE, or UNLIKELY. Null for legacy reviews and findings that do not emit the axis.",
+          "type": ["string", "null"]
+        },
+        "confidence": {
+          "description": "Reviewer confidence, e.g. 'high', 'medium', 'low'. Null in pre-dev.41 shapes.",
+          "type": ["string", "null"]
+        },
+        "category": {
+          "description": "Finding category string, e.g. 'correctness', 'drift'. Null in many shapes.",
+          "type": ["string", "null"]
+        },
+        "summary": {
+          "description": "Human-readable finding text. Projected from `description` (priority), then `summary`, then `title`, then empty string.",
+          "type": "string"
+        },
+        "title": {
+          "description": "Short title distinct from summary. Preserved when both `title` and `summary`/`description` present in source.",
+          "type": ["string", "null"]
+        },
+        "file": {
+          "description": "Source file path the finding refers to. Projected from `file` string; for dev.6 shapes projected from `files[0]`. Null when absent.",
+          "type": ["string", "null"]
+        },
+        "scope_ref": {
+          "description": "Non-file finding location. Present for modern process/session/artifact/project findings; null for file-backed and legacy findings.",
+          "type": ["object", "null"],
+          "required": ["kind", "ref"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {"type": "string"},
+            "ref": {"type": "string"}
+          }
+        },
+        "location_label": {
+          "description": "Deterministic display location: file path for file-backed findings, or '<scope_ref.kind>:<scope_ref.ref>' for scoped findings.",
+          "type": ["string", "null"]
+        },
+        "line": {
+          "description": "Line number within `file`. Null when absent in source.",
+          "type": ["integer", "null"]
+        },
+        "reviewer": {
+          "description": "Reviewer identifier (e.g. 'Alpha', 'Beta'). NOT synthesized — null pass-through when absent.",
+          "type": ["string", "null"]
+        },
+        "lens": {
+          "description": "Lens for this specific finding. Projected from finding's own `lens`, then top-level `lens`. Null when neither present.",
+          "type": ["string", "null"]
+        },
+        "rule_id": {
+          "description": "Standards rule identifier projected from the source finding. Preserved exactly when present; null when absent.",
+          "type": ["string", "null"]
+        },
+        "devils_advocate": {
+          "description": "True when the finding is a devil's advocate counterpoint. Default false.",
+          "type": "boolean"
+        },
+        "grounded_by": {
+          "description": "Array of grounding citations (URL strings or structured objects). Default empty array.",
+          "type": "array",
+          "items": {
+            "type": ["string", "object"]
+          }
+        },
+        "quality_profile": {
+          "description": "Finding quality profile marker. Modern findings use 'modern'; legacy findings carry null.",
+          "type": ["string", "null"]
+        },
+        "evidence": {
+          "description": "Modern finding evidence array. Empty for legacy findings.",
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "runtime_evidence": {
+          "description": "Manifest-bound runtime evidence ingested from user-run Playwright JSON. Null when absent.",
+          "type": ["object", "null"],
+          "required": [
+            "outcome", "source", "probe_id", "review_id", "finding_ref",
+            "finding_fingerprint", "assertion_polarity", "spec_path",
+            "result_path", "test_title", "ran_at", "updated_at"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "outcome": {"type": "string", "enum": ["confirmed", "refuted", "skipped", "error"]},
+            "source": {"type": "string", "enum": ["playwright-json"]},
+            "probe_id": {"type": "string"},
+            "review_id": {"type": "string"},
+            "finding_ref": {"type": "string"},
+            "finding_fingerprint": {"type": "string"},
+            "assertion_polarity": {"type": "string", "enum": ["finding-condition", "healthy-invariant"]},
+            "spec_path": {"type": "string"},
+            "result_path": {"type": "string"},
+            "test_title": {"type": "string"},
+            "assertion_message": {"type": ["string", "null"]},
+            "ran_at": {"type": "string"},
+            "updated_at": {"type": "string"}
+          }
+        },
+        "impact": {"type": ["string", "null"]},
+        "severity_rationale": {"type": ["string", "null"]},
+        "recommended_next_step": {"type": ["string", "null"]},
+        "verification_path": {"type": ["string", "null"]},
+        "proportional_remediation": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["present_problem", "simplest_viable_correction", "net_complexity", "why_current_shape_insufficient"],
+          "properties": {
+            "present_problem": {"type": "string"},
+            "simplest_viable_correction": {"type": "string"},
+            "net_complexity": {"type": "string"},
+            "why_current_shape_insufficient": {"type": "string"}
+          }
+        },
+        "agreement": {
+          "description": "Agreement level string, e.g. 'unanimous', 'majority'. NOT coalesced from convergence. Null when absent.",
+          "type": ["string", "null"]
+        },
+        "reviewer_attribution": {
+          "description": "Array-form multi-model reviewer attribution. Null when absent or when only legacy string attribution exists; legacy strings land in reviewer_attribution_legacy_text.",
+          "type": ["array", "null"],
+          "items": {"type": "string"}
+        },
+        "fingerprint": {
+          "description": "Opaque fingerprint string used for wont-fix registry joins. NO post-hoc computation — null when absent in source.",
+          "type": ["string", "null"]
+        },
+        "improvement": {
+          "description": "Suggested improvement text. Null in pre-dev.41 shapes.",
+          "type": ["string", "null"]
+        },
+        "value": {
+          "description": "Raw value field. Historical reviews may use this as free-text Value justification; legacy-schema compatibility rules improvement metadata uses enum values high, medium, or low. Renderers must label enum values as improvement metadata and non-enum strings as value justification.",
+          "type": ["string", "null"]
+        },
+        "effort": {
+          "description": "legacy-schema compatibility rules improvement effort enum metadata, typically trivial, moderate, or invasive. Null when absent.",
+          "type": ["string", "null"]
+        },
+        "suggested_action": {
+          "description": "Suggested remediation action. Projected from `suggested_action` (priority) then `suggested_fix` (dev.55 era). Null when absent.",
+          "type": ["string", "null"]
+        },
+        "fix_status": {
+          "description": "Fix status from dev.10 era shapes only. Null in all other shapes.",
+          "type": ["string", "null"]
+        },
+        "decision": {
+          "description": "User-authored decision joined from decisions-<review_id>.json. Null when no decision has been captured for this finding.",
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["finding_id", "decision"],
+          "properties": {
+            "finding_id": {"type": "string"},
+            "finding_fingerprint": {"type": ["string", "null"]},
+            "decision": {
+              "type": "string",
+              "enum": ["fix", "defer", "wont_fix", "needs_info"]
+            },
+            "notes": {"type": ["string", "null"]},
+            "decided_by": {"type": ["string", "null"]},
+            "decided_at": {"type": ["string", "null"]}
+          }
+        },
+        "calibration": {
+          "description": "Calibration join result. Null in Phase 0 — deferred per Sigil #4 (calibration_skipped_deferred warning).",
+          "type": "null"
+        },
+        "resolution": {
+          "description": "Fix-log resolution joined when --fix-dir provided AND fix-log references this review_id. Includes per-finding `fix_outcome` from the matching changes_summary entry when available; top-level fix-log status remains lifecycle-only. Null otherwise.",
+          "type": ["object", "null"]
+        },
+        "wont_fix": {
+          "description": "Wont-fix registry match joined when --wont-fix provided AND fingerprint matches. Null otherwise.",
+          "type": ["object", "null"]
+        },
+        "fix_plan": {
+          "description": "Optional fix lifecycle plan joined from a matching fix log entry. This is proposal/planning metadata, not applied-change proof.",
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "verification_cycle": {
+          "description": "Optional post-execution verifier outcome joined from a matching fix log entry.",
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "agreement_count": {
+          "description": "Number of reviewers in agreement for this finding (multi-reviewer mode). Null in single-reviewer reviews and pre-schema-v2 corpus.",
+          "type": ["integer", "null"]
+        },
+        "agreement_diversity": {
+          "description": "Whether the agreeing reviewers came from same provider ('same-provider') or distinct providers ('cross-provider'). Null when agreement_count is absent or when not applicable.",
+          "type": ["string", "null"],
+          "enum": ["same-provider", "cross-provider", null]
+        },
+        "reviewer_attribution_legacy_text": {
+          "description": "Free-form string from the legacy 'convergence' or 'cross_reviewer_agreement' fields when the new array-form 'reviewer_attribution' is absent. Provides back-compat for pre-schema-v2 review logs. Null when array-form attribution is present.",
+          "type": ["string", "null"]
+        },
+        "line_anchors": {
+          "description": "Multi-line projection from source 'line_anchor' string (e.g., 'L138,L225' → [138, 225]). Single-line shapes project to a 1-element array. Null when source omits the field. Triggers field_dropped_unsupported_shape warning if any anchor token is unparseable.",
+          "type": ["array", "null"],
+          "items": {"type": "integer"}
+        },
+        "f_id_display": {
+          "description": "Derived display pair for F-IDs. 'primary' is the canonical fnorm-normalized form (e.g. 'F1'); 'review_ref' preserves the original ref shape when it differs from primary (e.g. 'F-V1', 'F-A2'). When primary equals the original, review_ref is null and the renderer collapses to a single badge.",
+          "type": ["object", "null"],
+          "properties": {
+            "primary": {"type": "string"},
+            "review_ref": {"type": ["string", "null"]}
+          },
+          "required": ["primary"],
+          "additionalProperties": false
+        },
+        "files_modified": {
+          "description": "Files mentioned in the joined fix-log's changes_summary entries that match this finding's id. Null when no fix-log join produces matches OR when no fix-dir was provided to the loader.",
+          "type": ["array", "null"],
+          "items": {"type": "string"}
+        },
+        "devils_advocate_signals": {
+          "description": "Structured array of devil's-advocate signals (pre-mortem, assumption-gap, inversion-risk, etc.) with kind+prose pairs. Distinct from the boolean devils_advocate flag — this is the rich-shape projection from schema-v2 multi-model reviews. Null when absent.",
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {"type": "string"},
+              "prose": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "loader_warning": {
+      "description": "A single structured warning emitted by the loader during projection.",
+      "type": "object",
+      "required": ["file", "kind", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "description": "Path of the source review-log file that triggered this warning.",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Warning kind enum. See loader-warnings.md for full taxonomy.",
+          "type": "string",
+          "enum": [
+            "field_alias_applied",
+            "field_default_applied",
+            "fingerprint_missing",
+            "fix_log_unjoinable",
+            "calibration_skipped_deferred",
+            "addressed_unjoinable_id_shape",
+            "file_path_aliased_to_file",
+            "fnorm_unparseable_id_form",
+            "field_dropped_unsupported_shape",
+            "finding_quality_legacy_weak",
+            "finding_quality_modern_incomplete",
+            "field_shape_coerced",
+            "loader_error",
+            "humanize_error",
+            "render_error",
+            "lifecycle_dir_missing",
+            "lifecycle_record_malformed",
+            "lifecycle_link_unresolved",
+            "lifecycle_evidence_ref_unresolved",
+            "lifecycle_unsupported_version",
+            "lifecycle_record_ignored",
+            "decisions_record_malformed"
+          ]
+        },
+        "detail": {
+          "description": "Human-readable description of the specific warning instance.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

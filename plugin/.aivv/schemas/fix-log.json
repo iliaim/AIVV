@@ -1,0 +1,619 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIVV Fix Log (fix-<id>.json)",
+  "type": "object",
+  "definitions": {
+    "fix_plan": {
+      "type": "object",
+      "description": "Optional non-dry-run proposal/planning record. Applied changes remain recorded in changes_summary[].",
+      "required": ["finding_id", "status", "summary", "dry_run"],
+      "additionalProperties": true,
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["proposed", "approved", "applied", "superseded", "abandoned"]},
+        "selected_approach": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "expected_files": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "verification_path": {"type": "string", "minLength": 1},
+        "alternatives_considered": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["approach_id", "summary", "rejected_because"],
+            "additionalProperties": true,
+            "properties": {
+              "approach_id": {"type": "string", "minLength": 1},
+              "summary": {"type": "string", "minLength": 1},
+              "rejected_because": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "dry_run": {"type": "boolean"}
+      }
+    },
+    "verification_cycle": {
+      "type": "object",
+      "description": "Optional post-fix verification outcome per finding.",
+      "required": ["finding_id", "status", "verifier", "evidence"],
+      "additionalProperties": true,
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["verified_resolved", "verified_unresolved", "needs_rework", "skipped", "error"]},
+        "verifier": {"type": "string", "minLength": 1},
+        "evidence": {"type": "string", "minLength": 1},
+        "remaining_next_action": {"type": ["string", "null"]}
+      }
+    }
+  },
+  "required": ["schema_version", "id", "command", "status", "invoked_at", "target_project", "cycle_count"],
+  "anyOf": [
+    {"required": ["source"]},
+    {"required": ["source_type"]}
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9a-f]{4}$"},
+    "command": {"const": "aivv-fix"},
+    "status": {"enum": ["in-progress", "completed", "failed", "abandoned"]},
+    "invoked_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+    "target_project": {"type": "string"},
+    "storage_context": {
+      "type": "object",
+      "description": "Storage target and policy lookup provenance only; never an authorization or approval record. Historical logs may omit this block.",
+      "required": [
+        "instance_key",
+        "target_project",
+        "policy_target"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "instance_key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "target_project": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)"
+        },
+        "policy_target": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)"
+        }
+      }
+    },
+    "source_type": {
+      "description": "Legacy source-type field (pre-runtime-contract). New writers should also set the canonical `source` field; old readers continue to read this.",
+      "enum": ["review", "task-file", "literal", "resumed", "none"]
+    },
+    "source": {
+      "description": "Canonical FixSession.source per .aivv/runtime-contract.md. Names the finding origin. Required on writes from skill version 0.2+; optional on reads for backward compatibility with pre-runtime-contract fix logs (those use source_type instead).",
+      "enum": ["conversation", "review_id", "literal", "task_file"]
+    },
+    "source_review_id": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+    "lifecycle_context": {
+      "type": "object",
+      "description": "Optional side-channel context for /aivv-fix invocations routed from incident/problem/local-issue/GitHub selectors. This does not change FixSession.source.",
+      "required": ["selector_type", "selector", "record_kind", "record_id", "record_path", "source_mode"],
+      "properties": {
+        "selector_type": {"enum": ["incident", "problem", "issue", "github_issue"]},
+        "selector": {"type": "string"},
+        "record_kind": {"enum": ["incident", "problem", "issue"]},
+        "record_id": {"type": "string"},
+        "record_path": {"type": "string"},
+        "workflow_status": {"type": "string"},
+        "rca_status": {"type": "string"},
+        "source_mode": {"enum": ["review-sourced", "finding-sourced", "investigation-only"]},
+        "source_review_id": {"type": "string"},
+        "finding_id": {"type": "string"},
+        "github": {
+          "type": "object",
+          "required": ["owner", "repo", "number"],
+          "properties": {
+            "host": {"type": "string"},
+            "owner": {"type": "string"},
+            "repo": {"type": "string"},
+            "number": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "source_argument": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+    "source_review_snapshot": {
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["review_id", "findings"],
+          "properties": {
+            "review_id": {"type": "string"},
+            "reviewers": {"type": "integer"},
+            "lens": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+            "findings": {"type": "array"}
+          }
+        }
+      ]
+    },
+    "capability_degradations": {
+      "description": "Host capabilities the fix orchestrator could not honor at dispatch time (per .aivv/runtime-contract.md). Empty array means no degradations.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "cycle_count": {"type": "integer", "minimum": 1},
+    "challenge_iterations": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of Step 4.5 CHALLENGE REVISE/REJECT loop iterations in this invocation. Distinct from cycle_count (which counts Step 6 verifier re-entries). Cap: 3 per invocation."
+    },
+    "pre_write_validation_iterations": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of Step 5.4 deterministic pre-write validation re-authoring iterations. Distinct from challenge_iterations and cycle_count."
+    },
+    "max_pre_write_validation_iterations": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "description": "Resolved cap for Step 5.4 deterministic pre-write validation retries."
+    },
+    "stale_intent_regenerations": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of stale write-intent regeneration re-entries into Step 3. Distinct from challenge_iterations and pre_write_validation_iterations."
+    },
+    "max_stale_intent_regenerations": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "description": "Resolved cap for stale write-intent regeneration."
+    },
+    "class_verdict_reinvestigation_iterations": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of Step 5 pre-loop class-verdict re-investigation re-entries into Step 3 (a code-bug/design-flaw finding lacking a valid class_signature/class_assessment). Distinct from cycle_count (which bumps only on Step 6 post-EXECUTE verifier re-entry / Step 4 backtrack) and from pre_write_validation_iterations."
+    },
+    "max_class_verdict_reinvestigation_iterations": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Resolved cap for Step 5 pre-loop class-verdict re-investigation. On exhaustion the finding routes to the W10 decision queue (deferred / class-verdict-budget-exhausted), never silently dropped."
+    },
+    "dangerously_auto_apply": {
+      "type": "object",
+      "description": "Invocation-local audit record for --dangerously-auto-apply runs. Present only when the bypass was explicitly confirmed; never configured persistently.",
+      "required": ["confirmed", "confirmation_source", "bypassed_gates", "applied_count"],
+      "properties": {
+        "confirmed": {"const": true},
+        "confirmation_source": {
+          "enum": ["interactive-exact-phrase", "env:AIVV_DANGEROUSLY_AUTO_APPLY"]
+        },
+        "bypassed_gates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"}
+        },
+        "applied_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "write_intents": {
+      "type": "array",
+      "description": "B4 pre-write safety intents materialized before Step 4.5 challenger dispatch and before host write primitives.",
+      "items": {
+        "type": "object",
+        "required": ["id", "finding_id", "branch", "target_file", "operation", "kind", "content_sha", "source_step", "pre_write_assertions", "detector_result"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {"kind": {"const": "generated_patch"}},
+              "required": ["kind"]
+            },
+            "then": {
+              "required": ["proposed_edits"],
+              "properties": {
+                "proposed_edits": {"minItems": 1}
+              }
+            }
+          }
+        ],
+        "properties": {
+          "id": {"type": "string"},
+          "finding_id": {"type": "string"},
+          "branch": {"enum": ["A", "B", "C-fallthrough-A", "D"]},
+          "target_file": {"type": "string"},
+          "operation": {"enum": ["edit", "create", "replace"]},
+          "kind": {"enum": ["generated_patch", "verbatim_doc_content", "process_rule_content"]},
+          "exact_content_or_patch": {"type": "string"},
+          "content_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "source_step": {"const": "Step 4.4"},
+          "pre_write_assertions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "args"],
+              "properties": {
+                "kind": {"enum": ["jq-parses", "schema-coherence", "line-cite-valid", "shell-syntax-valid"]},
+                "args": {"type": "object"}
+              }
+            }
+          },
+          "proposed_edits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["old_string", "new_string", "content_sha"],
+              "properties": {
+                "old_string": {"type": "string"},
+                "new_string": {"type": "string"},
+                "content_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              }
+            }
+          },
+          "detector_result": {
+            "type": "object",
+            "required": ["verdict", "content_shapes", "detection_confidence"],
+            "properties": {
+              "verdict": {"enum": ["pass", "halt", "bypass-approved"]},
+              "content_shapes": {"type": "array", "items": {"type": "string"}},
+              "detection_confidence": {"enum": ["low", "medium", "high"]},
+              "required_assertions": {
+                "type": "array",
+                "items": {"enum": ["jq-parses", "schema-coherence", "line-cite-valid", "shell-syntax-valid"]}
+              },
+              "provided_assertions": {
+                "type": "array",
+                "items": {"enum": ["jq-parses", "schema-coherence", "line-cite-valid", "shell-syntax-valid"]}
+              },
+              "missing_assertions": {
+                "type": "array",
+                "items": {"enum": ["jq-parses", "schema-coherence", "line-cite-valid", "shell-syntax-valid"]}
+              },
+              "bypass_approval": {
+                "type": "object",
+                "required": ["write_intent_id", "shape", "approved_by", "approval_source", "approval_event_id", "user_approved_at", "reason", "scope", "content_sha"],
+                "anyOf": [
+                  {"required": ["expires_at"]},
+                  {"required": ["expires_condition"]}
+                ],
+                "properties": {
+                  "write_intent_id": {"type": "string"},
+                  "shape": {"const": "unsupported-risky-shape"},
+                  "approved_by": {"const": "user"},
+                  "approval_source": {"const": "host-user-input-event"},
+                  "approval_event_id": {"type": "string"},
+                  "user_approved_at": {"type": "string", "format": "date-time"},
+                  "reason": {"type": "string"},
+                  "scope": {"type": "string"},
+                  "expires_at": {"type": "string", "format": "date-time"},
+                  "expires_condition": {"type": "string"},
+                  "content_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "prior_cycle_snapshots": {
+      "type": "array",
+      "description": "Snapshots of changes_summary taken before each Step 6 re-entry into Step 3 (re-investigate). Cycle-N+1's auto-emit logic reads prior_cycle_snapshots[-1].changes_summary to detect within-invocation fix_introduced_bug regressions (Case A). Append-on-each-cycle; never mutate.",
+      "items": {
+        "type": "object",
+        "required": ["cycle", "changes_summary"],
+        "properties": {
+          "cycle": {"type": "integer", "minimum": 1},
+          "changes_summary": {"type": "array"}
+        }
+      }
+    },
+    "files_modified": {"type": "array", "items": {"type": "string"}},
+    "files_created": {"type": "array", "items": {"type": "string"}},
+    "write_boundary_shown": {
+      "type": "boolean",
+      "description": "True when the Step 5.0 pre-write boundary was rendered before non-dry-run writes."
+    },
+    "change_readiness": {
+      "type": "object",
+      "description": "Producer-side readiness decision captured before non-dry-run write dispatch.",
+      "required": ["risk_tier", "affected_surfaces", "approval_mode", "rollback_plan", "required_verification", "generated_verification", "monitoring_plan", "go_no_go"],
+      "properties": {
+        "risk_tier": {"enum": ["low", "medium", "high"]},
+        "affected_surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"}
+        },
+        "approval_mode": {"enum": ["auto", "user-confirmed", "dry-run", "dangerous-override", "skipped"]},
+        "rollback_plan": {"type": "string"},
+        "required_verification": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "command_argv", "required"],
+            "properties": {
+              "id": {"type": "string"},
+              "kind": {"type": "string"},
+              "command_argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string"}
+              },
+              "required": {"type": "boolean"}
+            }
+          }
+        },
+        "generated_verification": {
+          "type": "object",
+          "required": ["present", "execution_allowed", "policy"],
+          "properties": {
+            "present": {"type": "boolean"},
+            "execution_allowed": {"type": "boolean"},
+            "policy": {"enum": ["inspect-only", "existing-step-5.7-enabled", "external-ci-only"]}
+          }
+        },
+        "monitoring_plan": {"type": "string"},
+        "go_no_go": {"enum": ["go", "no-go", "dry-run-only"]}
+      }
+    },
+    "objective_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "finding_id", "kind", "ref", "outcome"],
+        "properties": {
+          "id": {"type": "string"},
+          "finding_id": {"type": "string"},
+          "kind": {"enum": ["test-output", "command-output", "schema-validation", "grep", "runtime-evidence", "source-citation", "verifier-result"]},
+          "satisfies": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "ref": {"type": "string"},
+          "outcome": {"type": "string"},
+          "summary": {"type": "string"}
+        }
+      }
+    },
+    "final_dispositions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "disposition"],
+        "properties": {
+          "finding_id": {"type": "string"},
+          "disposition": {"enum": ["closed", "closed_with_residual_risk", "deferred", "false_positive", "accepted_risk", "reopened", "needs_rework", "needs_evidence"]},
+          "decided_by": {
+            "type": "string",
+            "description": "Producer-required for closed_with_residual_risk and recommended for all final dispositions."
+          },
+          "rationale": {"type": "string"},
+          "evidence_refs": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "residual_risk": {
+            "anyOf": [{"type": "string"}, {"type": "null"}]
+          },
+          "reopen_trigger": {"type": "string"}
+        }
+      }
+    },
+    "changes_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "allOf": [
+          {
+            "if": {
+              "properties": {"dangerously_auto_apply": {"const": true}},
+              "required": ["dangerously_auto_apply"]
+            },
+            "then": {
+              "required": ["bypassed_gates"],
+              "properties": {
+                "bypassed_gates": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {"type": "string"}
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {"red_green_evidence": {"type": "object"}},
+              "required": ["red_green_evidence"]
+            },
+            "then": {
+              "properties": {"type": {"const": "verification-method"}}
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "red_green_evidence": {
+                  "type": "object",
+                  "properties": {"claim": {"const": "prevention"}},
+                  "required": ["claim"]
+                }
+              },
+              "required": ["red_green_evidence"]
+            },
+            "then": {
+              "properties": {
+                "red_green_evidence": {
+                  "type": "object",
+                  "required": ["pre_fix"],
+                  "properties": {
+                    "pre_fix": {
+                      "type": "object",
+                      "properties": {
+                        "outcome": {"const": "failed"},
+                        "right_reason_failure": {"const": true}
+                      }
+                    },
+                    "post_fix": {
+                      "type": "object",
+                      "properties": {
+                        "outcome": {"const": "passed"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "finding_id": {"type": "string"},
+          "category": {"type": "string"},
+          "file": {"type": "string"},
+          "change": {"type": "string"},
+          "root_cause": {"type": "string"},
+          "type": {
+            "enum": ["code-edit", "documentation", "design-adr", "process-rule", "build-script", "ci-gate", "verification-method"]
+          },
+          "fix_confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Per-finding fix confidence score computed in Step 4 (9-predicate demotion algorithm). Recorded here for post-cycle calibration analysis. Optional — absent on fix-logs written before dev.126."
+          },
+          "fix_confidence_at_plan": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Snapshot of fix_confidence computed at Step 4 PLAN time. Persisted alongside fix_outcome for cross-cycle calibration (resolved-at-low-confidence vs regression-at-low-confidence distinguishable)."
+          },
+          "fix_outcome": {
+            "type": "string",
+            "enum": ["resolved", "regression-introduced", "verifier-pass-with-residual-warning", "escalated", "abandoned"],
+            "description": "Step 6 verifier outcome for this change. Set after Step 6 returns; absent on changes still in cycle 1 pre-verify."
+          },
+          "dangerously_auto_apply": {
+            "type": "boolean",
+            "description": "True when this change was applied through a confirmed --dangerously-auto-apply bypass."
+          },
+          "bypassed_gates": {
+            "type": "array",
+            "description": "Gate names bypassed for this change when dangerously_auto_apply is true.",
+            "items": {"type": "string"}
+          },
+          "architecture_decision_route": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "required": ["route", "selected_option_id", "residual_class_risk", "user_approved_architecture_route"],
+            "properties": {
+              "route": {
+                "type": "string",
+                "enum": ["ordinary_route", "tactical_apply_now", "architectural_apply_now", "architectural_separate_effort", "decision_queue"]
+              },
+              "selected_option_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "residual_class_risk": {
+                "type": "string",
+                "minLength": 1
+              },
+              "user_approved_architecture_route": {
+                "type": "boolean"
+              }
+            }
+          },
+          "architectural_remediation_assessment": {
+            "type": ["object", "null"],
+            "additionalProperties": true,
+            "description": "Reason-coded final architectural remediation assessment from Step 4. Optional for logs before the architectural remediation gate."
+          },
+          "red_green_evidence": {
+            "type": "object",
+            "description": "Step 4.6/5.7 evidence that distinguishes true red-green prevention from post-fix verification-only execution.",
+            "required": ["claim", "post_fix"],
+            "properties": {
+              "claim": {
+                "enum": ["prevention", "verification-only"],
+                "description": "`prevention` requires right-reason pre-fix failure plus post-fix pass; otherwise record `verification-only`."
+              },
+              "pre_fix": {
+                "type": "object",
+                "required": ["command", "command_argv", "cwd", "exit", "outcome", "right_reason_failure"],
+                "properties": {
+                  "command": {"type": "string"},
+                  "command_argv": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"type": "string"}
+                  },
+                  "cwd": {"type": "string"},
+                  "exit": {"type": "integer"},
+                  "outcome": {"enum": ["failed", "passed", "error", "skipped"]},
+                  "right_reason_failure": {"type": "boolean"},
+                  "stdout_excerpt": {"type": "string"},
+                  "stderr_excerpt": {"type": "string"}
+                }
+              },
+              "post_fix": {
+                "type": "object",
+                "required": ["command", "command_argv", "cwd", "exit", "outcome"],
+                "properties": {
+                  "command": {"type": "string"},
+                  "command_argv": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {"type": "string"}
+                  },
+                  "cwd": {"type": "string"},
+                  "exit": {"type": "integer"},
+                  "outcome": {"enum": ["failed", "passed", "error", "skipped"]},
+                  "stdout_excerpt": {"type": "string"},
+                  "stderr_excerpt": {"type": "string"}
+                }
+              }
+            }
+          },
+          "execution_evidence": {
+            "type": "object",
+            "description": "Populated by Step 5.7 ORCHESTRATOR EXECUTION when type ∈ {build-script, ci-gate, verification-method} AND enable_step_57_execution: true.",
+            "properties": {
+              "command": {"type": "string"},
+              "command_argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string"}
+              },
+              "cwd": {"type": "string"},
+              "exit": {"type": "integer"},
+              "timed_out": {"type": "boolean"},
+              "wall_time_seconds": {"type": "number"},
+              "stdout_excerpt": {"type": "string"},
+              "stderr_excerpt": {"type": "string"},
+              "stdout_truncated": {"type": "boolean"},
+              "stderr_truncated": {"type": "boolean"},
+              "skipped_reason": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "fix_plans": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/fix_plan"}
+    },
+    "verification_cycles": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/verification_cycle"}
+    },
+    "findings_addressed": {"type": "array"},
+    "findings_deferred": {"type": "array"},
+    "findings_wont_fix": {"type": "array"},
+    "warnings": {"type": "array"}
+  }
+}

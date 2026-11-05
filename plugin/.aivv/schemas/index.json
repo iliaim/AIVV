@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIVV State Index (index.json)",
+  "type": "object",
+  "required": ["schema_version", "rebuilt_at", "entries"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "rebuilt_at": {"type": "string", "format": "date-time"},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "command", "status", "invoked_at"],
+        "properties": {
+          "id": {"type": "string"},
+          "command": {"enum": ["aivv", "aivv-fix"]},
+          "status": {"enum": ["in-progress", "completed", "failed", "abandoned", "voided-workspace-drift"]},
+          "invoked_at": {"type": "string", "format": "date-time"},
+          "completed_at": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]}
+        }
+      }
+    }
+  }
+}

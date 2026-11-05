@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIVV User Preferences v2",
+  "description": "Schema for .aivv/config.json (project) and ~/.aivv/config.json (user) — v2 contract. Strict structural validation (additionalProperties: false) when data.schema_version <= 2. v3+ readers will bypass-and-warn per existing forward-compat strategy.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 2,
+      "default": 2,
+      "description": "Schema versioning. THIS schema is the v2 contract — strict additionalProperties: false enforced when data.schema_version <= 2. v1 configs (schema_version=1) are routed to the v1 schema by Step 1.5 schema-version dispatch."
+    },
+    "default_reviewers": {"type": "integer", "minimum": 1, "maximum": 9, "default": 1, "description": "Default --reviewers=N value when not explicitly set on CLI."},
+    "default_lenses": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}], "default": "code", "description": "Default --lens= value (string) or list (array)."},
+    "severity_threshold": {"type": "string", "enum": ["CRITICAL", "MAJOR", "MINOR"], "default": "MINOR", "description": "Show DEFECT findings AT OR ABOVE this severity. POLISH is orthogonal value-add tier. L1-source findings forced-shown regardless."},
+    "auto_chain_fix": {"type": "string", "enum": ["always", "ask", "never"], "default": "ask", "description": "Post-review auto-chain into /aivv-fix behavior."},
+    "apply_polish_mode": {"type": "string", "enum": ["always", "ask", "never"], "default": "ask", "description": "POLISH findings handling in /aivv-fix apply queue."},
+    "polish_collapsed": {"type": "boolean", "default": true, "description": "POLISH section default-collapsed (true) or expanded (false)."},
+    "default_lens_replicate": {"type": "integer", "minimum": 1, "maximum": 5, "default": 2, "description": "Default reviewers-per-lens (renamed from default_M per round-3.5 UX revision J — 'M' was opaque acronym; new name matches existing --lens-replicate= flag). v2 binding to lens_replicate_M default for plain-dispatch is gated on _provenance==wizard (preserves v1 behavior for v1 users with default_M=2 + multi-lens; v1 reads of v2 configs map the renamed key via projection layer in preferences.md Step 2.5)."},
+    "runtime_driver_optin": {"type": "boolean", "default": false, "description": "Pre-consent to --runtime path when Playwright MCP detected."},
+    "default_target": {"type": ["string", "null"], "default": null, "description": "Default --target=<dir>."},
+    "rule_id_back_fill": {"type": "boolean", "default": false, "description": "Back-fill rule_id on pre-dev.39 calibration entries."},
+    "project_kind": {"type": ["string", "null"], "enum": ["ui", "backend", "mixed", "library", null], "default": null, "description": "Wizard-set project_kind: drives default_lenses resolution at wizard-write time. ui → ['visual','ux']; backend/mixed → 'code'; library → ['code','sec']; null → 'code'."},
+    "outer_loop_mode": {"type": "string", "enum": ["off", "until_clean"], "default": "off", "description": "When 'until_clean', /aivv-fix Step 6.5 re-invokes /aivv --fix until findings clean or cap reached."},
+    "outer_loop_max_cycles": {"type": "integer", "minimum": 2, "maximum": 5, "default": 3, "description": "Maximum outer loop iterations. Min=2 (cycles=1 is degenerate-equivalent-to-off per round-2 F015 sub-item 5 + round-3 F005)."},
+    "outer_loop_severity_floor": {"type": "string", "enum": ["CRITICAL", "MAJOR"], "default": "MAJOR", "description": "Outer loop continues only while NON-L1 findings ≥ this severity remain."},
+    "_provenance": {"type": "string", "enum": ["wizard", "manual", "default"], "default": "default", "description": "Metadata: tracks how the config was generated. 'wizard' = set by /aivv --setup; 'manual' = set by --config-set; 'default' = none of above. Used by Step 1.5 to gate default_lens_replicate→lens_replicate_M binding (only fires when _provenance==wizard). Round-3.5 SRP scope: ONLY config-source-tracking; hint-suppression is now _setup_hint_shown_at (separate field)."},
+    "_setup_hint_shown_at": {"type": ["string", "null"], "default": null, "description": "Metadata (round-3.5 UX revision I): ISO 8601 UTC timestamp when setup-hint was first emitted (e.g., '2026-05-17T18:30:00Z'). null = hint has not been shown yet (default for auto-created configs). When non-null, the setup-hint is suppressed on all subsequent /aivv invocations regardless of _provenance. Separates hint-suppression from config-source-tracking (round-3.5 UX agent SRP critique: overloading _provenance for both concerns was ambiguous when user runs --config-set, which sets _provenance=manual but doesn't necessarily 'complete setup')."},
+    "_walkthrough_hints_shown": {"type": "object", "additionalProperties": {"type": ["string", "null"]}, "default": {}, "description": "Metadata (round-3.5 UX revision O — Stage 3 dev.113): per-feature walkthrough markers. Object with arbitrary string keys mapping to ISO 8601 UTC timestamp (string) or null. Each key represents one walkthrough hint (e.g., 'first_findings_rendered', 'first_fix_recommendation', 'first_polish_findings'); the value is the timestamp the hint was first emitted, or null if the hint was reserved but not yet shown. Empty object {} = no walkthrough hints have been emitted yet (default). Extensible: future onboarding moments add new keys without schema changes. Distinct from _setup_hint_shown_at (which tracks ONE specific hint — the initial setup invitation); _walkthrough_hints_shown tracks N feature-discovery hints emitted at orchestrator-defined trigger moments. Suppression: a hint with non-null timestamp is suppressed on subsequent invocations; clearing the key (or setting to null) re-arms it."}
+  }
+}

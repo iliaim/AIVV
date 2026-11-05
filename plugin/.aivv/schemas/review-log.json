@@ -1,0 +1,642 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIVV Review Log (review-<id>.json)",
+  "type": "object",
+  "definitions": {
+    "runtime_evidence": {
+      "type": "object",
+      "required": [
+        "outcome",
+        "source",
+        "probe_id",
+        "review_id",
+        "finding_ref",
+        "finding_fingerprint",
+        "assertion_polarity",
+        "spec_path",
+        "result_path",
+        "test_title",
+        "ran_at",
+        "updated_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "outcome": {"enum": ["confirmed", "refuted", "skipped", "error"]},
+        "source": {"enum": ["playwright-json"]},
+        "probe_id": {"type": "string", "minLength": 1},
+        "review_id": {"type": "string", "minLength": 1},
+        "finding_ref": {"type": "string", "minLength": 1},
+        "finding_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$"},
+        "assertion_polarity": {"enum": ["finding-condition", "healthy-invariant"]},
+        "spec_path": {"type": "string", "minLength": 1},
+        "result_path": {"type": "string", "minLength": 1},
+        "test_title": {"type": "string", "minLength": 1},
+        "assertion_message": {"type": "string"},
+        "ran_at": {"type": "string", "format": "date-time"},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "runtime_evidence_ingest": {
+      "type": "object",
+      "required": ["review_id", "results_path", "manifest_path", "counts", "updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "review_id": {"type": "string", "minLength": 1},
+        "results_path": {"type": "string", "minLength": 1},
+        "manifest_path": {"type": "string", "minLength": 1},
+        "counts": {
+          "type": "object",
+          "required": ["confirmed", "refuted", "skipped", "error"],
+          "additionalProperties": false,
+          "properties": {
+            "confirmed": {"type": "integer", "minimum": 0},
+            "refuted": {"type": "integer", "minimum": 0},
+            "skipped": {"type": "integer", "minimum": 0},
+            "error": {"type": "integer", "minimum": 0}
+          }
+        },
+        "orphan_results": {"type": "integer", "minimum": 0},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "agreement": {
+      "enum": ["single", "converged", "mixed", "unique_findings", "clean"]
+    },
+    "checkpoint_outcome": {
+      "enum": ["continue", "dry-run", "select-findings", "stop"]
+    },
+    "criticality": {
+      "enum": ["low", "medium", "high"]
+    },
+    "evidence_kind": {
+      "enum": ["command-output", "schema-validation", "grep", "runtime-evidence", "source-citation", "verifier-result", "test-output"]
+    },
+    "trust_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "review_mode": {"type": "string", "minLength": 1},
+        "reviewers": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "count": {"type": "integer", "minimum": 1},
+            "labels": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "lenses": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "applied": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "detected": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "agreement": {"$ref": "#/definitions/agreement"},
+        "filtering": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "hidden_count": {"type": "integer", "minimum": 0},
+            "forced_show_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "evidence_posture": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "high_risk_not_applied": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "capability_degradations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "decision_checkpoint": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required": {"type": "boolean"},
+        "interactive": {"type": "boolean"},
+        "reason_codes": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "outcome": {"$ref": "#/definitions/checkpoint_outcome"},
+        "selected_finding_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "recorded_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "assurance_plan": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "scope": {"type": "string", "minLength": 1},
+        "criticality": {"$ref": "#/definitions/criticality"},
+        "required_evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "kind": {"$ref": "#/definitions/evidence_kind"},
+              "required": {"type": "boolean"},
+              "applies_to_finding_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "statement": {"type": "string", "minLength": 1},
+              "applies_to_finding_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "review_scope": {
+      "type": "object",
+      "description": "Optional audit contract describing the subject and evidence boundary sent to reviewers. Additive for historical logs.",
+      "required": ["subject_type", "final_scope"],
+      "additionalProperties": true,
+      "properties": {
+        "subject_type": {"enum": ["session", "file", "idea", "project", "artifact", "user-journey", "plan"]},
+        "final_scope": {"type": "string", "minLength": 1},
+        "target_project": {"type": "string", "minLength": 1},
+        "state_target": {"type": "string", "minLength": 1},
+        "evidence_sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "summary"],
+            "additionalProperties": true,
+            "properties": {
+              "kind": {"type": "string", "minLength": 1},
+              "summary": {"type": "string", "minLength": 1},
+              "ref": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "included_files": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "excluded_or_dropped_scope": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "scope_confirmation": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "mode": {"type": "string", "minLength": 1},
+            "classification_reason": {"type": "string", "minLength": 1},
+            "user_choice": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "plan_review": {
+      "type": "object",
+      "description": "Optional provenance for forward-looking /aivv --plan reviews.",
+      "required": ["plan_path", "implementation_verified"],
+      "additionalProperties": true,
+      "properties": {
+        "plan_path": {"type": "string", "minLength": 1},
+        "implementation_verified": {"type": "boolean"},
+        "verify_skip_reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "review_prompt_profile": {
+      "type": "object",
+      "description": "Optional audit profile for the reviewer prompt without requiring full prompt persistence.",
+      "required": ["prompt_name"],
+      "additionalProperties": true,
+      "properties": {
+        "prompt_name": {"type": "string", "minLength": 1},
+        "prompt_version": {"type": "string", "minLength": 1},
+        "prompt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "methodology_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "lens": {
+          "oneOf": [
+            {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+            {
+              "type": "array",
+              "items": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+              "minItems": 1,
+              "maxItems": 16
+            }
+          ]
+        },
+        "thoroughness": {"type": "string", "minLength": 1},
+        "direction_enabled": {"type": "boolean"},
+        "severity_model": {"type": "string", "minLength": 1},
+        "reviewer_count": {"type": "integer", "minimum": 1, "maximum": 16},
+        "full_prompt_available": {"type": "boolean"},
+        "redaction_summary": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "redacted_values": {"type": "integer", "minimum": 0},
+            "blocked_paths": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "warnings": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "reviewer_evidence_packet": {
+      "type": "object",
+      "description": "Optional persisted metadata for the exact reviewer evidence packet; content may be omitted or redacted.",
+      "required": ["format", "bytes", "sha256"],
+      "additionalProperties": true,
+      "properties": {
+        "format": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "redacted": {"type": "boolean"},
+        "truncated": {"type": "boolean"},
+        "content": {"type": "string"},
+        "omitted_reason": {"type": ["string", "null"]}
+      }
+    },
+    "reviewer_roster": {
+      "type": "array",
+      "description": "Optional reviewer roster tying reviewer labels to provider/model dispatch metadata and finding refs.",
+      "items": {
+        "type": "object",
+        "required": ["label", "display_name", "dispatch_path", "lens", "status"],
+        "additionalProperties": true,
+        "properties": {
+          "label": {"type": "string", "minLength": 1},
+          "display_name": {"type": "string", "minLength": 1},
+          "dispatch_path": {"type": "string", "minLength": 1},
+          "provider": {"type": ["string", "null"]},
+          "model": {"type": ["string", "null"]},
+          "model_source": {"type": ["string", "null"]},
+          "lens": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+          "status": {"enum": ["completed", "failed", "skipped", "degraded", "unfilled"]},
+          "status_reason": {"type": ["string", "null"]},
+          "finding_refs": {
+            "type": "array",
+            "items": {"type": "string", "pattern": "^F[0-9]{3,}$"}
+          }
+        }
+      }
+    }
+  },
+  "required": ["schema_version", "id", "command", "status", "invoked_at", "target_project", "lens", "reviewers", "review_mode", "capability_degradations", "findings"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9a-f]{4}$"},
+    "command": {"const": "aivv"},
+    "status": {"enum": ["in-progress", "completed", "failed", "abandoned", "voided-workspace-drift"]},
+    "invoked_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+    "target_project": {"type": "string"},
+    "storage_context": {
+      "type": "object",
+      "description": "Storage target and policy lookup provenance only; never an authorization or approval record. Historical logs may omit this block.",
+      "required": [
+        "instance_key",
+        "target_project",
+        "policy_target"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "instance_key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "target_project": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)"
+        },
+        "policy_target": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)"
+        }
+      }
+    },
+    "lens": {
+      "description": "Lens(es) used for the review. Single string in homogeneous case (one lens for all reviewers); array of strings in multi-lens spike case (dev.35+, Tier 2B). Array order matches reviewer order (alpha=lens[0], beta=lens[1], ...). Array length must equal `reviewers` field.",
+      "oneOf": [
+        {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+        {
+          "type": "array",
+          "items": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+          "minItems": 2,
+          "maxItems": 16
+        }
+      ]
+    },
+    "reviewers": {"type": "integer", "minimum": 1, "maximum": 16},
+    "review_mode": {
+      "description": "How the review was actually executed (per .aivv/runtime-contract.md). Required on writes from skill version 0.2+.",
+      "enum": ["cold_single_review", "cold_multi_review", "cold_multi_model", "same_agent_review", "evidence_only_review"]
+    },
+    "capability_degradations": {
+      "description": "Host capabilities the orchestrator could not honor at dispatch time. Empty array means no degradations (the requested mode was achievable).",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "workspace_sha_start": {
+      "description": "Workspace state capture before reviewer dispatch. Pre-dev.25: hex SHA256 from snapshot_workspace_sha(). Dev.25+: raw stdout of `git status --porcelain=v1 -z; git diff --no-color --no-ext-diff HEAD`. Either form is a comparable string identifying workspace state. Set when can_enforce_readonly is partial/unsupported; null/omitted otherwise. Field name retained for backward-compat per OQ4.",
+      "anyOf": [{"type": "string"}, {"type": "null"}]
+    },
+    "workspace_sha_end": {
+      "description": "Workspace state capture after reviewer dispatch. Same format as workspace_sha_start. If different, the review is voided with WORKSPACE_DRIFT_VOIDED_REVIEW.",
+      "anyOf": [{"type": "string"}, {"type": "null"}]
+    },
+    "predecessor_review_id": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9a-f]{4}$",
+      "description": "When this review is a re-review of a prior cycle's fixes. Either explicit (via `--predecessor-review-id=<id>` flag; detection_method: 'explicit-flag') or auto-detected per the tightened heuristic: most-recent prior review on same target with deduplicated Jaccard overlap of `findings[].file` sets ≥0.7, written within 24h, with at least one intervening `/aivv-fix` invocation (NOT bare git commit), status:completed on the candidate, and target-path canonical match. null when no predecessor. Format (when non-null) matches the `id` field pattern."
+    },
+    "predecessor_detection_method": {
+      "type": ["string", "null"],
+      "enum": ["explicit-flag", "auto-heuristic", "user-cleared", null],
+      "description": "Detection-source provenance for predecessor_review_id. null for reviews with no predecessor."
+    },
+    "fix_invocation_id": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9a-f]{4}$",
+      "description": "Populated by /aivv-fix when it writes its fix-log AND the originating /aivv review was the source. Anchors the predecessor-fix-log resolution at <target>/.aivv/state/fix-<fix_invocation_id>.json. null for reviews not followed by /aivv-fix."
+    },
+    "provider_trust": {
+      "description": "Provider trust posture recorded for provider-backed reviews. Optional for historical local/native review logs.",
+      "type": "object",
+      "required": ["allowed", "provider", "auth_mode", "destination_shape", "evidence_classes", "source_classes", "policy_sha256", "trust_signature", "blocked_paths", "redactions", "warnings"],
+      "additionalProperties": true,
+      "properties": {
+        "allowed": {"type": "boolean"},
+        "provider": {"type": "string"},
+        "model": {"type": ["string", "null"]},
+        "auth_mode": {"type": "string"},
+        "destination_shape": {"type": "string"},
+        "evidence_classes": {"type": "array", "items": {"type": "string"}},
+        "source_classes": {"type": "array", "items": {"type": "string"}},
+        "policy_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "prompt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "prompt_bytes": {"type": "integer", "minimum": 0},
+        "trust_signature": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "blocked_paths": {"type": "array"},
+        "redactions": {"type": "array"},
+        "warnings": {"type": "array"}
+      }
+    },
+    "trust_summary": {"$ref": "#/definitions/trust_summary"},
+    "decision_checkpoint": {"$ref": "#/definitions/decision_checkpoint"},
+    "assurance_plan": {"$ref": "#/definitions/assurance_plan"},
+    "review_scope": {"$ref": "#/definitions/review_scope"},
+    "plan_review": {"$ref": "#/definitions/plan_review"},
+    "review_prompt_profile": {"$ref": "#/definitions/review_prompt_profile"},
+    "reviewer_evidence_packet": {"$ref": "#/definitions/reviewer_evidence_packet"},
+    "reviewer_roster": {"$ref": "#/definitions/reviewer_roster"},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ref", "fingerprint", "severity", "description"],
+        "properties": {
+          "ref": {"type": "string", "pattern": "^F[0-9]{3,}$"},
+          "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$", "description": "Hex fingerprint identifier. dev.25+: SHA-1 (40 hex) from `git hash-object --stdin --no-filters`. pre-dev.25: SHA-256 (64 hex) from Python hashlib. Both accepted during the migration window (through dev.26)."},
+          "severity": {"enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH"]},
+          "file": {"type": "string", "pattern": "\\S"},
+          "line": {"type": "integer"},
+          "description": {"type": "string"},
+          "agreement": {
+            "description": "Agreement classification for the finding. Single-lens cases: unanimous (all N reviewers agree), majority (≥ceil(N/2) agree), dissent (split verdict), solo (one reviewer). Multi-lens cases (dev.36+): cross-lens-convergence (all K lenses, each via its assigned M-block, agree — HIGHEST confidence), lens-domain-catch (single lens's reviewers catch when reviewers had different lenses — HIGH within that lens-domain, semantically distinct from `solo`). K×M case (dev.58+): intra-lens-convergence (all M reviewers within a single lens-X block agree — homogeneous-prompt replication signal, distinct epistemic shape from cross-lens-convergence). Subset-case multi-lens-convergence-subset enum value remains deferred until K≥3 empirical evidence accumulates (per dev.40 DEFERRED-RETIRE-WHEN note in skills/aivv/SKILL.md Step 5 Case B).",
+            "enum": ["unanimous", "majority", "dissent", "solo", "cross-lens-convergence", "lens-domain-catch", "intra-lens-convergence"]
+          },
+          "lens": {
+            "description": "Per-finding lens attribution (dev.37+, multi-lens spike data-collection). Recorded ONLY for multi-lens reviews (when top-level `lens` is an array). For `lens-domain-catch` agreement: single string — the lens of the catching reviewer. For `cross-lens-convergence` agreement: array of strings — the lenses of contributing reviewers, ordered to match top-level `lens` array order with non-contributing lenses skipped (e.g., reviewer_lens_assignments=[code,sec,perf] + finding caught by reviewers 0 and 2 → array=[code,perf]). Omitted entirely in homogeneous-lens reviews (top-level `lens` field already covers the attribution; the dev.40 cross-property `if/then` enforces the omission). This field enables the eventual subtask 3d ADR analysis to compute per-lens FP/TP rates from review logs directly, without requiring per-lens calibration routing changes.",
+            "oneOf": [
+              {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+              {
+                "type": "array",
+                "items": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+                "minItems": 2,
+                "maxItems": 16
+              }
+            ]
+          },
+          "quality_profile": {
+            "type": "string",
+            "enum": ["modern"],
+            "description": "Strict modern new-write profile marker. Legacy review-log findings may omit this field."
+          },
+          "scope_ref": {
+            "type": "object",
+            "required": ["kind", "ref"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["process", "session", "artifact", "user-journey", "project"]
+              },
+              "ref": {
+                "type": "string",
+                "pattern": "\\S"
+              }
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["kind", "ref"],
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": ["internal-repo", "websearch", "webfetch", "runtime", "command", "state-log", "thread", "unverified", "unverifiable"]
+                },
+                "ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "excerpt": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "runtime_evidence": {"$ref": "#/definitions/runtime_evidence"},
+          "epistemic_modes": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "evidence_modes_diversity": {"enum": ["single-mode", "multi-mode"]},
+          "impact": {
+            "type": "string",
+            "minLength": 12
+          },
+          "severity_rationale": {
+            "type": "string",
+            "minLength": 12
+          },
+          "recommended_next_step": {
+            "type": "string",
+            "enum": ["fix-now", "investigate-first", "document", "defer-with-rationale", "accept-risk"]
+          },
+          "verification_path": {
+            "type": "string",
+            "minLength": 8
+          },
+          "proportional_remediation": {
+            "type": "object",
+            "required": ["present_problem", "simplest_viable_correction", "net_complexity", "why_current_shape_insufficient"],
+            "additionalProperties": false,
+            "properties": {
+              "present_problem": {"type": "string", "minLength": 8},
+              "simplest_viable_correction": {"type": "string", "minLength": 8},
+              "net_complexity": {"type": "string", "minLength": 8},
+              "why_current_shape_insufficient": {"type": "string", "minLength": 8}
+            }
+          }
+        },
+        "allOf": [
+          {
+            "oneOf": [
+              {
+                "required": ["file"],
+                "not": {"required": ["scope_ref"]}
+              },
+              {
+                "required": ["scope_ref"],
+                "not": {
+                  "anyOf": [
+                    {"required": ["file"]},
+                    {"required": ["line"]}
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "if": {
+              "properties": {
+                "quality_profile": {
+                  "const": "modern"
+                }
+              },
+              "required": ["quality_profile"]
+            },
+            "then": {
+              "required": [
+                "evidence",
+                "impact",
+                "severity_rationale",
+                "recommended_next_step",
+                "verification_path"
+              ],
+              "oneOf": [
+                {
+                  "required": ["file"],
+                  "not": {"required": ["scope_ref"]}
+                },
+                {
+                  "required": ["scope_ref"],
+                  "not": {
+                    "anyOf": [
+                      {"required": ["file"]},
+                      {"required": ["line"]}
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "warnings": {"type": "array"},
+    "runtime_evidence_ingest": {"$ref": "#/definitions/runtime_evidence_ingest"}
+  },
+  "allOf": [
+    {
+      "$comment": "Cross-property constraint (dev.40, F006): if top-level lens is a single string (homogeneous review), then findings[].lens MUST NOT be present. Schema-enforces the prose rule in skills/aivv/SKILL.md Step 7.5 'OMIT findings[].lens entirely in homogeneous-lens reviews'.",
+      "if": {
+        "properties": {"lens": {"type": "string"}},
+        "required": ["lens"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "not": {"required": ["lens"]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Cross-property constraint (dev.40, F005): when top-level lens is an array (multi-lens dispatch), the array length must equal the reviewers integer (1:1 positional assignment per /aivv Step 1.4 lens-composition rule). Catches hand-edited or buggy logs where reviewers=3 but lens.length=2.",
+      "if": {
+        "properties": {"lens": {"type": "array"}},
+        "required": ["lens"]
+      },
+      "then": {
+        "anyOf": [
+          {"properties": {"reviewers": {"const": 2}, "lens": {"type": "array", "minItems": 2, "maxItems": 2}}},
+          {"properties": {"reviewers": {"const": 3}, "lens": {"type": "array", "minItems": 3, "maxItems": 3}}},
+          {"properties": {"reviewers": {"const": 4}, "lens": {"type": "array", "minItems": 4, "maxItems": 4}}},
+          {"properties": {"reviewers": {"const": 5}, "lens": {"type": "array", "minItems": 5, "maxItems": 5}}},
+          {"properties": {"reviewers": {"const": 6}, "lens": {"type": "array", "minItems": 6, "maxItems": 6}}},
+          {"properties": {"reviewers": {"const": 7}, "lens": {"type": "array", "minItems": 7, "maxItems": 7}}},
+          {"properties": {"reviewers": {"const": 8}, "lens": {"type": "array", "minItems": 8, "maxItems": 8}}},
+          {"properties": {"reviewers": {"const": 9}, "lens": {"type": "array", "minItems": 9, "maxItems": 9}}},
+          {"properties": {"reviewers": {"const": 10}, "lens": {"type": "array", "minItems": 10, "maxItems": 10}}},
+          {"properties": {"reviewers": {"const": 11}, "lens": {"type": "array", "minItems": 11, "maxItems": 11}}},
+          {"properties": {"reviewers": {"const": 12}, "lens": {"type": "array", "minItems": 12, "maxItems": 12}}},
+          {"properties": {"reviewers": {"const": 13}, "lens": {"type": "array", "minItems": 13, "maxItems": 13}}},
+          {"properties": {"reviewers": {"const": 14}, "lens": {"type": "array", "minItems": 14, "maxItems": 14}}},
+          {"properties": {"reviewers": {"const": 15}, "lens": {"type": "array", "minItems": 15, "maxItems": 15}}},
+          {"properties": {"reviewers": {"const": 16}, "lens": {"type": "array", "minItems": 16, "maxItems": 16}}}
+        ]
+      }
+    }
+  ]
+}

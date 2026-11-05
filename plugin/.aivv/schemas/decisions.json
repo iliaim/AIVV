@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.local/schemas/decisions/v1.json",
+  "title": "AIVV Review Decisions",
+  "description": "User-authored decisions copied from a static aivv-view HTML report and consumed by /aivv-fix. The viewer may read these files but never writes them.",
+  "type": "object",
+  "required": ["schema_version", "review_id", "updated_at", "decisions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "review_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/decision"
+      }
+    }
+  },
+  "definitions": {
+    "decision": {
+      "type": "object",
+      "required": ["finding_id", "decision"],
+      "additionalProperties": false,
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finding_fingerprint": {
+          "type": ["string", "null"]
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["fix", "defer", "wont_fix", "needs_info"]
+        },
+        "notes": {
+          "type": ["string", "null"]
+        },
+        "decided_by": {
+          "type": ["string", "null"]
+        },
+        "decided_at": {
+          "type": ["string", "null"]
+        },
+        "architecture_decision_route": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["route", "selected_option_id", "residual_class_risk", "user_approved_architecture_route"],
+          "properties": {
+            "route": {
+              "type": "string",
+              "enum": ["ordinary_route", "tactical_apply_now", "architectural_apply_now", "architectural_separate_effort", "decision_queue"]
+            },
+            "selected_option_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "residual_class_risk": {
+              "type": "string",
+              "minLength": 1
+            },
+            "user_approved_architecture_route": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  }
+}

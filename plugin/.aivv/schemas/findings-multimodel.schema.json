@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aivv.dev/schemas/findings-multimodel.schema.json",
+  "title": "AIVV Multi-Model Synthesized Finding",
+  "description": "Schema for a synthesized finding after multi-model dispatch Stage 7 (attribution restore). Standalone — does not extend finding.json via $ref because finding.json carries additionalProperties:false which blocks draft-07 allOf extension. The confidence field here means cross-provider agreement confidence, overriding the per-reviewer HIGH/MEDIUM/LOW meaning.",
+  "type": "object",
+  "definitions": {
+    "runtime_evidence": {
+      "type": "object",
+      "required": [
+        "outcome",
+        "source",
+        "probe_id",
+        "review_id",
+        "finding_ref",
+        "finding_fingerprint",
+        "assertion_polarity",
+        "spec_path",
+        "result_path",
+        "test_title",
+        "ran_at",
+        "updated_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "outcome": {"enum": ["confirmed", "refuted", "skipped", "error"]},
+        "source": {"enum": ["playwright-json"]},
+        "probe_id": {"type": "string", "minLength": 1},
+        "review_id": {"type": "string", "minLength": 1},
+        "finding_ref": {"type": "string", "minLength": 1},
+        "finding_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$"},
+        "assertion_polarity": {"enum": ["finding-condition", "healthy-invariant"]},
+        "spec_path": {"type": "string", "minLength": 1},
+        "result_path": {"type": "string", "minLength": 1},
+        "test_title": {"type": "string", "minLength": 1},
+        "assertion_message": {"type": "string"},
+        "ran_at": {"type": "string", "format": "date-time"},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  },
+  "required": ["id", "severity", "confidence", "category", "summary", "mm_confidence", "reviewer_attribution", "single_reviewer"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "pattern": "^F[0-9]{3,}$"},
+    "severity": {"type": "string", "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH"]},
+    "likelihood": {
+      "type": "string",
+      "enum": ["CERTAIN", "PROBABLE", "POSSIBLE", "UNLIKELY"],
+      "description": "Scalar will-it-manifest probability (reachability × exposure × trigger-conditionality), mirrored from finding.json. Distinct from confidence (is-it-real). Optional; consumed by the impact×likelihood severity model (`severity_model: impact_likelihood`), absent under the default `legacy_4pass`. Per-provider likelihood maps are out of scope here."
+    },
+    "impact_tier": {
+      "type": "string",
+      "enum": ["CATASTROPHIC", "SEVERE", "MODERATE", "NEGLIGIBLE"],
+      "description": "Scalar magnitude-of-harm-if-triggered tier, mirrored from finding.json, anchored to observable harm categories never reviewer tone. Optional; pairs with `likelihood` in the impact×likelihood model's 4×4 cell-map, absent under the default `legacy_4pass`. Per-provider impact maps are out of scope here."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["verified", "moderate", "single-reviewer"],
+      "description": "Cross-provider agreement confidence. verified: ≥2 different-provider reviewers agree. moderate: ≥2 reviewers agree (same-provider acceptable). single-reviewer: only one reviewer found this finding — preserved with explicit label, not discarded."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["code-bug", "design-flaw", "process-violation", "documentation-gap", "clarification-needed", "improvement"]
+    },
+    "value": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Optional improvement-track prominence metadata, mirrored from finding.json. Used only for POLISH sorting/prominence; never a defect severity tier."
+    },
+    "effort": {
+      "type": "string",
+      "enum": ["trivial", "moderate", "invasive"],
+      "description": "Optional improvement-track cost metadata, mirrored from finding.json. Used with value for Quick-Win prominence; never a defect severity tier."
+    },
+    "summary": {"type": "string", "minLength": 8},
+    "file": {"type": ["string", "null"]},
+    "line": {"type": ["integer", "null"], "minimum": 1},
+    "reviewer": {"type": "string"},
+    "lens": {
+      "type": "string",
+      "enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
+      "default": "code"
+    },
+    "rule_id": {
+      "type": "string",
+      "pattern": "^(A11Y|UX|MC|VVT|VD|DP|COMP|I18N|RTV|SEC|HEU|IS|UJ|AS|CQ)-[A-Za-z0-9.-]+$"
+    },
+    "devils_advocate": {"type": "boolean", "default": false},
+    "grounded_by": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_type", "source_ref"],
+        "additionalProperties": false,
+        "properties": {
+          "source_type": {"type": "string", "enum": ["websearch", "webfetch", "context7", "runtime", "unverified", "unverifiable", "internal-repo"], "description": "Citation source category. `websearch` / `webfetch` for URLs surfaced via WebSearch / WebFetch. `context7` for library identifiers from Context7 MCP (form: `<library-id>@<version>`). `runtime` for orchestrator-captured runtime artifacts such as axe-core output, computed-style contrast records, screenshots, or screenshot diffs. `internal-repo` for repo-relative paths used as evidence (verify by Grep, not external source). `unverified` when no external grounding was applied. `unverifiable` when the claim was attempted-but-failed to ground (no authoritative source located). The `unverifiable` value is preserved for parity with skills/methodology/SKILL.md emission contract."},
+          "source_ref": {"type": "string", "minLength": 1, "description": "URL, library identifier (`<id>@<version>` for context7), or repo-relative path (for internal-repo). For `unverified` / `unverifiable`, a one-line label describing what was not grounded."},
+          "excerpt": {"type": "string", "description": "Optional short excerpt or quote from the source supporting the claim. Helps consumers verify the citation without re-fetching."}
+        }
+      }
+    },
+    "runtime_evidence": {"$ref": "#/definitions/runtime_evidence"},
+    "epistemic_modes": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "evidence_modes_diversity": {"enum": ["single-mode", "multi-mode"]},
+    "mm_confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW"],
+      "description": "The per-reviewer confidence range from the highest-confidence individual reviewer, preserved for reference."
+    },
+    "severity_reported": {
+      "type": "object",
+      "description": "Severity as reported by each reviewer-id before max-aggregation.",
+      "additionalProperties": {"type": "string", "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH"]}
+    },
+    "reviewer_attribution": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1,
+      "description": "Model IDs of reviewers who independently found this issue."
+    },
+    "agreement_count": {
+      "$comment": "MUST equal reviewer_attribution.length — not enforceable in draft-07 but maintained by orchestrator invariant. Included as a convenience field for consumers that prefer not to compute array length.",
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of reviewers who found this issue."
+    },
+    "agreement_diversity": {
+      "type": "string",
+      "enum": ["cross-provider", "same-provider"],
+      "description": "Whether agreeing reviewers are from different providers."
+    },
+    "single_reviewer": {
+      "type": "boolean",
+      "description": "True when only one reviewer found this finding."
+    },
+    "truncated_coverage": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the diff was truncated and this finding may reflect incomplete coverage."
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "confidence=verified requires single_reviewer=false (verified requires ≥2 different-provider reviewers; AC-8)",
+      "if": {"properties": {"confidence": {"const": "verified"}}, "required": ["confidence"]},
+      "then": {"properties": {"single_reviewer": {"const": false}}, "required": ["single_reviewer"]}
+    },
+    {
+      "$comment": "confidence=single-reviewer requires single_reviewer=true (AC-8)",
+      "if": {"properties": {"confidence": {"const": "single-reviewer"}}, "required": ["confidence"]},
+      "then": {"properties": {"single_reviewer": {"const": true}}, "required": ["single_reviewer"]}
+    }
+  ]
+}
