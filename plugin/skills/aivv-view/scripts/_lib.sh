@@ -18,9 +18,10 @@ aivv_view_runtime_root() {
   for candidate in \
     "${AIVV_ROOT:-}/.aivv/runtime-root.mjs" \
     "${CLAUDE_PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-    "$codex_home/aivv-runtime/.aivv/runtime-root.mjs" \
+    "${PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
     "$skill_dir/.aivv/runtime-root.mjs" \
-    "$skill_dir/../../.aivv/runtime-root.mjs"; do
+    "$skill_dir/../../.aivv/runtime-root.mjs" \
+    "$codex_home/aivv-runtime/.aivv/runtime-root.mjs"; do
     if [ -z "$runtime_root_helper" ] && [ -f "$candidate" ]; then
       runtime_root_helper="$candidate"
     fi

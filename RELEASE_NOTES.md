@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.2.2 — cross-agent plugin packaging
+
+- Add native plugin package manifests for Codex and Claude Code around the shared AIVV skills and runtime.
+- Document the shared review core and host-specific adapter boundary.
+- Prefer the active packaged runtime over a legacy Codex runtime when both are installed.
+- Make the Codex profile installer runnable as documented and verify its generated profiles stay read-only.
+
 ## 0.2.1 — guard and prompt-boundary fixes
 
 - Clarify how investigator probes follow each host's tool restrictions.

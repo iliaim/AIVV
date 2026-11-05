@@ -6,10 +6,11 @@ Read before provider-backed dispatch/synthesis. Owns Case D
 ## Runtime Root
 
 Resolve `AIVV_ROOT` through the bundled `.aivv/runtime-root.md` runtime-root contract:
-- Source/Claude plugin checkout: resolve to the plugin root.
-- Codex install: prefer the active `${CODEX_HOME}/aivv-runtime`; support copies
-  under `${CODEX_HOME}/skills` are not runtime roots. The resolver also supports
-  custom Codex roots and does not assume a default home directory.
+- Active plugin package: resolve to that package root, even when a legacy
+  `${CODEX_HOME}/aivv-runtime` also exists.
+- Legacy Codex skill install: resolve its sibling `${CODEX_HOME}/aivv-runtime`;
+  support copies under `${CODEX_HOME}/skills` are not runtime roots. The
+  resolver supports custom Codex roots and does not assume a default home.
 
 Set `PROMPT_BUNDLE_MJS="$AIVV_ROOT/tools/aivv-prompt-bundle.mjs"` and
 `CATALOG_PATH="$AIVV_ROOT/tools/model-catalog.json"`. Load role fallbacks for

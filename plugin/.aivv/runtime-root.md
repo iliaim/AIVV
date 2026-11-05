@@ -16,13 +16,15 @@ POSIX entrypoint for that same resolver. It uses this order:
 1. An explicit `AIVV_ROOT` is a development/debugging override and must be a
    valid AIVV root.
 2. `CLAUDE_PLUGIN_ROOT` identifies the Claude plugin root.
-3. `CODEX_HOME/aivv-runtime` is preferred when the host exposes `CODEX_HOME`,
-   including custom Codex roots.
-4. Otherwise, derive the host root from the loaded skill directory. A Codex
-   install resolves to `<codex-root>/aivv-runtime`; a source/Claude layout
-   resolves to the plugin root. This path-derived branch never assumes
-   `$HOME/.codex`.
-5. As a final self-location fallback, when neither an environment override nor
+3. `PLUGIN_ROOT` identifies the active Codex plugin package when the host
+   exposes it.
+4. Otherwise, derive the host root from the loaded skill directory. A bundled
+   plugin resolves to its package root. A legacy Codex skill install resolves
+   to its sibling `<codex-root>/aivv-runtime`. This path-derived branch never
+   assumes `$HOME/.codex`.
+5. `CODEX_HOME/aivv-runtime` is the fallback for legacy Codex installs that do
+   not expose a usable skill directory, including custom Codex roots.
+6. As a final self-location fallback, when neither an environment override nor
    a valid skill directory resolves a root, derive it from `runtime-root.mjs`'s
    own file location (two directories up). This only succeeds inside an intact
    AIVV install and exists so the resolver can locate itself when invoked with
@@ -40,15 +42,16 @@ unrelated project directory.
  for AIVV_RUNTIME_ROOT_CANDIDATE in \
    "${AIVV_ROOT:-}/.aivv/runtime-root.mjs" \
    "${CLAUDE_PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-   "$AIVV_CODEX_HOME/aivv-runtime/.aivv/runtime-root.mjs" \
+   "${PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
    "${SKILL_BASE_DIR:-}/.aivv/runtime-root.mjs" \
-   "${SKILL_BASE_DIR:-}/../../.aivv/runtime-root.mjs"; do
+   "${SKILL_BASE_DIR:-}/../../.aivv/runtime-root.mjs" \
+   "$AIVV_CODEX_HOME/aivv-runtime/.aivv/runtime-root.mjs"; do
    if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ] && [ -f "$AIVV_RUNTIME_ROOT_CANDIDATE" ]; then
      AIVV_RUNTIME_ROOT_HELPER="$AIVV_RUNTIME_ROOT_CANDIDATE"
    fi
  done
  if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ]; then
-   echo "AIVV runtime-root resolver not found; set AIVV_ROOT, CODEX_HOME, or SKILL_BASE_DIR" >&2
+   echo "AIVV runtime-root resolver not found; set AIVV_ROOT, PLUGIN_ROOT, CODEX_HOME, or SKILL_BASE_DIR" >&2
    exit 1
  fi
 AIVV_ROOT="$(node "$AIVV_RUNTIME_ROOT_HELPER" --print "${SKILL_BASE_DIR:-}")"
@@ -62,16 +65,17 @@ $AivvRuntimeRootHelper = $env:AIVV_RUNTIME_ROOT_HELPER
 foreach ($candidate in @(
   $(if ($env:AIVV_ROOT) { Join-Path $env:AIVV_ROOT ".aivv/runtime-root.mjs" }),
   $(if ($env:CLAUDE_PLUGIN_ROOT) { Join-Path $env:CLAUDE_PLUGIN_ROOT ".aivv/runtime-root.mjs" }),
-  (Join-Path $AivvCodexHome "aivv-runtime/.aivv/runtime-root.mjs"),
+  $(if ($env:PLUGIN_ROOT) { Join-Path $env:PLUGIN_ROOT ".aivv/runtime-root.mjs" }),
   $(if ($env:SKILL_BASE_DIR) { Join-Path $env:SKILL_BASE_DIR ".aivv/runtime-root.mjs" }),
-  $(if ($env:SKILL_BASE_DIR) { Join-Path $env:SKILL_BASE_DIR "../../.aivv/runtime-root.mjs" })
+  $(if ($env:SKILL_BASE_DIR) { Join-Path $env:SKILL_BASE_DIR "../../.aivv/runtime-root.mjs" }),
+  (Join-Path $AivvCodexHome "aivv-runtime/.aivv/runtime-root.mjs")
 )) {
   if (-not $AivvRuntimeRootHelper -and $candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
     $AivvRuntimeRootHelper = $candidate
   }
 }
 if (-not $AivvRuntimeRootHelper) {
-  throw "AIVV runtime-root resolver not found; set AIVV_ROOT, CODEX_HOME, or SKILL_BASE_DIR"
+  throw "AIVV runtime-root resolver not found; set AIVV_ROOT, PLUGIN_ROOT, CODEX_HOME, or SKILL_BASE_DIR"
 }
 $AIVV_ROOT = (& node $AivvRuntimeRootHelper --print $env:SKILL_BASE_DIR).Trim()
 ```
