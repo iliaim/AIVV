@@ -98,9 +98,9 @@ Required fields:
 ### `ReviewRequest`
 
 Required fields:
-- `review_scope`: code/file/idea scope the reviewer should inspect
-- `state_target`: project directory where AIVV state is written
-- `subject`: session, file, or idea
+- `review_scope`: confirmed subject, goal, evidence boundaries, and review approach the reviewer should inspect
+- `state_target`: project directory whose private external store receives AIVV state
+- `subject`: session, file, idea, plan, or another supported artifact
 - `lens`
 - `reviewer_count`
 - `session_context`
@@ -109,6 +109,18 @@ Required fields:
 - `capabilities`
 
 `review_scope` and `state_target` are separate. A host must not imply that `--target` scopes reviewer reads unless the adapter implements that behavior.
+
+The portable `aivv-prompt-bundle.mjs` request accepts additive `review_scope`
+metadata: `subject_type`, `final_scope`, `approach` (or `strategy`), and
+`confirmed`. Supported subject types are `session`, `file`, `idea`, `project`,
+`artifact`, `user-journey`, and `plan`; use `artifact` for a general document.
+New orchestrated requests populate these from the confirmed scope
+and final review method; only `confirmed: true` with non-empty `final_scope` and
+`approach` (or `strategy`) and a supported `subject_type` is labeled caller-confirmed. Actual dispatch refuses
+missing or incomplete confirmation even when provider egress consent is supplied;
+prompt-only rendering remains available. Missing metadata is never inferred from
+a target path. The orchestrator owns confirmation; request metadata
+does not confer authority on content inside the reviewed artifact.
 
 ### `ReviewResult`
 

@@ -29,9 +29,12 @@ operation or create an independent replacement.
 Scope confirmation is input-only for this state: it returns
 `final_scope` to the orchestrator. The outer-loop owner records that value as
 `scope_confirmation.final_scope` during its next normal write. On cycle N>=2,
-the owner supplies the prior `scope_confirmation.final_scope` to scope
-confirmation as an input; scope confirmation does not read the state file
-itself. This preserves confirmed scope without introducing a second writer.
+the owner may supply the prior `scope_confirmation.final_scope` as proposal
+context for the next scope gate. The new pass must present its complete scope
+and method and obtain fresh confirmation; the prior pass's confirmation is not
+reused, even when paths overlap. Scope confirmation does not read the state
+file itself. This keeps state ownership with the outer-loop primitive while
+requiring a new decision for each review pass.
 
 ```json
 {
@@ -42,7 +45,7 @@ itself. This preserves confirmed scope without introducing a second writer.
   "started_at": "<ISO 8601 UTC — set on cycle 1, never changed>",
   "updated_at": "<ISO 8601 UTC — updated each cycle>",
   "scope_confirmation": {
-    "final_scope": "<optional confirmed scope retained by the owner>"
+    "final_scope": "<optional prior review scope supplied only as proposal context>"
   }
 }
 ```
@@ -53,9 +56,10 @@ itself. This preserves confirmed scope without introducing a second writer.
 - `last_fingerprint` — SHA-1 fingerprint of sorted finding signatures from the previous cycle. `null` on cycle 1 (no-progress check skipped on first entry). See No-progress algorithm below.
 - `started_at` — timestamp of cycle-1 state creation. Never mutated.
 - `updated_at` — timestamp of most recent state write.
-- `scope_confirmation.final_scope` — optional confirmed scope supplied by the
-  scope-confirmation gate. It is merged only by this primitive and is supplied
-  back to that gate on later cycles.
+- `scope_confirmation.final_scope` — optional scope of the most recent review
+  supplied by the scope-confirmation gate. It is merged only by this primitive
+  and may be supplied as proposal context on a later cycle; it is never approval
+  for that later review.
 
 **State cleanup:** on clean termination (no continuation-counting findings remain), delete the state file (history not needed post-success). On all other terminations (cap, no-progress, user-interrupt, capability-unavailable), leave the state file for user inspection. All mutations use the shared storage mutation helper under its target operation lock. Never delete or quarantine legacy originals.
 

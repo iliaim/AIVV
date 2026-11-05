@@ -28,8 +28,9 @@ cancel with no partial write.
 
 ## Project-Kind Detection
 
-Before Q1, inspect manifests under `<target>` to infer project kind. First
-confident match wins:
+During setup, cheaply inspect manifests under `<target>` to infer project-kind
+metadata. Preserve an existing `project_kind`; when it is unset, use the first
+confident filesystem match, or `null` if there is no clear signal:
 
 | Signal | project_kind |
 |---|---|
@@ -39,37 +40,19 @@ confident match wins:
 | Multiple stacks | `mixed` |
 | No signal | `null` |
 
-Existing config can also inverse-map `default_lenses`: `["visual","ux"]` ->
-`ui`, `["code","sec"]` -> `library`, `["visual"]` -> `ui`, plain `code` ->
-`null`. Existing user config wins over filesystem inference when they disagree.
+Do not infer `project_kind` from `default_lenses`: they are independent settings.
+Project kind is metadata only and never installs or replaces review lenses.
+Preserve an existing valid `default_lenses` selection. If no lens selection is
+configured, use the golden default `general`, regardless of project kind. Let
+K be the number of lenses in that retained selection, or K=1 for fresh setup.
 
-Project kind maps to `default_lenses`:
-
-| project_kind | default_lenses | K |
-|---|---|---|
-| `ui` | `["visual","ux"]` | 2 |
-| `backend` | `"code"` | 1 |
-| `mixed` | `"code"` | 1 |
-| `library` | `["code","sec"]` | 2 |
-| `null` | `"code"` | 1 |
-
-Show Q1 only when detection/inverse-map has no useful result; otherwise record
-the detected kind in the pre-flight summary.
+Project kind is not an interactive question because it does not change a review
+choice. Preserve an existing value; otherwise record the cheap inference or
+`null` in setup metadata.
 
 ## Questions
 
-Q1 Project kind (only when not detected):
-
-```text
-What kind of code does this project mostly have?
-1. UI / frontend work
-2. Backend / API work
-3. Mixed (full-stack)
-4. Library / SDK (security-sensitive code paths)
-5. Skip - leave on default
-```
-
-Q2 Thoroughness:
+Q1 Thoroughness:
 
 ```text
 How thorough should AIVV be by default? (default: balanced) (currently: <current>)
@@ -78,7 +61,7 @@ How thorough should AIVV be by default? (default: balanced) (currently: <current
 3. Thorough - Multi-reviewer rigor. Kx2 reviewers, expand POLISH, auto-chain into /aivv-fix
 ```
 
-Q3 After finding issues:
+Q2 After finding issues:
 
 ```text
 1. Ask each time before fixing
@@ -86,7 +69,7 @@ Q3 After finding issues:
 3. Never apply fixes automatically
 ```
 
-Q4 HTML report:
+Q3 HTML report:
 
 ```text
 1. HTML report link after each review/fix [Recommended]
@@ -94,14 +77,14 @@ Q4 HTML report:
 3. Inline output only
 ```
 
-Q5 Outer loop, only if Q3 = automatically apply fixes:
+Q4 Outer loop, only if Q2 = automatically apply fixes:
 
 ```text
 1. No - single pass
 2. Yes - loop with recommended defaults (cap at 3 cycles, halt while MAJOR+ findings remain)
 ```
 
-Q6 Smart lens detection:
+Q5 Smart lens detection:
 
 ```text
 1. Ask when extra lenses look relevant (recommended) - lens_detection_mode: ask
@@ -111,7 +94,8 @@ Q6 Smart lens detection:
 
 ## Preset Bundle
 
-K is the number of default lenses. Q2 writes:
+K is the number of retained default lenses (one `general` lens on a fresh
+setup). Q1 writes:
 
 | Key | fast | balanced | thorough |
 |---|---|---|---|
@@ -124,13 +108,14 @@ K is the number of default lenses. Q2 writes:
 | `polish_collapsed` | true | false | false |
 | `post_review_html_viewer` | true | true | true |
 | `post_review_html_open_mode` | link | link | link |
-| `outer_loop_mode` | off | off | `until_clean` only if Q5 yes |
+| `outer_loop_mode` | off | off | `until_clean` only if Q4 yes |
 | `outer_loop_max_cycles` | 2 | 3 | 3 |
 
 Resolved reviewers: K=1 -> fast/balanced 1, thorough 2; K=2 -> fast/balanced
 2, thorough 4.
 
-The wizard does not ask for `scope_confirmation_mode`; write the golden-schema
+The wizard asks 4-5 preference questions; project kind is inferred/preserved as
+metadata without prompting. The wizard does not ask for `scope_confirmation_mode`; write the golden-schema
 default `ask`. It also does not ask for `fix_apply_policy`; omitted policy
 resolves from schema defaults and `/aivv-fix` gates automatic application by
 confidence, challenge, consequence, L1/manual-review, and write-intent checks.
@@ -142,10 +127,13 @@ Write:
 - `schema_version: 6`
 - `_provenance: "wizard"`
 - `_setup_hint_shown_at: <UTC ISO timestamp>`
-- resolved Q1-Q6 keys, including `project_kind`, `default_lenses`,
-  `post_review_html_viewer`, `post_review_html_open_mode`, and
-  `lens_detection_mode`
+- resolved preset values, including inferred/preserved `project_kind`,
+  preserved-or-defaulted `default_lenses`, `post_review_html_viewer`,
+  `post_review_html_open_mode`, and `lens_detection_mode`
 - `scope_confirmation_mode` at golden default (`ask`)
+
+For `default_lenses`, the pre-write summary shows the preserved existing
+selection or `general` when unset. Project-kind inference never changes it.
 
 ## Pre-Write Summary
 
@@ -153,7 +141,7 @@ After all questions and before writing, show resolved keys and ask:
 `Press Enter to confirm and save, or Ctrl-C to cancel.`
 
 Cold install shows the full key block. Re-run against an existing config shows a
-diff only, plus `(Other keys unchanged from current config.)`. Q2 default on
+diff only, plus `(Other keys unchanged from current config.)`. Q1 default on
 re-run is the closest preset by Hamming distance over the preset bundle; ties
 choose balanced.
 

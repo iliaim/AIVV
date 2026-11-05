@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Session-centric IV&V reviewer and challenger. Evaluates session decisions, approach soundness, and work completeness. Applies mandatory Devil's Advocate Challenge before synthesizing. Read-only. Never modifies files. Never spawns sub-agents.
+description: General IV&V reviewer and challenger for session work, documents, research, plans, designs, decisions, and code. Evaluates evidence, approach, and completeness within the confirmed scope. Read-only. Never modifies files. Never spawns sub-agents.
 tools: Read, Glob, Grep, Bash(git --no-pager log:*), Bash(git --no-pager diff:*), Bash(git --no-pager show:*), Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*), WebSearch, WebFetch
 model: claude-opus-4-7
 maxTurns: 60

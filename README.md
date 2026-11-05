@@ -1,10 +1,10 @@
 # AIVV — Agentic Independent Validation & Verification
 
-AIVV is an open-source Claude Code plugin for structured code review, remediation, and calibration. It dispatches isolated reviewers, records findings, and supports a bounded investigate → fix → verify workflow.
+AIVV is an open-source Claude Code plugin for structured review of session work, documents, research, plans, designs, decisions, and code. It dispatches isolated reviewers, records findings, and supports a bounded investigate → fix → verify workflow.
 
 ## What it does
 
-- `/aivv` runs an advisory review. Use `--reviewers=N` for multiple reviewers or `--lens=<name>` to focus the review.
+- `/aivv` proposes a scope and review approach for you to confirm, then runs a general advisory review. Use `--reviewers=N` for multiple reviewers or `--lens=code` for a code-focused review.
 - `/aivv-fix` investigates and remediates selected findings through explicit safety gates.
 - `/aivv-calibrate` supports project-specific calibration.
 - `/aivv-view` reads AIVV review and fix records.

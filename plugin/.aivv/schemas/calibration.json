@@ -9,8 +9,8 @@
   "properties": {
     "lens": {
       "type": "string",
-      "enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
-      "description": "Review lens. Shipped: code (default, dev.1+), sec + visual (dev.22+), ux + polish (dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (user-journey lens; dev.121). Forward-look planned: perf, a11y (Tier 2/3+). Enum mirrors finding.json envelope's lens enum; calibration corpora group by lens directory (e.g., .aivv/calibration/code/<invocation-id>.jsonl shards, plus any legacy .aivv/calibration/code.jsonl)."
+      "enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
+      "description": "Review lens. Shipped: general (broad goal-fit, evidence, design, and risk review), code (legacy finding default, dev.1+), sec + visual (dev.22+), ux + polish (dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (user-journey lens; dev.121). Forward-look planned: perf, a11y (Tier 2/3+). Enum mirrors finding.json envelope's lens enum; calibration corpora group by lens directory (e.g., .aivv/calibration/general/<invocation-id>.jsonl shards, plus any legacy .aivv/calibration/general.jsonl)."
     },
     "kind": {
       "type": "string",

@@ -133,7 +133,7 @@
           "properties": {
             "review_id": {"type": "string"},
             "reviewers": {"type": "integer"},
-            "lens": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+            "lens": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
             "findings": {"type": "array"}
           }
         }

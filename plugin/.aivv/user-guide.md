@@ -6,7 +6,7 @@ This guide is the short path for everyday AIVV use. Common workflows are first, 
 
 | Goal | Run | Notes |
 |---|---|---|
-| Review current session work | `/aivv` | Default: one general reviewer. |
+| Review current session work | `/aivv` | Default: general lens; confirm scope and approach before dispatch. |
 | Review with more confidence | `/aivv --reviewers=2` | Uses two reviewers when cold reviewer dispatch is available. |
 | Review a file | `/aivv path/to/file` | Relative paths resolve from the current target project. |
 | Challenge an idea | `/aivv "Should we use Redis here?"` | Treats the quoted text as the review subject. |
@@ -20,6 +20,7 @@ This guide is the short path for everyday AIVV use. Common workflows are first, 
 
 Start with `/aivv`. Add shape only when the work needs it:
 
+- Use `--lens=code` for a code-focused pass; the default `general` lens also handles documents, research, plans, designs, workflows, and decisions.
 - Use `--reviewers=2` for ambiguous, high-risk, or decision-heavy work.
 - Use `--lens=sec` for security-focused review.
 - Use `--lens=visual` for static UI/visual review.
@@ -28,9 +29,30 @@ Start with `/aivv`. Add shape only when the work needs it:
 
 The full flag catalog remains available through `/aivv --help` and `skills/aivv/references/argument-parsing.md`.
 
+Before each review, AIVV uses the available chat and artifacts to explain the goal,
+materials, boundaries, and intended review method in plain English. Confirm the
+proposal, choose a concrete alternative, or describe a custom scope. A new custom
+scope is restated for confirmation. With no answer or no prompt capability, the
+review waits; it does not dispatch reviewers or start fixes. Each outer-loop review
+pass confirms again. Legacy `announce` preferences and `--auto-scope` are accepted
+with a warning but no longer skip confirmation.
+
+The reviewer selects relevant questions and evidence from the
+[general review checklist](../skills/methodology/references/general-review-checklist.md).
+It checks accuracy, completeness, fitness for the goal, design, alternatives, and
+applicable risks. Maintainability and scalability are assessed against real needs;
+improvement suggestions must justify their added complexity. A clean review may
+recommend keeping the current approach. Code and runtime checks apply when the
+subject calls for them; a non-code or zero-diff session is valid review material.
+
+Existing configured lens choices, including `default_lenses: "code"`, remain in
+effect. Omitted values use the new `general` default. To choose it explicitly, use
+`/aivv --lens=general` or `/aivv --config-set default_lenses=general`.
+
 ## Target And State
 
-AIVV writes review logs, fix logs, and calibration under the resolved target project's `.aivv/` directory. In normal use, run AIVV from the project you are reviewing.
+AIVV writes review logs, fix logs, and calibration to a private external store for
+the resolved target project. In normal use, run AIVV from the project you are reviewing.
 
 Use `--target=/path/to/project` when the current working directory is not the project whose state should receive the logs.
 
@@ -60,7 +82,7 @@ Prefer review-log handoff for fixes:
 Concise definitions for AIVV's core vocabulary. Full contracts live in the shipped references linked from each entry.
 
 - **IV&V** — Independent Verification and Validation: reviewing work with people/agents not involved in producing it. AIVV substitutes structural independence (a separate engineering team) with cold spawning, context isolation, adversarial prompting, and lens separation. What each mechanism actually delivers is honestly bounded in `.aivv/methodology.md` "The Core Claim".
-- **Lens** — a methodological viewpoint applied by a reviewer (`code`, `sec`, `visual`, `ux`, `polish`, `compliance`, `i18n`, `user-journey`). Selected via `--lens=<name>`. Lens catalogs live at `.aivv/lenses/`.
+- **Lens** — a methodological viewpoint applied by a reviewer (`general`, `code`, `sec`, `visual`, `ux`, `polish`, `compliance`, `i18n`, `user-journey`). Selected via `--lens=<name>`. Lens catalogs live at `.aivv/lenses/`.
 - **Reviewer** — an isolated agent that reads the review target and emits findings. "Cold" means spawned without inherited conversation history; "isolated" means it sees only what the orchestrator explicitly passes.
 - **Finding** — one discrete issue emitted by a reviewer, carrying severity, location, and grounded evidence.
 - **`review_mode` values** — how reviewers were dispatched:

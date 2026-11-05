@@ -248,10 +248,10 @@
         "methodology_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "lens": {
           "oneOf": [
-            {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+            {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
             {
               "type": "array",
-              "items": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+              "items": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
               "minItems": 1,
               "maxItems": 16
             }
@@ -308,7 +308,7 @@
           "provider": {"type": ["string", "null"]},
           "model": {"type": ["string", "null"]},
           "model_source": {"type": ["string", "null"]},
-          "lens": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+          "lens": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
           "status": {"enum": ["completed", "failed", "skipped", "degraded", "unfilled"]},
           "status_reason": {"type": ["string", "null"]},
           "finding_refs": {
@@ -357,10 +357,10 @@
     "lens": {
       "description": "Lens(es) used for the review. Single string in homogeneous case (one lens for all reviewers); array of strings in multi-lens spike case (dev.35+, Tier 2B). Array order matches reviewer order (alpha=lens[0], beta=lens[1], ...). Array length must equal `reviewers` field.",
       "oneOf": [
-        {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+        {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
         {
           "type": "array",
-          "items": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+          "items": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
           "minItems": 2,
           "maxItems": 16
         }
@@ -448,10 +448,10 @@
           "lens": {
             "description": "Per-finding lens attribution (dev.37+, multi-lens spike data-collection). Recorded ONLY for multi-lens reviews (when top-level `lens` is an array). For `lens-domain-catch` agreement: single string — the lens of the catching reviewer. For `cross-lens-convergence` agreement: array of strings — the lenses of contributing reviewers, ordered to match top-level `lens` array order with non-contributing lenses skipped (e.g., reviewer_lens_assignments=[code,sec,perf] + finding caught by reviewers 0 and 2 → array=[code,perf]). Omitted entirely in homogeneous-lens reviews (top-level `lens` field already covers the attribution; the dev.40 cross-property `if/then` enforces the omission). This field enables the eventual subtask 3d ADR analysis to compute per-lens FP/TP rates from review logs directly, without requiring per-lens calibration routing changes.",
             "oneOf": [
-              {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+              {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
               {
                 "type": "array",
-                "items": {"enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+                "items": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
                 "minItems": 2,
                 "maxItems": 16
               }

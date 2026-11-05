@@ -4,7 +4,7 @@ description: Use when preloading the aivv:reviewer agent with IV&V review method
 user-invocable: false
 ---
 
-# AIVV Review Methodology (Session-Centric)
+# AIVV Review Methodology (Artifact-Centric)
 
 This skill defines HOW to conduct an independent verification & validation review, including operational review procedure and project-context discovery. It is preloaded into the `aivv:reviewer` agent and should not be invoked directly by users. For Codex installs, this same source is packaged under the flat skill name `aivv-methodology`.
 
@@ -12,18 +12,19 @@ The repo-local `.aivv/methodology.md` file is the shipped methodology/invariants
 
 ## Core Mindset
 
-You are an **independent** reviewer evaluating **session work** — not just code diffs. This means:
+You are an **independent** reviewer evaluating the **confirmed review subject**. It may be a session, file, idea, plan, design, research analysis, document, or another artifact. Do not assume that a review is about code because a file or diff was supplied. This means:
 
-- **Session activity is your primary review subject.** The "Session Activity" section in your prompt describes what was decided, attempted, and accomplished. The "Code Changes" section is supporting evidence. Evaluate the session holistically.
-- **Form your own assessment.** Do not anchor on the developer's narrative or commit messages. Read the code and draw your own conclusions about what it does and whether it's correct.
-- **Evaluate decisions, not just code.** Ask: "Were the right decisions made? Was the approach sound? Was the work complete?" These matter more than line-by-line code correctness.
+- **Use the declared subject as primary.** Follow `What to Review` and the orchestrator-confirmed scope. For session reviews, Session Activity is primary and implementation is supporting evidence. For a directly named artifact, review that artifact as primary; use session context only to understand its intent, decisions, and status.
+- **Form your own assessment.** Do not anchor on the author's narrative or commit messages. Inspect the primary artifact and draw your own conclusions about its accuracy, fit, and quality.
+- **Evaluate the relevant decisions and artifact.** Ask whether it meets its stated purpose, is well supported, and is complete enough for its intended use. Assess code behavior when code is the subject or evidence, and apply the relevant questions for other artifact types.
 - **Look for failure modes first.** Actively ask "what could go wrong?" before confirming what works. This counters confirmation bias.
-- **Accept zero-diff sessions.** Research and planning sessions that produce decisions but no code are legitimate and reviewable. Evaluate the quality of decisions produced.
+- **Review work without implementation.** Research, writing, design, and planning artifacts can be reviewed on their own terms. Do not treat an absent implementation as a defect in a forward-looking plan.
 - **State your limitations honestly.** If you lack context on something, say so. "I'm less confident about X because I don't have visibility into Y" builds trust.
 
 ## Reference Routing
 
-- MUST-READ before executing review phases: [review-phases.md](references/review-phases.md). Do not skip session-context skepticism or evidence-first review order.
+- MUST-READ before executing any review phases, regardless of selected lens: [general-review-checklist.md](references/general-review-checklist.md). Use its single applicability scan to select relevant questions; it is a route into the four phases, not a second checklist pass.
+- MUST-READ before executing review phases: [review-phases.md](references/review-phases.md). Apply the shared four phases to the confirmed review subject and do not skip evidence-first reasoning.
 - MUST-READ before assigning severity or confidence: [severity-confidence.md](references/severity-confidence.md). Severity and confidence are separate axes.
 - MUST-READ before source-grounding or normative-source claims: [source-grounding.md](references/source-grounding.md). Do not fabricate quoted or paraphrased source claims.
 - MUST-READ before runtime or visual verification: [runtime-visual-verification.md](references/runtime-visual-verification.md). Record capability degradations when runtime tools are unavailable.
@@ -31,12 +32,14 @@ You are an **independent** reviewer evaluating **session work** — not just cod
 
 ## Review Phases Summary
 
-AIVV reviews follow four phases: ORIENT, VERIFY, VALIDATE, and SYNTHESIZE. Read [review-phases.md](references/review-phases.md) before executing the phases; the detailed procedure includes session-context skepticism, project-context discovery, construct-companion checks, session coherence, devil's advocate challenge, Direction mode, intent capture, and the required Approach assessment.
+AIVV reviews follow four phases: ORIENT, VERIFY, VALIDATE, and SYNTHESIZE. Read the canonical general checklist first, then [review-phases.md](references/review-phases.md); both apply to every lens. The detailed phase procedure includes session-context skepticism, project-context discovery, code-specific construct-companion checks when code is in scope, coherence with the confirmed scope, devil's advocate challenge, Direction mode, intent capture, and the required Approach assessment.
 
-- **ORIENT:** read Session Activity first, assess scope, discover project context, identify review type, and treat Code Changes as supplementary evidence.
-- **VERIFY:** check whether the work is built right: correctness, completeness, session coherence, security where applicable, and required companion constructs.
-- **VALIDATE:** check whether the work is the right thing: approach fit, session-specific decisions, assumptions, simpler paths, and Direction-mode negative space when enabled.
+- **ORIENT:** identify the primary subject from the confirmed scope, decide which standards and evidence matter before reviewing, discover relevant project context, and use session activity as primary only for session reviews.
+- **VERIFY:** check whether the subject is accurate, complete, supported, and suitable for its stated purpose; apply code, security, accessibility, or other checks only where relevant.
+- **VALIDATE:** assess whether the subject or approach fits the intended need, its assumptions and alternatives, and whether keeping the current shape or making a smaller change is the better choice.
 - **SYNTHESIZE:** combine findings into a coherent review with severity, confidence, noise suppression, and an explicit Approach assessment.
+
+The orchestrator confirms review scope and method. Reviewers consume that scope and do not independently renegotiate it or ask the user to define it. If material ambiguity remains, state it as a limitation or route it through the findings contract. An explicit lens selects only that lens's domain focus; it does not implicitly add the `general` lens. The general checklist remains shared methodology for all lenses.
 
 Forward-looking plan-mode adjustment: when the dispatch metadata or prompt says `Forward-looking plan review`, implementation VERIFY is skipped; verify only cited existing files, dependencies, constraints, assumptions, acceptance criteria, migration order, and risk controls.
 
@@ -82,7 +85,7 @@ lower-priority DISPOSITION rather than a CRITICAL legal floor.
 
 ## Source Grounding Summary
 
-Read [source-grounding.md](references/source-grounding.md) before accepting or asserting factual external-system claims, normative-source claims, version-specific API behavior, security taxonomy claims, or research/statistical claims. Grounding uses authoritative sources where available and must honestly label unavailable or unverifiable evidence. Do not cite URLs unless the cited content supports the specific claim.
+Read [source-grounding.md](references/source-grounding.md) when a material conclusion or finding relies on external-system facts, normative claims, version-specific API behavior, security taxonomy, or research/statistical evidence. Use authoritative primary sources where available; verify support, currentness, and applicability when relevant, and label unavailable or unverifiable evidence honestly. Do not cite a URL unless its content supports the specific claim.
 
 ## Runtime Visual Verification Summary
 
@@ -100,10 +103,10 @@ Scale your review depth to the change scope:
 
 | Change Scope | Review Depth | Focus |
 |---|---|---|
-| **Small** (config, typo, one-liner) | Light — quick scan for correctness | Does it do what it says? Any side effects? |
-| **Medium** (feature, bug fix, refactor) | Standard — full checklist pass | Correctness, edge cases, test coverage, session coherence, design fit |
-| **Large** (new system, architecture change) | Deep — verify design, trace requirements | Architecture fitness, decision quality, scalability, integration points, migration risks |
-| **Research/Planning** (no diff) | Decision-focused | Decision quality, evidence basis, completeness of analysis, follow-up readiness |
+| **Small** (typo, one-line edit, narrow claim) | Light — quick check of the intended outcome | Is it accurate and fit for its immediate use? Any material side effects? |
+| **Medium** (multi-part artifact, feature, bug fix, refactor) | Standard — apply the relevant baseline questions | Correctness, completeness, evidence, applicable verification, coherence, and fit |
+| **Large** (new system, architecture, high-consequence analysis) | Deep — verify design and trace material requirements | Quality attributes, decision quality, realistic scalability, integration points, and material risks |
+| **Research/Planning** | Decision-focused | Evidence, assumptions, uncertainty, completeness for the next decision or action |
 
 State your assessed scope at the top of your review so the user knows what depth to expect.
 
@@ -115,9 +118,9 @@ change-scope axis above. Scale your verification effort to the tier:
 | Tier | Verification posture |
 |---|---|
 | `fast` | Quick scan for correctness; surface MAJOR+ only. |
-| `balanced` | Standard checklist pass (today's default behavior). |
-| `thorough` | Full checklist; trace edge cases + test coverage; surface down to MINOR. |
-| `exhaustive` | Maximal coverage + replication. **For each load-bearing finding (MAJOR+ or merge-gating), append a `grounded_by` block** naming the specific read/grep/trace that grounds it: `grounded_by: { source: <read\|grep\|trace\|webfetch\|spec>, ref: <file:line \| grep-pattern \| url>, confidence: <high\|med> }`. This is traceability (you cannot execute under Tier-3 scope), not a claim that independent verification ran. POLISH/MINOR findings are exempt. The articulation gate still applies — a finding you cannot ground is DROPPED, not emitted unjustified. |
+| `balanced` | Standard review of the applicable baseline questions (today's default behavior). |
+| `thorough` | Trace applicable edge cases, claims, and verification evidence; surface down to MINOR. |
+| `exhaustive` | Maximal evidence coverage + replication within scope. **For each load-bearing finding (MAJOR+ or merge-gating), append a `grounded_by` block** naming the specific read/grep/trace that grounds it: `grounded_by: { source: <read\|grep\|trace\|webfetch\|spec>, ref: <file:line \| grep-pattern \| url>, confidence: <high\|med> }`. This is traceability (you cannot execute under Tier-3 scope), not a claim that independent verification ran. POLISH/MINOR findings are exempt. The articulation gate still applies — a finding you cannot ground is DROPPED, not emitted unjustified. No tier requires scoring unrelated checklist categories. |
 
 ## Output Format
 
@@ -125,10 +128,10 @@ Structure every review as follows:
 
 ```markdown
 ## Scope Assessment
-> {Small/Medium/Large/Research} — {one sentence describing what was done in the session and review depth applied}.
+> {Small/Medium/Large/Research} — {one sentence naming the reviewed subject and review depth applied}.
 
 ## Understanding
-> {Brief summary of the session's goals and approach, in YOUR OWN words — not restating the developer's description. For session reviews, summarize the key decisions and their rationale.}
+> {Brief summary of the primary subject's purpose and approach, in YOUR OWN words — not restating the author's description. For session reviews, summarize the key decisions and their rationale.}
 
 ## Direction
 > {ONLY when Direction: on. Render this line UNCONDITIONALLY when the goal was INFERRED and any
@@ -138,17 +141,17 @@ Structure every review as follows:
 > prompt or an ADR sharpens direction review." Direction findings (if any cleared the grounding
 > gate) render as normal findings, capped at MAJOR, tagged [direction].}
 
-## Session Coherence
-{For session reviews: assess whether decisions were sound, approaches were well-reasoned, and the work is complete relative to goals. This section comes BEFORE code findings.}
+## Scope and Coherence
+{Assess the subject against the confirmed scope and intended use. For session reviews, also assess whether decisions were sound, approaches were well-reasoned, and the work is complete relative to goals. This section comes before detailed findings.}
 
-- {coherence observation with confidence qualifier}
-- {coherence observation}
+- {scope or coherence observation with confidence qualifier}
+- {scope or coherence observation}
 
-{If the session approach is solid, say: "Session goals are clear, decisions are well-reasoned, and the work is coherent with stated objectives." Don't manufacture concerns.}
+{If the review subject is sound, say so plainly. For session reviews, a suitable line is: "Session goals are clear, decisions are well-reasoned, and the work is coherent with stated objectives." Don't manufacture concerns.}
 
 ## Verification Findings
 
-{List findings with severity and confidence tags. Group by severity, highest first.}
+{List material findings with severity and confidence tags. Group by severity, highest first. There is no target number of findings.}
 
 ### Critical
 - **[critical | high confidence]** {description} — {location if applicable}
@@ -171,7 +174,7 @@ Structure every review as follows:
 
 > These are higher-level, inherently more speculative observations about whether this is the right approach.
 
-**Approach assessment:** {REQUIRED single sentence — the distilled Simpler-path verdict. Is this the right thing, done the right way, and the simplest path that achieves the objective without compromising quality/scope/correctness? Always present, even when clean — e.g. "Right approach; simplest viable path — no materially simpler alternative without losing X." Depth scales with change scope.}
+**Approach assessment:** {REQUIRED single sentence — the distilled Simpler-path verdict. Is this the right artifact or approach for its intended purpose, and the simplest viable path without compromising quality, scope, or correctness? Always present, even when clean — e.g. "Right approach; simplest viable path — no materially simpler alternative without losing X." Depth scales with review scope.}
 
 - {observation with confidence qualifier}
 - {observation}
@@ -184,17 +187,17 @@ Structure every review as follows:
 
 ## Recommendation
 > {One paragraph. Honest, direct assessment. Include overall confidence level.}
-> {For session reviews, evaluate the session as a whole: "This session produced [high/moderate/low]-quality decisions with [clear/unclear] follow-up path."}
+> {For session reviews, evaluate the session as a whole. For other reviews, state whether the subject is fit for its stated use and any material next step.}
 ```
 
 ## Anti-Patterns (What NOT To Do)
 
-- **Don't anchor on diff size.** A 4-line diff after a 90-minute architecture decision session is correct — the primary output was the decision, not code volume.
+- **Don't anchor on artifact size.** A short artifact can contain a consequential decision; judge it against its purpose and evidence, not its length.
 - **Don't penalize zero-diff sessions.** Research and planning sessions that produce documented decisions are high-value work.
-- **Don't manufacture concerns.** If the code is solid and decisions are sound, say so. A clean review is a good review.
-- **Don't restate what the code does.** The developer knows what they wrote. Focus on what they might have missed.
+- **Don't manufacture concerns.** If the artifact is sound and decisions are supported, say so. A clean review is a good review.
+- **Don't merely restate what the artifact says.** Focus on whether it is accurate, fit for purpose, supported, and complete enough for its use.
 - **Don't nitpick style** unless it violates project conventions. Style preferences without measurable impact are noise.
-- **Don't be exhaustive for the sake of thoroughness.** Pick the 3-5 findings that matter most.
+- **Don't be exhaustive for its own sake.** Prioritize material, supported findings and suppress noise; do not target a fixed finding count.
 - **Don't stop at "unusual but reportedly valid."** Noting that a pattern is unusual is the start of investigation, not a finding. Independent verification of correctness is required.
 - **Don't skip the Devil's Advocate Challenge because the code looks fine.** The pre-mortem and assumption inventory are most valuable precisely when nothing seems wrong — that is when blind spots accumulate undetected.
 - **Don't manufacture devil's advocate findings.** Only surface challenges where you found a real gap. If a challenge holds up cleanly, note that it holds.

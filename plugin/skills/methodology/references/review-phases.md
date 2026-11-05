@@ -10,9 +10,9 @@ Contents:
 - Phase 3: VALIDATE
 - Phase 4: SYNTHESIZE
 
-## Session Context Skepticism (Critical Rule)
+## Session Context Skepticism (when session context is supplied)
 
-**Session context is written by the same person whose work you are reviewing.** It describes intent and belief, not verified truth. The most dangerous content in a session context is a confident-sounding but incorrect assertion — because it causes reviewers to skip verification of exactly the thing that is wrong.
+**Session context is written by the same person whose work you are reviewing.** It describes intent and belief, not verified truth. A confident-sounding assertion can cause a reviewer to skip verification of exactly the thing that is wrong.
 
 Four principles apply without exception:
 
@@ -28,17 +28,11 @@ Four principles apply without exception:
 
 Before reviewing, understand the project's conventions and locked decisions. Your review must honor those constraints.
 
-### Step 1: Discover project conventions (always do this first)
+### Step 1: Discover applicable project guidance
 
-Read the project root for convention files, in this priority order:
+Within the confirmed scope, inspect available project guidance relevant to the subject. Start with explicit maintainer or agent instructions (`AGENTS.md`, `AGENTS.override.md`, or equivalent), then check relevant README or project overview material, style and standards guidance, architecture or decision records, and active plans or specifications. Prefer the closest applicable guidance and load only enough material to establish the relevant constraints.
 
-1. **maintainer guidance** (or `.claude/maintainer guidance`) — Primary project instructions. Contains architecture, standards, locked decisions, and workflow rules. ALWAYS read this first.
-2. **`.claude/rules/`** — If a rules directory exists, look for a `RULES_SUMMARY.md` first (quick reference). Only load individual rule files when the summary is insufficient.
-3. **`strategy/DECISIONS.md`** or equivalent — Locked strategic decisions that all work must align with.
-4. **`.claude/memory/`** — Persistent memory files with project history and patterns.
-5. **`CURRENT/`** or equivalent — Active planning documents, trackers, decisions.
-
-**If none of these exist**, the project has no formal conventions — note this in your review as context and apply general software engineering best practices.
+If no relevant guidance appears in the inspected sources, say that no applicable guidance was found there; do not infer that none exists elsewhere. Apply evidence-based practice appropriate to the artifact type and intended use. Keep all reads within the confirmed scope and relevant dependency evidence.
 
 ### Step 2: Identify locked decisions
 
@@ -49,11 +43,11 @@ Most projects with a maintainer guidance will document immutable/locked decision
 - Business strategy (e.g., "US-first market", "mobile-first")
 - Design principles (e.g., "zero technical debt", "privacy-first")
 
-**When reviewing session decisions**: Check each decision against locked constraints. Flag any contradiction as critical.
+When a decision in scope conflicts with a documented constraint, establish the concrete consequence and apply the shared severity and confidence rules. A conflict alone does not determine severity. If the constraint's applicability or authority is unclear, state that uncertainty and use the appropriate clarification or investigation route.
 
 ### Step 3: Find session artifacts
 
-Session context comes from these sources (check what exists in the project):
+For a session review, relevant session context may come from these sources when they are supplied or included in the confirmed scope:
 
 | Artifact | Common Locations | Content |
 |---|---|---|
@@ -63,7 +57,7 @@ Session context comes from these sources (check what exists in the project):
 | User decisions | `CURRENT/USER_DECISIONS.md`, `CURRENT/DECISIONS.md` | Approved/rejected decisions |
 | Project progress | `.claude/memory/project-progress.md` | Milestones |
 
-**Not all projects will have all of these.** Use what's available.
+**Not all projects will have these sources.** Use only relevant, available session artifacts within the confirmed scope. Do not inspect private or external context outside that scope.
 ### Step 4: Standards lookup
 
 For standards lookup details, read [standards-lookup.md](standards-lookup.md). Open the relevant standards subfile directly rather than loading every catalog at once.
@@ -74,21 +68,21 @@ For standards lookup details, read [standards-lookup.md](standards-lookup.md). O
 
 Before reviewing anything, understand the scope:
 
-1. **Read the Session Activity section first** — this is your primary input. Understand what the session set out to accomplish, what decisions were made, and what the current state is.
-2. **Assess change scope** — is this a research session (no diff), a one-line fix, a feature addition, or an architectural change? This determines review depth (see Proportional Rigor below).
+1. **Read `What to Review` and the confirmed scope first.** Identify the primary subject and intended use. For a session review, read Session Activity as primary context; for a directly named artifact, review that artifact as primary and use session context only to understand its intent and status.
+2. **Assess review scope** — is this a small correction, a multi-part artifact or feature, a research session, or a major structural decision? This determines review depth (see Proportional Rigor below).
 3. **Apply Project Context Discovery** (Steps 1–4 above) — read maintainer guidance, identify locked decisions, find session artifacts.
 4. **Identify the review type**:
-   - **Session review** (no argument): Evaluate decisions, approach, completeness, and session coherence
-   - **Code review** (file argument): Evaluate code quality, patterns, and fitness
-   - **Idea challenge** (quoted text): Evaluate reasoning, alternatives, and risks
+   - **Session review:** Evaluate decisions, approach, scope fit, and completion.
+   - **Artifact review:** Evaluate the named file or artifact against its purpose and relevant criteria; artifact type does not imply code review.
+   - **Idea challenge:** Evaluate reasoning, evidence, alternatives, and risks.
    - **Forward-looking plan review** (`--plan <file>`): Evaluate a plan/spec/proposal before implementation. The plan is the primary artifact; implementation VERIFY is skipped except for checking cited existing files, dependencies, constraints, and evidence.
-5. **Understand the information hierarchy**: Session Activity is PRIMARY. Code Changes are SUPPLEMENTARY evidence. Do not lead with diff commentary when session context is rich.
+5. **Keep the primary subject clear.** Session Activity is primary only for a session review. Code Changes, session notes, and other context are supporting evidence when the named artifact itself is primary.
 
 ### Phase 2: VERIFY ("Built right?")
 
-Systematic verification across two dimensions: **code correctness** and **session coherence**.
+Systematically verify the primary subject against its intended purpose, evidence, relevant requirements, and the confirmed scope. Assess code correctness and session coherence when those surfaces are in scope.
 
-**Forward-looking plan-mode adjustment:** when the dispatch metadata or prompt says `Forward-looking plan review`, do NOT run implementation VERIFY as if completed code exists. Instead, verify only the plan's cited existing evidence: referenced files/paths, stated dependencies, constraints, assumptions, acceptance criteria, migration order, and risk controls. Missing implementation is expected and is not a finding unless the plan itself claims the work is already complete. Continue to run Session Coherence / Plan Coherence checks and Phase 3 VALIDATE in full.
+**Forward-looking plan-mode adjustment:** when the dispatch metadata or prompt says `Forward-looking plan review`, do NOT run implementation VERIFY as if completed code exists. Instead, verify only the plan's cited existing evidence: referenced files/paths, stated dependencies, constraints, assumptions, acceptance criteria, migration order, and risk controls. Missing implementation is expected and is not a finding unless the plan itself claims the work is already complete. Continue to check plan coherence against the confirmed scope and run Phase 3 VALIDATE in full.
 
 #### Intent-before-defect Gate
 
@@ -134,9 +128,9 @@ When the artifact under review explicitly says a behavior is intentional (`inten
 - Concurrency: race conditions, shared mutable state
 - **Code simplicity** (when diff includes logic code, not pure UI/markup/config): consult [`.aivv/lenses/code.md`](../../../.aivv/lenses/code.md) for discovery pointer + [`.aivv/standards/code-quality.md`](../../../.aivv/standards/code-quality.md) for full CQ-* rule details (16 rules: simplification process, complexity, redundancy & abstraction). For cross-file / architecture-altitude simplification (god-files, module boundaries, cross-file knowledge duplication, dependency direction, file-tree fit), also consult [`.aivv/standards/architecture.md`](../../../.aivv/standards/architecture.md) for the AS-* catalog (8 rules) — the structural complement to CQ-*.
 
-#### Completeness Sub-Pass (construct-companion inventory)
+#### Completeness Sub-Pass (code constructs only)
 
-For each construct class encountered in the review target, verify the required companion is present. Missing companion → **MAJOR** finding when the companion's absence is reachable at current inputs; for not-manifest cases (e.g., a feature availability guard in a codebase that targets only evergreen browsers, or a test file expectation where the project has no enforced coverage gate), route through the Improvement-articulation pass (verified present need + specific improvement + positive net value required) rather than auto-elevating to MAJOR. This is a **systematic mandatory check**, not a reactive "look if you happen to notice it" pass — generate the expectation first, then verify.
+When code is in the confirmed scope, for each encountered construct class verify its relevant companion. Missing companion → **MAJOR** finding when the companion's absence is reachable at current inputs; for not-manifest cases (e.g., a feature availability guard in a codebase that targets only evergreen browsers, or a test file expectation where the project has no enforced coverage gate), route through the Improvement-articulation pass (verified present need + specific improvement + positive net value required) rather than auto-elevating to MAJOR. This is a systematic code check, not a requirement for non-code reviews.
 
 | Construct | Required companion to verify |
 |-----------|------------------------------|
@@ -150,16 +144,15 @@ For each construct class encountered in the review target, verify the required c
 
 For runtime correctness procedure and visual verification triggers, read [runtime-visual-verification.md](runtime-visual-verification.md). Static analysis is not runtime correctness.
 
-#### Session Coherence (ALWAYS — even when no diff exists)
+#### Scope and coherence (always)
 
-- **Goal alignment**: Do the code changes (if any) align with the stated session goals?
-- **Decision-implementation consistency**: Were there decisions discussed that aren't reflected in the implementation? Did any rejected approaches sneak back in?
-- **Completeness gaps**: Are there gaps between what was planned and what was implemented? Is unfinished work explicitly acknowledged?
-- **Rejection validation**: Were rejected approaches appropriately ruled out with sound reasoning?
-- **Risk acknowledgment**: Are identified risks adequately documented and mitigated?
-- **Decision quality**: Were decisions evidence-based (citing data, research, project standards) or assumption-based?
+- **Purpose and scope fit**: Does the artifact or session work align with the stated goal and confirmed scope?
+- **Internal consistency**: Do related sections, decisions, and supporting artifacts agree? For a session review, do outcomes reflect decisions and constraints?
+- **Completeness and status**: Are material gaps, limitations, and unfinished work clear relative to the artifact's intended next use?
+- **Decision quality**: Where decisions are in scope, are they supported by relevant evidence and fair consideration of alternatives?
+- **Risk acknowledgment**: Are material risks and uncertainties represented accurately?
 
-#### Completeness & Consistency
+#### Implementation completeness (when code is in scope)
 
 - Does the implementation cover all stated requirements/goals?
 - Are there scenarios the code doesn't handle?
@@ -197,28 +190,28 @@ Higher-level assessment. These findings are inherently more speculative — labe
 - Will this be maintainable? Will it be painful to modify later?
 - Are there genuinely viable alternatives worth considering? Do not manufacture alternatives when one localized correction is clearly sufficient; when alternatives are equally sound, preserve the author's choice.
 
-#### Session-Specific Validation
+#### Session-Specific Validation (for session reviews)
 - Was the scope of work appropriate for the stated goals?
 - Were trade-offs explicitly acknowledged rather than silently accepted?
 - Does the session leave a clear path for follow-up work?
 - If approaches were rejected, was the evaluation fair and thorough?
-- For research/planning sessions: Is the analysis complete enough to enable the next implementation session?
+- For research/planning sessions: Is the analysis complete enough to support its stated next decision or action?
 
 #### Devil's Advocate Challenge (Mandatory — all review scopes)
 
 Before synthesizing, work through these four challenge questions. **Depth scales with change scope**: a small change gets a one-sentence answer per question; a large or architectural change warrants full exploration of scenarios, alternatives, and edge cases. If a challenge holds up cleanly, say so explicitly — a clean challenge outcome is positive signal. If it reveals a gap, that's a finding.
 
-1. **Pre-mortem** — "If this shipped today and caused a production incident in the next two weeks, what is the single most likely root cause? Is that scenario explicitly addressed?"
+1. **Pre-mortem** — "If this artifact were used as intended today and caused a material failure in the next two weeks, what is the most likely cause? Is that scenario explicitly addressed?" For software changes, consider a production incident; for other subjects, use the relevant consequence.
 
-2. **Assumption inventory** — "What does this code or decision assume about inputs, environment, external dependencies, or user behavior that is NOT explicitly validated? What happens if any one of those assumptions is violated?"
+2. **Assumption inventory** — "What does this artifact or decision assume about evidence, inputs, context, dependencies, or user behavior that is NOT established? What happens if a material assumption is wrong?"
 
-3. **Inversion test** — "What is the riskiest decision made this session? What is the worst-case consequence if that decision turns out to be wrong in six months? Is the downside acceptable given what was acknowledged?"
+3. **Inversion test** — "What is the riskiest decision or claim in scope? What is the plausible consequence if it is wrong or becomes unsuitable? Is that downside acknowledged and acceptable?"
 
-4. **Simpler path test** — "Could this achieve the same outcome with materially less complexity? If yes, is the added complexity justified by a specific, stated reason?" Be ambitious here: actively look for a restructuring that *removes* moving pieces (branches, layers of indirection, state) rather than merely relocating them — at both the within-function altitude (CQ-*) and the cross-file altitude (AS-*). **But discipline the ambition:** if you assert that a materially simpler structure exists, you MUST sketch it concretely — name the target shape and which moving pieces disappear. If you cannot sketch one, do not assert one exists; an unsubstantiated "this could surely be simpler" is noise, not a finding. (The dev.146 Approach-assessment line in Phase 4 distils this test; this discipline keeps that assessment honest.) See `.aivv/standards/code-quality.md` CQ-025 (relocated-not-removed) for the deletion bias the reviewer applies.
+4. **Simpler path test** — "Could the same outcome be reached with materially less complexity or effort, or by keeping the current state? If so, is the proposed change justified by a specific present need?" Where code structure is in scope, compare the concrete moving pieces that would be removed or added. Do not assert a simpler alternative unless you can sketch its shape and trade-off. See `.aivv/standards/code-quality.md` CQ-025 only when that code-quality rule applies.
 
 Any improvement surfaced by this test must also pass [severity-confidence.md](severity-confidence.md)'s Proportional-remediation gate. The reviewer must compare the minimum sufficient correction with the proposed recommendation, account for added moving pieces, and show positive net value before emitting it.
 
-For **large or architectural changes**, go further: for each of the four questions, enumerate the two or three most plausible failure scenarios or alternative approaches rather than stopping at the first one. Challenge the assumptions of the assumptions.
+For **large, high-consequence, or structurally complex reviews**, go further in proportion to the decision: examine the most plausible failure scenarios or alternatives, rather than stopping at the first one. Do not turn this into exhaustive scoring across unrelated categories.
 
 #### Direction Challenge (fit-to-goal + negative-space) — apply only when `Direction: on`
 
@@ -227,17 +220,19 @@ subsection entirely (pre-feature review behavior). When `Direction: on`, add two
 reasoning dimensions to the Devil's Advocate work above. Direction now defaults on after
 the R19 maintainer-review gate passed; `--no-direction` or `direction: false` pins the
 pre-feature behavior. **Depth scales** with the
-`Thoroughness:` tier AND the assessed change scope: a one-line sanity check at `fast` or
-research/one-line scope; a full alternatives enumeration + whole-repo exploration (Read/Glob/Grep,
-Tier-1) at `exhaustive` or architectural scope.
+`Thoroughness:` tier AND the assessed review scope: a concise check at `fast` or
+small scope; a full alternatives analysis with reads and searches inside the confirmed subject and
+relevant dependency evidence at `exhaustive` or architectural scope. Do not expand to whole-repo
+exploration unless the repository is part of the confirmed review scope.
 
-1. **Fit-to-goal.** Does this change actually advance the session's goal? State the goal you are
-   assessing against (see Intent capture below). Is there a structurally better alternative that
-   meets the same goal? (Google "Alternatives Considered with trade-offs" + ADR shape.)
-2. **Negative-space.** What is NOT done that the goal implies? Grade against this fixed gap-class
-   checklist: **error paths · boundary/null/empty inputs · dependency failures · missing test
-   classes · leftover TODOs · undeclared non-goals.** Name any gap whose absence undermines the
-   stated goal.
+1. **Fit-to-goal.** Does this artifact or change advance the confirmed goal? State the goal you are
+   assessing against (see Intent capture below). Is there a viable alternative that better meets the
+   same goal under the stated constraints, and what trade-off would it make?
+2. **Negative-space.** What is NOT present that the goal and artifact type imply? Consider material
+   evidence or assumption gaps, relevant boundary and failure cases, dependencies, missing
+   verification, unfinished scope, and undeclared non-goals. Check code-specific cases such as
+   error paths, null/empty inputs, and test classes only when code is in scope. Name a gap only when
+   it undermines the stated goal or intended use.
 
 **The grounding gate (make-or-break).** Emit a direction finding ONLY IF it (1) cites concrete
 evidence, (2) sketches a concrete alternative, (3) names the trade-off, and (4) is advisory.
@@ -275,4 +270,4 @@ methodology prose.)
 
 Combine your findings into a coherent review. Apply the severity/confidence model and suppress noise.
 
-**Always emit an Approach assessment** (dev.146+): the synthesis MUST lead its Validation Observations with a one-line verdict distilling the Phase 3 Simpler-path test — is this the right thing, built the right way, and the simplest path that achieves the objective without compromising quality, scope, or correctness? State it even when the approach holds up cleanly (a clean assessment is positive signal, not silence). This keeps the Validation altitude always-visible rather than surfacing only when a concern happens to clear the articulation gate. The assessment line is a summary, not a finding — it does not bypass the Improvement-articulation gate; any concrete betterment it implies still becomes a finding only if verified present need, a specific improvement, and positive net value are established.
+**Always emit an Approach assessment** (dev.146+): the synthesis MUST lead its Validation Observations with a one-line verdict distilling the Phase 3 Simpler-path test — is this the right artifact or approach for its intended use, and the simplest viable path without compromising quality, scope, or correctness? State it even when the approach holds up cleanly (a clean assessment is positive signal, not silence). This keeps the Validation altitude always-visible rather than surfacing only when a concern happens to clear the articulation gate. The assessment line is a summary, not a finding — it does not bypass the Improvement-articulation gate; any concrete betterment it implies still becomes a finding only if verified present need, a specific improvement, and positive net value are established.

@@ -42,8 +42,8 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
 - `--full-ui-ux`: lenses `visual,ux,polish,compliance,i18n,user-journey`,
   wrapper M=2, default N=12.
 - `--full-a11y`: lenses `visual,compliance`, wrapper M=2, default N=4.
-- `--full`: all seven lenses, wrapper M=2, default N=14.
-- `--full-with-journey`: all eight lenses including `user-journey`, wrapper M=2,
+- `--full`: all seven specialist lenses (excluding the general default lens), wrapper M=2, default N=14.
+- `--full-with-journey`: all eight specialist lenses including `user-journey` (excluding the general default lens), wrapper M=2,
   default N=16; warn that this exceeds the dev.70 tested ceiling of N=14, then
   continue unless host dispatch cannot support it.
 - `--thoroughness=<tier>`: accepts exactly `fast, balanced, thorough, exhaustive`.
@@ -70,7 +70,7 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
 
 ## Setup
 
-`--setup` is a standalone interactive wizard; the parser intentionally does not enumerate Q1-Q6 and [setup-wizard.md](setup-wizard.md) owns that flow. It
+`--setup` is a standalone interactive wizard; the parser intentionally does not enumerate Q1-Q5 and [setup-wizard.md](setup-wizard.md) owns that flow. It
 stops normal processing before Steps 1.4/1.5/1.9/2/3/4/6/7/7.5/8.
 
 Reject `--setup` with `--config-*`, full-* flags, `--lens=`, `--reviewers=`,
@@ -89,9 +89,10 @@ and `--project` outside setup warns and is ignored.
 
 - `--auto-lens` / `--no-auto-lens`: per-run only, mutually exclusive; force
   `lens_detection_mode` to `smart` or `off`; strip before positional parsing.
-- `--auto-scope` / `--ask-scope`: per-run only, mutually exclusive; force
-  `scope_confirmation_mode` to `announce` or `ask`; strip before positionals.
-  Explicit file/idea positionals still announce and do not prompt.
+- `--auto-scope` / `--ask-scope`: accepted per-run aliases, mutually exclusive;
+  strip before positionals. `--auto-scope` is deprecated: warn and normalize
+  it to `ask`. Both aliases require the ordinary complete scope confirmation;
+  explicit file/idea positionals also require confirmation.
 
 ## 2aa. `--multi-model` / `--no-multi-model`
 

@@ -29,13 +29,15 @@ Emit only when all conditions hold:
 Microcopy, as the first user-visible Step 6 line:
 
 ```text
-Tip: AIVV is using defaults ({reviewers} reviewer{plural-s}, {lens-summary}, {severity_threshold}-and-above severity). Configure with /aivv --setup (4-6 questions) - this hint won't appear again
+Tip: AIVV is using defaults ({reviewers} reviewer{plural-s}, {lens-summary}, {severity_threshold}-and-above severity). Configure with /aivv --setup (4-5 questions) - this hint won't appear again
 ```
 
 Substitutions:
 - `{reviewers}` from resolved `default_reviewers`.
 - `{plural-s}` is `s` iff reviewers > 1.
-- `{lens-summary}` is `code lens` for a string or `visual+ux lenses` for an array.
+- `{lens-summary}` names the resolved default lens for a string (for example,
+  `general lens`) or joins the resolved array with `+` and `lenses` (for
+  example, `visual+ux lenses`).
 - `{severity_threshold}` is resolved enum value.
 
 No trailing period and no leading emoji.

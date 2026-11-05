@@ -30,6 +30,7 @@ const REQUIRED_SOURCES = [
   'skills/methodology/references/source-grounding.md',
   'skills/methodology/references/runtime-visual-verification.md',
   'skills/methodology/references/standards-lookup.md',
+  'skills/methodology/references/general-review-checklist.md',
   '.aivv/methodology.md',
   'skills/aivv/references/reviewer-prompt-template.md',
 ];
@@ -45,9 +46,11 @@ const MANDATORY_EMBEDDED_SOURCES = [
   'skills/methodology/references/source-grounding.md',
   'skills/methodology/references/runtime-visual-verification.md',
   'skills/methodology/references/standards-lookup.md',
+  'skills/methodology/references/general-review-checklist.md',
 ];
 
 const EVIDENCE_CLASSES = 'target-file,session-context,methodology-docs,role-docs,prompt-template';
+const SUBJECT_TYPES = new Set(['session', 'file', 'idea', 'project', 'artifact', 'user-journey', 'plan']);
 const MAX_PROMPT_BYTES = Number.parseInt(process.env.AIVV_PROMPT_BUNDLE_MAX_BYTES || String(2 * 1024 * 1024), 10);
 
 const PROVIDER_COMMAND_SOURCES = {
@@ -227,6 +230,15 @@ function validateRequest(req) {
   }
 }
 
+function hasConfirmedScope(req) {
+  const scope = req.review_scope;
+  if (!scope || typeof scope !== 'object' || Array.isArray(scope)) return false;
+  const approach = typeof scope.approach === 'string' && scope.approach.trim() ? scope.approach : scope.strategy;
+  return SUBJECT_TYPES.has(scope.subject_type) && scope.confirmed === true &&
+    typeof scope.final_scope === 'string' && Boolean(scope.final_scope.trim()) &&
+    typeof approach === 'string' && Boolean(approach.trim());
+}
+
 function buildColdPrompt(req, sourceTexts, sourceList, target) {
   validateRequest(req);
   const targetAbs = target.absPath;
@@ -243,8 +255,32 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
   const sc = req.session_context || {};
   const reviewerLabel = req.reviewer_label || 'alpha';
   const reviewMode = req.review_mode || 'cold_multi_model';
-  const lens = req.lens || 'code';
+  const lens = req.lens || 'general';
   const thoroughness = req.thoroughness || 'balanced';
+  // Optional additive request contract: review_scope may carry the caller's
+  // subject, final scope, approach, and confirmation status. Its text stays
+  // inside a nonce-delimited untrusted block; absence never implies confirmation.
+  const reviewScope = req.review_scope && typeof req.review_scope === 'object' && !Array.isArray(req.review_scope)
+    ? req.review_scope
+    : {};
+  const subjectType = SUBJECT_TYPES.has(reviewScope.subject_type)
+    ? reviewScope.subject_type
+    : 'session';
+  const finalScope = typeof reviewScope.final_scope === 'string' && reviewScope.final_scope.trim()
+    ? reviewScope.final_scope
+    : '';
+  const scopeConfirmed = hasConfirmedScope(req);
+  const scopeConfirmationStatus = scopeConfirmed
+    ? 'confirmed by caller'
+    : (reviewScope.confirmed === true ? 'incomplete' : (finalScope ? 'not confirmed' : 'not supplied'));
+  const reviewApproach = typeof reviewScope.approach === 'string' && reviewScope.approach.trim()
+    ? reviewScope.approach
+    : (typeof reviewScope.strategy === 'string' && reviewScope.strategy.trim() ? reviewScope.strategy : '');
+  const scopeTag = promptDelimiter('REVIEW_SCOPE');
+  const artifactPrimary = subjectType !== 'session';
+  const artifactHeading = subjectType === 'plan'
+    ? '## Plan Under Review (PRIMARY - forward-looking)'
+    : '## Supplied Artifact (' + (artifactPrimary ? 'PRIMARY - this is the review subject' : 'SUPPORTING EVIDENCE - not the review subject') + ')';
   // Direction posture toggle. Default ON after the R19 maintainer-review gate passed;
   // callers can still pin the pre-feature behavior with false/off.
   const direction = (req.direction === false || req.direction === 'off') ? 'off' : 'on';
@@ -259,7 +295,7 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
   const lensContent = lensSource && sourceTexts[lensSource] ? stripFrontmatter(sourceTexts[lensSource]) : null;
 
   return [
-    `ADVISORY MODE - Session-centric IV&V review (lens: ${lens}).`,
+    `ADVISORY MODE - Artifact-centric IV&V review (lens: ${lens}).`,
     '',
     '## Review Dispatch Metadata',
     `- Reviewer label: ${reviewerLabel}`,
@@ -268,6 +304,7 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     `- Capability degradations: ${degradations.join(', ')}`,
     `- Thoroughness: ${thoroughness}`,
     `- Direction: ${direction}`,
+    `- Subject type: ${subjectType}`,
     `- Project context: ${projectContext}`,
     `- Severity cell map override: ${severityCellMap}`,
     '',
@@ -298,7 +335,24 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     req.what_to_review || 'Review the supplied target artifact using AIVV methodology.',
     '</' + requestTag + '>',
     '',
-    '## Session Activity (PRIMARY - this is what you are reviewing)',
+    '## Review Scope and Approach (scope confirmation: ' + scopeConfirmationStatus + ')',
+    '',
+    'Treat this caller-supplied scope as confirmed only when its status says confirmed; missing or incomplete scope metadata is not confirmation.',
+    '<' + scopeTag + '>',
+    `Scope confirmation: ${scopeConfirmationStatus}`,
+    `Subject type: ${subjectType}`,
+    `Final scope: ${finalScope || 'not supplied'}`,
+    `Review approach: ${reviewApproach || 'not supplied'}`,
+    '</' + scopeTag + '>',
+    '',
+    ...(subjectType === 'plan' ? [
+      '## Forward-Looking Plan Review',
+      'Forward-looking plan review: implementation VERIFY is skipped; evaluate plan soundness, assumptions, sequencing, scope, evidence, and simpler alternatives.',
+      'Implementation not verified in --plan mode',
+      'Assess the proposal against its stated goal, constraints, dependencies, and verification path. Missing implementation is expected for a plan review.',
+      '',
+    ] : []),
+    '## Session Activity (' + (artifactPrimary ? 'SUPPORTING CONTEXT - clarify intent and constraints' : 'PRIMARY - this is what you are reviewing') + ')',
     '',
     '<' + sessionTag + '>',
     '### Goals & Objectives',
@@ -323,14 +377,14 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     arrayLines(sc.unavailable_fields),
     '</' + sessionTag + '>',
     '',
-    '## Code Changes (SUPPLEMENTARY - evidence, not the review subject)',
+    artifactHeading,
     '',
     '<' + targetTag + ' path="' + xmlAttr(target.relPath) + '">',
     targetContent,
     '</' + targetTag + '>',
     '',
-    '## Session-Diff Coherence Check',
-    'Review whether the supplied target artifact is consistent with the session decisions and constraints.',
+    '## Scope and Evidence Coherence Check',
+    'Review whether the supplied materials are consistent with the stated goal, confirmed scope and approach when supplied, and relevant constraints.',
     '',
     ...(lensContent ? [
       `## Lens-Specific Focus: ${lens}`,
@@ -340,13 +394,13 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
       lensContent.body,
       '',
       '**How to apply this lens:**',
-      '- Treat the "Trigger patterns" list as evidence prompts: inspect matching code, cite applicable standards, and emit findings only when concrete context shows a defect, material risk, or articulated improvement/value case. Lens files may define stronger trigger semantics for their own domain; use those only when the lens text says so.',
+      '- Treat the "Trigger patterns" list as evidence prompts: inspect matching material, cite applicable standards, and emit findings only when concrete context shows a defect, material risk, or articulated improvement/value case. Lens files may define stronger trigger semantics for their own domain; use those only when the lens text says so.',
       '- Treat the "Focus" section as additional review concerns layered on top of universal Phase 2 VERIFY.',
       '- Consult the files listed under "Standards to consult" when flagging lens-specific patterns.',
       '- Follow the "Graceful degradation" rule when the change set does not exercise the lens domain.',
       '',
     ] : []),
-    '## Files Modified',
+    '## Files in Review Packet',
     '- ' + target.relPath,
     '',
     '## Working Directory',
@@ -414,7 +468,11 @@ function main() {
   }
   const req = readJson(request.absPath);
   validateRequest(req);
-  const lensSource = lensSourceFor(req.lens || 'code');
+  if (!args.renderPromptOnly && !hasConfirmedScope(req)) {
+    process.stderr.write('[AIVV] SCOPE_CONFIRMATION_REQUIRED: confirm the final scope and review method, then supply review_scope.confirmed=true, subject_type (' + [...SUBJECT_TYPES].join(', ') + '), and non-empty final_scope and approach (or strategy). Prompt-only rendering remains available.\n');
+    process.exit(9);
+  }
+  const lensSource = lensSourceFor(req.lens || 'general');
   const fixedSources = [
     ...REQUIRED_SOURCES,
     providerAdapterSource,

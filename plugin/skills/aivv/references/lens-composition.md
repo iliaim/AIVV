@@ -65,13 +65,17 @@ Examples:
 
 ## Full-* Shortcuts
 
+Full-* wrappers remain fixed specialist audits; their ordered lens sets and
+reviewer counts do not change when the default lens is `general`. They never
+implicitly add `general`.
+
 | Flag | K | Default M/N | Lenses |
 |---|---:|---:|---|
 | `--full-visual` | 2 | M=3 / N=6 | visual + polish |
 | `--full-ui-ux` | 6 | M=2 / N=12 | visual + ux + polish + compliance + i18n + user-journey |
 | `--full-a11y` | 2 | M=2 / N=4 | visual + compliance |
-| `--full` | 7 | M=2 / N=14 | code + sec + visual + ux + polish + compliance + i18n |
-| `--full-with-journey` | 8 | M=2 / N=16 | code + sec + visual + ux + polish + compliance + i18n + user-journey |
+| `--full` | 7 | M=2 / N=14 | code + sec + visual + ux + polish + compliance + i18n (all seven specialist lenses) |
+| `--full-with-journey` | 8 | M=2 / N=16 | code + sec + visual + ux + polish + compliance + i18n + user-journey (all eight specialist lenses) |
 
 `--lens-replicate=<M>` overrides wrapper default M. N above 14 exceeds the
 single-trial dev.70 probe ceiling and should warn as host-cap risk.

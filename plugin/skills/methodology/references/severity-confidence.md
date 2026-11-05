@@ -46,6 +46,14 @@ Every non-trivial finding MUST be classified on two axes:
 
 ### Severity (what's the impact?)
 
+For `general` reviews of non-code subjects, first apply the
+[general lens's non-code severity anchors](../../../.aivv/lenses/general.md).
+Those anchors take precedence over software-specific examples and legacy keyword
+shortcuts below; confidence and applicable legal/safety or project-policy floors
+remain separate considerations. All findings still honor a configured
+`impact_likelihood` matrix; the general examples do not replace its mapping.
+Software findings retain their configured compatibility behavior.
+
 | Level | Meaning | Action |
 |-------|---------|--------|
 | **critical** | Causes data loss, security breach, crash, breaks core functionality, OR implementation contradicts an explicit session decision | Must fix |
@@ -58,7 +66,7 @@ Every non-trivial finding MUST be classified on two axes:
 
 | Level | Meaning | Presentation |
 |-------|---------|-------------|
-| **high** | Almost certainly correct based on code as written | State directly: "This will cause X" |
+| **high** | Almost certainly correct based on the primary artifact and checked evidence, including code when relevant | State the verified fact directly; keep any unverified inputs or conditional consequences explicit |
 | **medium** | Likely correct but depends on context you may not fully have | Frame as likely: "This appears to cause X" |
 | **low** | Speculative — worth considering but uncertain | Frame as question: "Could this affect X?" |
 

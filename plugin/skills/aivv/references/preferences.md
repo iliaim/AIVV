@@ -37,7 +37,9 @@ present, map `default_M` to `default_lens_replicate`; new writes use
 Back-compat defaults: historical configs missing `project_context`,
 `severity_cell_map`, `thoroughness`, `direction`, `scope_confirmation_mode`,
 `polish_collapsed`, or `fix_apply_policy` resolve from golden schema defaults.
-if the whole key is omitted, the schema default is the runtime default.
+An omitted `default_lenses` value resolves to the golden default `general`;
+historical configs that explicitly set `code` or another valid lens retain that
+selection.
 
 Historical golden-schema default note: `scope_confirmation_mode`, `polish_collapsed`, or `fix_apply_policy` omissions are bound by schema defaults, not persisted-file materialization.
 
@@ -54,8 +56,9 @@ outer-loop keys. Explicit config pins and CLI flags win. Recompute reviewer
 assignments if the dial fills reviewer or replicate defaults.
 
 `exhaustive`: default reviewers 2; escalate to 3 for architectural scope or
-more lenses than the project_kind baseline, except under `--full-*` where KxM
-governs. Require reviewers to attach `grounded_by` for load-bearing findings.
+when final review coverage exceeds the resolved `default_lenses` count, except
+under `--full-*` where KxM governs. Project-kind metadata does not define a lens
+baseline. Require reviewers to attach `grounded_by` for load-bearing findings.
 
 Resolve `direction`: `--direction`/`--no-direction` > project > user > golden
 schema default. Pass as `Direction: on|off` in dispatch metadata.
@@ -63,7 +66,13 @@ schema default. Pass as `Direction: on|off` in dispatch metadata.
 ## Runtime Validation
 
 Validate resolved `default_lenses` against `<plugin_root>/.aivv/lenses/*.md`.
-Unknown lens names warn and fall back to `code`; do not halt.
+Unknown lens names warn and fall back to `general`; do not halt. Do not append
+`general` to an explicit or configured lens list. Fixed full-* wrappers retain
+their documented specialist lens lists.
+
+For `scope_confirmation_mode`, treat legacy `announce` as readable input but
+warn that it is deprecated and resolve it to `ask`. Every actual review still
+requires the confirmation gate in `scope-confirmation.md`.
 
 Validate `default_target` directory exists. Stale paths warn and fall back to
 cwd for this invocation.
@@ -78,7 +87,7 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | Config key | Binds to | Used by |
 |---|---|---|
 | `default_reviewers` | reviewer-count default | Step 1 N-resolution; Step 5 |
-| `default_lenses` | lens-list default extended by smart detection | Step 1.4; Step 3.5 |
+| `default_lenses` | explicit/configured lens-list default; omitted/invalid fallback is `general` | Step 1.4; Step 3.5 |
 | `severity_threshold` | output threshold | Step 6 |
 | `auto_chain_fix` | review-to-fix behavior | Step 6/8 |
 | `apply_polish_mode` | legacy POLISH fix behavior | `/aivv-fix`; superseded by explicit `fix_apply_policy.improvement` |
@@ -90,7 +99,7 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `runtime_driver_optin` | runtime evidence default | runtime emit/ingest path |
 | `default_target` | `--target` default | target resolution |
 | `rule_id_back_fill` | calibration backfill behavior | Step 7 |
-| `project_kind` | wizard-authored project type | wizard/default-lens derivation |
+| `project_kind` | inferred/preserved setup metadata | setup summary only; does not derive lenses |
 | `outer_loop_mode` | reverse-chain continuation mode | `/aivv-fix` outer loop |
 | `outer_loop_max_cycles` | loop cap | `/aivv-fix` outer loop |
 | `outer_loop_severity_floor` | legacy continuation floor | `/aivv-fix` outer loop |
@@ -100,7 +109,7 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `severity_model` | `legacy_4pass` or `impact_likelihood` | severity methodology |
 | `project_context` | deployment/data/jurisdiction context | severity and legal applicability |
 | `severity_cell_map` | partial impact-likelihood table override | severity methodology |
-| `scope_confirmation_mode` | ask/announce scope gate | Step 3.4 |
+| `scope_confirmation_mode` | required ask behavior; legacy announce warns and normalizes to ask | Step 3.4 |
 | `_provenance` | wizard/manual/default source tracking | default_lens_replicate binding gate |
 | `_setup_hint_shown_at` | setup-hint suppression timestamp | Step 6 hint |
 | `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 6 and `/aivv-fix` notices |

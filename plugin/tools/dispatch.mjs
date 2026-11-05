@@ -173,7 +173,7 @@ async function withRetry(fn, { maxRetries = 3, baseMs = 500, capMs = 60000 } = {
 // ── Structural validator (no external JSON Schema lib) ────────────────────
 const SEVERITY_ENUM = new Set(['CRITICAL', 'MAJOR', 'MINOR', 'POLISH']);
 const CONFIDENCE_ENUM = new Set(['HIGH', 'MEDIUM', 'LOW']);
-const LENS_ENUM = new Set(['code', 'sec', 'visual', 'ux', 'polish', 'compliance', 'i18n', 'user-journey', 'perf', 'a11y']);
+const LENS_ENUM = new Set(['general', 'code', 'sec', 'visual', 'ux', 'polish', 'compliance', 'i18n', 'user-journey', 'perf', 'a11y']);
 const CATEGORY_ENUM_VALUES = ['code-bug', 'design-flaw', 'process-violation', 'documentation-gap', 'clarification-needed', 'improvement'];
 const CATEGORY_ENUM = new Set(CATEGORY_ENUM_VALUES);
 const MODERN_FINDING_FIELDS = ['quality_profile', 'scope_ref', 'evidence', 'impact', 'severity_rationale', 'recommended_next_step', 'verification_path', 'proportional_remediation'];
@@ -720,7 +720,7 @@ async function callAnthropicCLI(model, prompt, timeoutSecs) {
 // ── Anthropic provider ────────────────────────────────────────────────────
 const ANTHROPIC_FINDINGS_TOOL = {
   name: 'submit_findings',
-  description: 'Submit all findings identified in the code review. Call this once with the complete list. Use an empty array if no issues were found.',
+  description: 'Submit all findings identified in the requested review. Call this once with the complete list. Use an empty array if no issues were found.',
   input_schema: {
     type: 'object',
     required: ['findings'],
@@ -741,7 +741,7 @@ const ANTHROPIC_FINDINGS_TOOL = {
             effort:     { type: ['string', 'null'], enum: [...IMPROVEMENT_EFFORT_ENUM, null] },
             file:       { type: ['string', 'null'] },
             line:       { type: ['integer', 'null'], minimum: 1 },
-            lens:       { type: 'string', enum: ['code', 'sec', 'visual', 'ux', 'polish', 'compliance', 'i18n', 'user-journey', 'perf', 'a11y'] },
+            lens:       { type: 'string', enum: ['general', 'code', 'sec', 'visual', 'ux', 'polish', 'compliance', 'i18n', 'user-journey', 'perf', 'a11y'] },
             rule_id:    { type: 'string' },
             devils_advocate: { type: 'boolean' },
             grounded_by: { type: 'array' },
