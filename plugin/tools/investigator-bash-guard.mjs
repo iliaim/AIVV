@@ -88,7 +88,7 @@ function isAllowed(tokens, policy) {
   // here, so it is intentionally outside the allowlist.
   if (!["status", "log", "diff", "show"].includes(subcommand)) return false;
   if (subcommand === "status" && !hasSafeStatusPrefix) return false;
-  const deniedGitFlags = /^(--output(?:=|$)|--ext-diff$|--textconv$|--external-diff$|--exec(?:=|$)|--pager(?:=|$)|--pathspec-from-file(?:=|$)|--pathspec-file-nul$|-o(?:$|.)|-O(?:$|.))/;
+  const deniedGitFlags = /^(--output(?:=|$)|--ext-diff$|--textconv$|--exec(?:=|$)|--pager(?:=|$)|--pathspec-from-file(?:=|$)|--pathspec-file-nul$|-o(?:$|.)|-O(?:$|.))/;
   if (args.some((arg) => deniedGitFlags.test(arg))) return false;
   // Configured diff.external and textconv drivers can execute arbitrary programs.
   // Require Git's explicit per-command opt-outs whenever a command may render diffs.
@@ -134,7 +134,8 @@ function stayWithinWorkspace(tokens, workspaceRoot) {
     if (attachedShortPath) candidates.push(attachedShortPath[1]);
 
     for (const candidate of candidates) {
-      if (candidate === "" || (!endOfOptions && candidate.startsWith("-"))) continue;
+      if (candidate === "" || (candidate === "-" && !endOfOptions)) continue;
+      if (!endOfOptions && candidate.startsWith("-") && !candidate.includes("/")) continue;
       if (!isWorkspacePath(candidate, workspaceRoot, endOfOptions)) return false;
     }
   }

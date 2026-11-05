@@ -66,6 +66,8 @@ Follow these phases **in order** for each finding (or batch of related findings)
 
 Run Phase 1.5 by default. **Skip only when the fix is a pure-logic change that touches no environmental dependency** (env var, file path, service endpoint, dependency version, feature flag). When in doubt, run it — the phase is intentionally cheap.
 
+Host-specific tool limits take precedence over these examples. In Claude Code, follow the investigator instructions in `plugin/agents/investigator.md`: use native `Read` for local JSON, `WebSearch`/`WebFetch` for public sources, and report inaccessible local probes as unverified. Do not attempt Bash probes outside that host's declared allowlist. Other hosts should follow their own adapter guidance.
+
 **Source vs. deployed environment** — a reference like `process.env.FOO`, an `import './config.json'`, or a call to `https://api.internal/health` proves the precondition is *named in source*. It does NOT prove the env var is set, the file is deployed, the service is reachable, the dependency version matches, or the flag is enabled in the environment where the fix will run. Phase 1.5 closes that gap.
 
 **Five categories to enumerate.** For each category that the proposed fix touches, list the specific preconditions and verify each one against the target environment using the host's shell or API facility. Provide ≥1 verification command run; the examples below are host-neutral starting points (use whatever the deploy host actually exposes).

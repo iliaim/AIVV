@@ -22,6 +22,7 @@ for (const command of [
   "git --no-pager show --no-ext-diff --no-textconv --format=oneline HEAD",
   "cat 'file name.txt'",
   "grep -n 'token' README.md",
+  "ls -R .",
 ]) {
   const result = run("aivv:investigator", command);
   assert.equal(result.status, 0, `expected investigator command to pass: ${command}`);
@@ -37,6 +38,7 @@ for (const command of [
   "git --no-pager diff --no-ext-diff --no-textconv --pathspec-from-file=-/outside",
   "git --no-pager diff --no-ext-diff --no-textconv --pathspec-file-nul",
   "git --no-pager diff --no-ext-diff",
+  "git --no-pager diff --no-ext-diff --no-textconv --ext-diff",
   "git --no-pager log -p --no-ext-diff",
   "git --no-pager show --no-textconv HEAD",
   "git --no-pager status --pager=less",
@@ -52,28 +54,27 @@ for (const command of [
   "cat *",
   "cat ?",
   "cat [a]",
-  "find . -name '*.md'",
   "grep -R secret .",
   "grep -r secret .",
+  "grep --dereference-recursive secret .",
   "grep -f patterns.txt README.md",
-  "jq '.' README.md",
-  "jq --run-tests -/passwd",
-  "jq -L-/outside 'include \"secret\"; .' input.json",
   "ls -L .",
+  "ls -RL .",
   "ls -laL .",
-  "find / -name secret",
   "grep password /etc/passwd",
-  "find . -exec touch marker \\;",
-  "find . -fprint0 /tmp/result",
-  "find . -fls /tmp/result",
-  "file README.md",
-  "file -C -m local.magic",
-  "file --compile",
   "git --no-pager blame README.md",
 ]) {
   const result = run("aivv:investigator", command);
   assert.equal(result.status, 2, `expected investigator command to be blocked: ${command}`);
   assert.match(result.stderr, /Blocked by AIVV read-only agent Bash guard/);
+}
+
+// These paths pass containment, then the executable allowlist blocks the
+// commands. Keep these checks separate from option and traversal cases.
+for (const command of ["find .", "jq . README.md", "file README.md"]) {
+  const result = run("aivv:investigator", command);
+  assert.equal(result.status, 2, `expected allowlist-only command to be blocked: ${command}`);
+  assert.match(result.stderr, /outside the read-only investigator allowlist/);
 }
 
 // The plugin hook is session-wide; unguarded agents and the parent keep their
@@ -90,11 +91,11 @@ const symlinkWorkspace = mkdtempSync(path.join(tmpdir(), "aivv-bash-guard-"));
 try {
   symlinkSync("/etc", path.join(symlinkWorkspace, "-"), "dir");
   symlinkSync("/etc/passwd", path.join(symlinkWorkspace, "outside-file"));
+  assert.equal(run("aivv:investigator", "cat -/passwd", symlinkWorkspace).status, 2);
+  assert.equal(run("aivv:investigator", "cat -../../../etc/passwd", symlinkWorkspace).status, 2);
   assert.equal(run("aivv:investigator", "cat -- -/passwd", symlinkWorkspace).status, 2);
   assert.equal(run("aivv:investigator", "cat outside-file", symlinkWorkspace).status, 2);
   assert.equal(run("aivv:investigator", "grep -f -/passwd README.md", symlinkWorkspace).status, 2);
-  assert.equal(run("aivv:investigator", "jq --run-tests -/passwd", symlinkWorkspace).status, 2);
-  assert.equal(run("aivv:investigator", "jq -L-/outside 'include \"secret\"; .' input.json", symlinkWorkspace).status, 2);
   assert.equal(run("aivv:investigator", "git --no-pager diff --no-ext-diff --no-textconv --pathspec-from-file=-/passwd", symlinkWorkspace).status, 2);
 } finally {
   rmSync(symlinkWorkspace, { recursive: true, force: true });
