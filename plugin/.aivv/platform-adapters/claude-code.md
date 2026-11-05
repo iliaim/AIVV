@@ -9,7 +9,7 @@
 - **Soft-required:** `jq` for the `/aivv-fix` Step 6 step 2 pre-evaluation gate (`warnings_count` extraction from the fix-log via `jq '.warnings | length' <fix_log>`) and the `--list-wont-fix` raw-registry inspection fallback when the registry schema-gate hard-errors. Not pre-installed on macOS / Windows Git Bash / most Linux distros — users install via package manager (`brew install jq`, `apt install jq`, `winget install jq`, etc.). When `jq` is absent, the `Bash` tool surface returns a `command not found` error and the gate's warnings branch is unevaluable; orchestrator falls back to gate's `heading_count >= 3` branch alone (loses warnings-only fire). A future release may replace this dependency with a pure-shell parser if the soft-required posture proves too much friction. Python is not required by the shipped runtime.
 - **Action Inbox:** uses the same required Node runtime for its short-lived loopback server and exclusive claim helper; opening the Inbox remains optional.
 
-This document maps AIVV's platform-agnostic workflow concepts to Claude Code's concrete tool names, subagent-dispatch syntax, and installation flow. When AIVV adds support for another platform, it will get its own adapter file alongside this one — this file is not edited.
+This document maps AIVV's shared workflow concepts to Claude Code's concrete tool names, subagent-dispatch syntax, and installation flow. Codex has its own adapter in `codex.md`; other hosts should get a separate adapter rather than changing the shared workflow contract.
 
 ---
 
@@ -30,7 +30,7 @@ AIVV workflows refer to abstract actions; Claude Code implements them via these 
 | Browse the web | `WebFetch`, `WebSearch` |
 | Load a skill in-session | `Skill` |
 
-Where an AIVV skill's prose inlines a specific Claude Code tool name (e.g., *"Use the Edit tool..."*), that is a Claude Code-specific reference — acceptable pragmatic choice for v0.1. Future cross-agent support will move such references to the active platform's adapter.
+Some existing skills still contain host-specific tool references. Keep those references explicitly labeled, and migrate them into the active adapter when touching that workflow. New shared workflow instructions should use abstract operations from the runtime contract.
 
 ---
 
@@ -193,7 +193,7 @@ The author-side packaging fixture installs a disposable Codex fixture and invoke
 
 ## Assumptions specific to Claude Code (cross-agent portability flags)
 
-When adding a second platform adapter, re-verify each of these against the target platform:
+When adding another host adapter, re-verify each of these against the target platform:
 
 1. **Plugin-agent namespacing as `<plugin>:<agent>`** — Claude Code convention (empirically verified via throwaway test plugin). Other platforms may use different separators (slash, dot) or no namespacing.
 2. **Subagent `Agent` / `Task` tool with `subagent_type:` parameter** — Claude Code-specific. Other platforms have different parallel/subagent patterns (or none).

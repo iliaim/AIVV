@@ -1,7 +1,12 @@
-# OpenAI Codex adapter (experimental)
+# OpenAI Codex adapter
 
-**Status:** Experimental portability draft. Claude Code is AIVV's primary supported host. The Codex installer is available, but the current package layout and end-to-end behavior have not completed the project's packaging proof.
+**Status:** Native plugin package and separate profile installer are verified in isolated Codex CLI homes. Shared skills and runtime ship in the package. Actual cold reviewer and investigator dispatch remains experimental until an end-to-end Codex run is verified.
 
-The adapter installs AIVV skills, support files, and reviewer/investigator agent definitions for Codex. Treat its output as advisory. Do not rely on it as an independent or compliance audit.
+Install the plugin from Codex CLI:
 
-Install from a repository checkout with `scripts/install-codex.sh` (macOS/Linux) or `scripts/install-codex.ps1` (PowerShell). See [INSTALL.md](https://github.com/iliaim/AIVV/blob/main/INSTALL.md) for commands and limitations.
+```bash
+codex plugin marketplace add iliaim/AIVV --ref main
+codex plugin add aivv@aivv
+```
+
+The plugin packages AIVV skills and runtime files. Codex plugin packages do not install the custom read-only reviewer and investigator agent profiles, so full cold dispatch still uses `scripts/install-codex.sh` (macOS/Linux) or `scripts/install-codex.ps1` (PowerShell). Keep results advisory; they are not an independent organizational or compliance audit. See [INSTALL.md](https://github.com/iliaim/AIVV/blob/main/INSTALL.md) for the current setup paths.

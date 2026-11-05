@@ -31,14 +31,20 @@ function resolveRuntimeRoot(skillDir) {
   const claudeRoot = canonicalCandidate(process.env.CLAUDE_PLUGIN_ROOT);
   if (isValidRuntimeRoot(claudeRoot)) return claudeRoot;
 
-  const codexHome = canonicalCandidate(process.env.CODEX_HOME);
-  const envCodexRoot = codexHome ? canonicalCandidate(path.join(codexHome, "aivv-runtime")) : "";
-  if (isValidRuntimeRoot(envCodexRoot)) return envCodexRoot;
+  const pluginRoot = canonicalCandidate(process.env.PLUGIN_ROOT);
+  if (isValidRuntimeRoot(pluginRoot)) return pluginRoot;
 
-  const hostRoot = skillDir ? canonicalCandidate(path.join(skillDir, "..", "..")) : "";
+  const skillRoot = canonicalCandidate(skillDir);
+  if (isValidRuntimeRoot(skillRoot)) return skillRoot;
+
+  const hostRoot = skillRoot ? canonicalCandidate(path.join(skillRoot, "..", "..")) : "";
   const derivedCodexRoot = hostRoot ? canonicalCandidate(path.join(hostRoot, "aivv-runtime")) : "";
   if (isValidRuntimeRoot(derivedCodexRoot)) return derivedCodexRoot;
   if (isValidRuntimeRoot(hostRoot)) return hostRoot;
+
+  const codexHome = canonicalCandidate(process.env.CODEX_HOME);
+  const envCodexRoot = codexHome ? canonicalCandidate(path.join(codexHome, "aivv-runtime")) : "";
+  if (isValidRuntimeRoot(envCodexRoot)) return envCodexRoot;
 
   if (isValidRuntimeRoot(contractRoot)) return contractRoot;
 
