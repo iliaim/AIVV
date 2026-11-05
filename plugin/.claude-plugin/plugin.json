@@ -1,6 +1,6 @@
 {
   "name": "aivv",
-  "description": "Agentic Independent Validation & Verification — dual-agent code review, remediation, and continuous audit for Claude Code.",
+  "description": "Agentic Independent Validation & Verification — advisory code review, remediation, and calibration for coding agents.",
   "keywords": [
     "code-review",
     "verification-and-validation",
@@ -13,5 +13,5 @@
   },
   "license": "MIT",
   "repository": "https://github.com/iliaim/AIVV",
-  "version": "0.2.1"
+  "icon": "assets/aivv-icon.png"
 }

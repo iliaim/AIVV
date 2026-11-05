@@ -1,6 +1,6 @@
 # AIVV — Agentic Independent Validation & Verification
 
-AIVV is an open-source Claude Code plugin for structured code review, remediation, and calibration. It dispatches isolated reviewers, records findings, and supports a bounded investigate → fix → verify workflow.
+AIVV is an open-source, cross-agent package for structured code review, remediation, and calibration. It keeps review rules, prompts, schemas, and state formats shared, with host adapters for Claude Code and Codex tool names, permissions, dispatch, and installation. Both hosts have native plugin packages; Codex cold-review and investigation dispatch remains experimental because its custom agent profiles install separately and the full workflow has not yet had an end-to-end Codex check.
 
 ## What it does
 
@@ -20,7 +20,16 @@ In Claude Code, add the marketplace and install AIVV:
 /plugin install aivv@aivv
 ```
 
-Restart Claude Code after installation, then run `/aivv`. See [INSTALL.md](INSTALL.md) for upgrades, removal, and the experimental Codex adapter.
+Restart Claude Code after installation, then run `/aivv`. See [INSTALL.md](INSTALL.md) for upgrades, removal, and Codex setup.
+
+For Codex, add the native plugin:
+
+```bash
+codex plugin marketplace add iliaim/AIVV --ref main
+codex plugin add aivv@aivv
+```
+
+Start a new chat and ask, “Review the changes in this repository with AIVV.” The shell installer described in [INSTALL.md](INSTALL.md) provisions Codex's read-only reviewer and investigator profiles. Full cold dispatch remains experimental until the plugin and profile setup pass an end-to-end Codex run.
 
 ## Documentation
 

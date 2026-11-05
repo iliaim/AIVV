@@ -7,7 +7,7 @@ AIVV evolves through evidence-gated changes. The roadmap describes possible futu
 - Advisory code review with reviewer and lens selection.
 - A guarded investigate, fix, and verify workflow.
 - Project calibration and read-only review output.
-- An experimental Codex installer; Claude Code remains the primary supported host.
+- Native plugin packages for Claude Code and Codex with shared workflows and host adapters; Codex custom-agent dispatch still needs separate profile installation and end-to-end validation.
 
 ## Under consideration
 

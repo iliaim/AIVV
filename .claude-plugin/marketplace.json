@@ -1,7 +1,7 @@
 {
   "name": "aivv",
   "metadata": {
-    "description": "Agentic Independent Validation & Verification marketplace — ships the AIVV plugin for agent-driven code review, remediation, and continuous audit in Claude Code."
+    "description": "Agentic Independent Validation & Verification marketplace — ships shared review and remediation workflows with host adapters for Claude Code and Codex."
   },
   "owner": {
     "name": "Ilia Imerlishvili"
@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "aivv",
-      "description": "Agentic Independent Validation & Verification — dual-agent code review, remediation, and continuous audit for Claude Code.",
-      "version": "0.2.1",
+      "description": "Agentic Independent Validation & Verification — advisory code review, remediation, and calibration for coding agents.",
+      "version": "0.2.2",
       "source": "./plugin",
       "author": {
         "name": "Ilia Imerlishvili"

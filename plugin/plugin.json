@@ -1,0 +1,47 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "aivv",
+  "version": "0.2.2",
+  "description": "Advisory code review, finding investigation, and gated remediation workflows for coding agents.",
+  "author": {
+    "name": "Ilia Imerlishvili",
+    "url": "https://github.com/iliaim"
+  },
+  "homepage": "https://github.com/iliaim/AIVV",
+  "repository": "https://github.com/iliaim/AIVV",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "verification-and-validation",
+    "security-review",
+    "remediation"
+  ],
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json",
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "AIVV",
+        "shortDescription": "Code review and guided fixes",
+        "longDescription": "Run advisory repository reviews, investigate selected findings, and apply fixes through explicit safety gates. AIVV records review state outside the project checkout and reports when reviewer isolation or other capabilities are unavailable. It does not replace tests, security testing, or organizational review.",
+        "developerName": "Ilia Imerlishvili",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Interactive",
+          "Read",
+          "Write"
+        ],
+        "defaultPrompt": [
+          "Review the changes in this repository with AIVV.",
+          "Run a security-focused AIVV review.",
+          "Show recent AIVV findings."
+        ],
+        "websiteURL": "https://github.com/iliaim/AIVV",
+        "brandColor": "#294C6B",
+        "composerIcon": "./assets/aivv-icon.png",
+        "logo": "./assets/aivv-icon.png",
+        "screenshots": []
+      }
+    }
+  }
+}

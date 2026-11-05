@@ -76,15 +76,16 @@ When `/aivv-calibrate` triggers:
    for AIVV_RUNTIME_ROOT_CANDIDATE in \
      "${AIVV_ROOT:-}/.aivv/runtime-root.mjs" \
      "${CLAUDE_PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-     "$AIVV_CODEX_HOME/aivv-runtime/.aivv/runtime-root.mjs" \
+     "${PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
      "${SKILL_BASE_DIR:-}/.aivv/runtime-root.mjs" \
-     "${SKILL_BASE_DIR:-}/../../.aivv/runtime-root.mjs"; do
+     "${SKILL_BASE_DIR:-}/../../.aivv/runtime-root.mjs" \
+     "$AIVV_CODEX_HOME/aivv-runtime/.aivv/runtime-root.mjs"; do
      if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ] && [ -f "$AIVV_RUNTIME_ROOT_CANDIDATE" ]; then
        AIVV_RUNTIME_ROOT_HELPER="$AIVV_RUNTIME_ROOT_CANDIDATE"
      fi
    done
    if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ]; then
-     echo "AIVV runtime-root resolver not found; set AIVV_ROOT, CODEX_HOME, or SKILL_BASE_DIR" >&2
+     echo "AIVV runtime-root resolver not found; set AIVV_ROOT, PLUGIN_ROOT, CODEX_HOME, or SKILL_BASE_DIR" >&2
      exit 1
    fi
    AIVV_ROOT="$(node "$AIVV_RUNTIME_ROOT_HELPER" --print "${SKILL_BASE_DIR:-}")"
