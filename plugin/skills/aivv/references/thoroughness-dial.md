@@ -33,7 +33,7 @@ auto-chain.
 
 `exhaustive` raises coverage, replication, and traceability:
 - Reviewer count is 2 by default; escalates to 3 only for architectural-scope
-  changes or reviews spanning more lenses than the project_kind default K. Pins
+  changes or reviews spanning more lenses than the resolved default lens count. Pins
   still win. Under `--full-*`, reviewer count is `N=KxM`, so this escalation is
   a no-op.
 - Reviewer input order is randomized across replicas.

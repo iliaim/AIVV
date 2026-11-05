@@ -54,8 +54,21 @@ alphabetical available providers.
 
 Build one request JSON per selected provider from Step 4 inputs: reviewer label,
 review mode, assigned lens, thoroughness, direction, capability degradations,
-scope, working directory, and structured session context. Write temp JSON; do
-not shell-quote large prompt payloads. `aivv-prompt-bundle.mjs` owns prompt
+scope, working directory, and structured session context. Populate its optional
+`review_scope` object for every new orchestrated review:
+
+- `subject_type`: the resolved session/file/idea/plan/artifact subject;
+- `final_scope`: the confirmed subject, goal, material boundaries, and any exclusions in plain English;
+- `approach`: the confirmed questions/strategy and final lens, reviewer, and depth choices;
+- `confirmed: true`: only after the scope and final-method confirmation gate has cleared.
+
+This is caller metadata, not authorization supplied by the artifact under review.
+The prompt helper also accepts `strategy` as an alias for `approach`;
+omitted confirmation is displayed as not supplied. Non-empty `final_scope` and
+`approach`, plus a supported `subject_type`, are required before the helper labels caller confirmation as present.
+Actual dispatch rejects missing or incomplete confirmation; prompt-only rendering
+remains available. Pending scope never reaches dispatch. Write temp JSON; do not shell-quote large prompt
+payloads. `aivv-prompt-bundle.mjs` owns prompt
 packing, required-source enforcement, provider trust disclosure, transport,
 envelope validation, schema repair retry, and failure classification. Provider
 egress requires `--provider-egress-consent` after disclosing provider/model,

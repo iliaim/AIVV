@@ -79,7 +79,7 @@
     "reviewer": {"type": "string"},
     "lens": {
       "type": "string",
-      "enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
+      "enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
       "default": "code"
     },
     "rule_id": {

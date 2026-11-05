@@ -163,11 +163,11 @@ AIVV skills expose slash commands via SKILL.md frontmatter's `description:` fiel
 
 | AIVV skill | Slash command (user-invocable) |
 |---|---|
-| `aivv` | `/aivv` (supports `--reviewers=N` or bare-integer shorthand; `--lens=code` default, plus `--lens=sec` and `--lens=visual` shipped in v0.1/dev.22) |
+| `aivv` | `/aivv` (supports `--reviewers=N` or bare-integer shorthand; `--lens=general` default, with `--lens=code` and other specialist lenses available) |
 | `aivv-fix` | `/aivv-fix` |
 | `methodology` | (not user-invocable — preload only; merged review methodology + project-context) |
 
-Lenses are defined by files in `.aivv/lenses/<name>.md`. v0.1/dev.22 ships three: `code` (default), `sec` (static security review), `visual` (static UI/a11y review). B3 runtime evidence is externalized by default through generated Playwright probe scaffolds plus user-run JSON ingest; host browser drivers are optional gated adapters. Additional lenses (`perf`, `a11y` as a pure-a11y split) are Tier 2/3. Alias commands (e.g., `/aivv-visual` → `/aivv --lens=visual`) and scheduled audits (`/aivv-audit`) are Tier 3.
+Lenses are defined by files in `.aivv/lenses/<name>.md`; [the lens catalog](../lenses/README.md) lists the shipped choices. `general` is the default for intent-driven review across artifact types; specialist lenses remain selectable. B3 runtime evidence is externalized by default through generated Playwright probe scaffolds plus user-run JSON ingest; host browser drivers are optional gated adapters. Additional lenses (`perf`, `a11y` as a pure-a11y split) are Tier 2/3. Alias commands (e.g., `/aivv-visual` → `/aivv --lens=visual`) and scheduled audits (`/aivv-audit`) are Tier 3.
 
 ---
 

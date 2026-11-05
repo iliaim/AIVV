@@ -29,17 +29,18 @@ runtime_driver: none | optional | required
 
 ## How lenses compose
 
-`/aivv` with no `--lens=` defaults to `code`. The orchestrator:
+`/aivv` with no `--lens=` defaults to `general`. The shared general review checklist is required for every lens; the selected lens file adds its focus. When the user explicitly selects one or more lenses, use exactly that selection; do not add `general` implicitly. The orchestrator:
 1. Resolves the lens name → `.aivv/lenses/<name>.md` (plugin-root-relative).
 2. Reads the file; if missing, errors with the list of shipped lenses.
-3. Parses frontmatter + body. The body content under `## Focus`, `## Trigger patterns`, and `## Standards to consult` is injected into the reviewer prompt under a **Lens-specific focus** section after the universal Session-Diff Coherence Check.
+3. Parses frontmatter + body. The body content under `## Focus`, `## Trigger patterns`, and `## Standards to consult` is injected into the reviewer prompt under a **Lens-specific focus** section after the shared checklist and Scope and Artifact Coherence Check.
 4. `calibration_lens` from frontmatter determines the per-run calibration filename.
 
 ## Current lenses (v0.1)
 
 | Lens | File | Driver | Status |
 |---|---|---|---|
-| `code` | [code.md](code.md) | none | Default static code review; includes CQ-* and AS-* standards routing |
+| `general` | [general.md](general.md) | none | Default artifact review; follows the shared general review checklist |
+| `code` | [code.md](code.md) | none | Specialist static code review; includes CQ-* and AS-* standards routing |
 | `sec` | [sec.md](sec.md) | none | Static security review — OWASP-style code-level concerns |
 | `visual` | [visual.md](visual.md) | optional (B3 externalized Playwright probe emit/ingest; host browser adapters gated) | Static UI/a11y review (WCAG 2.1/2.2 AA baseline); optional runtime evidence (RTV-* rules) via `--runtime` |
 | `ux` | [ux.md](ux.md) | none | UX patterns — form/navigation/error/loading-states (UX-001..046, dev.43+) |

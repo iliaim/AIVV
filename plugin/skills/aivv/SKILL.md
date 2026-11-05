@@ -1,6 +1,6 @@
 ---
 name: aivv
-description: "Use when you need AIVV advisory review of the current session, a file, an idea, or a forward-looking plan, with optional `--reviewers=N`, `--lens=...`, `--target=<dir>` to scope state writes and relative path resolution, and `--fix` handoff."
+description: "Use for general AIVV advisory review of session work, documents, research, plans, designs, decisions, or code; optionally choose reviewers or lenses, target a project, or hand findings to /aivv-fix."
 ---
 
 # AIVV Orchestration
@@ -19,8 +19,9 @@ not run `find`, `ls`, `rg --files`, or read references for confirmation.
 
 ## Contract Snapshot
 
-**Core principle:** session-centric advisory IV&V. Session activity is primary;
-code diffs are supporting evidence.
+**Core principle:** advisory IV&V of the confirmed subject. A named document,
+idea, plan, or other artifact is primary; session activity is primary for session
+reviews. Other material supplies relevant evidence and context.
 
 `review_mode` values:
 - `cold_single_review`: one isolated reviewer.
@@ -61,7 +62,9 @@ Plan mode:
 Config/shape anchors:
 - Config keys come from the golden schema at `.aivv/schemas/config.schema.json`.
 - `polish_collapsed` has default `false`.
-- Defaults start at `--reviewers=1 --lens=code`; code lens uses CQ-* / AS-* routing.
+- Defaults start at `--reviewers=1 --lens=general`. Explicit and configured lens
+  choices remain unchanged; `general` is the fallback for an unset or unknown
+  configured lens.
 - `review-shape-resolution.md` owns the adaptive-confidence floor.
 - Explicit artifact routes use artifact-relevant session context.
 - Schema-gate hard-error is route-sensitive; do not hard-stop `/aivv` review
@@ -78,7 +81,7 @@ Config/shape anchors:
 /aivv --reviewers=2 --fix     # review, then durable /aivv-fix handoff
 /aivv --fix --dry-run         # review normally, then plan fixes only
 /aivv --target=/path/project  # state + relative-path target
-/aivv --full                  # code/sec/visual/ux/polish/compliance/i18n, N=14
+/aivv --full                  # seven specialist lenses, N=14
 /aivv --maintenance           # quarantine + index rebuild; no review
 ```
 
@@ -94,8 +97,10 @@ Parser anchors:
 
 ### Step 3.4: Scope Confirmation
 
-Establish `final_scope`, record `multi_topic`, and apply scope confirmation
-before lens composition.
+Present and confirm the complete goal, subject, material boundaries, questions
+or strategy, and proposed review method for every actual review. Hold before
+lens detection or dispatch until confirmed; see
+[`scope-confirmation.md`](references/scope-confirmation.md).
 
 ### Step 3.5: Lens Composition
 

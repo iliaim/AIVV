@@ -41,7 +41,7 @@ Always extract `--reviewers=N`, `--lens=...`, `--target=<dir>`, `--fix`,
 per-run lens/scope/thoroughness/direction/multi-model overrides, and first bare
 integer shorthand.
 
-For defaults (`--reviewers=1 --lens=code`), `--target=<dir>` scope, `--dry-run` semantics, and plan-mode parser state and the not-verified surfacing rule, see [../SKILL.md](../SKILL.md) Contract Snapshot — the canonical source; do not restate here.
+For review defaults, `--target=<dir>` scope, `--dry-run` semantics, and plan-mode parser state and the not-verified surfacing rule, see [../SKILL.md](../SKILL.md) Contract Snapshot — the canonical source; do not restate here.
 
 Parser guardrails: `--thoroughness=fast|balanced|thorough|exhaustive`; extract `--direction`/`--no-direction` before config binding.
 
@@ -97,7 +97,9 @@ continue; the notice may reappear on the next invocation.
 If the user config is unavailable or unreadable after Step 1.5's warning, skip
 both notices and continue without a second warning.
 
-These fire before the Step 3.4 scope announcement.
+These fire before the Step 3.4 scope-and-method confirmation proposal; those
+pre-review configuration/hint writes may already be complete if confirmation is
+later held.
 
 ## Step 1.95: Eval
 
@@ -118,8 +120,9 @@ Reviewer subagents do not see conversation history. Extract before git diff. **P
 
 For session reviews, scan full conversation. For file/idea/plan routes, scan
 artifact-relevant history. If fewer than three categories have substance, prepend
-limited-context warning. Record `multi_topic: true|false` and a separate
-`lens_ceiling` judgment.
+limited-context warning. Record `multi_topic: true|false`. Compute the
+`lens_ceiling` only after the scope has been confirmed, against the confirmed
+session subset.
 
 For codemod/bulk-rename/formatter sessions, prepend to the reviewer prompt: `⚠️ This session involved mechanical/automated changes. Diff volume does NOT reflect decision count.` so bulk output is not over-weighted as review surface.
 
@@ -134,24 +137,38 @@ Plan mode:
 - Include cheap supporting context only.
 - Prompt must include: `Forward-looking plan review: implementation VERIFY is skipped; evaluate plan soundness, assumptions, sequencing, scope, evidence, and simpler alternatives.`
 
-No argument: run `git status`, staged/unstaged diffs excluding lock/build/dist,
-and recent session commits since last review or last 6 hours. Cap displayed
-commits at 50 and diff near 300 lines.
+No argument: when Git is available, gather `git status`, staged/unstaged diffs
+excluding lock/build/dist, and recent session commits since last review or last
+6 hours. Cap displayed commits at 50 and diff near 300 lines. If Git is
+unavailable or there is no diff, continue with available conversation and
+non-code materials; Git is not a review prerequisite.
 
 File path: read specified files and include artifact-relevant session context.
 Quoted text: treat as idea/approach to challenge.
 
 ## Step 3.4: Scope Confirmation
 
-Use `review-shape-resolution.md` and `scope-confirmation.md`. This produces
-`final_scope`, records scope provenance for Step 7.5, and may set
-`scope_fix_chain_suppressed` for non-interactive ambiguous `--fix`.
+Use `review-shape-resolution.md` and `scope-confirmation.md`. Present the full
+goal, subject, material boundaries, relevant questions/strategy, and preliminary
+lens/depth method, then get confirmation for every actual review, including
+explicit file/idea/plan routes, clear topics, and `--dry-run`. This produces
+`final_scope` and scope provenance for Step 7.5. If confirmation is pending,
+canceled, or unavailable, stop before lens detection, reviewer dispatch,
+calibration, review-log writing, and fix handoff. Earlier preamble writes may
+already have happened.
 
 ## Step 3.5/3.6: Lens Detection And Consent
 
-After `final_scope`, use `review-shape-resolution.md` to apply deterministic
-floor, recompute `reviewer_lens_assignments`, and resolve `lens_detection_mode`.
+After the confirmed `final_scope`, use `review-shape-resolution.md` to apply
+deterministic floors, recompute `reviewer_lens_assignments`, and resolve
+`lens_detection_mode`. If final lenses, reviewer depth, replication, or coverage
+changed from the confirmed proposal, show the complete final scope and method
+and reconfirm before Step 4. Defer `ask`-mode lens consent to that full final
+proposal; do not issue a lens-only prompt that omits scope or depth.
 `--auto-lens` means smart; `--no-auto-lens` means off.
+If the changed final proposal is pending, canceled, or unavailable, hold after
+detection and before reviewer prompt construction, dispatch, calibration,
+review-log writing, or fix handoff.
 
 ## Step 4: Reviewer Prompt
 
@@ -186,7 +203,9 @@ per-invocation shard `<calibration_dir>/<lens>/<invocation-id>.jsonl`
 ## Step 7.5: Review Log
 
 Read `review-log-schema.md`. Write `review-<invocation_id>.json` for every
-non-voided invocation, including clean reviews. Persist lens detection, scope
+actual review that passed scope confirmation and any changed-method
+confirmation and ran, including clean reviews. Do not write it for a review
+held before complete confirmation. Persist lens detection, scope
 confirmation, plan_review, severity calibration, predecessor linkage, and
 impact-likelihood extension fields.
 

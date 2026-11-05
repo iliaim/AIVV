@@ -1,6 +1,6 @@
 # Code Quality & Simplification Signals (CQ-*)
 
-**Scope:** Code-review signals for simplification, complexity, abstraction, and redundancy. Surfaces under the `code` lens (default) when the diff includes logic code (not pure UI/markup/config).
+**Scope:** Code-review signals for simplification, complexity, abstraction, and redundancy. Surfaces under the `code` lens, and through the shared methodology when a general review includes logic code (not pure UI/markup/config).
 
 **Severity model:** AIVV two-track discriminator per `.aivv/methodology.md` Finding Severities section. Distribution: 1 MAJOR / 15 POLISH (16 rules). **Zero CRITICAL by design** — no CQ-* rule carries financial/security/data-integrity/availability blast-radius per default. CQ-002 remains MAJOR because weakening tests during a simplification is an observable behavior-contract risk. Other CQ-* smells default to POLISH improvement opportunities; when a concrete failure/harm mode has already materialized, re-route to the DEFECT track for impact×likelihood scoring. POLISH improvements do not drive `/aivv-fix --until-clean` continuation; use optional `value`/`effort` metadata to surface Quick Wins without borrowing a defect tier.
 

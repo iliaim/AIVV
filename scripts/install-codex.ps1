@@ -214,7 +214,7 @@ if ($RemoveLegacyMethodology) {
 
 New-CodexAgentToml `
   -Name "aivv-reviewer" `
-  -Description "AIVV IV&V reviewer: independent advisory review of session work, file, or idea. Read-only." `
+  -Description "AIVV general advisory reviewer for session work, artifacts, plans, and decisions. Read-only." `
   -PromptPath (Join-Path $PluginSourceRoot ".aivv\prompts\reviewer-role.md") `
   -OutPath (Join-Path $AgentsDest "aivv-reviewer.toml")
 

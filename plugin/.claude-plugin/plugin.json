@@ -1,6 +1,6 @@
 {
   "name": "aivv",
-  "description": "Agentic Independent Validation & Verification — advisory code review, remediation, and calibration for coding agents.",
+  "description": "Agentic Independent Validation & Verification — general advisory review of session work, plans, documents, decisions, and code, with remediation and calibration.",
   "keywords": [
     "code-review",
     "verification-and-validation",

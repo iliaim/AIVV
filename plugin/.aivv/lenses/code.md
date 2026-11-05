@@ -1,19 +1,19 @@
 ---
 name: code
-description: Default code-review lens — correctness, architecture, readability, maintainability, session-decision coherence
+description: Specialist code-review lens — implementation correctness, code quality, and software architecture
 calibration_lens: code
-applies_to: source code, config, schemas, tests, documentation
+applies_to: source code, configuration, schemas, tests
 runtime_driver: none
 ---
 
 ## Focus
 
-The `code` lens is the default; its content is loaded into the reviewer prompt so the CQ-* and AS-* standards-routing below is available in every ordinary code review. The universal methodology (`.aivv/methodology.md` Phase 2 VERIFY) remains the baseline; this lens adds concrete code-quality and architecture lookup routing on top.
+The `code` lens is a specialist focus for implementation and software architecture reviews. The shared methodology and general review checklist apply to every lens; this lens adds concrete code-quality and architecture lookup routing when code is in scope.
 
 This file exists for:
-- **Discoverability** — listing `.aivv/lenses/` enumerates all shipped lenses including the default.
+- **Discoverability** — listing `.aivv/lenses/` enumerates all shipped lenses.
 - **Symmetry** — every lens selectable via `--lens=X` has a corresponding file.
-- **Prompt routing** — default reviews receive the same lens-specific focus section as non-default lenses, rather than depending on stale implicit behavior.
+- **Prompt routing** — explicit code reviews receive the same lens-specific focus section as other selected lenses.
 
 **Code simplicity & maintainability signals**: when the diff includes logic code (not pure UI/markup/config), consult [.aivv/standards/code-quality.md](../standards/code-quality.md) for the CQ-* signal catalog — 16 rules covering simplification process discipline (CQ-001..005), complexity signals (CQ-010..015), and redundancy & abstraction (CQ-020..025). Under `severity_model: impact_likelihood`, classify DEFECT-track issues through the shared IMPACT and LIKELIHOOD anchors below; POLISH-default improvement rules require verified present need, a specific improvement, and positive net value. CQ-025 (relocated-not-removed) carries a deterministic net-lines anchor (`git diff --numstat`); the file-size attention-trigger lives at AS-001 (architecture altitude).
 

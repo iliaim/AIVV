@@ -25,7 +25,7 @@ This is the shared config/preferences resolution mechanism reused by both `/aivv
 /aivv --setup
 ```
 
-The wizard asks 4-6 questions (project kind auto-detected from filesystem; Q1 shown only when detection is ambiguous), resolves a preset bundle, asks how to show readable HTML reports, and writes your preferences. Run `--setup --project` to configure project-scope instead of user-scope.
+The wizard asks 4-5 preference questions, records project-kind metadata from an existing value or cheap filesystem inference, resolves a preset bundle, asks how to show readable HTML reports, and writes your preferences. A fresh setup defaults to the `general` review lens regardless of project kind; an existing `default_lenses` selection is preserved. Run `--setup --project` to configure project-scope instead of user-scope.
 
 **Manual setup:**
 
@@ -88,7 +88,7 @@ This table lists the stable user-facing preference keys (including `multi_model_
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `default_reviewers` | int (1–9) | 1 | When `--reviewers=N` not set, use this |
-| `default_lenses` | string \| array | `"code"` | When `--lens=` not set, use this. Unknown lens names warn + fall through to `code`. |
+| `default_lenses` | string \| array | `"general"` | When `--lens=` is not set, use this. An omitted or unknown configured lens warns and falls back to `general`; a valid explicit or configured lens selection is retained as written. |
 | `severity_threshold` | enum (`CRITICAL` \| `MAJOR` \| `MINOR`) | `"MINOR"` | Show defect findings AT OR ABOVE this severity. L1-source findings forced-shown regardless. POLISH always rendered separately (orthogonal value-add tier — NOT on the threshold axis). |
 | `auto_chain_fix` | enum (`always` \| `ask` \| `never`) | `"ask"` | Whether `/aivv` auto-chains into `/aivv-fix` when findings exist |
 | `apply_polish_mode` | enum (`always` \| `ask` \| `never`) | `"ask"` | Whether `/aivv-fix` batch-applies POLISH suggestions |
@@ -100,7 +100,7 @@ This table lists the stable user-facing preference keys (including `multi_model_
 | `runtime_driver_optin` | bool | `false` | Pre-consent to `--runtime` when MCP detected (post-dev.43) |
 | `default_target` | string \| null | `null` | Default `--target=` directory. Stale paths warn but do not error. |
 | `rule_id_back_fill` | bool | `false` | Back-fill `rule_id` on pre-dev.39 calibration entries via finding-text → rule-ID heuristic |
-| `project_kind` | enum (`"ui"` \| `"backend"` \| `"mixed"` \| `"library"` \| `null`) | `null` | Wizard-set project category. Drives `default_lenses` at wizard-write time: `ui` → `["visual","ux"]`; `backend`/`mixed` → `"code"`; `library` → `["code","sec"]`; `null` → `"code"`. Set by `/aivv --setup`; readable/settable via `--config-set`. Runtime reads `default_lenses` directly, not `project_kind`. |
+| `project_kind` | enum (`"ui"` \| `"backend"` \| `"mixed"` \| `"library"` \| `null`) | `null` | Wizard-set project category metadata. It does not select or overwrite `default_lenses`; fresh setup keeps `general`, and an existing configured lens selection is preserved. Set by `/aivv --setup`; readable/settable via `--config-set`. Runtime reads `default_lenses` directly, not `project_kind`. |
 | `outer_loop_mode` | enum (`"off"` \| `"until_clean"`) | `"off"` | When `"until_clean"`, `/aivv-fix` Step 6.5 re-invokes `/aivv --fix` in a loop until all continuation-counting findings clear or a termination condition fires (cap, no-progress, user-interrupt). Continuation-counting subset: findings with `recommended_next_step` of `fix-now` or `investigate-first` AND NOT L1-source AND NOT POLISH. Legacy findings without `recommended_next_step` fall back to `severity ≥ outer_loop_severity_floor`. Default `"off"` preserves all existing behavior. Enable per-project or globally via `--config-set outer_loop_mode=until_clean`. |
 | `outer_loop_max_cycles` | int (2–5) | 3 | Maximum outer-loop iterations. Min=2 (cycles=1 is equivalent to `off`). On reaching the cap, /aivv-fix emits a cap-reached banner and halts. |
 | `outer_loop_severity_floor` | enum (`"CRITICAL"` \| `"MAJOR"`) | `"MAJOR"` | Legacy fallback minimum severity for outer-loop continuation when a finding lacks `recommended_next_step`. Current action gates prefer DISPOSITION (`fix-now` / `investigate-first`) over raw severity. |
@@ -110,7 +110,7 @@ This table lists the stable user-facing preference keys (including `multi_model_
 | `severity_cell_map` | object | `{}` | Optional partial override for the impact×likelihood 4×4 defect table. Omitted cells use the shipped default table in `.aivv/methodology.md`. |
 | `thoroughness` | enum (`"fast"` \| `"balanced"` \| `"thorough"` \| `"exhaustive"`) | `"balanced"` | Sets the default review-effort dial when `--thoroughness=` is absent. `balanced` is the inert default; `fast` lowers effort, `thorough` raises replicate depth, and `exhaustive` adds the load-bearing-grounding obligations described in `skills/aivv/references/thoroughness-dial.md`. v1/v2/v3/v4/v5 configs predate the key and default to `balanced`. |
 | `direction` | boolean | `true` | Enables the graduated direction-challenge posture by default when `--direction` / `--no-direction` is absent. Use `--no-direction` for a single invocation or `--config-set direction=false` to persist the pre-feature behavior. Historical configs that predate the key resolve the missing value from the golden schema default. |
-| `scope_confirmation_mode` | enum (`"ask"` \| `"announce"`) | `"ask"` | Pre-dispatch scope gate (golden schema). `ask`: announce the scope when obvious, prompt (pre-filled proposal) when ambiguous. `announce`: always announce + never prompt (best-guess for ambiguous). No `off`. Historical configs that predate the key default to `ask`. Per-run override: `--auto-scope`/`--ask-scope`. |
+| `scope_confirmation_mode` | enum (`"ask"` \| `"announce"`) | `"ask"` | Pre-dispatch scope gate. Every actual review, including explicit files, ideas, clear topics, and `--dry-run`, requires confirmation. Legacy `announce` remains readable but is deprecated, warns, and normalizes to `ask`; it cannot skip confirmation. Historical configs that predate the key default to `ask`. Legacy `--auto-scope` is also deprecated and normalizes to `ask`; `--ask-scope` uses the same required confirmation behavior. |
 | `issue_sync_mode` | enum (`"off"` \| `"draft-local"` \| `"confirm-github"` \| `"auto-github"`) | `"confirm-github"` | Controls GitHub issue sync for local issue mirrors. `confirm-github` plans remote operations but requires explicit confirmation; `auto-github` may apply eligible non-sensitive operations after safety checks. |
 | `issue_sync_public_repo_policy` | enum (`"block-sensitive"` \| `"confirm-sensitive"` \| `"allow"`) | `"block-sensitive"` | Controls publication of sensitive lifecycle issue content to public GitHub repositories. Sensitive records are blocked on public repos by default. |
 | `multi_model_enabled` | boolean | `false` | Master switch for cross-provider multi-model review (Case D). When `true`, `/aivv` dispatches provider-diverse reviewers (Anthropic + OpenAI + Gemini, capped by reviewer count) instead of same-provider cold subagents. Provider readiness is probed via CLI OAuth (`auth_mode=auto`; no env API keys needed). Per-run override: `--multi-model` / `--no-multi-model`. The companion provider keys `reviewer_provider_priority` (default `["anthropic","openai","gemini"]`) and `multi_model_fallback_strategy` (`ask`/`subagents`/`none`) tune selection order and per-provider-failure behavior — see `.aivv/schemas/config.schema.json` for the full provider/model orchestration key set. |
@@ -236,13 +236,10 @@ On first interactive use and in `/aivv --setup`, AIVV asks how to show HTML repo
 /aivv --config-set post_review_html_open_mode=open --user
 ```
 
-**"I trust AIVV's scoping — announce what it'll review but don't ask me":**
-
-```bash
-/aivv --config-set scope_confirmation_mode=announce
-```
-
-The pre-dispatch announcement still appears (so you can catch a wrong inference); only the confirm/adjust prompt is skipped. Override for a single run with `--ask-scope` (force the prompt) or `--auto-scope` (force announce-only).
+Legacy configurations may still contain `scope_confirmation_mode=announce`, and
+older invocations may pass `--auto-scope`. Both remain readable for
+compatibility, but AIVV warns and normalizes them to required `ask` behavior.
+Every actual review must confirm its complete scope and method before dispatch.
 
 **"I want to keep issue lifecycle state local only":**
 
@@ -306,7 +303,7 @@ Generated configs do not need to materialize schema-default `fix_apply_policy`. 
 
 Config files are validated against the golden additive schema at `.aivv/schemas/config.schema.json`. The `schema_version` field remains accepted as compatibility/minimum-reader metadata; the current writer stamps `schema_version: 6`, and additive key additions do not create new `config.v<N>.schema.json` files.
 
-Historical configs remain readable. Configs that predate `lens_detection_mode`, `severity_model`, `thoroughness`, `direction`, `scope_confirmation_mode`, `polish_collapsed`, or `fix_apply_policy` resolve omitted values from the golden schema defaults. Explicit `polish_collapsed: true` continues to collapse POLISH output. Legacy `default_M` maps to `default_lens_replicate` when the modern key is absent.
+Historical configs remain readable. Configs that predate `default_lenses` or other additive preferences resolve omitted values from golden schema defaults, including `general` for `default_lenses`. Explicit valid lens selections such as `code` continue to be honored. A legacy `scope_confirmation_mode: "announce"` is read with a deprecation warning and resolves to `ask`. Explicit `polish_collapsed: true` continues to collapse POLISH output. Legacy `default_M` maps to `default_lens_replicate` when the modern key is absent.
 
 On validation error:
 

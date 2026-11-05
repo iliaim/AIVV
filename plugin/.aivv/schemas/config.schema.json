@@ -29,7 +29,8 @@
           }
         }
       ],
-      "default": "code"
+      "default": "general",
+      "description": "Lens set used when callers do not select lenses. New setups default to general; an explicit configured or command-line lens set remains in effect."
     },
     "severity_threshold": {
       "type": "string",
@@ -179,7 +180,8 @@
         "library",
         null
       ],
-      "default": null
+      "default": null,
+      "description": "Optional project-kind metadata for setup and reporting. It does not derive or replace default_lenses."
     },
     "outer_loop_mode": {
       "type": "string",
@@ -335,7 +337,7 @@
         "announce"
       ],
       "default": "ask",
-      "description": "Scope-confirmation gate (W8). ask=announce trivial scope + prompt (pre-filled proposal) when non-trivial; announce=always announce + never prompt (best-guess for non-trivial). The announcement is a baseline guarantee — no 'off'. v1–v5 configs predate the key and resolve to 'ask' on read. See 2026-05-30-scope-confirmation."
+      "description": "Every review confirms its proposed scope before dispatch. ask prompts for confirmation; legacy announce remains accepted syntactically but is normalized to ask with a warning, so announcement alone never authorizes a review. v1–v5 configs predate the key and resolve to 'ask' on read."
     },
     "issue_sync_mode": {
       "type": "string",

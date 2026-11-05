@@ -164,9 +164,9 @@
     },
     "lens": {
       "type": "string",
-      "enum": ["code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
+      "enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
       "default": "code",
-      "description": "Review lens. Shipped lenses (one entry per lens file under .aivv/lenses/): code (default), sec (security; dev.22+), visual (UI/a11y/component correctness; dev.22+), ux (heuristic walkthrough + microcopy + interaction states; dev.43+), polish (improvement-articulation / value-add; dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk subset; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (UJ-* rules; dev.121). Forward-look planned lenses retained for compatibility with calibration corpora that may pre-emit them: perf (performance review; planned Tier 2/3), a11y (pure-a11y split distinct from visual lens's UI-a11y; planned Tier 2/3). Pre-dev.43 findings without this field default to 'code'."
+      "description": "Review lens. Shipped lenses (one entry per lens file under .aivv/lenses/): general (broad goal-fit, evidence, design, and risk review), code (default for legacy findings), sec (security; dev.22+), visual (UI/a11y/component correctness; dev.22+), ux (heuristic walkthrough + microcopy + interaction states; dev.43+), polish (improvement-articulation / value-add; dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk subset; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (UJ-* rules; dev.121). Forward-look planned lenses retained for compatibility with calibration corpora that may pre-emit them: perf (performance review; planned Tier 2/3), a11y (pure-a11y split distinct from visual lens's UI-a11y; planned Tier 2/3). Findings without this field continue to default to 'code'."
     },
     "rule_id": {
       "type": "string",

@@ -13,7 +13,7 @@
 def lens_label:
   if . == null then null
   elif type == "array" then ([.[] | lens_label] | unique | join(", "))
-  else {"code":"General review", "visual":"Visual design", "ux":"User experience",
+  else {"general":"General review", "code":"Code review", "visual":"Visual design", "ux":"User experience",
         "sec":"Security", "polish":"Refinement suggestions"}[.] // .
   end;
 

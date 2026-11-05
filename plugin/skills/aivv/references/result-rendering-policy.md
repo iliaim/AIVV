@@ -36,7 +36,7 @@ Trigger when `~/.aivv/config.json` exists and `_setup_hint_shown_at` is absent
 or null. Emit:
 
 ```text
-Tip: AIVV is using defaults ({resolved_default_reviewers} reviewer{plural-s}, {resolved_lens_summary}, {resolved_severity_threshold}-and-above severity). Configure with /aivv --setup (4-6 questions) — this hint won't appear again
+Tip: AIVV is using defaults ({resolved_default_reviewers} reviewer{plural-s}, {resolved_lens_summary}, {resolved_severity_threshold}-and-above severity). Configure with /aivv --setup (4-5 questions) — this hint won't appear again
 ```
 
 Then write `_setup_hint_shown_at` to user config. On write failure, warn and

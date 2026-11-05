@@ -15,7 +15,7 @@ Common workflows:
 
 Review-shape flags:
   --reviewers=N                     Dispatch N cold reviewer subagents (1-9)
-  --lens=<X>[,<Y>...]               Lens(es): code, sec, visual, ux, polish, compliance, i18n, user-journey
+  --lens=<X>[,<Y>...]               Lens(es): general, code, sec, visual, ux, polish, compliance, i18n, user-journey
   --lens-replicate=M                Reviewers per lens (K×M composition; requires --lens= when M>1)
   --thoroughness=<tier>             Effort dial: fast | balanced | thorough | exhaustive (default: balanced)
   --direction | --no-direction      Force-enable / disable the direction-challenge posture this run
@@ -30,8 +30,8 @@ Full-* wrapper flags (set lens list + reviewer count atomically; conflict with -
   --full-visual                     visual,polish
   --full-a11y                       visual,compliance
   --full-ui-ux                      visual,ux,polish,compliance,i18n,user-journey
-  --full                            all seven core lenses
-  --full-with-journey               all eight lenses incl. user-journey (exceeds the tested ceiling — warns)
+  --full                            all seven specialist lenses (excludes general)
+  --full-with-journey               all eight specialist lenses incl. user-journey (excludes general; warns above tested ceiling)
 
 Runtime-evidence flags:
   --runtime                         Runtime-evidence mode (external probe emit/ingest)
@@ -40,7 +40,8 @@ Runtime-evidence flags:
 
 Auto lens / scope:
   --auto-lens | --no-auto-lens      Force / disable smart lens detection this run
-  --auto-scope | --ask-scope        Force announce mode / ask mode this run
+  --auto-scope | --ask-scope        --auto-scope is deprecated; both require confirmation
+  Every review confirms its subject, materials, and method before dispatch, including --dry-run
 
 Multi-model flags (per-run overrides; do not persist):
   --multi-model | --no-multi-model  Force cross-provider (Case D) / native review this run

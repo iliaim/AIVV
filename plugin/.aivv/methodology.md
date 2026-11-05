@@ -22,7 +22,7 @@ AIVV substitutes a mix of mechanisms that approximate, but do not reproduce, org
 - **Context isolation**: each reviewer sees only what the orchestrator explicitly passes. Again: prevents contamination, does not create epistemic diversity.
 - **LLM non-determinism**: sampling variance produces different surface reasoning from the same prompt — but same posterior distribution. Variance within one model's belief, not diversity across models.
 - **Adversarial prompting**: a framing intervention. Biases the reviewer toward finding problems. Useful, but not independence.
-- **Lens separation**: different reviewers apply different methodological lenses. The lens catalog ships at `plugin/.aivv/lenses/` (currently 8: code, sec, visual, ux, polish, compliance, i18n, user-journey). This is the one mechanism that produces **real epistemic diversity** — different starting assumptions, different reading of the same artifact — and remains the strongest form of agentic independence AIVV delivers.
+- **Lens separation**: different reviewers can apply different specialist focuses. The catalog ships at `plugin/.aivv/lenses/` (currently 9: general, code, sec, visual, ux, polish, compliance, i18n, user-journey). `general` is the default baseline for artifact reviews; an explicit lens selection adds only the selected specialist focus to the shared methodology. Distinct specialist lenses are designed to encourage different readings of the same artifact, but this does not establish measured review effectiveness or independent human-level assurance.
 
 **What this gets you**: findings that are stronger than no review, sometimes stronger than a single attentive review. Convergence between two cold-spawned reviewers with the same prompt is meaningful but *correlated* — it reflects the LLM's posterior, not two independent posteriors.
 
@@ -137,7 +137,15 @@ standalone final severity pass: applicable L1 legal/safety/accessibility/securit
 sources usually establish a DEFECT or policy floor; L4 aesthetic/style guidance
 usually supports IMPROVEMENT only after the articulation gate proves current value.
 
-Severity inference under the legacy model still follows the four-pass rule:
+General-lens non-code findings use the impact anchors in
+[lenses/general.md](lenses/general.md), rather than software compatibility
+shortcuts. This prevents a bounded draft-budget error or a decision mismatch
+from becoming CRITICAL solely because it mentions finances or a constraint.
+Applicable legal/safety and explicit project-policy floors remain in force, and a
+configured `impact_likelihood` matrix remains authoritative for final severity.
+
+For software behavior findings, severity inference under the legacy model still
+follows the four-pass rule:
 
 1. **Blast-radius pass** (overrides tone) — behavior is gated on the resolved `severity_model` config key (preferences.md Step 1.5; defaults to `legacy_4pass` for v1–v4 configs and absent-key reads):
    - **Under `severity_model: legacy_4pass`** (the shipped default — current behavior, UNCHANGED): financial/security/data/availability concerns → CRITICAL regardless of wording.
@@ -324,12 +332,12 @@ AIVV uses a **dual-target dogfood model**, with the formal target chosen by lens
 
 | Lens family | Formal dogfood target | Calibration log |
 |---|---|---|
-| `code` (default) and `sec` | **AIVV-self** | Its resolved external `<calibration_dir>/<lens>/*.jsonl` shards; legacy shared/shard history read via union |
+| `general` (default), `code`, and `sec` | **AIVV-self** | Its resolved external `<calibration_dir>/<lens>/*.jsonl` shards; legacy shared/shard history read via union |
 | UI families: `visual`, `ux`, `polish` (and forward-look `compliance`, `i18n`, `runtime-visual`) | A representative UI-bearing project selected for controlled review | Its own resolved external `<calibration_dir>/<lens>/*.jsonl` shards; legacy shared/shard history read via union |
 
 **Rationale for the split:** AIVV-self is a CLI plugin distributed as static markdown skills + JSON schemas + agent role prose; it has minimal user-facing UI surface. Running UI-family lenses against AIVV-self produces graceful zero-findings (per the lens files' "Graceful degradation" sections) — useful for confirming the lens doesn't fabricate findings on non-UI code, but not a real dogfood signal for UI-pattern coverage. A representative UI-bearing project provides the controlled population that UI-family lenses need to calibrate against.
 
-**Every self-referential `/aivv` run on AIVV is a code/sec dogfood event.** A run on the selected UI-bearing project is a UI-family dogfood event. Both feed lens-specific calibration corpora.
+**Every self-referential `/aivv` run on AIVV is a dogfood event for its assigned lens.** This includes the general default and the explicit `code` and `sec` lenses. A run on the selected UI-bearing project is a UI-family dogfood event. Runs feed lens-specific calibration corpora; this catalog/default change does not claim measured quality gains.
 
 Calibration corpora from other projects are *field evidence*, not the dogfood baseline. Field evidence informs pattern-mining and reveals reviewer failure modes outside AIVV's own surface area; it does not substitute for dogfood-baseline calibration on a known-controlled population.
 

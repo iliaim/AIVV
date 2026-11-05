@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.3.0 — general review and confirmed scope
+
+- Default to the `general` lens for documents, research, plans, designs, workflows, decisions, and code. Explicit configured lenses remain unchanged; historical findings retain their original lens semantics.
+- Confirm the subject, boundaries, and review approach before every review pass, including clear file requests and outer-loop passes. Legacy `announce` settings and `--auto-scope` warn and require confirmation; unavailable prompts leave the review pending.
+- Select relevant evidence, standards, and review methods using a shared checklist that covers accuracy, completeness, fitness for purpose, design, alternatives, and proportionate improvements.
+- Include the checklist in portable reviewer prompts and distinguish general and code reviews in report labels.
+- Rate non-code general findings by their consequences; code-era financial and keyword shortcuts do not automatically make a bounded document error CRITICAL. Software severity policies remain in effect.
+
 ## 0.2.2 — cross-agent plugin packaging
 
 - Add native plugin package manifests for Codex and Claude Code around the shared AIVV skills and runtime.

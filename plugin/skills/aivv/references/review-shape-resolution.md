@@ -16,30 +16,45 @@ confirmation, smart-lens detection, or high-risk floor reporting.
    `--reviewers=N`, `--lens=<list>`, `--lens-replicate=M`, `--full-*`
    wrappers, `--auto-lens` / `--no-auto-lens`, and `--auto-scope` /
    `--ask-scope`.
-2. Apply the preliminary Step 1.4 composition from
+2. Load config/default overlays from [`preferences.md`](preferences.md). An
+   omitted `default_lenses` resolves to the golden default `general`; do not
+   inject `general` into an explicit, configured, or fixed wrapper lens list.
+3. Apply the preliminary Step 1.4 composition from
    [`lens-composition.md`](lens-composition.md). This validates explicit
    K/M/N combinations and yields a provisional `reviewer_lens_assignments`.
-3. Load config/default overlays from [`preferences.md`](preferences.md). If any
+   If any
    of `default_reviewers`, `default_lenses`, or `default_lens_replicate`
    supplies an unset shape value, rerun the Step 1.4 composition before Step
    1.9.
-4. Extract session context and compute the Step 2.5 `lens_ceiling` buckets.
-   This judgment is advisory only; `sec` and `compliance` high-risk floors can
-   override a `no` bucket.
-5. Gather paths / plan / file / idea context, then run the Step 3.4 scope gate
-   from [`scope-confirmation.md`](scope-confirmation.md). The gate must produce
-   `final_scope` before any floor or ceiling is admitted to dispatch.
-6. Recompute smart-lens detection against `final_scope` in Step 3.5, then apply
-   Step 3.6 consent / mode handling.
+4. Extract session context and gather available paths / plan / file / idea
+   material. Compute the proposed scope and present the complete scope and
+   preliminary method through the Step 3.4 gate before lens detection.
+5. Run the mandatory Step 3.4 confirmation from
+   [`scope-confirmation.md`](scope-confirmation.md). Every actual review,
+   including explicit artifacts and `--dry-run`, must produce a confirmed
+   `final_scope` before detection or dispatch. If confirmation is missing,
+   canceled, or unavailable, hold before lens detection, reviewer dispatch,
+   calibration, review-log writing, and fix handoff.
+6. After confirmation, compute/recompute the Step 2.5 `lens_ceiling` and run
+   Step 3.5 detection only against `final_scope`. Resolve Step 3.6 mode and
+   candidate additions; defer any `ask`-mode lens consent until the complete
+   final scope and method can be shown.
 7. Apply the adaptive-confidence floor: when reviewer count is not pinned by
    explicit `--reviewers`, wrapper flags, or config, raise a single-reviewer
    default to 2 reviewers if the scope gate found an ambiguous/non-trivial
    session, high-risk lens floors were detected, or review scope spans multiple
    unrelated files/topics. This is a pre-dispatch confidence floor, not a schema
    default change; low-risk explicit artifact reviews remain at one reviewer.
-8. Rebuild `reviewer_lens_assignments` exactly once after detection, unless the
-   dispatch shape is fixed by a tier-1 explicit selection. Detection-added
-   lenses run at M=1 and are appended after the explicit/configured block.
+8. Rebuild `reviewer_lens_assignments` exactly once after detection and the
+   confidence floor, unless the dispatch shape is fixed by a tier-1 explicit
+   selection. Detection-added lenses run at M=1 and are appended after the
+   explicit/configured block. Compare this final shape with the proposal the
+   user confirmed; show the final scope and method and reconfirm before dispatch
+   if lenses, reviewer depth, replication, or coverage changed. This complete
+   final confirmation also serves as any pending Step 3.6 `ask`-mode lens
+   consent; do not issue a separate lens-only prompt. If this confirmation is
+   pending, canceled, or unavailable, hold before dispatch, calibration,
+   review-log writing, and fix handoff.
 
 ## 2. Composition Rules
 
@@ -56,16 +71,20 @@ wrapper default M through the precedence chain in `argument-parsing.md`.
 
 ## 3. Scope Before Lenses
 
-`scope-confirmation.md` owns the classifier, prompt/announcement copy,
-non-interactive suppression, per-session suppression, and `scope_confirmation`
-audit block. This file owns only the ordering contract:
+`scope-confirmation.md` owns the proposal, mandatory confirmation behavior,
+hold conditions, legacy announce normalization, and `scope_confirmation` audit
+block. This file owns only the ordering contract:
 
-- Step 3.4 runs after context gathering and before Step 3.5/3.6.
+- Step 3.4 runs after available context gathering and before any lens detection.
+- The complete goal, subject, material boundaries, relevant question/strategy,
+  and preliminary lens/depth method are confirmed at Step 3.4 for every review.
 - Its output is `final_scope`; a user narrowing also sets `dropped_scope`.
 - Ordinary floor and ceiling path checks run against `paths intersect final_scope.paths`.
 - If a scope adjustment changes the session subset, recompute `lens_ceiling`
   before final lens admission.
 - High-risk floor still applies to remaining in-scope paths.
+- Any post-confirmation detection/depth change is shown with the final scope and
+  confirmed before dispatch.
 - When `was_trivial == false` and reviewer count is otherwise unpinned, the
   adaptive-confidence floor may raise the count from 1 to 2 before final
   reviewer assignment.
@@ -79,8 +98,11 @@ Step 3.5 combines four inputs:
 - Step 2.5 ceiling matches admitted by Step 3.6 mode/consent;
 - `sec` / `compliance` high-risk floor matches from `high_risk_paths`.
 
-Path matching uses `git diff --name-only HEAD -- ":(glob)<glob>"`, cached diff,
-and untracked `git status --porcelain` paths. Split comma-separated frontmatter
+When Git is available, path matching uses `git diff --name-only HEAD --
+":(glob)<glob>"`, cached diff, and untracked `git status --porcelain` paths. If
+Git is unavailable or there is no diff, continue using only available session
+and artifact context; do not invent path matches, file counts, or commit counts.
+Split comma-separated frontmatter
 glob lists on `,`, trim tokens, and reject brace expansion assumptions. Generated
 and vendored paths are excluded for ordinary floor/ceiling checks, but not for
 `high_risk_paths`.
@@ -107,7 +129,8 @@ keeps an explicit fixed shape from silently dropping high-risk coverage.
 
 Before Step 4 prompt construction, the orchestrator must have:
 
-- `lenses_list`: final ordered dispatch lenses, always including `code`;
+- `lenses_list`: final ordered dispatch lenses, using the confirmed explicit or
+  configured choices, or the golden default `general` when no lens was set;
 - `reviewer_lens_assignments`: final list read by Step 4 / Step 5;
 - `lens_origin`: explicit, config/default, floor, ceiling, or high-risk;
 - `scope_confirmation`: audit block fields from `scope-confirmation.md`;

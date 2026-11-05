@@ -220,7 +220,7 @@ fi
 
 write_agent_toml \
   "aivv-reviewer" \
-  "AIVV IV&V reviewer: independent advisory review of session work, file, or idea. Read-only." \
+  "AIVV general advisory reviewer for session work, artifacts, plans, and decisions. Read-only." \
   "${plugin_source_root}/.aivv/prompts/reviewer-role.md" \
   "${agents_dest}/aivv-reviewer.toml"
 
