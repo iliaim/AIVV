@@ -13,6 +13,21 @@ codex plugin add aivv@aivv
 
 The plugin packages AIVV skills and runtime files. Codex plugin packages do not install the custom read-only reviewer and investigator agent profiles, so cold dispatch also requires `scripts/install-codex.sh` (macOS/Linux) or `scripts/install-codex.ps1` (PowerShell). Codex skips bundled plugin hooks until a user reviews and trusts the current hook definition; review the AIVV hook files before enabling it. Keep results advisory; they are not an independent organizational or compliance audit. See [INSTALL.md](https://github.com/iliaim/AIVV/blob/main/INSTALL.md) for the current setup paths.
 
+## Native question formatting
+
+A human visual check in Codex desktop on 2026-11-06 confirmed that a native
+question displayed a bold Markdown heading and Unicode
+bullets on separate lines, with all text and controls readable. The specimen
+contained blank lines, four labeled lines (Goal, Materials, Excludes, Method), native choices
+and custom input. This is human-observed rendering, not automated inspection of
+Codex. It does not establish support for tables, nested lists, every Markdown
+construct, other window sizes, or other Codex clients.
+
+Use this verified desktop capability through the canonical
+[scope-question presentation guidance](../../skills/aivv/references/scope-confirmation.md#1-ordering-and-required-proposal).
+Other Codex surfaces retain that procedure's fallback unless their formatting
+support is known.
+
 ## Native model and reasoning labels
 
 Before proposing a native review method, inspect the callable dispatch tool's
