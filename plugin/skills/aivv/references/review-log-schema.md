@@ -2,12 +2,13 @@
 
 After calibration and before Step 8 auto-chain, write
 `<state_dir>/review-<invocation_id>.json` for every non-voided review that ran
-after its scope and final method were resolved, including clean reviews.
-Do not write a review log for a review held, canceled, or left pending before
-necessary clarification, or voided by workspace drift. The normal preamble may
-already have initialized configuration, written hints, or run authorized
-maintenance before scope resolution; a pre-dispatch hold does not claim those
-earlier writes were absent or rolled back. The orchestrator writes this
+after its scope and final method were resolved and announced, including clean
+reviews. Do not write a review log for a review held on genuine ambiguity,
+missing authority, explicit ask-mode confirmation, or canceled scope, or voided
+by workspace drift. The normal preamble may already have initialized
+configuration, written hints, or run authorized maintenance before scope
+resolution; a pre-dispatch hold does not claim
+those earlier writes were absent or rolled back. The orchestrator writes this
 log; reviewer agents are read-only.
 
 Invocation ID format: `YYYY-MM-DDTHH-MM-SS-<4-char-random-hex>`, computed at
@@ -67,15 +68,15 @@ where exact model is unavailable, use `model:"inherited"` and
 user_choice, lens_origin, suppression_reason}`. Persist only redacted/capped
 `trigger_excerpt` values.
 
-`scope_confirmation` shape for a review that actually ran (see the canonical
-scope-resolution procedure in
+`scope_confirmation` shape for a review that actually ran (the historic field
+name is retained; see the canonical scope-resolution procedure in
 [`scope-confirmation.md`](scope-confirmation.md)):
 `{mode, was_trivial, classification_reason, proposed_scope, options_offered,
 user_choice, final_scope, dropped_scope?, suppression_reason}`. Omit on early
-exits, voided reviews, or a hold before scope/method resolution.
-`mode` is `ask`; legacy
-`announce` inputs are warned and normalized before execution. There is no
-non-interactive scope suppression record because unresolved reviews do not run.
+exits, voided reviews, or a hold before scope/method resolution. `mode` records
+the resolved `announce` or `ask` policy. The default is `announce`; a manually
+configured ask preference or explicit `--ask-scope` remains visible in the
+record.
 
 `severity_calibration` shape:
 `{model:"impact_likelihood", under_rating_mirror, track_split,

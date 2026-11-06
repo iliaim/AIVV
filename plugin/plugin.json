@@ -23,7 +23,7 @@
       "interface": {
         "displayName": "AIVV",
         "shortDescription": "General reviews and guided fixes",
-        "longDescription": "Review session work, documents, plans, decisions, and code. AIVV clarifies material scope or method ambiguity, investigates selected findings, and applies fixes through explicit safety gates. It records review state outside the project checkout and reports when reviewer isolation or other capabilities are unavailable. It does not replace tests, security testing, or organizational review.",
+        "longDescription": "Review session work, documents, plans, decisions, and code. AIVV announces the resolved scope and approach for clear explicit read-only requests, and asks when scope, authority, or material boundaries are unclear. Investigate selected findings and apply fixes through explicit safety gates. AIVV records review state outside the project checkout and reports when reviewer isolation or other capabilities are unavailable. It does not replace tests, security testing, or organizational review.",
         "developerName": "Ilia Imerlishvili",
         "category": "Developer Tools",
         "capabilities": [

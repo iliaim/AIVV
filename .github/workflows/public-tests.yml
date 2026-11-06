@@ -35,6 +35,8 @@ jobs:
         run: node tests/security/investigator-bash-guard.test.mjs
       - name: Verify native prompt boundary nonce generation
         run: node tests/security/native-prompt-boundary.test.mjs
+      - name: Verify pre-write validator policy and content boundaries
+        run: node tests/security/pre-write-validator-policy.test.mjs
       - name: Verify active plugin runtime-root resolution
         run: node tests/runtime-root.test.mjs
       - name: Verify Claude and Codex package metadata

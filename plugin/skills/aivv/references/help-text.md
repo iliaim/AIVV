@@ -2,7 +2,7 @@
 
 Canonical categorized help text printed by `/aivv --help`. This file is the single verbatim source for the primary learnability surface — the orchestrator prints its contents verbatim on `--help` and exits before any review/state work. Do NOT paraphrase, reword, or model-compose per-flag descriptions at render time.
 
-**Maintenance rule.** Add every new flag documented in [argument-parsing.md](argument-parsing.md) to this template under the matching category in the same change.
+**Maintenance rule.** Every new flag added to [argument-parsing.md](argument-parsing.md) MUST be appended here in the matching category in the same commit. The pre-dev.283 version of this template was deleted in the router compaction (only `--show-polish` survived, because it alone carried a validate.sh pin) — restoring it is F010; keeping it in sync is the standing rule.
 
 ## Verbatim Template
 
@@ -40,9 +40,8 @@ Runtime-evidence flags:
 
 Auto lens / scope:
   --auto-lens | --no-auto-lens      Force / disable smart lens detection this run
-  --auto-scope                       Deprecated; uses default scope resolution
-  --ask-scope                        Require approval of the resolved scope this run
-  Clear requests proceed; clarify material ambiguity or a method change before dispatch
+  --auto-scope | --ask-scope        Announce clear scope/method | explicitly request confirmation
+  Ambiguity, missing authority, and material scope expansion always require clarification
 
 Multi-model flags (per-run overrides; do not persist):
   --multi-model | --no-multi-model  Force cross-provider (Case D) / native review this run

@@ -3,12 +3,12 @@
 Canonical runtime procedure for turning `/aivv` arguments, preferences, scope
 resolution, and smart-lens detection into the final reviewer count and
 `reviewer_lens_assignments`. Referenced from [`SKILL.md`](../SKILL.md) Steps
-1.4, 3.4, and 3.5.
+1.4, 3.4, 3.5, and 3.6.
 
 Read this file before resolving or recomputing review shape: reviewer count,
 `lenses_list`, `--lens-replicate`, full-audit wrappers (`--full-ui-ux`,
 `--full-visual`, `--full-a11y`, `--full`, `--full-with-journey`), scope
-   resolution, smart-lens detection, or high-risk floor reporting.
+resolution, smart-lens detection, or high-risk floor reporting.
 
 ## 1. Pipeline
 
@@ -16,6 +16,9 @@ Read this file before resolving or recomputing review shape: reviewer count,
    `--reviewers=N`, `--lens=<list>`, `--lens-replicate=M`, `--full-*`
    wrappers, `--auto-lens` / `--no-auto-lens`, and `--auto-scope` /
    `--ask-scope`.
+   <!-- Codex-SPECIFIC --> Resolve native model and reasoning labels under the
+   [Codex adapter](../../../.aivv/platform-adapters/codex.md#native-model-and-reasoning-labels)
+   before describing the proposed method.
 2. Load config/default overlays from [`preferences.md`](preferences.md). An
    omitted `default_lenses` resolves to the golden default `general`; do not
    inject `general` into an explicit, configured, or fixed wrapper lens list.
@@ -27,27 +30,33 @@ Read this file before resolving or recomputing review shape: reviewer count,
    supplies an unset shape value, rerun the Step 1.4 composition before Step
    1.9.
 4. Extract session context and gather available paths / plan / file / idea
-   material. Resolve `final_scope` under [`scope-confirmation.md`](scope-confirmation.md)
-   before lens detection; clarify only material ambiguity or a method change
-   beyond the user's request.
-5. Apply lens detection only within `final_scope`, using `lens_detection_mode`.
-   In `ask` mode, seek consent for non-obvious ceiling lenses.
+   material. Resolve the requested material boundary. Ask before detection only
+   if the subject/boundary is genuinely ambiguous or authority to inspect it is
+   missing; clear explicit read-only requests proceed without re-approval.
+5. After `final_scope` is resolved, compute/recompute the Step 2.5
+   `lens_ceiling` and run Step 3.5 detection only against that scope. Resolve
+   Step 3.6 mode and candidate additions using Detection Mode below.
 6. Apply the adaptive-confidence floor: when reviewer count is not pinned by
    explicit `--reviewers`, wrapper flags, or config, raise a single-reviewer
-   default to 2 reviewers when context is materially ambiguous, high-risk lens
-   floors apply, or review scope spans multiple
+   default to 2 reviewers if scope resolution found an ambiguous/non-trivial
+   session, high-risk lens floors were detected, or review scope spans multiple
    unrelated files/topics. This is a pre-dispatch confidence floor, not a schema
    default change; low-risk explicit artifact reviews remain at one reviewer.
-7. Rebuild `reviewer_lens_assignments` after detection and the
+7. Rebuild `reviewer_lens_assignments` exactly once after detection and the
    confidence floor, unless the dispatch shape is fixed by a tier-1 explicit
-   selection. Detection-added lenses run at M=1 and follow the
-   explicit/configured block. Before dispatch, compare the final reviewer count
-   and provider set with the user's request. Ask for consent if the resolved
-   method materially increases cost or provider egress. If consent is declined
-   or unavailable, retain the last authorized valid shape and report any
-   confidence floor or lens that was not applied; hold if no authorized valid
-   shape remains. State the resolved scope and final method before dispatch;
-   require extra scope approval only when `--ask-scope` was explicit.
+   selection. Detection-added lenses run at M=1 and are appended after the
+   explicit/configured block. Resolve the final reviewer count and provider set
+   before requesting any reviewer-cost or provider-egress consent; do not treat
+   consent for an earlier shape as authorization for a shape changed by the
+   confidence floor or lens resolution. If consent is declined or unavailable,
+   retain the last authorized valid shape and report any unapplied confidence
+   floor or lens; hold if no authorized valid shape remains. Announce the
+   complete final scope and method
+   before dispatch. If ask mode was explicitly selected by `--ask-scope` or a
+   manual-provenance config value, request confirmation once with that complete
+   resolved proposal. Otherwise ask only if the method
+   would materially expand scope or needs authority the request did not grant;
+   never add a redundant lens-only approval unless the user explicitly requested lens selection.
 
 ## 2. Composition Rules
 
@@ -64,29 +73,32 @@ wrapper default M through the precedence chain in `argument-parsing.md`.
 
 ## 3. Scope Before Lenses
 
-`scope-confirmation.md` owns scope resolution and the `scope_confirmation`
-audit block. This file owns only the ordering contract:
+`scope-confirmation.md` owns scope resolution, announce/ask conditions, hold
+conditions, and the compatible `scope_confirmation` audit block. This file owns
+only the ordering contract:
 
-- Step 3.4 runs after available context gathering and before any lens detection.
-- Resolve the goal, subject, material boundaries, and review question before
-  detecting lenses.
+- Step 3.4 resolves scope after available context gathering and before lens detection.
+- Resolve `final_scope` before detection; announce the final method after lens
+  and depth resolution but before dispatch.
 - Its output is `final_scope`; a user narrowing also sets `dropped_scope`.
 - Ordinary floor and ceiling path checks run against `paths intersect final_scope.paths`.
 - If a scope adjustment changes the session subset, recompute `lens_ceiling`
   before final lens admission.
 - High-risk floor still applies to remaining in-scope paths.
-- Ask before a material method change beyond what the user requested.
+- Detection and depth changes within the requested boundary are announced, not
+  separately approved unless explicit ask mode applies. Material scope expansion
+  or missing authority is held.
 - When `was_trivial == false` and reviewer count is otherwise unpinned, the
   adaptive-confidence floor may raise the count from 1 to 2 before final
   reviewer assignment.
 
-## 4. Detection And Consent
+## 4. Detection Mode
 
 Step 3.5 combines four inputs:
 
 - existing `lenses_list` from explicit/default shape;
 - deterministic floor matches from lens frontmatter `detect_paths`;
-- detected ceiling matches admitted by `lens_detection_mode`;
+- Step 2.5 ceiling matches admitted by Step 3.6 mode;
 - `sec` / `compliance` high-risk floor matches from `high_risk_paths`.
 
 When Git is available, path matching uses `git diff --name-only HEAD --
@@ -101,10 +113,12 @@ and vendored paths are excluded for ordinary floor/ceiling checks, but not for
 Modes:
 
 - `smart`: apply floor, relevant ceiling, and high-risk matches.
-- `ask`: auto-apply floor; ask for non-obvious ceiling additions when
-  interactive. If declined or unavailable, record them as not applied and
-  continue with the selected lenses plus floors. Non-interactive runs report
-  ceiling additions without applying them.
+- `ask`: auto-apply floor. A default/wizard value reports optional ceiling candidates
+  without adding them or blocking the requested review. A manual-provenance `ask`
+  preference requests a choice about those additions when interactive. If
+  declined, canceled, or unavailable, report them as not applied and continue
+  with the authorized shape. Non-interactive runs report candidates without
+  adding them. Do not infer a request for questions from a persisted default.
 - `off`: detect/report only; no auto-apply beyond explicit/default lenses.
 
 ## 5. Fixed Shape Suppression
@@ -122,7 +136,7 @@ keeps an explicit fixed shape from silently dropping high-risk coverage.
 
 Before Step 4 prompt construction, the orchestrator must have:
 
-- `lenses_list`: final ordered dispatch lenses, using the resolved explicit or
+- `lenses_list`: final ordered dispatch lenses, using the confirmed explicit or
   configured choices, or the golden default `general` when no lens was set;
 - `reviewer_lens_assignments`: final list read by Step 4 / Step 5;
 - `lens_origin`: explicit, config/default, floor, ceiling, or high-risk;

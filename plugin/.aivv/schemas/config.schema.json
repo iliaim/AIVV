@@ -214,7 +214,7 @@
         "off"
       ],
       "default": "ask",
-      "description": "Smart lens detection (dev.154). ask=prompt for non-obvious ceiling additions (floor always auto-applies); smart=auto-apply ceiling; off=legacy detect-and-report. See 2026-05-29-smart-lens-detection."
+      "description": "Smart lens detection (dev.154). Default/wizard ask reports optional ceiling candidates without adding them or blocking the requested review; manual-provenance ask requests a choice when interactive. smart adds relevant lenses within scope and announces the final method; off retains detect/report behavior. See review-shape-resolution.md for the mode contract."
     },
     "severity_model": {
       "type": "string",
@@ -336,8 +336,8 @@
         "ask",
         "announce"
       ],
-      "default": "ask",
-      "description": "Ask mode clarifies material scope or method ambiguity before dispatch; a clear user request authorizes its stated scope without a second approval. Use --ask-scope when explicit approval is wanted. Legacy announce is accepted syntactically and normalized to ask with a warning. v1–v5 configs predate the key and resolve to 'ask' on read."
+      "default": "announce",
+      "description": "announce=show resolved scope/method before a clear explicit read-only review and proceed; a manually configured ask value requests scope/method confirmation each run. Old wizard/default ask values resolve in-memory to announce unless --ask-scope is explicit. Ambiguity, missing authority, or material scope expansion always requires clarification. v1–v5 configs predate the key and resolve to announce on read."
     },
     "issue_sync_mode": {
       "type": "string",

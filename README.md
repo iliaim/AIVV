@@ -1,10 +1,10 @@
 # AIVV — Agentic Independent Validation & Verification
 
-AIVV is an open-source, cross-agent package for structured review of session work, documents, research, plans, designs, decisions, and code, with remediation and calibration. It keeps review rules, prompts, schemas, and state formats shared, with host adapters for Claude Code and Codex tool names, permissions, dispatch, and installation. Both hosts have native plugin packages. Codex cold reviewer and investigator dispatch has been verified end to end; its custom read-only profiles still need a separate install step. The live check suppressed AIVV state writes, so persisted review state remains unverified on Codex.
+AIVV is an open-source, cross-agent package for structured review of session work, documents, research, plans, designs, decisions, and code, with remediation and calibration. It keeps review rules, prompts, schemas, and state formats shared, with host adapters for Claude Code and Codex tool names, permissions, dispatch, and installation. Both hosts have native plugin packages. Codex custom read-only profiles still need a separate install step; the [Codex adapter](plugin/.aivv/platform-adapters/codex.md) records verified desktop review, confirmation, persistence, and restart rediscovery coverage and its limits.
 
 ## What it does
 
-- `/aivv` reviews the clearly named subject and asks only when scope or method is materially unclear. Use `--ask-scope` to request explicit approval; use `--reviewers=N` for multiple reviewers or `--lens=code` for a code-focused review.
+- `/aivv` announces the resolved scope and approach for a clear explicit read-only review, then proceeds. It asks when scope, authority, or material boundaries are unclear; use `--ask-scope` to request confirmation each run. Use `--reviewers=N` for multiple reviewers or `--lens=code` for a code-focused review.
 - `/aivv-fix` investigates and remediates selected findings through explicit safety gates.
 - `/aivv-calibrate` supports project-specific calibration.
 - `/aivv-view` reads AIVV review and fix records.

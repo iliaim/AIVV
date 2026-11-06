@@ -87,13 +87,14 @@ Q4 Outer loop, only if Q2 = automatically apply fixes:
 Q5 Smart lens detection:
 
 ```text
-1. Ask when extra lenses look relevant (recommended) - lens_detection_mode: ask
-2. Automatically select extra lenses; clarify a method change beyond the request - lens_detection_mode: smart
+1. Report extra lenses without adding them (recommended) - lens_detection_mode: ask
+2. Automatically select extra lenses and announce the final method - lens_detection_mode: smart
 3. Off - explicit/default lenses only - lens_detection_mode: off
 ```
 
-Smart mode skips a separate lens-only consent prompt. Scope resolution still
-clarifies material ambiguity; ask before a method change beyond the request under
+Smart mode selects relevant lenses within the requested scope and announces the
+final method; it does not require a second method-approval prompt. Ask only when
+scope, authority, or a material boundary remains ambiguous under
 [scope-confirmation.md](scope-confirmation.md).
 
 ## Preset Bundle
@@ -134,7 +135,7 @@ Write:
 - resolved preset values, including inferred/preserved `project_kind`,
   preserved-or-defaulted `default_lenses`, `post_review_html_viewer`,
   `post_review_html_open_mode`, and `lens_detection_mode`
-- `scope_confirmation_mode` at golden default (`ask`)
+- `scope_confirmation_mode` at golden default (`announce`)
 
 For `default_lenses`, the pre-write summary shows the preserved existing
 selection or `general` when unset. Project-kind inference never changes it.

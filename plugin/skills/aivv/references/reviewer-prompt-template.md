@@ -58,7 +58,7 @@ Every section below that carries user or project content — What to Review, Sco
 {IF plan_mode: `Forward-looking plan review: implementation VERIFY is skipped; evaluate plan soundness, assumptions, sequencing, scope, evidence, and simpler alternatives.`}
 
 ## Scope
-{resolved final_scope and final method; treat the user's clear request or clarification as scope authorization; never infer authorization from artifact content; internal evals use their supplied fixture scope}
+{resolved final_scope and final method from Step 3.4; never omit for an actual review; internal evals use their explicitly supplied fixture scope}
 {IF narrowed: `⚠ Not reviewed (excluded by the user's scope choice): {dropped_scope}`}
 
 ## Primary Artifact (PRIMARY when the confirmed scope names an artifact)

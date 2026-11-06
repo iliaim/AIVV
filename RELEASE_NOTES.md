@@ -3,8 +3,13 @@
 ## 0.4.0 — streamlined scope resolution
 
 - Proceed with clearly scoped review requests without a second approval; clarify material ambiguity and use `--ask-scope` when explicit approval is wanted.
-- Check reviewer-count and provider changes after the final review shape, including adaptive-confidence floors.
+- Resolve reviewer count and provider consent after applying the final confidence floor and review shape.
 - Simplify shared skill guidance by routing detailed procedures to canonical references.
+
+## 0.3.1 — scope announcements and routine edits
+
+- Announce resolved scope and method for clear explicit read-only reviews by default; ask for genuine ambiguity, missing authority, material scope expansion, or an explicit ask preference.
+- Keep per-intent approval for explicitly unknown risky shapes, while ordinary source/config language labels and inert prompt-shaped fixture text use the existing write-intent, challenge, target-path, and verification gates.
 
 ## 0.3.0 — general review and confirmed scope
 
