@@ -1,14 +1,14 @@
 # Review Shape Resolution
 
 Canonical runtime procedure for turning `/aivv` arguments, preferences, scope
-confirmation, and smart-lens detection into the final reviewer count and
+resolution, and smart-lens detection into the final reviewer count and
 `reviewer_lens_assignments`. Referenced from [`SKILL.md`](../SKILL.md) Steps
-1.4, 3.4, 3.5, and 3.6.
+1.4, 3.4, and 3.5.
 
 Read this file before resolving or recomputing review shape: reviewer count,
 `lenses_list`, `--lens-replicate`, full-audit wrappers (`--full-ui-ux`,
 `--full-visual`, `--full-a11y`, `--full`, `--full-with-journey`), scope
-confirmation, smart-lens detection, or high-risk floor reporting.
+   resolution, smart-lens detection, or high-risk floor reporting.
 
 ## 1. Pipeline
 
@@ -27,34 +27,27 @@ confirmation, smart-lens detection, or high-risk floor reporting.
    supplies an unset shape value, rerun the Step 1.4 composition before Step
    1.9.
 4. Extract session context and gather available paths / plan / file / idea
-   material. Compute the proposed scope and present the complete scope and
-   preliminary method through the Step 3.4 gate before lens detection.
-5. Run the mandatory Step 3.4 confirmation from
-   [`scope-confirmation.md`](scope-confirmation.md). Every actual review,
-   including explicit artifacts and `--dry-run`, must produce a confirmed
-   `final_scope` before detection or dispatch. If confirmation is missing,
-   canceled, or unavailable, hold before lens detection, reviewer dispatch,
-   calibration, review-log writing, and fix handoff.
-6. After confirmation, compute/recompute the Step 2.5 `lens_ceiling` and run
-   Step 3.5 detection only against `final_scope`. Resolve Step 3.6 mode and
-   candidate additions; defer any `ask`-mode lens consent until the complete
-   final scope and method can be shown.
-7. Apply the adaptive-confidence floor: when reviewer count is not pinned by
+   material. Resolve `final_scope` under [`scope-confirmation.md`](scope-confirmation.md)
+   before lens detection; clarify only material ambiguity or a method change
+   beyond the user's request.
+5. Apply lens detection only within `final_scope`, using `lens_detection_mode`.
+   In `ask` mode, seek consent for non-obvious ceiling lenses.
+6. Apply the adaptive-confidence floor: when reviewer count is not pinned by
    explicit `--reviewers`, wrapper flags, or config, raise a single-reviewer
-   default to 2 reviewers if the scope gate found an ambiguous/non-trivial
-   session, high-risk lens floors were detected, or review scope spans multiple
+   default to 2 reviewers when context is materially ambiguous, high-risk lens
+   floors apply, or review scope spans multiple
    unrelated files/topics. This is a pre-dispatch confidence floor, not a schema
    default change; low-risk explicit artifact reviews remain at one reviewer.
-8. Rebuild `reviewer_lens_assignments` exactly once after detection and the
+7. Rebuild `reviewer_lens_assignments` after detection and the
    confidence floor, unless the dispatch shape is fixed by a tier-1 explicit
-   selection. Detection-added lenses run at M=1 and are appended after the
-   explicit/configured block. Compare this final shape with the proposal the
-   user confirmed; show the final scope and method and reconfirm before dispatch
-   if lenses, reviewer depth, replication, or coverage changed. This complete
-   final confirmation also serves as any pending Step 3.6 `ask`-mode lens
-   consent; do not issue a separate lens-only prompt. If this confirmation is
-   pending, canceled, or unavailable, hold before dispatch, calibration,
-   review-log writing, and fix handoff.
+   selection. Detection-added lenses run at M=1 and follow the
+   explicit/configured block. Before dispatch, compare the final reviewer count
+   and provider set with the user's request. Ask for consent if the resolved
+   method materially increases cost or provider egress. If consent is declined
+   or unavailable, retain the last authorized valid shape and report any
+   confidence floor or lens that was not applied; hold if no authorized valid
+   shape remains. State the resolved scope and final method before dispatch;
+   require extra scope approval only when `--ask-scope` was explicit.
 
 ## 2. Composition Rules
 
@@ -71,20 +64,18 @@ wrapper default M through the precedence chain in `argument-parsing.md`.
 
 ## 3. Scope Before Lenses
 
-`scope-confirmation.md` owns the proposal, mandatory confirmation behavior,
-hold conditions, legacy announce normalization, and `scope_confirmation` audit
-block. This file owns only the ordering contract:
+`scope-confirmation.md` owns scope resolution and the `scope_confirmation`
+audit block. This file owns only the ordering contract:
 
 - Step 3.4 runs after available context gathering and before any lens detection.
-- The complete goal, subject, material boundaries, relevant question/strategy,
-  and preliminary lens/depth method are confirmed at Step 3.4 for every review.
+- Resolve the goal, subject, material boundaries, and review question before
+  detecting lenses.
 - Its output is `final_scope`; a user narrowing also sets `dropped_scope`.
 - Ordinary floor and ceiling path checks run against `paths intersect final_scope.paths`.
 - If a scope adjustment changes the session subset, recompute `lens_ceiling`
   before final lens admission.
 - High-risk floor still applies to remaining in-scope paths.
-- Any post-confirmation detection/depth change is shown with the final scope and
-  confirmed before dispatch.
+- Ask before a material method change beyond what the user requested.
 - When `was_trivial == false` and reviewer count is otherwise unpinned, the
   adaptive-confidence floor may raise the count from 1 to 2 before final
   reviewer assignment.
@@ -95,7 +86,7 @@ Step 3.5 combines four inputs:
 
 - existing `lenses_list` from explicit/default shape;
 - deterministic floor matches from lens frontmatter `detect_paths`;
-- Step 2.5 ceiling matches admitted by Step 3.6 mode/consent;
+- detected ceiling matches admitted by `lens_detection_mode`;
 - `sec` / `compliance` high-risk floor matches from `high_risk_paths`.
 
 When Git is available, path matching uses `git diff --name-only HEAD --
@@ -111,7 +102,9 @@ Modes:
 
 - `smart`: apply floor, relevant ceiling, and high-risk matches.
 - `ask`: auto-apply floor; ask for non-obvious ceiling additions when
-  interactive; report-but-do-not-apply ceiling additions when non-interactive.
+  interactive. If declined or unavailable, record them as not applied and
+  continue with the selected lenses plus floors. Non-interactive runs report
+  ceiling additions without applying them.
 - `off`: detect/report only; no auto-apply beyond explicit/default lenses.
 
 ## 5. Fixed Shape Suppression
@@ -129,7 +122,7 @@ keeps an explicit fixed shape from silently dropping high-risk coverage.
 
 Before Step 4 prompt construction, the orchestrator must have:
 
-- `lenses_list`: final ordered dispatch lenses, using the confirmed explicit or
+- `lenses_list`: final ordered dispatch lenses, using the resolved explicit or
   configured choices, or the golden default `general` when no lens was set;
 - `reviewer_lens_assignments`: final list read by Step 4 / Step 5;
 - `lens_origin`: explicit, config/default, floor, ceiling, or high-risk;

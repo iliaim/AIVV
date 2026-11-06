@@ -89,10 +89,11 @@ and `--project` outside setup warns and is ignored.
 
 - `--auto-lens` / `--no-auto-lens`: per-run only, mutually exclusive; force
   `lens_detection_mode` to `smart` or `off`; strip before positional parsing.
-- `--auto-scope` / `--ask-scope`: accepted per-run aliases, mutually exclusive;
+- `--auto-scope` / `--ask-scope`: per-run scope options, mutually exclusive;
   strip before positionals. `--auto-scope` is deprecated: warn and normalize
-  it to `ask`. Both aliases require the ordinary complete scope confirmation;
-  explicit file/idea positionals also require confirmation.
+  it to the default `ask` behavior. `--ask-scope` presents the resolved
+  proposal and requires approval even when scope and method are clear. Both use
+  the rules in [`scope-confirmation.md`](scope-confirmation.md).
 
 ## 2aa. `--multi-model` / `--no-multi-model`
 

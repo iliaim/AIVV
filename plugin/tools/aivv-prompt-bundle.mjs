@@ -472,7 +472,7 @@ function main() {
   const req = readJson(request.absPath);
   validateRequest(req);
   if (!args.renderPromptOnly && !hasConfirmedScope(req)) {
-    process.stderr.write('[AIVV] SCOPE_CONFIRMATION_REQUIRED: confirm the final scope and review method, then supply review_scope.confirmed=true, subject_type (' + [...SUBJECT_TYPES].join(', ') + '), and non-empty final_scope and approach (or strategy). Prompt-only rendering remains available.\n');
+    process.stderr.write('[AIVV] SCOPE_CONFIRMATION_REQUIRED: resolve scope from the request or clarification, then supply review_scope.confirmed=true, subject_type (' + [...SUBJECT_TYPES].join(', ') + '), and non-empty final_scope and approach (or strategy). Prompt-only rendering remains available.\n');
     process.exit(9);
   }
   const lensSource = lensSourceFor(req.lens || 'general');

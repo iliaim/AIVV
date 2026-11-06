@@ -1,11 +1,11 @@
 ---
 name: aivv-view
-description: "Use when you need a read-only AIVV viewer over external runtime state and preserved project history: --tui, --html, --browser, --json, --summary, and enriched findings/resolution views."
+description: "Use to inspect AIVV review and fix history, render or export reports, browse findings across reviews, or create an opt-in local remediation handoff with --inbox."
 ---
 
 # AIVV View
 
-Phase 1 ships an `fzf`-backed TUI on top of the Phase 0 bash+jq loader. Phase 0 projects 15 historical review-log shape variants into a single canonical envelope. Phase 2 ships static HTML review reports and a read-only findings browser.
+The viewer reads AIVV history, normalizes legacy review logs into a canonical envelope, and presents summaries, reports, or a multi-review findings browser.
 
 ## Usage
 
@@ -44,7 +44,7 @@ and linked `reviews/` output retain their selected destinations. Legacy pending
 Inbox requests cannot execute: explicitly import the review if necessary, then
 requeue selected findings through the current receiver's normal validation.
 
-## TUI hotkeys (Phase 1)
+## TUI hotkeys
 
 | Key | Action |
 |-----|--------|
@@ -59,7 +59,7 @@ requeue selected findings through the current receiver's normal validation.
 
 Graceful degradation: if `fzf` is not installed, `--tui` falls back to `--summary` with an install hint.
 
-## HTML report (Phase 2)
+## HTML reports
 
 `--html` renders a self-contained single-file HTML report — no network dependencies, works offline, shareable by copying one file. It compacts and inlines CSS/JS from `templates/` at render time.
 
@@ -129,24 +129,10 @@ The helper proposes only deterministic values from existing fields and records a
 - [Humanize module](references/humanize.md) — centralized translation pipeline that adds `*_label` fields to the canonical envelope.
 - [Report renderer contract](references/report-renderer-contract.md) — stable input/output, read-only, compatibility, and size-policy boundary for HTML renderers.
 
-## Tests
-
-
 ## Runtime
 
 Hard deps: `bash`, `git`. Required: `jq`; the viewer hard-fails at invocation with install hint when absent (no degraded mode exists — the loader requires jq). `node` is required for shared path resolution and incomplete-import visibility checks, including static reports.
 
-## Scope-by-exclusion (4 non-negotiables)
+## Boundaries
 
-1. Static viewer reports have no write-back. Decisions UI is clipboard-only and may only read existing decision files. The separately invoked `--inbox` service is the opt-in action-inbox contract exception: it may append one validated, immutable remediation-request shard through a loopback-only endpoint, but it cannot modify review/decision/calibration records or execute a fix. Historical compatibility uses a derived index; original logs are not rewritten by `aivv-view`.
-2. No daemon / hosted mode; `--inbox` is a foreground, short-lived loopback service only.
-3. No JS framework or client-side state machine (Phase 2 is render-time-static).
-4. No editor of state files.
-
-<!-- DEFERRED-RETIRE-WHEN: a proposal extends opt-in action-inbox contract's local immutable request boundary into mutable triage write-back or remote execution -->
-
-<!-- DEFERRED-RETIRE-WHEN: canonical-fingerprint stability empirically demonstrated against ≥3 cross-cycle pairs from the existing review corpus -->
-
-<!-- DEFERRED-RETIRE-WHEN: typical per-cycle finding count crosses ≥30 (current corpus distribution: min 0, max 15, median 5, mode 3; three-pane is over-spec'd below ~30 per Lighthouse + axe + pytest-html + ESLint HTML precedent) -->
-
-<!-- DEFERRED-RETIRE-WHEN: calibration entries carry a structured join key (rule_id OR fingerprint OR F-id), OR the loader documents a fuzzy-prose-match algorithm with stated accuracy expectations — currently the .finding field is free-form prose only in code.jsonl, and polish/ux/visual.jsonl carry only review_meta records -->
+Viewing and static reports do not change review, fix, calibration, or decision records. Reports may be written to the selected output or private cache. The opt-in `--inbox` route creates a local, immutable remediation request; only `/aivv-fix` can consume it, and the viewer never runs a fix. Historical logs remain unchanged.

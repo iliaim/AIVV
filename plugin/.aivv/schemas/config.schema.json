@@ -337,7 +337,7 @@
         "announce"
       ],
       "default": "ask",
-      "description": "Every review confirms its proposed scope before dispatch. ask prompts for confirmation; legacy announce remains accepted syntactically but is normalized to ask with a warning, so announcement alone never authorizes a review. v1–v5 configs predate the key and resolve to 'ask' on read."
+      "description": "Ask mode clarifies material scope or method ambiguity before dispatch; a clear user request authorizes its stated scope without a second approval. Use --ask-scope when explicit approval is wanted. Legacy announce is accepted syntactically and normalized to ask with a warning. v1–v5 configs predate the key and resolve to 'ask' on read."
     },
     "issue_sync_mode": {
       "type": "string",

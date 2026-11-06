@@ -1,6 +1,6 @@
 ---
 name: aivv-fix
-description: "Use when you need end-to-end remediation of IV&V findings: investigate root causes, apply strategic fixes with prevention mechanisms, and verify in a bounded cycle after `/aivv`, lifecycle records, task open_issues, or a literal finding string."
+description: "Use to investigate and remediate AIVV findings, task open issues, or bugs and problems raised in the current session, then verify the fix in a bounded cycle."
 argument-hint: "[task-id | \"literal finding\" | --review-id <id> | --action-request <uuid> --target <dir> | --incident <id> | --problem <id> | --issue <id> | --github-issue <url|owner/repo#N>]"
 ---
 
@@ -8,7 +8,7 @@ argument-hint: "[task-id | \"literal finding\" | --review-id <id> | --action-req
 
 End-to-end workflow for resolving IV&V findings: root cause analysis, strategic fixes, scoped re-verification, in a bounded loop.
 
-**This skill requires write access via the host's edit facility** (Claude Code: `Edit`/`Write`/`Bash`; Codex: `apply_patch`/`shell_command`). If invoked from a restricted context (read-only subagent, no edit capability), warn the user and stop.
+Routes require only the capabilities they use: read, reviewer dispatch, or write. A selected write route needs the host's write facility (Claude Code: `Edit`/`Write`/`Bash`; Codex: `apply_patch`/`shell_command`). Check the route before stopping for missing write access; never cross a write gate without it.
 
 ## Host Adapter Mapping
 
@@ -42,40 +42,11 @@ Flow: 1 COLLECT findings → 2 TRIAGE batches → 2.5 CONTAIN critical blast rad
 
 Do not rely on `git diff` in Steps 5/6, skip same-file batching, auto-proceed on architectural changes, or loop past 3 cycles; use the session change log, batch related findings, ask on restructuring, and present the convergence gate.
 
-## Reference Index
+## Reference Loading
 
-Single progressive-disclosure index. Open the matching subfile before executing its gated step; references own load-bearing contracts, while this body keeps the skeleton and triggers.
+Read the linked reference when a step or condition below calls for it; do not preload the full reference set. Load prompt templates and schemas only for the dispatch that uses them: [investigator-prompt-template.md](references/investigator-prompt-template.md), [json-schema.md](references/json-schema.md), [investigator-output-example.md](references/investigator-output-example.md), [investigator-enrichment-fields.md](references/investigator-enrichment-fields.md), [investigator-field-definitions.md](references/investigator-field-definitions.md), [batched-and-challenger-schemas.md](references/batched-and-challenger-schemas.md), [schema-migration-notes.md](references/schema-migration-notes.md), [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md), and [verifier-prompt-template.md](references/verifier-prompt-template.md).
 
-**Step-gated references (read before the named step/condition):**
-
-- MUST-READ before Step 1.0 state maintenance: [preamble-state-maintenance.md](references/preamble-state-maintenance.md) — external-only Schema-version gate, authorized stale-session reaping, and legacy-history preservation. Do not improvise.
-- MUST-READ before extracting any Step 1 flag, the `--list-wont-fix`/`--forget-wont-fix` early-exit handlers, or lifecycle-selector routing: [fix-flags.md](references/fix-flags.md) — per-flag parsing rules, the two registry-handler exit codes, and the lifecycle-selector route helper are fixed contracts.
-- MUST-READ before accepting `--action-request=<uuid>`: [action-inbox.md](references/action-inbox.md) — the exclusive claim, target/revision revalidation, bounded selected-findings filter, and no-auto-execution boundary are fixed contracts.
-- MUST-READ before scanning conversation signals or fingerprinting in Step 1 COLLECT: [finding-collection.md](references/finding-collection.md) — Signal 0–4 priority, severity inference, fingerprint routing to `.aivv/runtime-contract.md`, and dedup thresholds are fixed contracts.
-- MUST-READ when resolving `--review-id`: [review-id-resolution.md](references/review-id-resolution.md) — missing, ambiguous, stale, or schema-newer review logs are hard routing conditions.
-- MUST-READ before binding `/aivv-fix`-specific preference keys in Step 1.1: [fix-preferences.md](references/fix-preferences.md) — the `fix_apply_policy` map, legacy `apply_polish_mode` mapping, `--apply-all-polish`/`--dangerously-auto-apply` precedence, and the `auto_apply_v1` marker write are fixed contracts (shared mechanism in `.aivv/configuration.md`).
-- MUST-READ when POLISH or L1-source policy affects scope: [polish-and-l1-source-policy.md](references/polish-and-l1-source-policy.md) — preserve forced-show and evidence semantics.
-- MUST-READ before any cross-step containment/investigation/challenge/auto-apply/decision-queue/Branch A-F execution decision: [execution-decisioning.md](references/execution-decisioning.md) — ordering, route boundaries, decision ledger fields, and dry-run/dangerous-bypass limits are fixed contracts.
-- MUST-READ before Step 2 TRIAGE classification, smart batching, or the triage summary: [triage.md](references/triage.md) — the disposition/category/investigation-mode classification, batching heuristics, and triage-table format are fixed contracts.
-- MUST-READ when Step 2.5 CONTAIN applies: [containment.md](references/containment.md) — the right-now/when-triggered protocol and disruption-cost disclosure are fixed contracts.
-- MUST-READ before using the low-risk fast path in Step 3: [fast-path.md](references/fast-path.md) — the eligibility gate, inline investigation record, and non-skippable safety/verification steps are fixed contracts.
-- MUST-READ before investigator dispatch or same-agent fallback in Step 3: [investigation-dispatch.md](references/investigation-dispatch.md) — record capability degradations rather than guessing.
-- MUST-READ before classifying apply-policy routes, the Step 4 architectural-remediation lane + batch reconciliation, evaluating Gate 1/2/3, the wont-fix-accept write, the auto-proceed precheck, or computing `fix_confidence`: [apply-policy-and-gates.md](references/apply-policy-and-gates.md) — the W10 route boundaries, the architectural-remediation render + fail-closed contract, the dangerous-bypass audit, the pre-execution gate triggers, and the confidence demotion ladder are fixed contracts.
-- MUST-READ before write intents or pre-write validation (Step 4.4 / 5.4): [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md) — never bypass required assertions without explicit user approval.
-- MUST-READ before Step 4.5 CHALLENGE trigger, dispatch, or verdict handling: [challenge-loop.md](references/challenge-loop.md) — the trigger/skip conditions, prompt placeholders, and `challenge_iterations` counter semantics are fixed contracts.
-- MUST-READ before Step 4.6 RED-GREEN TEST GATE: [red-green-gate.md](references/red-green-gate.md) — the right-reason failure-shape validation and the `red_green_evidence` prevention-claim rule are fixed contracts.
-- MUST-READ before writing or recovering `session_changes` in Step 5: [fix-log-contract.md](references/fix-log-contract.md) — resolve the target project once and keep state writes atomic. The Step 5 pre-loop also runs the fail-closed class-verdict gate + `class_signature` variant scan + class-sibling triage (class breadth), alongside the `scope_search_seed` pre-loop (scope breadth).
-- MUST-READ before dispatching the Step 5 pre-loop class-sibling triage pass: [class-sibling-triage-template.md](references/class-sibling-triage-template.md) — the per-site `confirmed`/`false-positive`/`ambiguous` verdict contract and the embedded `speculative-pattern-projection` prevention rule are fixed contracts; a `class_signature` grep match is a hypothesis, never an auto-fix target.
-- MUST-READ before executing Branch A/B/C/D/E/F fixes, the `--dangerously-auto-apply` Step 5 audit banner, or lifecycle write-back: [execution-branches.md](references/execution-branches.md) — branch selection is evidence-driven and must not collapse into generic editing.
-- MUST-READ before post-write mechanical verification (Step 5.5/5.6/5.6.5/5.7): [mechanical-verification-checks.md](references/mechanical-verification-checks.md) — run sibling-surface grep and clean-tree checks where required.
-- MUST-READ before Step 6: VERIFY: [verifier-dispatch.md](references/verifier-dispatch.md) — enforce the convergence gate after bounded verification loops.
-- MUST-READ before Step 6.5 outer-loop reverse-chain: [outer-loop.md](references/outer-loop.md) — state schema, no-progress algorithm, termination banners, and reverse-chain invocation form are fixed contracts.
-- MUST-READ before Step 7 predecessor backfill or any calibration JSONL write: [document-and-calibration.md](references/document-and-calibration.md) — the `fix_invocation_id` backfill recipe and the per-kind calibration record fields are fixed contracts.
-- MUST-READ when review/fix viewer behavior is enabled (Step 7.8): [viewer-hook.md](references/viewer-hook.md) — viewer updates are post-state-write behavior, not a substitute for verification.
-
-**Dispatch-time prompt/schema bodies:** load these inline only when their dispatch step needs them: [investigator-prompt-template.md](references/investigator-prompt-template.md), [json-schema.md](references/json-schema.md), [investigator-output-example.md](references/investigator-output-example.md), [investigator-enrichment-fields.md](references/investigator-enrichment-fields.md), [investigator-field-definitions.md](references/investigator-field-definitions.md), [batched-and-challenger-schemas.md](references/batched-and-challenger-schemas.md), [schema-migration-notes.md](references/schema-migration-notes.md), [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md), and [verifier-prompt-template.md](references/verifier-prompt-template.md).
-
-Calibration data is written inline (JSONL append) — see Step 7. No separate script is shipped for the write path; analytics/reporting scripts are planned for a future release alongside `.aivv/schemas/`.
+Calibration data is appended inline as JSONL; see Step 7.
 
 ---
 
@@ -95,7 +66,7 @@ Calibration data is written inline (JSONL append) — see Step 7. No separate sc
 /aivv-fix --forget-wont-fix=<key>      # remove registry entry
 ```
 
-**Flags:** parse with [fix-flags.md](references/fix-flags.md). `--action-request` is an explicit user-selected batch handoff, not an auto-apply bypass: it requires `--target`, claims the request once, revalidates its review and revision, and then uses all ordinary gates. Keep the top-level invariant: `--dry-run` is safe preview mode; the pre-invocation state-maintenance preamble still runs, but no remediation writes occur and No fix/session/calibration/verifier writes occur after the dry-run gate. `--dangerously-auto-apply` is a confirmed per-run bypass only; it never overrides `--dry-run`.
+**Flags:** parse with [fix-flags.md](references/fix-flags.md). `--action-request` is an explicit user-selected batch handoff, not an auto-apply bypass: it requires `--target`, claims the request once, revalidates its review and revision, and then uses all ordinary gates. `--dry-run` may run pre-invocation state maintenance but performs no remediation writes; after its gate, it writes no fix/session/calibration/verifier state. `--dangerously-auto-apply` is a confirmed per-run bypass only; it never overrides `--dry-run`.
 
 ## Target Project Resolution
 
@@ -103,9 +74,8 @@ Calibration data is written inline (JSONL append) — see Step 7. No separate sc
 
 ## Instructions
 
-When this skill triggers, follow these 7 steps **exactly**.
+For remediation, follow the ordered phases below and take conditional branches only when their trigger applies.
 
-<!-- pre-fix evidence: plugin/skills/aivv-fix/SKILL.md:110-122. -->
 ### Before Starting: Track Progress
 
 When a host progress facility is available, register these pending steps and
@@ -144,7 +114,8 @@ route selectors that make state required (`--review-id`, `--resume`, `--resolve`
 registry selectors). Bind the shared context before maintenance. The preamble
 performs route-sensitive schema checks and authorized external maintenance;
 legacy originals remain untouched. Selected missing/corrupt/newer artifacts
-keep their route errors; unrelated history warns. Dry-run is read-only throughout.
+keep their route errors; unrelated history warns. Dry-run skips remediation
+writes, but authorized pre-invocation state maintenance may still write.
 **Route-first cost rule:** execute Step 1 in this order: minimal `--target` pre-parse → preamble → full flag parse → source-route classification (`review_id`/`resume`/`resolve`, lifecycle selector, task ID, literal, or conversation) → load only that route's collector/resolver. Do not load conversation Signal 0-4 rules for a successful `--review-id` route, lifecycle helpers without a lifecycle selector, or task-file extraction details for literal/conversation routes. Safety gates still run in normal order once findings exist.
 **Flag extraction first.** Before source parsing, parse and strip flags from the argument string per the reference (the flag catalog covers `--dry-run`, `--target=`, `--review-id=`, `--resume`, `--resolve`, `--incident`/`--problem`/`--issue`/`--github-issue`, `--list-wont-fix`, `--forget-wont-fix=`, `--outer-cycle=`, `--root-review-id=`, `--apply-all-polish`, and `--dangerously-auto-apply`). If `--dry-run` is present, stop at Step 4.3 after investigation planning output; do not load write-intent, challenger, execution, verifier, or calibration references unless the user starts a non-dry-run invocation.
 
@@ -189,14 +160,14 @@ For conversation/literal/task-file collection, tag each finding with its source 
 
 ### Step 1.9: Write Boundary
 
-After findings are loaded and before investigation or planning output can imply writes, render:
+After findings are loaded and before investigation or planning output can imply remediation, render:
 
 ```text
-[aivv-fix] write boundary: no files will change until Step 5 EXECUTE.
+[aivv-fix] remediation boundary: no remediation files will change before Step 5 EXECUTE.
 [aivv-fix] proposed writes must first materialize as inspectable write_intents and pass readiness gates.
 ```
 
-Record `write_boundary_shown: true` in the eventual fix log for every non-dry-run invocation. In `--dry-run`, render the same boundary but do not write a fix log, preserving dry-run's no-remediation-write contract.
+Earlier steps may perform the state maintenance, preference update, or action-request claim described in their route. Record `write_boundary_shown: true` in the eventual fix log for every non-dry-run invocation. In `--dry-run`, render the same boundary but do not write a fix log, preserving dry-run's no-remediation-write contract.
 
 ---
 
@@ -234,24 +205,17 @@ Before investigator dispatch, compute `architectural_remediation_assessment` and
 
 ### Step 4: PLAN — Present Investigation Results
 
-**MUST-READ:** [execution-decisioning.md](references/execution-decisioning.md) before reconciling gates into final execution routes.
+**MUST-READ:** [execution-decisioning.md](references/execution-decisioning.md) and [apply-policy-and-gates.md](references/apply-policy-and-gates.md) before turning investigation results into final decisions. These references own execution routes, batch reconciliation, apply-policy classification, gates, the decision queue, and `fix_confidence` predicates and persistence.
 **Field propagation (required — load-bearing for Step 5 dispatch):** Before presenting the structured summary, for every approved finding, carry the **`category`** value set in Step 2a (inherited from the envelope schema for Signal 0 findings; inferred for Signal 1-4) onto the approved-finding record. Step 5 Branch dispatch reads this field and falls back to Branch A (`code-bug`) on missing-or-unknown with a warning logged to `session_changes`. Undefined-on-read is never acceptable for a dispatch key.
 
-Collect investigator JSON, mark consumed handles, close them before Step 3 re-entry, and render the structured **Investigation Results** summary per [apply-policy-and-gates.md](references/apply-policy-and-gates.md). That reference owns the architectural-remediation lane, `[RECONCILED]` batch reconciliation, and the W10 batched apply-policy decision queue with the **"Fix Decisions Needed"** surface.
+Collect investigator JSON, mark consumed handles, close them before Step 3 re-entry, and render the structured **Investigation Results** summary. Reconcile batches after investigators declare `files_to_modify`.
 
-**MUST-READ:** [apply-policy-and-gates.md](references/apply-policy-and-gates.md) before classifying apply-policy routes, rendering the decision queue, or applying the `--dangerously-auto-apply` bypass. It is the canonical home for the four route classifications, the "Fix Decisions Needed" surface format, the severity/disposition invariant (`skip` cannot suppress CRITICAL/MAJOR), the absent-`fix_apply_policy` default binding, and the dangerous-bypass route. Do not improvise route boundaries or the bypass audit reasons.
+Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](references/finding-collection.md). Then apply Gate 1/2/3; Gate 1 challenges root cause and Step 4.5 later challenges the fix plan.
 
-Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](references/finding-collection.md). Then apply the pre-execution Gate 1/2/3 rules from [apply-policy-and-gates.md](references/apply-policy-and-gates.md); Gate 1 challenges root cause and Step 4.5 later challenges the fix plan.
-
-**MUST-READ:** [apply-policy-and-gates.md](references/apply-policy-and-gates.md) before evaluating Gate 1/2/3, the `unable-to-verify` documentation-gap short-circuit, or the Gate-1-vs-Step-4.5 layering. The gate triggers, second-opinion dispatch lifecycle, and the gate-vs-auto-proceed overlap rule are fixed contracts.
-
-**Auto-proceed precheck:** do not move any finding to Step 5 yet. Record blockers for the later Auto-eligible route, then wait for `fix_confidence`, Step 4.4 write-intent materialization, Step 4.5 CHALLENGE, and consequence gates. Only high-confidence, policy-auto, consequence-free fixes may auto-apply; trade-offs, architecture/shared-interface changes, medium/low confidence, conflicts, and high-blast-radius action-driving findings route through the decision queue or skip/escalate invariant.
-Final auto-eligible classification happens only after `fix_confidence` computation, Step 4.4 write-intent materialization, Step 4.5 CHALLENGE trigger/verdict handling, and consequence gates settle. Auto-apply requires `fix_confidence == "high"` plus policy-auto and no unresolved blockers. Medium/low-confidence proposals route to the decision queue, targeted re-investigation, or skip/escalate handling; they never auto-apply by policy default.
+**Auto-proceed precheck:** do not move any finding to Step 5 yet. Auto-apply is allowed only after `fix_confidence` is high, policy is `auto`, write-intent readiness passes, CHALLENGE and consequence gates clear, and no blocker remains. Route trade-offs, architecture/shared-interface changes, medium/low confidence, conflicts, and high-blast-radius action-driving findings to the decision queue, targeted re-investigation, or skip/escalate handling.
 #### `fix_confidence` computation (per approved finding, computed here — consumed by Step 4.5)
 
 After Gate 1/2/3 resolves and before evaluating the Step 4.5 trigger, compute `fix_confidence` per approved finding via the one-way demotion ladder (`high → medium → low`, floor at `low`), then persist it on every `session_changes.changes_summary[]` entry and in the `review_meta` calibration record.
-
-**MUST-READ:** [apply-policy-and-gates.md](references/apply-policy-and-gates.md) before computing `fix_confidence`. It is the canonical home for the demotion ladder, the per-predicate definitions (`predecessor_finding_match`, architectural-remediation, `touches_shared_interface`, `authors_new_verification_code`), and the schema persistence contract. Do not improvise predicates or floors.
 
 ---
 
@@ -261,9 +225,9 @@ If `dry_run == true`, stop here after investigation results, batch reconciliatio
 - findings that would be fixed, skipped, escalated, or require user decisions;
 - proposed files to modify when investigators supplied them;
 - confidence and reason-coded blockers;
-- the exact message: `DRY RUN: no write intents, challenger dispatch, execution, verifier dispatch, fix log, session state, calibration, or viewer artifacts were written.`
+- the exact message: `DRY RUN: no remediation writes were made. After the dry-run gate, no write intents, challenger dispatch, execution, verifier dispatch, fix log, session changes, or calibration writes occurred. Any authorized pre-invocation state maintenance ran before the gate.`
 
-Do not materialize `write_intents[]`, dispatch the fix-plan challenger, enter Step 4.6, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
+After this halt, do not materialize `write_intents[]`, dispatch the fix-plan challenger, enter Step 4.6, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
 
 ---
 
@@ -347,26 +311,11 @@ Compile verification context from the `session_changes` log rather than git, dis
 
 When a predecessor review is linked, Step 6 must carry each predecessor finding's `runtime_evidence` outcome into the verifier prompt summary. Missing or refuted runtime evidence on UI/rendered-DOM findings does not block source-level verification, but any READY_TO_MERGE conclusion is source-coherent only and should include the runtime-evidence advisory from `verifier-dispatch.md`.
 
-### Step 6.5: Outer-loop reverse-chain (NEW Stage 4 dev.113)
+### Step 6.5: Outer-loop reverse-chain
 
 **Fires ONLY after Step 6 produces a verify-PASS result with no regressions.** This step checks whether the outer-loop should continue, has converged cleanly, or has hit a termination condition.
 
-**MUST-READ:** [`references/outer-loop.md`](references/outer-loop.md) before running Step 6.5 — it points to the canonical home (`.aivv/outer-loop.md`) for the full phase algorithm: the OUTER_LOOP_MIN_DEV constant, the `outer-loop-<root_review_id>.json` state schema, the no-progress algorithm (SHA-1 of sorted finding signatures), the 5-banner termination matrix, the Skill-tool reverse-chain invocation form, the pre-dispatch canary procedure, and the capability-unavailable degradation.
-
-Execute the reference's phases in order:
-- **Phase A — preconditions:** no-op + proceed to Step 7 when `outer_loop_mode != "until_clean"` or `--dry-run`; on `can_invoke_peer_skill` unavailable, emit the capability-unavailable banner, set `capability_degradations: ["outer_loop_reverse_chain_unavailable"]`, and halt.
-- **Phase B — canary probe:** assert the `marketplace.json` `dev.NN` ≥ OUTER_LOOP_MIN_DEV before dispatch; halt with the version banner on failure.
-- **Phase C — load state + continuation subset:** read/initialize the state file; let K = count of verify-pass `fix-now`/`investigate-first`, non-L1, non-POLISH findings (legacy `severity ≥ outer_loop_severity_floor` fallback).
-- **Phase D — CLEAN exit (K == 0):** when `outer_cycle_count ≥ 1`, emit the CLEAN banner (+ L1-regression banner if applicable), delete the state file, proceed to Step 7; when `outer_cycle_count == 0`, no-op to Step 7.
-- **Phase E — cap (K > 0):** halt with the Cap-reached banner when `outer_cycle_count ≥ outer_loop_max_cycles` (leave state file).
-- **Phase F — no-progress (K > 0, under cap):** halt with the no-progress banner when `outer_cycle_count > 1` and the current fingerprint equals `last_fingerprint` (leave state file).
-- **Phase G — reverse-chain (K > 0, under cap, progress):** increment `outer_cycle_count`, write state atomically, then invoke the reverse-chain Skill tool:
-  ```
-  Skill tool:
-    skill: "aivv:aivv"
-    args: "--fix --outer-cycle=<new_count> --root-review-id=<root_review_id> [--target=<dir>] [--dry-run]"
-  ```
-  where `<new_count>` is the post-increment value written to state.
+Read the canonical [outer-loop contract](../../.aivv/outer-loop.md) before evaluating its preconditions, state, canary, termination, or reverse-chain behavior. The outer loop runs only after verification passes without regressions; the contract owns its algorithm and version-failure handling.
 
 ---
 
@@ -424,17 +373,7 @@ After Step 7 completes the fix log and review-log backfill, render the joined re
 - **Investigator returns invalid JSON**: Retry with clarified prompt (max 1 retry)
 - **Investigator times out (max-turns exhausted on the host)**: Use partial results if available, flag incomplete analysis
 - **Session change log incomplete**: Warn user that verification may miss changes not logged in `session_changes`. Suggest manual review of all files touched during the session.
-- **Restricted context (no edit capability)**: Stop immediately, explain that `/aivv-fix` needs the host's edit facility (Claude Code: `Edit`/`Write`; Codex: `apply_patch`).
+- **Write route without edit capability**: Stop before the first write, explain which host facility is unavailable (Claude Code: `Edit`/`Write`; Codex: `apply_patch`), and report any read-only result already established.
 
-### `--review-id` failure modes (Task 6 / Step 1.05)
-
-| Code | Exit | Meaning |
-|---|---|---|
-| `REVIEW_NOT_FOUND` | 2 | review-`<id>`.json absent from resolved external state/archive and bounded historical sources |
-| `REVIEW_CORRUPT` | 3 | review log JSON parse fails |
-| `REVIEW_TARGET_MISMATCH` | 4 | review's `target_project` != current target |
-| `REVIEW_STALE_PATHS` | per-finding | file-backed `file` field no longer exists at fix-application time |
-| `REVIEW_SCHEMA_NEWER` | 6 | review log `schema_version` exceeds supported max |
-| `REVIEW_NO_FINDINGS` | 0 | review log has empty `findings` array — clean exit |
-| `EVIDENCE_ONLY_HANDOFF` | info | review was `evidence_only_review`; file-clustering skipped |
-| `same_agent_review` warning | info → user-confirm | review was non-independent; user must confirm to proceed |
+For `--review-id` failure codes and recovery routes, follow
+[review-id-resolution.md](references/review-id-resolution.md).

@@ -4,7 +4,7 @@ AIVV is an open-source, cross-agent package for structured review of session wor
 
 ## What it does
 
-- `/aivv` proposes a scope and review approach for you to confirm, then runs a general advisory review. Use `--reviewers=N` for multiple reviewers or `--lens=code` for a code-focused review.
+- `/aivv` reviews the clearly named subject and asks only when scope or method is materially unclear. Use `--ask-scope` to request explicit approval; use `--reviewers=N` for multiple reviewers or `--lens=code` for a code-focused review.
 - `/aivv-fix` investigates and remediates selected findings through explicit safety gates.
 - `/aivv-calibrate` supports project-specific calibration.
 - `/aivv-view` reads AIVV review and fix records.

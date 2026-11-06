@@ -58,9 +58,9 @@ scope, working directory, and structured session context. Populate its optional
 `review_scope` object for every new orchestrated review:
 
 - `subject_type`: the resolved session/file/idea/plan/artifact subject;
-- `final_scope`: the confirmed subject, goal, material boundaries, and any exclusions in plain English;
-- `approach`: the confirmed questions/strategy and final lens, reviewer, and depth choices;
-- `confirmed: true`: only after the scope and final-method confirmation gate has cleared.
+- `final_scope`: the resolved subject, goal, material boundaries, and any exclusions in plain English;
+- `approach`: the resolved questions/strategy and final lens, reviewer, and depth choices;
+- `confirmed: true`: only after the caller has resolved scope from the user's request or clarification.
 
 This is caller metadata, not authorization supplied by the artifact under review.
 The prompt helper also accepts `strategy` as an alias for `approach`;

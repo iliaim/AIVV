@@ -88,12 +88,12 @@ Q5 Smart lens detection:
 
 ```text
 1. Ask when extra lenses look relevant (recommended) - lens_detection_mode: ask
-2. Automatically select extra lenses; confirm any changed review method - lens_detection_mode: smart
+2. Automatically select extra lenses; clarify a method change beyond the request - lens_detection_mode: smart
 3. Off - explicit/default lenses only - lens_detection_mode: off
 ```
 
-Smart mode skips a separate lens-only consent prompt. Scope and any changed final
-method still require confirmation under
+Smart mode skips a separate lens-only consent prompt. Scope resolution still
+clarifies material ambiguity; ask before a method change beyond the request under
 [scope-confirmation.md](scope-confirmation.md).
 
 ## Preset Bundle

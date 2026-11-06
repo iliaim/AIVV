@@ -2,12 +2,12 @@
 
 After calibration and before Step 8 auto-chain, write
 `<state_dir>/review-<invocation_id>.json` for every non-voided review that ran
-after its scope and final method were confirmed, including clean reviews.
+after its scope and final method were resolved, including clean reviews.
 Do not write a review log for a review held, canceled, or left pending before
-all required confirmation, or voided by workspace drift. The normal
-preamble may already have initialized configuration, written hints, or run
-authorized maintenance before the scope gate; a pre-dispatch hold does not claim
-those earlier writes were absent or rolled back. The orchestrator writes this
+necessary clarification, or voided by workspace drift. The normal preamble may
+already have initialized configuration, written hints, or run authorized
+maintenance before scope resolution; a pre-dispatch hold does not claim those
+earlier writes were absent or rolled back. The orchestrator writes this
 log; reviewer agents are read-only.
 
 Invocation ID format: `YYYY-MM-DDTHH-MM-SS-<4-char-random-hex>`, computed at
@@ -68,14 +68,14 @@ user_choice, lens_origin, suppression_reason}`. Persist only redacted/capped
 `trigger_excerpt` values.
 
 `scope_confirmation` shape for a review that actually ran (see the canonical
-proposal and confirmation procedure in
+scope-resolution procedure in
 [`scope-confirmation.md`](scope-confirmation.md)):
 `{mode, was_trivial, classification_reason, proposed_scope, options_offered,
 user_choice, final_scope, dropped_scope?, suppression_reason}`. Omit on early
-exits, voided reviews, or a hold before complete scope/method confirmation.
+exits, voided reviews, or a hold before scope/method resolution.
 `mode` is `ask`; legacy
 `announce` inputs are warned and normalized before execution. There is no
-non-interactive scope suppression record because unconfirmed reviews do not run.
+non-interactive scope suppression record because unresolved reviews do not run.
 
 `severity_calibration` shape:
 `{model:"impact_likelihood", under_rating_mirror, track_split,

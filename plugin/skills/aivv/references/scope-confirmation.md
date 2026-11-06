@@ -1,198 +1,51 @@
-# Scope Confirmation Gate - Step 3.4
+# Scope Resolution
 
-Canonical procedure for proposing and confirming the exact review before any
-reviewer dispatch. Every actual `/aivv` review uses this gate, including explicit
-file, idea, plan, and clear single-topic session reviews, and `/aivv --dry-run`.
-Help, setup, config-only, eval, and maintenance routes are not reviews and do not
-enter Step 3.4.
+Resolve the review subject and material boundaries before lens detection or reviewer dispatch. The user's request authorizes a review of the subject it clearly names; do not ask for a second approval of an already clear request.
 
-## 1. Ordering And Required Proposal
+Help, setup, config-only, eval, and maintenance routes are not reviews and do not use this procedure.
 
-Gather the user-provided request, artifact/session context, and whatever
-supporting material is available. Then present the review proposal and obtain
-confirmation before lens detection, reviewer dispatch, calibration, review-log
-writing, or `/aivv-fix` handoff. Do not perform the review while confirmation is
-pending.
+## Resolve the scope
 
-Every proposal must make these items clear:
+1. Use the request and available in-scope context to identify the goal, primary subject, material to inspect, and requested question or strategy. Do not imply a project-wide sweep unless requested.
+2. If the subject and boundaries are clear and `--ask-scope` is absent, briefly state the resolved scope and method, then continue. This applies to explicit files, plans, ideas, clear session topics, and `--dry-run`.
+3. Ask one concise question only when unresolved ambiguity could materially change the subject, included materials, exclusions, or review method. Offer a few evidence-backed options and allow custom text. If no usable subject is present, ask what the user wants reviewed.
+4. Use the user's answer as the resolved scope. If material ambiguity remains, ask only about it and hold dispatch until it is resolved. When `--ask-scope` is explicit, present the resolved proposal once and wait for approval; otherwise do not echo it back for confirmation.
 
-- **Goal and subject:** what will be reviewed and why, including the relevant
-  question or review strategy for an idea, plan, or requested challenge.
-- **Materials and boundaries:** which supplied conversation, files, diffs,
-  plans, or other available material will be considered, and any material
-  explicitly excluded. Do not imply a project-wide sweep unless the user asked
-  for one.
-- **Review method:** the resolved reviewer count and depth, requested/default
-  lens or lenses, and replicate count or thoroughness tier when applicable.
-- **Decision:** a clear way to confirm, change, or enter a custom scope.
+Never invent candidate subjects, changed-file counts, commit counts, or supporting evidence. Git availability is not required for a review; use available session history or non-code material and state material limitations.
 
-Show scope and method together so the user can judge the actual proposed
-review. Keep a clear proposal short. For example:
+## Keep scope and method bounded
 
-```text
-Proposed review
-Goal: assess whether the cache change preserves correct invalidation.
-Subject: this session's cache work.
-Materials: the cache-related session context and the available changed files; other project areas are excluded.
-Questions: invalidation correctness, failure cases, and simpler alternatives.
-Method: 1 reviewer; general lens; balanced depth.
-[Confirm this review] / [Change scope] / [Enter a custom scope]
-```
+Lens detection may select relevant review criteria only within the resolved subject and material boundaries. It must not expand the review to paths or topics outside the user's request.
 
-Use the resolved values for the current invocation; the sample values are only
-illustrative. `--dry-run` still performs a review and therefore uses the same
-gate. User-supplied `--lens`, configured lenses, full-* wrappers, reviewer
-counts, and thoroughness affect the method shown but do not waive confirmation.
+Preserve explicit reviewer, lens, replication, and thoroughness choices. Lens detection owns consent for non-obvious ceiling additions in `lens_detection_mode: ask`. Separately ask before reviewer cost or provider egress materially exceeds the request. Do not use these choices to reopen an already clear scope. Follow `review-shape-resolution.md` for assignment and floor rules.
 
-## 2. Classify The Proposal And Ask
+Legacy `scope_confirmation_mode: "announce"` and `--auto-scope` remain readable, warn, and normalize to `ask`; neither bypasses clarification for material ambiguity or approval for an unauthorized method change. `--ask-scope` explicitly requests approval of the resolved proposal for this run.
 
-Use the existing `classification_reason` values in the audit block:
+## Pending or unavailable answers
 
-- `explicit-file` for a file positional or `--plan <file>`;
-- `explicit-idea` for an idea positional;
-- `single-topic-session` for one coherent session topic;
-- `multi-topic-session` for multiple session topics;
-- `multiple-subjects` when the request or available evidence supports distinct
-  plausible subjects;
-- `empty-context` when the subject or enough context is missing.
+If a necessary clarification or explicitly requested approval is canceled, unanswered, or unavailable from the host, hold before reviewer dispatch, calibration, review-log writing, and `/aivv-fix` handoff. Do not guess across a material boundary. Target binding, configuration initialization, setup hints, or authorized preamble maintenance may already have run; do not claim those writes were rolled back or absent.
 
-`was_trivial` may describe whether the proposed subject is clear, but even a
-clear proposal always requires confirmation. There is no trivial-scope bypass.
+## Record the resolved scope
 
-For a clear proposal, use one short confirmation prompt with choices such as
-`[Confirm this review]`, `[Change scope]`, and custom text input. For an
-ambiguous proposal, offer a few concrete alternatives grounded in supplied
-conversation or observed material, plus custom text input. Use the host's
-built-in free-text/“Other” control when available; do not require a separate
-custom option if the host already supplies that control. Preserve all material
-alternatives when the user narrows the proposal and show what will be left out.
-
-Never invent candidate topics, changed-file counts, commit counts, or supporting
-evidence. If there is no Git repository or the diff is empty, that is valid
-context: inspect available session history and non-code materials, state what is
-and is not available, and propose a review from that material. Git availability
-is not a prerequisite for review.
-
-When no usable subject is present, ask the user what they want reviewed. Do not
-offer fabricated candidate subjects. After the user supplies a subject, present
-the complete scope-and-method proposal and ask for confirmation.
-
-Selecting an exact displayed option that represents a complete review proposal
-or `[Confirm this review]` confirms that proposal and records any excluded
-material. `[Change scope]`, custom-text entry, cancel, or hold options request
-revision or stop the review; they do not approve dispatch. An unambiguous
-textual affirmation such as “yes,”
-“confirm,” or “proceed with that review” also confirms the exact proposal just
-shown. Do not treat a preselected option, missing answer, silence, or canceled
-prompt as a submitted confirmation. A custom scope or new interpretation is
-not yet confirmation: echo the interpreted goal, subject, materials,
-boundaries, relevant question/strategy, and method, then ask the user to confirm
-that complete proposal before proceeding. If a custom scope narrows the
-proposal, explicitly retain the dropped material in `dropped_scope` and make
-the exclusion visible to the user and reviewers.
-
-## 3. Reconfirm A Changed Method
-
-The initial proposal uses explicit and configured review shape before
-scope-filtered lens detection. After confirmation, apply detection and any
-scope-dependent reviewer-depth rules. If the final detected lenses, reviewer
-count, replication, or coverage differs from the method the user confirmed,
-show the final scope and the changed method together and obtain confirmation
-before dispatch. If the user rejects that final proposal, keep the review
-pending and offer a revised scope/method for confirmation; never proceed under
-the earlier confirmation after changing the proposal. The existing
-lens-consent prompt may serve this purpose only when it shows the complete
-final scope and method; do not ask a lens-only question that hides a scope or
-depth change.
-
-Detection can select lenses for the confirmed subject but can never expand the
-confirmed material boundaries. Recompute relevance and coverage after a user
-narrowing. Preserve explicit/configured base choices and the fixed-shape rules
-in `review-shape-resolution.md`; do not inject the default lens into those lists.
-Any permitted detection additions still require the changed-method confirmation
-above. If the final method is unchanged, do not ask a redundant second question.
-
-## 4. Pending, Cancelled, Or Unavailable Confirmation
-
-If the initial scope proposal is not confirmed, is canceled, receives no answer,
-or the host cannot obtain an interactive response, hold the review before lens
-detection. If the post-detection final scope/method proposal is not confirmed,
-hold after detection but before reviewer dispatch. In either case, do not fall
-back to announce-and-proceed or non-interactive best-guess behavior, and stop
-before reviewer dispatch, calibration, review-log writing, and fix handoff.
-Tell the user which complete proposal is waiting for confirmation.
-
-This hold does not imply that no writes occurred: target binding, configuration
-initialization, setup/walkthrough hints, or authorized preamble maintenance may
-already have completed before Step 3.4. Do not claim those earlier writes were
-rolled back or absent.
-
-`--fix` does not change this gate. A held review must not enter `/aivv-fix`.
-
-## 5. Legacy Announce Controls
-
-`scope_confirmation_mode: "announce"` and `--auto-scope` remain readable for
-backward-compatible parsing, but both are deprecated. Warn that the setting or
-flag is deprecated and normalize it to `ask` for this invocation. They do not
-skip or weaken confirmation, and there is no “don't ask again” choice. The
-ordinary `--ask-scope` flag also means the required confirmation behavior; it is
-not needed to make confirmation happen.
-
-No new flags or config keys are introduced. Persisted `announce` values may
-remain in existing files until the user changes them; resolution must still
-warn and require confirmation on every actual review.
-
-## 6. Scope And Lens Ordering
-
-This gate runs after available context is gathered and before lens detection.
-It outputs `final_scope`; when the user narrows a proposal, it also outputs
-`dropped_scope`. Reviewer prompts and final reporting must carry both so
-reviewers cannot silently broaden the subject.
-
-After confirmation:
-
-1. Match lens `detect_paths` and `high_risk_paths` only against paths within
-   `final_scope`.
-2. Recompute session lens ceilings when the confirmed session subset changes.
-3. Preserve applicable high-risk floors for material still in scope.
-4. Resolve the final method and reconfirm it under Section 3 if its coverage or
-   depth changed from the proposal.
-
-Do not combine pre-confirmation scope selection with detection-dependent lens
-consent. The final review method is confirmed only after any detection-based
-changes are visible.
-
-## 7. Outer-Loop Reviews
-
-Each outer-loop `/aivv` pass is a new actual review and requires a new scope and
-method confirmation. A prior pass's `final_scope` may be shown as a proposed
-starting point, but it is never approval for the next pass. Re-evaluate it
-against the current session and available material; do not reuse confirmation
-based on scope overlap or suppress the prompt because the paths look similar.
-The outer-loop owner may pass the prior value as proposal context, but this gate
-does not read outer-loop state itself.
-
-## 8. Audit Block
-
-For a review that actually runs, write the existing additive `scope_confirmation`
-fields in `review-<id>.json`:
+For a review that runs, write the existing `scope_confirmation` fields in `review-<id>.json`:
 
 ```text
 scope_confirmation: {
-  "mode",                    // "ask" after resolving legacy announce values
+  "mode",                    // resolved mode; legacy announce normalizes to ask
   "was_trivial",
-  "classification_reason",   // one of the six values in Section 2
+  "classification_reason",   // explicit-file, explicit-idea, single-topic-session,
+                              // multi-topic-session, multiple-subjects, or empty-context
   "proposed_scope",
-  "options_offered",
-  "user_choice",             // confirmed option or accepted custom interpretation
+  "options_offered",          // [] when no clarification was needed
+  "user_choice",              // "request-scope" or the user's actual answer
   "final_scope",
   "dropped_scope",            // only when the user narrowed scope
-  "suppression_reason"       // null for a confirmed review; no suppressed review runs
+  "suppression_reason"        // null for a review that ran
 }
 ```
 
-Use only these existing fields; do not add approval state, scope fingerprints,
-or confirmation machinery to the log. Do not write this block, calibration,
-or a review log unless the initial scope and any changed final method have been
-confirmed and the review actually runs. The normal preamble may already have
-written configuration, hints, or maintenance state as described in Section 4.
+Do not add confirmation machinery or new review-log fields. Omit the block on early exits, voided reviews, or a hold before scope is resolved.
+
+## Outer-loop reviews
+
+Each outer-loop pass re-evaluates the current subject and material against the initiating request. Reuse that authorization while the subject and boundaries remain within it; ask again only if a material expansion or new ambiguity requires a user decision. Do not treat old paths as in scope automatically.

@@ -106,7 +106,7 @@ In forward-looking plan/spec/proposal review, build a compact ledger for every l
 | Cited existing file/path | Confirm the path exists or mark it stale/missing. |
 | API/schema/CLI snippet | Confirm it matches live signatures, docs, or tests, or mark it pseudocode. |
 | Evidence/assertion claim | Trace it to the named command, fixture, test, issue, review log, or source citation. |
-| Scope enumeration | Confirm the grep/list command and exclusions cover all intended surfaces. |
+| Scope enumeration | Check that the plan clearly names intended files, the deterministic scope check, and excluded matches with reasons. Any clear equivalent format is sufficient. |
 | Fix blast radius | Confirm the plan names downstream contracts, migrations, and rollback/verification surfaces. |
 
 If a plan's evidence cannot be checked inside the review context, say exactly which claim is unchecked and route the item as plan-risk or `investigate-first`; do not present unchecked plan prose as verified fact.
@@ -270,4 +270,4 @@ methodology prose.)
 
 Combine your findings into a coherent review. Apply the severity/confidence model and suppress noise.
 
-**Always emit an Approach assessment** (dev.146+): the synthesis MUST lead its Validation Observations with a one-line verdict distilling the Phase 3 Simpler-path test — is this the right artifact or approach for its intended use, and the simplest viable path without compromising quality, scope, or correctness? State it even when the approach holds up cleanly (a clean assessment is positive signal, not silence). This keeps the Validation altitude always-visible rather than surfacing only when a concern happens to clear the articulation gate. The assessment line is a summary, not a finding — it does not bypass the Improvement-articulation gate; any concrete betterment it implies still becomes a finding only if verified present need, a specific improvement, and positive net value are established.
+**Always emit an Approach assessment:** lead Validation Observations with a one-line verdict on whether this is the right artifact or approach for its intended use and the simplest viable path without compromising quality, scope, or correctness. Include it even when the approach holds up cleanly. The assessment is a summary, not a finding; any concrete improvement it implies must still pass the improvement-articulation gate.

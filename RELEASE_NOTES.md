@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.4.0 — streamlined scope resolution
+
+- Proceed with clearly scoped review requests without a second approval; clarify material ambiguity and use `--ask-scope` when explicit approval is wanted.
+- Check reviewer-count and provider changes after the final review shape, including adaptive-confidence floors.
+- Simplify shared skill guidance by routing detailed procedures to canonical references.
+
 ## 0.3.0 — general review and confirmed scope
 
 - Default to the `general` lens for documents, research, plans, designs, workflows, decisions, and code. Explicit configured lenses remain unchanged; historical findings retain their original lens semantics.

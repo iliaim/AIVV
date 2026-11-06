@@ -3,7 +3,6 @@
 Open only for actual `/aivv` review execution. Contract lookups stay in
 `../SKILL.md`.
 
-<!-- pre-fix evidence: plugin/skills/aivv-fix/SKILL.md:110-122. -->
 ## Progress
 
 When the host provides progress UI, register the following phases and mark each
@@ -21,7 +20,7 @@ capability degradation.
 2. Setup/eval/maintenance early branch
 3. Extract structured session context
 4. Gather change context
-5. Scope confirmation
+5. Scope resolution
 6. Lens composition/detection/consent
 7. Construct reviewer prompt
 8. Dispatch reviewers
@@ -97,9 +96,8 @@ continue; the notice may reappear on the next invocation.
 If the user config is unavailable or unreadable after Step 1.5's warning, skip
 both notices and continue without a second warning.
 
-These fire before the Step 3.4 scope-and-method confirmation proposal; those
-pre-review configuration/hint writes may already be complete if confirmation is
-later held.
+These fire before scope resolution; those pre-review configuration/hint writes
+may already be complete if a later clarification holds the review.
 
 ## Step 1.95: Eval
 
@@ -108,7 +106,7 @@ review steps.
 
 ## Step 2: Session Context
 
-Reviewer subagents do not see conversation history. Extract before git diff. **Per-category scan attestation (required):** for each of the 7 categories your internal reasoning MUST include a line `[N. Category]: scanned: <count> messages; scope: full-session|artifact-relevant; content: <one-sentence summary> OR none surfaced` — a category with no attestation line was not scanned; return to it. Concrete message-counts are required over checkbox-style confirmation (these lines anchor reasoning; they need not appear in reviewer-facing output).
+Reviewer subagents do not see conversation history. Extract the context relevant to the review before inspecting the diff. Use the categories below as a coverage aid; do not treat message counts or a fixed attestation format as proof that the scan is complete.
 
 - Goals & objectives
 - Decisions, with unverified correctness claims marked
@@ -118,11 +116,10 @@ Reviewer subagents do not see conversation history. Extract before git diff. **P
 - Trade-offs
 - Current state
 
-For session reviews, scan full conversation. For file/idea/plan routes, scan
-artifact-relevant history. If fewer than three categories have substance, prepend
-limited-context warning. Record `multi_topic: true|false`. Compute the
-`lens_ceiling` only after the scope has been confirmed, against the confirmed
-session subset.
+For session reviews, scan the in-scope session context. For file/idea/plan routes,
+scan artifact-relevant history. If context is limited, state the limitation.
+Record `multi_topic: true|false`. Compute `lens_ceiling` against the resolved
+scope, not unrelated session material.
 
 For codemod/bulk-rename/formatter sessions, prepend to the reviewer prompt: `⚠️ This session involved mechanical/automated changes. Diff volume does NOT reflect decision count.` so bulk output is not over-weighted as review surface.
 
@@ -146,27 +143,29 @@ non-code materials; Git is not a review prerequisite.
 File path: read specified files and include artifact-relevant session context.
 Quoted text: treat as idea/approach to challenge.
 
-## Step 3.4: Scope Confirmation
+## Step 3.4: Scope Resolution
 
-Use `review-shape-resolution.md` and `scope-confirmation.md`. Present the full
-goal, subject, material boundaries, relevant questions/strategy, and preliminary
-lens/depth method, then get confirmation for every actual review, including
-explicit file/idea/plan routes, clear topics, and `--dry-run`. This produces
-`final_scope` and scope provenance for Step 7.5. If confirmation is pending,
-canceled, or unavailable, stop before lens detection, reviewer dispatch,
-calibration, review-log writing, and fix handoff. Earlier preamble writes may
-already have happened.
+Use `review-shape-resolution.md` and `scope-confirmation.md`. Derive `final_scope`
+from the user's request and available in-scope context. For a clear request,
+briefly state the scope and method, then continue without a second approval
+unless `--ask-scope` explicitly requests one.
+Clarify only material ambiguity or a method change that exceeds what the user
+requested or authorized. A canceled or unanswered required clarification or
+explicit approval holds before reviewer dispatch, calibration, review-log
+writing, and fix handoff. Earlier preamble writes may already have happened.
 
-## Step 3.5/3.6: Lens Detection And Consent
+## Step 3.5: Lens Detection And Method Check
 
-After the confirmed `final_scope`, use `review-shape-resolution.md` to apply
+After resolving `final_scope`, use `review-shape-resolution.md` to apply
 deterministic floors, recompute `reviewer_lens_assignments`, and resolve
-`lens_detection_mode`. If final lenses, reviewer depth, replication, or coverage
-changed from the confirmed proposal, show the complete final scope and method
-and reconfirm before Step 4. Defer `ask`-mode lens consent to that full final
-proposal; do not issue a lens-only prompt that omits scope or depth.
+`lens_detection_mode`. Keep detection within `final_scope`. In `ask` mode, ask
+whether to apply non-obvious ceiling lenses. Show any resulting reviewer-cost or
+provider-egress change too; ask separately before such changes exceed the user's
+request. Do not ask for a second scope approval unless `--ask-scope` was explicit.
 `--auto-lens` means smart; `--no-auto-lens` means off.
-If the changed final proposal is pending, canceled, or unavailable, hold after
+If optional lens consent is declined or unavailable, leave those ceiling lenses
+not applied and continue with explicit/default lenses and automatic floors.
+If a necessary clarification is pending, canceled, or unavailable, hold after
 detection and before reviewer prompt construction, dispatch, calibration,
 review-log writing, or fix handoff.
 
@@ -203,10 +202,9 @@ per-invocation shard `<calibration_dir>/<lens>/<invocation-id>.jsonl`
 ## Step 7.5: Review Log
 
 Read `review-log-schema.md`. Write `review-<invocation_id>.json` for every
-actual review that passed scope confirmation and any changed-method
-confirmation and ran, including clean reviews. Do not write it for a review
-held before complete confirmation. Persist lens detection, scope
-confirmation, plan_review, severity calibration, predecessor linkage, and
+actual review with a resolved scope that ran, including clean reviews. Do not
+write it for a review held before scope resolution. Persist lens detection, scope
+resolution, plan_review, severity calibration, predecessor linkage, and
 impact-likelihood extension fields.
 
 ## Step 7.5.5: Cleanup

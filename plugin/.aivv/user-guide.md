@@ -6,15 +6,16 @@ This guide is the short path for everyday AIVV use. Common workflows are first, 
 
 | Goal | Run | Notes |
 |---|---|---|
-| Review current session work | `/aivv` | Default: general lens; confirm scope and approach before dispatch. |
+| Review current session work | `/aivv` | Default: general lens; clarify material scope or method ambiguity before dispatch. |
 | Review with more confidence | `/aivv --reviewers=2` | Uses two reviewers when cold reviewer dispatch is available. |
 | Review a file | `/aivv path/to/file` | Relative paths resolve from the current target project. |
+| Require explicit scope approval | `/aivv --ask-scope` | Shows the resolved proposal and waits for approval, even when scope is clear. |
 | Challenge an idea | `/aivv "Should we use Redis here?"` | Treats the quoted text as the review subject. |
 | Review a plan before building | `/aivv --plan docs/plan.md` | Forward-looking review; implementation verification is skipped. |
 | Review and then fix | `/aivv --reviewers=2 --fix` | Chains into `/aivv-fix` after the review log is written. |
 | Preview fixes without applying | `/aivv --reviewers=2 --fix --dry-run` | Investigates and plans only; no remediation writes. |
 | Fix findings from a review | `/aivv-fix --review-id=<review-id>` | Uses the durable review log instead of rescanning chat. |
-| Inspect review output | `/aivv-view` | Read-only viewer over local AIVV state. |
+| Inspect review output | `/aivv-view` | Browsing and reports read local state; the opt-in `--inbox` route creates a local remediation request. |
 
 ## Choosing Review Shape
 
@@ -29,13 +30,14 @@ Start with `/aivv`. Add shape only when the work needs it:
 
 The full flag catalog remains available through `/aivv --help` and `skills/aivv/references/argument-parsing.md`.
 
-Before each review, AIVV uses the available chat and artifacts to explain the goal,
-materials, boundaries, and intended review method in plain English. Confirm the
-proposal, choose a concrete alternative, or describe a custom scope. A new custom
-scope is restated for confirmation. With no answer or no prompt capability, the
-review waits; it does not dispatch reviewers or start fixes. Each outer-loop review
-pass confirms again. Legacy `announce` preferences and `--auto-scope` are accepted
-with a warning but no longer skip confirmation.
+Before each review, AIVV uses the available chat and artifacts to resolve the
+goal, materials, boundaries, and intended review method. Clear requests proceed
+without a second approval. If a material boundary or method is unclear, answer
+one concise clarification; without it, the review waits and does not dispatch
+reviewers or start fixes. Outer-loop passes reuse the initiating request while
+the scope stays within it. Use `--ask-scope` when you want approval even for a
+clear proposal. Legacy `announce` preferences and `--auto-scope` are accepted
+with a warning and use the default clarification behavior.
 
 The reviewer selects relevant questions and evidence from the
 [general review checklist](../skills/methodology/references/general-review-checklist.md).

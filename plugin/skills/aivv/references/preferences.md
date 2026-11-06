@@ -71,8 +71,9 @@ Unknown lens names warn and fall back to `general`; do not halt. Do not append
 their documented specialist lens lists.
 
 For `scope_confirmation_mode`, treat legacy `announce` as readable input but
-warn that it is deprecated and resolve it to `ask`. Every actual review still
-requires the confirmation gate in `scope-confirmation.md`.
+warn that it is deprecated and resolve it to `ask`. The mode uses the scope
+resolution rules in `scope-confirmation.md`; it does not add a second approval
+when the request already gives a clear subject and method.
 
 Validate `default_target` directory exists. Stale paths warn and fall back to
 cwd for this invocation.
@@ -109,7 +110,7 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `severity_model` | `legacy_4pass` or `impact_likelihood` | severity methodology |
 | `project_context` | deployment/data/jurisdiction context | severity and legal applicability |
 | `severity_cell_map` | partial impact-likelihood table override | severity methodology |
-| `scope_confirmation_mode` | required ask behavior; legacy announce warns and normalizes to ask | Step 3.4 |
+| `scope_confirmation_mode` | clarification behavior for material ambiguity; legacy announce warns and normalizes to ask | Step 3.4 |
 | `_provenance` | wizard/manual/default source tracking | default_lens_replicate binding gate |
 | `_setup_hint_shown_at` | setup-hint suppression timestamp | Step 6 hint |
 | `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 6 and `/aivv-fix` notices |
