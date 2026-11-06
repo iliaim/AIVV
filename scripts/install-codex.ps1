@@ -19,6 +19,36 @@ if (-not (Test-Path (Join-Path $PluginSourceRoot "skills")) -or -not (Test-Path 
   throw "AIVV plugin source root is incomplete: $PluginSourceRoot"
 }
 
+$RequiredSourceDirectories = @(
+  "skills/aivv",
+  "skills/aivv-fix",
+  "skills/aivv-calibrate",
+  "skills/aivv-view",
+  "skills/methodology",
+  ".aivv",
+  "skills",
+  "tools"
+)
+$RequiredSourceFiles = @(
+  ".aivv/prompts/reviewer-role.md",
+  ".aivv/prompts/investigator-role.md"
+)
+foreach ($RelativePath in $RequiredSourceDirectories) {
+  $Source = Join-Path $PluginSourceRoot $RelativePath
+  if (-not (Test-Path -LiteralPath $Source -PathType Container)) {
+    throw "Missing AIVV source directory: $Source"
+  }
+}
+foreach ($RelativePath in $RequiredSourceFiles) {
+  $Source = Join-Path $PluginSourceRoot $RelativePath
+  if (-not (Test-Path -LiteralPath $Source -PathType Leaf)) {
+    throw "Missing AIVV source file: $Source"
+  }
+  if ((Get-Content -LiteralPath $Source -Raw).Contains("'''")) {
+    throw "Cannot embed triple-single-quote sequence in TOML developer_instructions: $Source"
+  }
+}
+
 if ($Scope -eq "user" -and $env:CODEX_HOME) {
   $CodexRoot = $env:CODEX_HOME
 } elseif ($Scope -eq "user") {
@@ -33,6 +63,77 @@ if ($env:AIVV_CODEX_ROOT_OVERRIDE) {
 $SkillsDest = Join-Path $CodexRoot "skills"
 $AgentsDest = Join-Path $CodexRoot "agents"
 $RuntimeDest = Join-Path $CodexRoot "aivv-runtime"
+
+$ReplacementRelativePaths = @(
+  "skills/aivv",
+  "skills/aivv-fix",
+  "skills/aivv-calibrate",
+  "skills/aivv-view",
+  "skills/aivv-methodology",
+  "aivv-runtime/.aivv",
+  "aivv-runtime/skills",
+  "aivv-runtime/tools",
+  "agents/aivv-reviewer.toml",
+  "agents/aivv-investigator.toml"
+)
+$BackupRelativePaths = [System.Collections.Generic.List[string]]::new()
+$Conflicts = [System.Collections.Generic.List[string]]::new()
+
+foreach ($RelativePath in $ReplacementRelativePaths) {
+  $Destination = Join-Path $CodexRoot $RelativePath
+  if (Test-Path -LiteralPath $Destination) {
+    if ($Force) {
+      $BackupRelativePaths.Add($RelativePath)
+    } else {
+      $Conflicts.Add($Destination)
+    }
+  }
+}
+
+if ($Force) {
+  $LegacySupportEntries = @(
+    @{ RelativePath = "skills/.aivv"; Marker = "methodology.md" },
+    @{ RelativePath = "skills/skills"; Marker = "aivv/SKILL.md" },
+    @{ RelativePath = "skills/tools"; Marker = "dispatch.mjs" }
+  )
+  foreach ($Entry in $LegacySupportEntries) {
+    $Destination = Join-Path $CodexRoot $Entry.RelativePath
+    if ((Test-Path -LiteralPath $Destination) -and (Test-Path -LiteralPath (Join-Path $Destination $Entry.Marker))) {
+      $BackupRelativePaths.Add($Entry.RelativePath)
+    }
+  }
+}
+
+$LegacyMethodology = Join-Path $SkillsDest "methodology"
+if ($RemoveLegacyMethodology -and (Test-Path -LiteralPath $LegacyMethodology)) {
+  $BackupRelativePaths.Add("skills/methodology")
+}
+
+if ($Conflicts.Count -gt 0) {
+  $ConflictList = $Conflicts -join [Environment]::NewLine
+  throw "Existing AIVV destinations found; no files were changed:`n$ConflictList`nRerun with -Force to back up and replace them."
+}
+
+$BackupRoot = $null
+if ($BackupRelativePaths.Count -gt 0) {
+  $BackupId = "$([DateTime]::UtcNow.ToString('yyyyMMddTHHmmss'))-$PID-$([Guid]::NewGuid().ToString('N'))"
+  $BackupRoot = Join-Path $CodexRoot ".aivv-install-backup-$BackupId"
+  New-Item -ItemType Directory -Path $BackupRoot | Out-Null
+
+  foreach ($RelativePath in $BackupRelativePaths) {
+    $Source = Join-Path $CodexRoot $RelativePath
+    $BackupDestination = Join-Path (Join-Path $BackupRoot "previous") $RelativePath
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $BackupDestination) | Out-Null
+    Copy-Item -Recurse -Force -LiteralPath $Source -Destination $BackupDestination
+  }
+
+  @(
+    "Original Codex root: $CodexRoot",
+    "Each entry under previous/ mirrors its original relative path under the Codex root.",
+    "To restore an entry, copy it back to that same relative path."
+  ) | Set-Content -LiteralPath (Join-Path $BackupRoot "README.txt") -Encoding utf8
+  Write-Host "Backed up existing AIVV destinations to $BackupRoot"
+}
 
 New-Item -ItemType Directory -Force -Path $SkillsDest, $AgentsDest, $RuntimeDest | Out-Null
 

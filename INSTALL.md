@@ -51,6 +51,8 @@ Clone the repository and run the installer for your shell:
 
 Restart Codex after installation. See [the adapter notes](plugin/.aivv/platform-adapters/codex.md) for the current capability boundary.
 
+The installer checks all AIVV destinations before changing files. If it finds an existing destination, it stops and lists the conflicts. To upgrade, rerun with `--force` (PowerShell: `-Force`). The installer first copies every existing AIVV destination to a hidden `.aivv-install-backup.*` directory under the selected Codex root and prints its path. The `previous/` directory preserves each original path, so local edits can be restored from that backup; the installer does not merge local edits into the new files.
+
 ## Data and permissions
 
 AIVV stores review, fix, and calibration state in a per-user location outside the project checkout. The exact paths, migration behavior, and privacy boundaries are documented in the [runtime contract](plugin/.aivv/runtime-contract.md). Review output can contain excerpts from the target project; handle and share it accordingly.
