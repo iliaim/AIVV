@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.4.0 — streamlined scope resolution
+
+- Proceed with clearly scoped review requests without a second approval; clarify material ambiguity and use `--ask-scope` when explicit approval is wanted.
+- Resolve reviewer count and provider consent after applying the final confidence floor and review shape.
+- Simplify shared skill guidance by routing detailed procedures to canonical references.
+
 ## 0.3.1 — scope announcements and routine edits
 
 - Announce resolved scope and method for clear explicit read-only reviews by default; ask for genuine ambiguity, missing authority, material scope expansion, or an explicit ask preference.

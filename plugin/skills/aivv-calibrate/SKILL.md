@@ -6,13 +6,7 @@ argument-hint: "[--lens=<lens>] [--target=<dir>] [--all-lenses] [--raw] [--migra
 
 # AIVV Calibrate — Read-Side Analytics Skill
 
-Without `--migrate`, this skill emits read-only analytics over a single project's calibration corpus:
-external target-instance calibration and read-only legacy shared files plus shards
-(per-invocation sharding contract). The shared storage resolver owns the external location. Completed
-imports count each covered source file once; changed imported legacy bytes remain
-historical until explicit reconciliation. Analytics never initialize a store.
-`--migrate` is an explicit, target-local maintenance operation that relocates a
-legacy shared file into the shard directory.
+Analytics use one target project's external calibration corpus and legacy or sharded records. The shared resolver selects storage; completed imports count each covered source file once, and imported legacy bytes remain historical until explicit reconciliation.
 
 ## Contract
 
@@ -22,8 +16,7 @@ legacy shared file into the shard directory.
   `--migrate` may relocate `<lens>.jsonl` to `<lens>/legacy.jsonl` in the
   selected target. Do not add `--migrate` on the user's behalf. The operation
   is git-aware and idempotent; it does not rewrite record contents.
-- Target-only: no cross-project aggregation and no rescaling-formula
-  consumption. Those remain deferred to v0.3.
+- Target-only: no cross-project aggregation or rescaling-formula consumption.
 - Visualization only: the output informs a human; it does not feed review-time
   logic.
 - Minimum-N floor: FP/TP rates emit `insufficient_data` when the denominator is
@@ -59,13 +52,9 @@ Codex behavior specifics are in
 
 When `/aivv-calibrate` triggers:
 
-1. Preserve strict read-only mode unless the user's original arguments include
-   `--migrate`. Never add that flag to an analytics request.
-
-   When `--migrate` is present, treat the invocation as the explicit,
-   target-local maintenance exception: it may relocate only legacy calibration
-   files under the selected target. Preserve the flag exactly; do not combine
-   it with any other write behavior.
+1. Preserve the read-only default. Honor `--migrate` only when the user's original
+   arguments include it, and limit it to legacy calibration files in the
+   selected target.
 2. Resolve the AIVV plugin/runtime root, then run the deterministic helper from
    that root while preserving the user's original target arguments. Do not
    assume the reviewed target project contains AIVV's `tools/` directory.
@@ -110,7 +99,7 @@ off-schema kind detection, likelihood-calibration buckets, and edge cases.
 The helper reports:
 
 - records by canonical calibration kind;
-- FP and TP rates over FP/TP-family events, with the N=5 floor;
+- FP and TP rates over FP/TP-family events, subject to the minimum-N floor above;
 - findings-per-review trend from `review_meta` records;
 - likelihood calibration by manifestation with per-tier N=10 and total N=30
   floors;

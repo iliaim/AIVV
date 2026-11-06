@@ -45,7 +45,13 @@ resolution, smart-lens detection, or high-risk floor reporting.
 7. Rebuild `reviewer_lens_assignments` exactly once after detection and the
    confidence floor, unless the dispatch shape is fixed by a tier-1 explicit
    selection. Detection-added lenses run at M=1 and are appended after the
-   explicit/configured block. Announce the complete final scope and method
+   explicit/configured block. Resolve the final reviewer count and provider set
+   before requesting any reviewer-cost or provider-egress consent; do not treat
+   consent for an earlier shape as authorization for a shape changed by the
+   confidence floor or lens resolution. If consent is declined or unavailable,
+   retain the last authorized valid shape and report any unapplied confidence
+   floor or lens; hold if no authorized valid shape remains. Announce the
+   complete final scope and method
    before dispatch. If ask mode was explicitly selected by `--ask-scope` or a
    manual-provenance config value, request confirmation once with that complete
    resolved proposal. Otherwise ask only if the method
@@ -109,9 +115,10 @@ Modes:
 - `smart`: apply floor, relevant ceiling, and high-risk matches.
 - `ask`: auto-apply floor. A default/wizard value reports optional ceiling candidates
   without adding them or blocking the requested review. A manual-provenance `ask`
-  preference requests a choice about those additions when interactive; when
-  non-interactive, report them without adding them. Do not infer an explicit
-  request for questions from a persisted default.
+  preference requests a choice about those additions when interactive. If
+  declined, canceled, or unavailable, report them as not applied and continue
+  with the authorized shape. Non-interactive runs report candidates without
+  adding them. Do not infer a request for questions from a persisted default.
 - `off`: detect/report only; no auto-apply beyond explicit/default lenses.
 
 ## 5. Fixed Shape Suppression

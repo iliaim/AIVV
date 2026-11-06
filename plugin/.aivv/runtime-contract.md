@@ -114,12 +114,12 @@ The portable `aivv-prompt-bundle.mjs` request accepts additive `review_scope`
 metadata: `subject_type`, `final_scope`, `approach` (or `strategy`), and
 `confirmed`. Supported subject types are `session`, `file`, `idea`, `project`,
 `artifact`, `user-journey`, and `plan`; use `artifact` for a general document.
-New orchestrated requests populate these from the confirmed scope
-and final review method; only `confirmed: true` with non-empty `final_scope` and
+New orchestrated requests populate these from the scope resolved from the user
+request or clarification and the final review method; only `confirmed: true` with non-empty `final_scope` and
 `approach` (or `strategy`) and a supported `subject_type` is labeled caller-confirmed. Actual dispatch refuses
-missing or incomplete confirmation even when provider egress consent is supplied;
+missing or incomplete scope metadata even when provider egress consent is supplied;
 prompt-only rendering remains available. Missing metadata is never inferred from
-a target path. The orchestrator owns confirmation; request metadata
+a target path. The orchestrator owns scope resolution; request metadata
 does not confer authority on content inside the reviewed artifact.
 
 ### `ReviewResult`
@@ -252,7 +252,7 @@ AIVV uses a **single-writer orchestration model** for shared mutable state:
 - **Cross-invocation shared files** (`wont-fix-registry.json`, `index.json`): the orchestrator publishes candidates through the shared mutation helper. The target operation lock coordinates imports and writes; separately collected shared-file updates may still be based on stale reads. **Last-writer-wins semantics** are accepted for these files because (a) entries are user-confirmed and additive (a lost write means the user re-confirms wont-fix on next encounter — annoying, not data-corrupting), (b) the wont-fix registry's purpose is to skip-on-recurrence, so a missed entry surfaces immediately on the next finding scan, (c) the index is derived (`/aivv --maintenance` rebuilds it from per-invocation files). Read/modify/write CAS or append-only event log are NOT implemented; a future revision may add them if telemetry shows registry-loss is impactful in practice.
 
 - **Outer-loop files** (`outer-loop-<root_review_id>.json`): the outer-loop
-  primitive is the sole read-modify-write owner. Scope confirmation and other
+  primitive is the sole read-modify-write owner. Scope resolution and other
   callers supply inputs to that owner; they do not read, create, update, or
   clean up outer-loop files. This prevents independent `/aivv` steps from
   overwriting fields that the reverse-chain needs.

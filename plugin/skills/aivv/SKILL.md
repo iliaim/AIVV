@@ -34,7 +34,6 @@ reviews. Other material supplies relevant evidence and context.
 only stored in metadata.
 
 `--reviewers=N` and `--target=<dir>` semantics:
-- Exact contract marker: --target=<dir> to scope state writes and relative path resolution.
 - `--reviewers=N` controls reviewer count and influences `review_mode`.
 - `--target=<dir>` controls `state_target`, the project instance whose external
   store receives review/fix logs and calibration, and the base for relative
@@ -115,23 +114,12 @@ detect signal appears outside the requested scope.
 
 - Contract lookup/help summary: this file only. If the answer is in Contract
   Snapshot, stop; do not list/read the reference tree for confirmation.
-- Real `/aivv` review execution: read [orchestration-workflow.md](references/orchestration-workflow.md), then route-specific references named there.
+- Real reviews: read [orchestration-workflow.md](references/orchestration-workflow.md) first; it owns execution and routes to the other references.
 - Argument/config/setup/eval/maintenance: [argument-parsing.md](references/argument-parsing.md), [help-text.md](references/help-text.md), [preferences.md](references/preferences.md), [thoroughness-dial.md](references/thoroughness-dial.md), [setup-wizard.md](references/setup-wizard.md), [eval-harness.md](references/eval-harness.md), [lens-composition.md](references/lens-composition.md).
 - Review shape/scope: [review-shape-resolution.md](references/review-shape-resolution.md), [lens-composition.md](references/lens-composition.md), [scope-confirmation.md](references/scope-confirmation.md).
 - Dispatch/prompt: [reviewer-prompt-template.md](references/reviewer-prompt-template.md), [review-dispatch-lifecycle.md](references/review-dispatch-lifecycle.md), [multi-model-dispatch.md](references/multi-model-dispatch.md).
 - Output/persistence: [result-rendering-policy.md](references/result-rendering-policy.md), [setup-hint.md](references/setup-hint.md), [consensus-output-templates.md](references/consensus-output-templates.md), [self-calibration.md](references/self-calibration.md), [review-log-schema.md](references/review-log-schema.md), [viewer-hook.md](references/viewer-hook.md), [auto-chain-handoff.md](references/auto-chain-handoff.md).
 
-## Real Review Execution
-
-When the user requests an actual review, read `orchestration-workflow.md` first;
-do not use this file as the complete procedure. That workflow owns progress
-tracking, parser details, session extraction, `multi_topic`, `final_scope`,
-`reviewer_lens_assignments`, prompt construction, `capability degradations`,
-dispatch, threshold filtering, forced-show, lens coverage, `review_meta`,
-`WORKSPACE_DRIFT_VOIDED_REVIEW`, `plan_review`, `--predecessor-review-id`, and
-optional `/aivv-fix` handoff with stale-cache canary behavior.
-
-<!-- pre-fix evidence: plugin/skills/aivv-fix/SKILL.md:110-122. -->
 <!-- CLAUDE-CODE-SPECIFIC --> Host notes: Claude Code uses `TodoWrite`, `Read`/`Grep`/`Glob`, `Agent`, and
 `Skill`.
 <!-- Codex-SPECIFIC --> Codex uses `update_plan` when exposed and concise user-facing phase

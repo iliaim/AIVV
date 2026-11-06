@@ -26,15 +26,15 @@ merges cycle and scope inputs, updates it, and deletes it on clean termination.
 No other `/aivv` reference or helper may open this file for a read-modify-write
 operation or create an independent replacement.
 
-Scope confirmation is input-only for this state: it returns
+Scope resolution is input-only for this state: it returns
 `final_scope` to the orchestrator. The outer-loop owner records that value as
 `scope_confirmation.final_scope` during its next normal write. On cycle N>=2,
-the owner may supply the prior `scope_confirmation.final_scope` as proposal
-context for the next scope gate. The new pass must present its complete scope
-and method and obtain fresh confirmation; the prior pass's confirmation is not
-reused, even when paths overlap. Scope confirmation does not read the state
-file itself. This keeps state ownership with the outer-loop primitive while
-requiring a new decision for each review pass.
+the owner may supply the prior `scope_confirmation.final_scope` as context for
+the next scope resolution. Reuse the initiating request's authorization while
+the new scope remains within it; ask again only for a material expansion or new
+ambiguity. Prior paths are not automatically in scope. Scope resolution does
+not read the state file itself. This keeps state ownership with the outer-loop
+primitive without adding a redundant approval to each review pass.
 
 ```json
 {
@@ -57,9 +57,9 @@ requiring a new decision for each review pass.
 - `started_at` — timestamp of cycle-1 state creation. Never mutated.
 - `updated_at` — timestamp of most recent state write.
 - `scope_confirmation.final_scope` — optional scope of the most recent review
-  supplied by the scope-confirmation gate. It is merged only by this primitive
-  and may be supplied as proposal context on a later cycle; it is never approval
-  for that later review.
+  supplied by the scope-resolution step. It is merged only by this primitive
+  and may inform a later cycle; it does not automatically authorize expanded
+  paths or topics.
 
 **State cleanup:** on clean termination (no continuation-counting findings remain), delete the state file (history not needed post-success). On all other terminations (cap, no-progress, user-interrupt, capability-unavailable), leave the state file for user inspection. All mutations use the shared storage mutation helper under its target operation lock. Never delete or quarantine legacy originals.
 

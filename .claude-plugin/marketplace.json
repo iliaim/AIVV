@@ -10,7 +10,7 @@
     {
       "name": "aivv",
       "description": "Agentic Independent Validation & Verification — general advisory review of session work, plans, documents, decisions, and code, with remediation and calibration.",
-      "version": "0.3.1",
+      "version": "0.4.0",
       "source": "./plugin",
       "author": {
         "name": "Ilia Imerlishvili"

@@ -70,6 +70,28 @@ Software findings retain their configured compatibility behavior.
 | **medium** | Likely correct but depends on context you may not fully have | Frame as likely: "This appears to cause X" |
 | **low** | Speculative — worth considering but uncertain | Frame as question: "Could this affect X?" |
 
+### Impact × likelihood and project context
+
+Under `severity_model: impact_likelihood`, route behaviour-preserving
+improvements with no plausible harm mode or declared-standard breach to
+`category: improvement`. Route plausible failures, harm, security adjacency,
+observable behaviour changes, contract or standard breaches, or unresolved
+archetypes to the DEFECT track. Absence of relevant tests does not establish
+behaviour preservation; use code or contract reasoning.
+
+Use declared `project_context.deployment` as exposure input across lenses:
+`personal` starts low, `internal` medium, and `public` may be high for
+customer-facing or internet-reachable paths. Undeclared deployment is
+conditional evidence: state the assumption and recommend declaring context only
+when it could materially change severity; it does not create a CRITICAL floor.
+
+Use declared `data_classes`, `jurisdictions`, and `compliance_targets` to assess
+legal applicability. Apply `COMP-LEGAL-*` and `DP-LEGAL-*` floors when context
+supports the cited authority or is undeclared and the pattern plausibly falls
+within it. When declared context rules the authority out, retain the citation
+for transparency but do not apply its CRITICAL floor; route it as a context note
+or lower-priority disposition, using POLISH only if it passes that tier's gates.
+
 ### Noise Suppression Rule
 
 **If a finding is both low-confidence AND minor-severity, omit it entirely.** It is noise. This single rule dramatically improves signal ratio.
