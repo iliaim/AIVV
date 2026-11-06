@@ -55,6 +55,12 @@ const mixedContent = intentFixture({ old_string: "old\u0000bytes" });
 mixedContent.write_intents[0].exact_content = "A second content field must not hide a binary preimage.";
 assert.equal(detectorVerdict(mixedContent).reason, "unsupported-risky-shape",
   "every supplied write-content representation retains the NUL protection");
+const rootContent = intentFixture();
+rootContent.exact_content = "actual\u0000write";
+assert.equal(detectorVerdict(rootContent).reason, "unsupported-risky-shape",
+  "root-level write content cannot hide behind a nonempty intent array");
+assert.equal(detectorVerdict(intentFixture({ new_string: 'const nul = "\\u0000";' })).status,
+  "pass", "an inert source escape is text, not an actual NUL byte");
 
 assert.equal(editFrame({ old_string: "é", new_string: "ok" }),
   "old_bytes=2\né\nnew_bytes=2\nok", "edit framing continues to use UTF-8 byte lengths");

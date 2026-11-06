@@ -183,12 +183,9 @@ export function detectorVerdict(fixture) {
   if (rootPathVerdict.status === "halt") return rootPathVerdict;
 
   const shapes = collectShapes(fixture);
-  const intents = fixture.write_intents?.length ? fixture.write_intents : [fixture];
-  const intentBytes = intents.flatMap((intent) => [intent.exact_content, intent.exact_content_or_patch,
-    ...(Array.isArray(intent.proposed_edits) ? intent.proposed_edits.flatMap((edit) => [edit.old_string, edit.new_string]) : [])])
-    .filter((content) => typeof content === "string");
-
-  if (intentBytes.some((content) => content.includes("\u0000"))) {
+  const containsNul = value => typeof value === "string" ? value.includes("\u0000")
+    : value !== null && typeof value === "object" && Object.values(value).some(containsNul);
+  if (containsNul(fixture)) {
     return { status: "halt", reason: "unsupported-risky-shape" };
   }
   // Prompt-shaped content is data in an inspectable write intent. The
