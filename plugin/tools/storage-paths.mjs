@@ -137,8 +137,12 @@ export function validateContainedPath(candidate, boundary) {
 }
 function privateWindows(dir) {
   // A fresh DACL avoids inheriting broad grants from a custom LOCALAPPDATA.
-  const script = `$p='${dir.replaceAll("'", "''")}'; $sid=[System.Security.Principal.WindowsIdentity]::GetCurrent().User; $acl=New-Object System.Security.AccessControl.DirectorySecurity; $acl.SetOwner($sid); $acl.SetAccessRuleProtection($true,$false); $rule=New-Object System.Security.AccessControl.FileSystemAccessRule($sid,"FullControl","ContainerInherit,ObjectInherit","None","Allow"); $acl.AddAccessRule($rule); Set-Acl -LiteralPath $p -AclObject $acl -ErrorAction Stop`;
-  execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { stdio: 'pipe' });
+  // Use the Windows system tool so this also works when PowerShell's ACL module
+  // is unavailable (for example, on some hosted PowerShell 7 runners).
+  const sid = execFileSync('whoami.exe', ['/user', '/fo', 'csv', '/nh'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+    .trim().match(/\"(S-1-[0-9-]+)\"\s*$/)?.[1];
+  if (!sid) fail('STORAGE_PERMISSIONS', 'could not resolve the current Windows user SID');
+  execFileSync('icacls.exe', [dir, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`, '/setowner', `*${sid}`], { stdio: 'pipe', windowsHide: true });
 }
 export function ensurePrivateDirectory(dir, boundary = dir) {
   validateContainedPath(dir, boundary);
