@@ -8,6 +8,22 @@ permissions:
   contents: read
 
 jobs:
+  codex-installer:
+    name: Codex installer (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Codex installer preflight and upgrade backup
+        run: node tests/codex-installer.test.mjs
+      - name: Verify external state persistence
+        run: node tests/storage-persistence.test.mjs
+
   read-only-agent-guard:
     runs-on: ubuntu-latest
     steps:

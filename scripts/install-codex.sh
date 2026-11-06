@@ -29,6 +29,8 @@ Usage: scripts/install-codex.sh [--scope user|project] [--force] [--remove-legac
 
 Installs AIVV for Codex by copying skills and subagent TOML files.
 Default scope is user, using CODEX_HOME when set and ~/.codex otherwise.
+Existing AIVV destinations are never replaced without --force. With --force,
+the current destinations are backed up under the selected Codex root first.
 EOF
       exit 0
       ;;
@@ -53,6 +55,37 @@ if [ ! -d "$plugin_source_root/skills" ] || [ ! -d "$plugin_source_root/.aivv" ]
   exit 1
 fi
 
+required_source_dirs=(
+  "${plugin_source_root}/skills/aivv"
+  "${plugin_source_root}/skills/aivv-fix"
+  "${plugin_source_root}/skills/aivv-calibrate"
+  "${plugin_source_root}/skills/aivv-view"
+  "${plugin_source_root}/skills/methodology"
+  "${plugin_source_root}/.aivv"
+  "${plugin_source_root}/skills"
+  "${plugin_source_root}/tools"
+)
+required_source_files=(
+  "${plugin_source_root}/.aivv/prompts/reviewer-role.md"
+  "${plugin_source_root}/.aivv/prompts/investigator-role.md"
+)
+for source in "${required_source_dirs[@]}"; do
+  if [ ! -d "$source" ]; then
+    echo "Missing AIVV source directory: $source" >&2
+    exit 1
+  fi
+done
+for source in "${required_source_files[@]}"; do
+  if [ ! -f "$source" ]; then
+    echo "Missing AIVV source file: $source" >&2
+    exit 1
+  fi
+  if grep -q "'''" "$source"; then
+    echo "Cannot embed triple-single-quote sequence in TOML developer_instructions: $source" >&2
+    exit 1
+  fi
+done
+
 if [ "$scope" = "user" ] && [ -n "${CODEX_HOME:-}" ]; then
   codex_root="$CODEX_HOME"
 elif [ "$scope" = "user" ]; then
@@ -67,6 +100,86 @@ fi
 skills_dest="${codex_root}/skills"
 agents_dest="${codex_root}/agents"
 runtime_dest="${codex_root}/aivv-runtime"
+
+skill_names=(aivv aivv-fix aivv-calibrate aivv-view aivv-methodology)
+support_paths=(.aivv skills tools)
+replacement_paths=()
+for name in "${skill_names[@]}"; do
+  replacement_paths+=("skills/${name}")
+done
+for rel_path in "${support_paths[@]}"; do
+  replacement_paths+=("aivv-runtime/${rel_path}")
+done
+replacement_paths+=(
+  "agents/aivv-reviewer.toml"
+  "agents/aivv-investigator.toml"
+)
+
+path_exists() {
+  [ -e "$1" ] || [ -L "$1" ]
+}
+
+conflicts=()
+backup_paths=()
+for rel_path in "${replacement_paths[@]}"; do
+  destination="${codex_root}/${rel_path}"
+  if path_exists "$destination"; then
+    if [ "$force" = "true" ]; then
+      backup_paths+=("${rel_path}")
+    else
+      conflicts+=("${destination}")
+    fi
+  fi
+done
+
+if [ "$force" = "true" ]; then
+  legacy_paths=(
+    "skills/.aivv|methodology.md"
+    "skills/skills|aivv/SKILL.md"
+    "skills/tools|dispatch.mjs"
+  )
+  for entry in "${legacy_paths[@]}"; do
+    rel_path="${entry%%|*}"
+    marker="${entry#*|}"
+    destination="${codex_root}/${rel_path}"
+    if path_exists "$destination" && path_exists "${destination}/${marker}"; then
+      backup_paths+=("${rel_path}")
+    fi
+  done
+fi
+
+if [ "$remove_legacy_methodology" = "true" ] && path_exists "${skills_dest}/methodology"; then
+  backup_paths+=("skills/methodology")
+fi
+
+if [ "${#conflicts[@]}" -gt 0 ]; then
+  echo "Existing AIVV destinations found; no files were changed:" >&2
+  for destination in "${conflicts[@]}"; do
+    printf '  %s\n' "$destination" >&2
+  done
+  echo "Rerun with --force to back up and replace them." >&2
+  exit 1
+fi
+
+backup_root=""
+if [ "${#backup_paths[@]}" -gt 0 ]; then
+  mkdir -p "$codex_root"
+  backup_root="$(mktemp -d "${codex_root}/.aivv-install-backup.XXXXXX")"
+  for rel_path in "${backup_paths[@]}"; do
+    source="${codex_root}/${rel_path}"
+    backup_destination="${backup_root}/previous/${rel_path}"
+    mkdir -p "$(dirname "$backup_destination")"
+    cp -R "$source" "$backup_destination"
+  done
+  {
+    printf 'Original Codex root: %s\n' "$codex_root"
+    cat <<'EOF'
+Each entry under previous/ mirrors its original relative path under the Codex root.
+To restore an entry, copy it back to that same relative path.
+EOF
+  } > "${backup_root}/README.txt"
+  echo "Backed up existing AIVV destinations to $backup_root"
+fi
 
 mkdir -p "$skills_dest" "$agents_dest" "$runtime_dest"
 
@@ -214,7 +327,7 @@ copy_support_dir ".aivv"
 copy_support_dir "skills"
 copy_support_dir "tools"
 
-if [ "$remove_legacy_methodology" = "true" ] && [ -e "${skills_dest}/methodology" ]; then
+if [ "$remove_legacy_methodology" = "true" ] && path_exists "${skills_dest}/methodology"; then
   rm -rf "${skills_dest}/methodology"
 fi
 
