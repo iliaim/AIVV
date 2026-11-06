@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.5.0 — provider-neutral runtime
+
+- Centralize provider, model, authentication, and prompt-source metadata; select providers and models through the shared runtime contract.
+- Keep shared roles and guidance provider-neutral, with transport, authentication, and host capability details in adapters.
+- Add provider-neutrality and adapter-registry coverage to public CI.
+
 ## 0.4.2 — skill metadata and CI maintenance
 
 - Keep Claude Code skill metadata required for its plugin UX and document the host-specific validation path.
