@@ -43,3 +43,5 @@ jobs:
         run: node tests/plugin-package.test.mjs
       - name: Verify general review defaults and portable runtime contract
         run: node tests/review/general-review.test.mjs
+      - name: Verify provider-neutral roles and provider adapter registry
+        run: node tests/provider-agnostic-contract.test.mjs

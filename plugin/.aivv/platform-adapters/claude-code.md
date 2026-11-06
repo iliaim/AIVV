@@ -118,6 +118,12 @@ Empirically confirmed 2026-04-21 via subprocess dispatch — a test agent with `
 
 ---
 
+## Repository validation
+
+From the repository root, validate the Claude Code plugin package with `claude plugin validate --profile directory plugin`.
+
+---
+
 ## Plugin manifest
 
 **Location**: `.claude-plugin/plugin.json` (at plugin root)

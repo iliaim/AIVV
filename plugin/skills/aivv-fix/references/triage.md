@@ -55,7 +55,7 @@ Show the user a summary table before proceeding:
 - Batch 2: F003 — independent subsystem
 - Batch 3: F004 — independent, low severity
 
-Estimated investigator cost: 3 Opus agents x ~25 turns each
+Estimated investigator cost: N independent investigator runs x ~25 turns each
 ```
 
 Auto-proceed immediately unless any batch contains findings where the proposed fix has significant trade-offs (e.g., fixing one issue would overcomplicate another area, require architectural changes, or degrade performance). In those cases, pause and ask the user how to proceed. For straightforward fixes, do not wait for acknowledgement.

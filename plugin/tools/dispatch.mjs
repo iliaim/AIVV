@@ -8,10 +8,10 @@
  *
  * Usage:
  *   printf '%s' "$prompt" | node <AIVV_ROOT>/tools/dispatch.mjs \
- *     --provider anthropic --model <id> --reviewer-id alpha \
+ *     --provider <provider-id> --model <model-id> --reviewer-id alpha \
  *     --timeout 300
  *
- *   node <AIVV_ROOT>/tools/dispatch.mjs --probe --provider anthropic --provider-egress-consent
+ *   node <AIVV_ROOT>/tools/dispatch.mjs --probe --provider <provider-id> --provider-egress-consent
  *   node <AIVV_ROOT>/tools/dispatch.mjs --assert-prompt-pack
  *
  * Exit codes:
@@ -23,10 +23,7 @@
  *   5  Node version < 20 (Node 18 EOL 2025-04-30)
  *   9  Dispatch failed after all retries / provider egress consent missing
  *
- * Auth resolution (--auth-mode auto, the default — no API keys required):
- *   Anthropic: ① claude CLI subprocess  → ② ANTHROPIC_API_KEY
- *   Gemini:    ① agy CLI subprocess  → ② gemini CLI subprocess  → ③ GEMINI_API_KEY
- *   OpenAI:    ① codex CLI subprocess   → ② OPENAI_API_KEY
+ * Authentication precedence and supported routes are defined by each provider adapter.
  */
 
 import { createHash } from 'node:crypto';
@@ -36,6 +33,7 @@ import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessProviderTrust, redactProviderDiagnostic, writeProviderTrustMemory } from './provider-trust.mjs';
+import { assertProviderAdapterParity, providerIds, validateProviderCatalog } from './provider-registry.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const AIVV_ROOT = dirname(SCRIPT_DIR);
@@ -60,6 +58,8 @@ function parseArgs(argv) {
     assertPromptPack: false,
     assertModernFindingSchema: false,
     assertExtractJSON: false,
+    assertProviderRegistry: false,
+    modelSource: 'request',
     renderPromptOnly: false,
     providerEgressConsent: false,
     evidenceClasses: [],
@@ -72,6 +72,7 @@ function parseArgs(argv) {
     if (arg === '--assert-prompt-pack') { args.assertPromptPack = true; continue; }
     if (arg === '--assert-modern-finding-schema') { args.assertModernFindingSchema = true; continue; }
     if (arg === '--assert-extract-json') { args.assertExtractJSON = true; continue; }
+    if (arg === '--assert-provider-registry') { args.assertProviderRegistry = true; continue; }
     if (arg === '--render-prompt-only') { args.renderPromptOnly = true; continue; }
     if (arg === '--provider-egress-consent') { args.providerEgressConsent = true; continue; }
     if (arg === '--help' || arg === '-h') { args.help = true; continue; }
@@ -80,6 +81,7 @@ function parseArgs(argv) {
     switch (key) {
       case '--provider':    args.provider = val; break;
       case '--model':       args.model = val; break;
+      case '--model-source': args.modelSource = val; break;
       case '--reviewer-id': args.reviewerId = val; break;
       case '--timeout':     args.timeout = parseInt(val, 10); break;
       case '--auth-mode':   args.authMode = val; break;
@@ -116,13 +118,11 @@ if (args.help) {
     '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-prompt-pack',
     '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-modern-finding-schema',
     '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-extract-json',
+    '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-provider-registry',
     '',
-    'Providers: anthropic, gemini, openai',
+    'Registered providers: ' + providerIds.join(', '),
     '',
-    'Auth (--auth-mode auto, default — no API keys required):',
-    '  Anthropic: claude CLI (already logged in via Claude Code)  →  ANTHROPIC_API_KEY',
-    '  Gemini:    agy CLI (Google Antigravity) → gemini CLI       →  GEMINI_API_KEY',
-    '  OpenAI:    codex CLI (run: codex auth)                     →  OPENAI_API_KEY',
+    'Auth: provider-specific authentication routes and precedence are defined by the provider adapter.',
     '',
     'Provider egress:',
     '  Dispatch requires --provider-egress-consent. Use --render-prompt-only to inspect the packed prompt locally.',
@@ -1787,6 +1787,9 @@ const PROVIDERS = {
   openai:    { probe: probeOpenAI,    call: callOpenAI },
 };
 
+validateProviderCatalog();
+assertProviderAdapterParity(Object.keys(PROVIDERS));
+
 // ── Main entry ────────────────────────────────────────────────────────────
 async function main() {
   if (args.assertPromptPack) {
@@ -1799,6 +1802,10 @@ async function main() {
   }
   if (args.assertExtractJSON) {
     assertExtractJSON();
+    return;
+  }
+  if (args.assertProviderRegistry) {
+    process.stdout.write('[AIVV] Provider registry and runtime adapter map are consistent (' + providerIds.length + ' providers).\n');
     return;
   }
 
@@ -2003,6 +2010,7 @@ async function main() {
     reviewer_id: args.reviewerId,
     provider: args.provider,
     model: args.model,
+    model_source: args.modelSource,
     finding_count: durableResponse.findings.length,
     duration_ms: durationMs,
     provider_egress: disclosure,

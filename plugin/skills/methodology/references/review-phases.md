@@ -51,11 +51,11 @@ For a session review, relevant session context may come from these sources when 
 
 | Artifact | Common Locations | Content |
 |---|---|---|
-| Session files | `.claude/sessions/` | Autosaves and manual summaries |
-| Session memory | `.claude/memory/current-session.md` | Tasks, decisions, blockers |
+| Session files | `host session artifacts` | Autosaves and manual summaries |
+| Session memory | `host-provided session memory` | Tasks, decisions, blockers |
 | Week/sprint tracker | `CURRENT/WEEK_*_TRACKER.md`, `CURRENT/SPRINT_*.md` | Task checkboxes |
 | User decisions | `CURRENT/USER_DECISIONS.md`, `CURRENT/DECISIONS.md` | Approved/rejected decisions |
-| Project progress | `.claude/memory/project-progress.md` | Milestones |
+| Project progress | `host-provided project memory` | Milestones |
 
 **Not all projects will have these sources.** Use only relevant, available session artifacts within the confirmed scope. Do not inspect private or external context outside that scope.
 ### Step 4: Standards lookup

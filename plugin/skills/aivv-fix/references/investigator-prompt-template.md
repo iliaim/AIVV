@@ -2,7 +2,7 @@
 
 Use this template verbatim when building the prompt for each `aivv:investigator` subagent in Step 3. Fill in all `{placeholder}` values from the current session context.
 
-**Native prompt boundary:** before each native Claude/Codex dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings and all session/project/path content, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
+**Native prompt boundary:** before each native host dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings and all session/project/path content, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
 
 ```
 Investigate these related findings using the Investigation Protocol (Phases 1, 1.5, 2, 3, 4, 5).
@@ -46,7 +46,7 @@ Apply scrutiny proportional to the source confidence tier:
 - `[ivv]` — Formal review output. Treat as a confirmed issue.
 - `[user-reported]` — Explicit user report. High confidence it is real.
 - `[deferred]` — Issue noticed but skipped during the session. Verify it is still present before investigating fully.
-- `[agent-noted]` — Casual observation by Claude. Apply extra scrutiny — confirm it is a real issue, not a false alarm, before proceeding.
+- `[agent-noted]` — Casual observation by an agent. Apply extra scrutiny — confirm it is a real issue, not a false alarm, before proceeding.
 
 ## Batch Context
 These findings were grouped because: {clustering rationale from Step 2b}
@@ -139,7 +139,7 @@ Read these files yourself when needed. The orchestrator is providing pointers an
 {introduced_by_context}
 
 ## Project Context
-{Include any relevant CLAUDE.md path, rules directory, or conventions that apply}
+{Include relevant project instruction files (such as AGENTS.md, CLAUDE.md, or host-equivalent guidance), rules, or conventions}
 
 ## Instructions
 1. Follow the Investigation Protocol exactly: Phase 1 UNDERSTAND, Phase 1.5 PREREQUISITE PROBE (default-on for fixes touching environmental dependencies — env vars, deployed files, services, dependency versions, feature flags; skip only for pure-logic fixes), Phase 2 ROOT CAUSE, Phase 3 SCAN, Phase 4 RESEARCH, Phase 5 PROPOSE. Phase 1.5 emits an optional `prerequisite_probe` field on your output (see canonical schema for shape; backward-compat — omit when skipped).

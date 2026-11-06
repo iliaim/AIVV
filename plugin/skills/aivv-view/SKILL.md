@@ -74,7 +74,7 @@ Graceful degradation: if `fzf` is not installed, `--tui` falls back to `--summar
 /aivv-view --html -o review.html --open
 ```
 
-`--open` is only valid with `--html -o report.html` or `--browser -o browser.html`; stdout HTML cannot be opened because there is no generated file path. The script-level opener uses the host OS default browser (`open`, `xdg-open`, or PowerShell) and respects `AIVV_QUIET=1`, `AIVV_HEADLESS=1`, `CI=true`, and display-less Linux environments by writing the report without launching a browser. In Codex, `/aivv` and `/aivv-fix` prefer the in-app Browser plugin for auto-open behavior when `post_review_html_open_mode=open`; this script remains portable and host-neutral. Bare interactive `/aivv-view` is browser-first and writes the browser under the external target-instance report cache; piped bare invocations still emit JSON for scripts.
+`--open` is only valid with `--html -o report.html` or `--browser -o browser.html`; stdout HTML cannot be opened because there is no generated file path. The script-level opener uses the host OS default browser (`open`, `xdg-open`, or PowerShell) and respects `AIVV_QUIET=1`, `AIVV_HEADLESS=1`, `CI=true`, and display-less Linux environments by writing the report without launching a browser. In automatic `/aivv` and `/aivv-fix` flows, the active platform adapter owns any native auto-open behavior when `post_review_html_open_mode=open`; this script remains portable and host-neutral. Bare interactive `/aivv-view` is browser-first and writes the browser under the external target-instance report cache; piped bare invocations still emit JSON for scripts.
 
 ## Findings browser
 

@@ -5,20 +5,30 @@ Read before provider-backed dispatch/synthesis. Owns Case D
 
 ## Runtime Root
 
-Resolve `AIVV_ROOT` through the bundled `.aivv/runtime-root.md` runtime-root contract:
-- Active plugin package: resolve to that package root, even when a legacy
-  `${CODEX_HOME}/aivv-runtime` also exists.
-- Legacy Codex skill install: resolve its sibling `${CODEX_HOME}/aivv-runtime`;
-  support copies under `${CODEX_HOME}/skills` are not runtime roots. The
-  resolver supports custom Codex roots and does not assume a default home.
+Resolve AIVV_ROOT through the bundled runtime-root contract. Host adapters own active and legacy install locations; do not infer the runtime from the consuming project's tools directory.
 
 Set `PROMPT_BUNDLE_MJS="$AIVV_ROOT/tools/aivv-prompt-bundle.mjs"` and
-`CATALOG_PATH="$AIVV_ROOT/tools/model-catalog.json"`. Load role fallbacks for
-`reviewer.primary`, `reviewer.fast`, and `reviewer.secondary`.
+`CATALOG_PATH="$AIVV_ROOT/tools/model-catalog.json"`. Resolve provider IDs,
+model defaults, adapter documentation, and command-source paths from the central
+registry. After Step 1.5 has resolved layered configuration, write only these
+non-secret provider settings to an invocation-local JSON file:
+`reviewer_provider_priority`, `model_policy`, `model_overrides`,
+`provider_auth_modes`, legacy reviewer model slots, legacy provider auth modes,
+and `auth_mode`. Do not re-read or re-resolve project/user configuration here.
+Build request settings once from that resolved object:
+
+```bash
+node "$AIVV_ROOT/tools/model-selection.mjs" --build-request-settings \
+  < "$resolved_provider_settings_path" > "$provider_request_settings_path"
+```
+
+Use `reviewer_provider_priority` from the helper output for provider ordering,
+and include its `model_selection` object in every per-provider request. A
+per-request `model` remains an explicit override and takes precedence.
 
 ## Provider Readiness
 
-For each non-native provider in `reviewer_provider_priority`, run:
+For each enabled provider in the resolved provider priority, run:
 
 ```bash
 node "$AIVV_ROOT/tools/dispatch.mjs" --probe --provider <X> --provider-egress-consent
@@ -27,14 +37,14 @@ node "$AIVV_ROOT/tools/dispatch.mjs" --probe --provider <X> --provider-egress-co
 The readiness is established by ONE mechanism: the probe exit code. Exit 0
 means candidate provider; non-zero means unavailable and must be recorded with
 exit code/reason. Do not inspect API-key env vars or `.aivv/models*.json`; CLI
-OAuth is the default auth source. There is NO "model-diversity-within-Anthropic" degradation; Anthropic model variants are one provider and never satisfy cross-provider review.
+Authentication routes and precedence are defined by the selected provider adapter. Model variants from one provider remain one provider for diversity accounting.
 
-Claude Code native Anthropic path: available through native Agent path
-(`provider: "anthropic-native"`, `dispatch_path: "agent-tool"`). Gemini/OpenAI
-still use `dispatch.mjs --probe`. On Codex/other hosts with Node >= 20, still
-probe, then run `aivv-prompt-bundle.mjs --render-prompt-only` as pre-egress
-contract check; render failure skips the provider and records the error. Only a
-host without Node >= 20 is probe-less.
+Host-native model dispatch is selected only when the active host adapter
+declares and verifies that path. Otherwise use the provider adapter through
+dispatch.mjs --probe. On hosts using the packaged provider runtime, probe
+first, then run aivv-prompt-bundle.mjs --render-prompt-only as the pre-egress
+contract check; render failure skips the provider and records the error.
+Host-specific paths and capability claims live in .aivv/platform-adapters/.
 
 No provider/native path -> warn and fall back to Case A. One provider available
 at N >= 2 -> continue, but cross-provider verification is unreachable.
@@ -44,13 +54,15 @@ at N >= 2 -> continue, but cross-provider verification is unreachable.
 Effective N comes from `--reviewers=N` or resolved default:
 
 ```text
-ordered_avail = [p for p in reviewer_provider_priority if p in providers_available]
+effective_priority = request_settings.reviewer_provider_priority
+ordered_avail = [p for p in effective_priority if p in providers_available]
 providers_to_dispatch = ordered_avail[:N]
 fallback_slot_count = max(N - len(ordered_avail), 0)
 ```
 
-Priority omission is config opt-out. Empty priority warns and falls back to
-alphabetical available providers.
+An unset or empty priority uses the provider registry's deterministic default
+order. A non-empty configured priority preserves its order and selects only
+those provider IDs.
 
 Build one request JSON per selected provider from Step 4 inputs: reviewer label,
 review mode, assigned lens, thoroughness, direction, capability degradations,
@@ -76,17 +88,28 @@ egress requires `--provider-egress-consent` after disclosing provider/model,
 evidence classes, destination shape, prompt hash/bytes, and source list from
 `--render-prompt-only`.
 
-Dispatch selected providers in parallel where possible. Claude Code uses native
-Agent for Anthropic and prompt-bundle jobs for Gemini/OpenAI; Codex/other hosts
-use prompt-bundle jobs for all selected providers. Sequential fallback is
-allowed only when the host shell cannot background jobs.
+The shared request also carries `request_settings.model_selection`, which the
+helper builds from the configuration already resolved at Step 1.5:
+`{ policy, provider_overrides, legacy_slot_overrides, provider_auth_modes }`.
+Policy is `aivv-recommended`, `pinned`, or the deprecated `family-latest`
+alias. An explicit per-request model wins; otherwise pinned selection checks
+the provider override and then compatible legacy reviewer slots. If no pin is
+available, the registered default is used with a warning. Current model
+catalog IDs are preserved legacy values marked `unverified-legacy`; dispatch
+must keep that warning visible until provider-specific acceptance evidence is
+recorded. Auth settings are provider-keyed and resolved through the provider
+adapter; provider-specific legacy keys remain read-only compatibility aliases.
+
+Dispatch selected providers in parallel where possible using the active host
+adapter's declared dispatch operations. Sequential fallback is allowed only
+when the host shell cannot background jobs.
 
 ## Parse Outputs And Fallback
 
 Successful provider result shape:
 
 ```json
-{"label":"alpha","provider":"openai","model":"...","model_source":"provider-reported|request|model-catalog","findings":[],"finding_count":0,"dispatch_path":"provider"}
+{"label":"alpha","provider":"<provider-id>","model":"...","model_source":"provider-reported|request|model-catalog|provider-config","findings":[],"finding_count":0,"dispatch_path":"provider"}
 ```
 
 Agent-tool source: parse native response; empty findings is a successful clean
@@ -99,12 +122,12 @@ replacement_model?}`.
 
 Fallback order:
 1. Priority-chain fallback: for failed/unfilled slots, walk
-   `reviewer_provider_priority` to next not-yet-failed available provider;
+   `effective_priority` to next not-yet-failed available provider;
    preserve original slot label and emit one provider-chain status line.
 2. If unresolved slots remain, apply `multi_model_fallback_strategy`. `ask`
    (default) prompts the user with 4 options: (1) **Skip this provider now** —
    proceed with N−failed reviewers, record `capability_degradations`; (2)
-   **Replicate with default provider** — one extra `reviewer_provider_priority[0]`
+   **Replicate with default provider** — one extra `effective_priority[0]`
    reviewer to keep count; (3) **Always skip** — as (1) AND persist
    `multi_model_fallback_strategy: "none"` to the resolved config tier (project
    preferred when one exists, else user); (4) **Always replicate** — as (2) AND

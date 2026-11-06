@@ -29,7 +29,7 @@ Benefits when Signal 0 fires: deterministic dedup across N reviewers (no LLM sca
 - TODO/FIXME markers mentioned in conversation
 - Problems acknowledged but not addressed ("yes that's an issue, let's continue")
 
-**Signal 4 — Agent observations** (medium confidence): Scan for issues Claude flagged but didn't fix:
+**Signal 4 — Agent observations** (medium confidence): Scan for issues an agent identified but did not fix:
 - "I also noticed X", "worth noting that Y", "there's also a potential issue with..."
 - Code smells or risks mentioned in passing during implementation
 
@@ -66,7 +66,7 @@ The pass behavior is gated on the resolved `severity_model` config key (resolved
 - `[ivv]` — from formal review
 - `[user-reported]` — from user message
 - `[deferred]` — noticed but skipped
-- `[agent-noted]` — flagged by Claude in passing
+- `[agent-noted]` — flagged by an agent in passing
 
 **wont-fix registry pre-filter**: Resolve the read-side matching view through the
 installed helper, which uses the shared locked external read boundary:

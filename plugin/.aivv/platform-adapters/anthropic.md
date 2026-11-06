@@ -19,7 +19,7 @@
 
 Force API key only: `--auth-mode api_key`
 
-Per-provider config override: `auth_mode_anthropic: "cli"` | `"api_key"` | `"auto"` (see the latest config schema, currently `config.v6.schema.json`)
+For shared authentication settings, see [Configuration keys](../configuration.md#configuration-keys) and the [golden configuration schema](../schemas/config.schema.json) (config.schema.json:519-530).
 
 ## Capability matrix
 
