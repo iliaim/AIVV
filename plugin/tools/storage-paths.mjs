@@ -142,7 +142,8 @@ function privateWindows(dir) {
   const sid = execFileSync('whoami.exe', ['/user', '/fo', 'csv', '/nh'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
     .trim().match(/\"(S-1-[0-9-]+)\"\s*$/)?.[1];
   if (!sid) fail('STORAGE_PERMISSIONS', 'could not resolve the current Windows user SID');
-  execFileSync('icacls.exe', [dir, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`, '/setowner', `*${sid}`], { stdio: 'pipe', windowsHide: true });
+  execFileSync('icacls.exe', [dir, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`], { stdio: 'pipe', windowsHide: true });
+  execFileSync('icacls.exe', [dir, '/setowner', `*${sid}`], { stdio: 'pipe', windowsHide: true });
 }
 export function ensurePrivateDirectory(dir, boundary = dir) {
   validateContainedPath(dir, boundary);
