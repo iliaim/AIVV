@@ -205,7 +205,6 @@ Before investigator dispatch, compute `architectural_remediation_assessment` and
 
 ### Step 4: PLAN — Present Investigation Results
 
-**MUST-READ:** [execution-decisioning.md](references/execution-decisioning.md) and [apply-policy-and-gates.md](references/apply-policy-and-gates.md) before turning investigation results into final decisions. These references own execution routes, batch reconciliation, apply-policy classification, gates, the decision queue, and `fix_confidence` predicates and persistence.
 **Field propagation (required — load-bearing for Step 5 dispatch):** Before presenting the structured summary, for every approved finding, carry the **`category`** value set in Step 2a (inherited from the envelope schema for Signal 0 findings; inferred for Signal 1-4) onto the approved-finding record. Step 5 Branch dispatch reads this field and falls back to Branch A (`code-bug`) on missing-or-unknown with a warning logged to `session_changes`. Undefined-on-read is never acceptable for a dispatch key.
 
 Collect investigator JSON, mark consumed handles, close them before Step 3 re-entry, and render the structured **Investigation Results** summary. Reconcile batches after investigators declare `files_to_modify`.
@@ -233,15 +232,11 @@ After this halt, do not materialize `write_intents[]`, dispatch the fix-plan cha
 
 ### Step 4.4: MATERIALIZE WRITE INTENTS — inspectable proposed bytes
 
-**MUST-READ:** [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md) before challenger dispatch, pre-write validation, or any host write primitive.
-
 Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.5 or Step 5 can proceed. Missing, opaque, stale, risky, or insufficiently validated intents halt according to the reference.
 
 ### Step 4.5: CHALLENGE — Independent Fix-Plan Review
 
 After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), and after Step 4.4 has materialized `write_intents[]`, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews proposed fixes and escaped `write_intents[]` snapshots BEFORE code is written — when revision is cheap. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
-
-**MUST-READ:** [challenge-loop.md](references/challenge-loop.md) before evaluating the CHALLENGE trigger, dispatching the challenger, or handling its verdict. It is the canonical home for the 4.5.1 trigger/skip conditions + token-budget circuit-breaker, the 4.5.2 dispatch + per-placeholder prompt construction (including the  worktree-CWD note and the output-format-override contract), and the 4.5.3 APPROVE/REVISE/REJECT handling + the `challenge_iterations`-vs-`cycle_count` counter semantics. Do not improvise the triggers, the prompt placeholders, or the counter rules. The challenger **prompt** itself is in [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md).
 
 ---
 
@@ -249,29 +244,19 @@ After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escala
 
 For every approved finding where a test can be written (`code-bug`, `design-flaw` with testable behavior): materialize a failing-test write intent (red), validate the right-reason pre-fix failure, apply the fix in Step 5, verify the test passes (green), and log `red_green_evidence` on the Step 5 `changes_summary` entry.
 
-**MUST-READ:** [red-green-gate.md](references/red-green-gate.md) before materializing a test intent or claiming red-green prevention. It is the canonical home for the six-step sequence (materialize → validate failure shape → verify-fails → apply → verify-passes → log), the `red_green_evidence.claim` prevention-vs-verification-only contract, the skip conditions (`documentation-gap`/`process-violation`/no-test-infra/effort), and the runtime-observation exception. Do not improvise the failure-shape validation or the prevention-claim rule.
-
 ---
 
 ### Step 5: EXECUTE — Apply Approved Fixes
 
-**MUST-READ:** [execution-decisioning.md](references/execution-decisioning.md) before dispatching an approved finding to Branch A/B/C/D/E/F or applying a dangerous-auto-approved route.
-**MUST-READ:** [fix-log-contract.md](references/fix-log-contract.md) before resolving targets, evaluating dry-run, writing `session_changes`, or recovering an in-progress fix log.
-**MUST-READ:** [execution-branches.md](references/execution-branches.md) before executing Branch A/B/C/D/E/F fixes.
-
-Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner, and honor the dry-run halt. Then initialize the fix log and apply each approved fix by evidence-driven branch selection. Every branch must preserve root-cause verification, write-intent consumption where required, scoped edits, prevention mechanism selection, and accurate `changes_summary` logging as specified in the references.
+Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner, and honor the dry-run halt. Then initialize the fix log and apply each approved fix through its evidence-selected branch, recording the applied changes as specified in that branch's reference.
 
 When `lifecycle_context` is present, initialize `session_changes.lifecycle_context` before the first fix-log write, load the lifecycle record for investigator context, and apply only schema-backed write-back fields per the reference (treating `rca_status` not-started/draft as investigation-first). When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply`, tag each dangerous-route `changes_summary` entry, and emit the loud `DANGEROUSLY AUTO-APPLIED <N> fix(es)` audit banner at the end of Step 5 (with `0` if no fix was bypassed). The lifecycle write-back rules + GitHub-sync/validate helpers and the dangerous-audit banner contract are in [execution-branches.md](references/execution-branches.md) — read it before any lifecycle write-back or dangerous-route apply.
 
 ### Step 5.4: PRE-WRITE-VALIDATE — deterministic embedded-content checks
 
-**MUST-READ:** [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md) before running Step 5.4.
-
 Run deterministic checks for every approved write intent with required or missing detector assertions before the host write primitive. `jq-parses`, `schema-coherence`, and `line-cite-valid` failures halt and re-route for re-authoring; never bypass required assertions without an explicit valid user approval record.
 
 ### Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)
-
-**MUST-READ:** [mechanical-verification-checks.md](references/mechanical-verification-checks.md) before post-write mechanical verification.
 
 Run the fix-bundle coherence pass after per-finding fixes and before verifier dispatch. Warnings are advisory but must be logged into the fix log for verifier input.
 
@@ -279,23 +264,17 @@ Run the fix-bundle coherence pass after per-finding fixes and before verifier di
 
 ### Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions
 
-**MUST-READ:** [mechanical-verification-checks.md](references/mechanical-verification-checks.md) before Step 6.
-
 Check `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields exactly as the reference specifies. Halt only on corrupted `cycle_count < 1`; otherwise append warnings and continue to verifier dispatch.
 
 ---
 
 ### Step 5.6.5: Cycle-N+1 mandatory sibling-surface grep (AC-X3)
 
-**MUST-READ:** [mechanical-verification-checks.md](references/mechanical-verification-checks.md) when `cycle_count >= 2`.
-
 Run sibling-surface grep for original strings from the prior cycle and surface surviving sibling matches as warnings/sub-findings.
 
 ---
 
 ### Step 5.7: ORCHESTRATOR EXECUTION — Run New Verification Code
-
-**MUST-READ:** [mechanical-verification-checks.md](references/mechanical-verification-checks.md) before executing new verification code.
 
 When enabled by config/flag, execute newly-authored verification code with path-safety checks, timeout handling, captured execution evidence, nonzero-exit warnings, and immediate atomic fix-log persistence.
 
@@ -305,7 +284,7 @@ When a newly-authored verification method is claimed as recurrence prevention, S
 
 ### Step 6: VERIFY — Scoped Re-Verification
 
-**MUST-READ:** [verifier-dispatch.md](references/verifier-dispatch.md) before Step 6 verifier dispatch, same-agent verification fallback, result parsing, or convergence handling.
+See [verifier-dispatch.md](references/verifier-dispatch.md) for dispatch, independence, result parsing, and convergence rules.
 
 Compile verification context from the `session_changes` log rather than git, dispatch the scoped verifier with target-project anchoring, enforce the same-agent-verification exclusions, parse resolver/regression outcomes, queue calibration records, and enforce the convergence gate after bounded verification loops. Do not attempt a 4th fix cycle without explicit user direction.
 
@@ -345,15 +324,11 @@ The **Finding** column is sourced from `session_changes.changes_summary[].findin
 
 **Predecessor backfill on fix-log → review-log:** when `/aivv-fix` is chained from a `/aivv` review (source == "review_id"), back-fill the originating review log's `fix_invocation_id` with the current fix-log's `id`, persist `source_review_id` as the canonical join key, and validate the candidate fix log with the AIVV-rooted `"$AIVV_ROOT/tools/pre-write-validator.mjs"` command defined in [document-and-calibration.md](references/document-and-calibration.md) before the durable write.
 
-**MUST-READ:** [document-and-calibration.md](references/document-and-calibration.md) before writing the predecessor backfill or any calibration record. It is the canonical home for the `fix_invocation_id` write-back + `source_review_id` persistence + bidirectional ID-coverage contract (with the `jq` write-back recipe) AND the calibration JSONL append field-specs below. Do not improvise the backfill recipe or the calibration record fields.
-
 **Step 7.8: Optional post-fix HTML viewer hook**
 
-**MUST-READ:** [viewer-hook.md](references/viewer-hook.md) when review/fix viewer behavior is enabled.
+After Step 7 completes the fix log and review-log backfill, render the joined review/fix HTML report only when the conditions in [viewer-hook.md](references/viewer-hook.md) match. Viewer behavior is post-state-write and non-blocking; it is not a substitute for verification.
 
-After Step 7 completes the fix log and review-log backfill, render the joined review/fix HTML report only when the reference conditions match. Viewer behavior is post-state-write and non-blocking; it is not a substitute for verification.
-
-2. **Calibration**: For false positives (`already-correct` verdicts), and for the `false_negative` / `bad_fix` / conditional `review_meta` / `pending_calibration` / challenger-outcome / `challenge_budget_exhausted` records, append the appropriate single-line JSON record to this invocation's per-invocation shard `<calibration_dir>/<lens>/<invocation-id>.jsonl` via the host read-modify-write pattern (per-invocation sharding contract). Skip under `--dry-run`. See the **MUST-READ** [document-and-calibration.md](references/document-and-calibration.md) for the per-kind field specs, the `review_meta` de-dup contract, the lens-file path resolution, and the `fix_confidence_distribution` addition. Use the shared storage mutation helper for publication.
+2. **Calibration**: Append applicable records to this invocation's per-invocation shard through the shared storage helper; skip calibration writes under `--dry-run`. See [document-and-calibration.md](references/document-and-calibration.md) for record fields and shard rules.
 
 3. **Pattern capture**: If a new prevention mechanism was created, suggest promoting it to project/global guidance. If `/lesson` is available, also suggest `/lesson "Prevention mechanism created for recurring pattern: [description]. Applies to: [scope]." --category technical --severity medium`; otherwise skip silently.
 

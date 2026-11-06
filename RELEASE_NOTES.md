@@ -1,5 +1,16 @@
 # Release notes
 
+## 0.4.2 — skill metadata and CI maintenance
+
+- Keep Claude Code skill metadata required for its plugin UX and document the host-specific validation path.
+- Remove repeated `/aivv-fix` reference callouts where the progressive-disclosure index already defines the trigger.
+- Upgrade CI actions to their current Node 24-compatible major versions.
+
+## 0.4.1 — readable review scope
+
+- Show a clear scope and method proposal before review dispatch, and repeat the resolved scope after clarification.
+- Bind procedure loading to the installed plugin layout.
+
 ## 0.4.0 — streamlined scope resolution
 
 - Proceed with clearly scoped review requests without a second approval; clarify material ambiguity and use `--ask-scope` when explicit approval is wanted.
