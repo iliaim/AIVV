@@ -112,6 +112,9 @@ detect signal appears outside the requested scope.
 
 ## Route Loading
 
+- For actual reviews, bind reference paths to this loaded skill using the
+  bundled `.aivv/runtime-root.md` reference-resolution contract before opening
+  the workflow. The consuming project's working directory is not the skill root.
 - Contract lookup/help summary: this file only. If the answer is in Contract
   Snapshot, stop; do not list/read the reference tree for confirmation.
 - Real reviews: read [orchestration-workflow.md](references/orchestration-workflow.md) first; it owns execution and routes to the other references.

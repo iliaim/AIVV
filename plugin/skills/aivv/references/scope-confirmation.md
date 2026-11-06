@@ -31,18 +31,37 @@ Every proposal must make these items clear:
   lens or lenses, and replicate count or thoroughness tier when applicable.
 - **Decision:** tell the user how to redirect or narrow the review if needed.
 
-Show scope and method together before dispatch so the user can see what will be
-reviewed. Keep the announcement short. For example:
+Show scope and method together in user-visible chat before dispatch, including
+after an ambiguity question has been answered. A saved audit block, reviewer
+prompt, or confirmation choice alone is not that announcement. State the
+resolved scope, rather than only saying “confirmed” or “proceeding.”
 
-```text
-Proposed review
-Goal: assess whether the cache change preserves correct invalidation.
-Subject: this session's cache work.
-Materials: the cache-related session context and the available changed files; other project areas are excluded.
-Questions: invalidation correctness, failure cases, and simpler alternatives.
-Method: 1 reviewer; general lens; balanced depth.
-You can redirect or narrow this review before I continue.
-```
+Use a short heading and separate labeled lines or bullets, with real line
+breaks. Prefer **Goal**, **Materials**, **Includes**, **Excludes**, and **Method**;
+combine or omit inapplicable lines rather than filling an empty template. Keep
+the review's main questions with Includes. Use plain English and the actual
+reviewer count, lens, depth and requested model/reasoning settings. For example:
+
+**Review scope**
+
+- **Goal:** Check whether the workshop plan supports residents without a computer.
+- **Materials:** `workshop-plan.md` and relevant access requirements from this chat.
+- **Includes:** How those residents can attend both sessions; gaps and simpler alternatives.
+- **Excludes:** Registration, internet-only barriers, staffing, and implementation.
+- **Method:** 1 reviewer; general review; balanced depth; GPT-6 Luna at extra-high (`xhigh`).
+
+For a clear request, follow this with a brief statement that the review is
+starting; do not turn the announcement into another permission question or a
+timed approval wait. The user can still redirect or narrow the review.
+
+When a question is necessary, put the structured context and meaningful
+alternatives in chat, then use a concise native question with matching options
+and the host's custom-input control. Keep enough subject and boundary context
+in the question to identify the choice. Do not assume native popups render
+Markdown, tables, or preserved line breaks; the formatted chat proposal must
+stand on its own. After the answer, show the resolved scope and method in the
+same readable format before dispatch. Ask again only if a material ambiguity
+or authority gap remains, or explicit ask mode requires confirmation.
 
 Use the resolved values for the current invocation; the sample values are only
 illustrative. `--dry-run` still performs a review and therefore uses the same

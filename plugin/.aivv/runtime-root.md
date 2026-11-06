@@ -5,6 +5,23 @@ through `.aivv/runtime-root.mjs` before invoking the helper. Do not run
 `node tools/<helper>.mjs` from the consuming project: that project is not the
 AIVV installation.
 
+## Reference resolution
+
+Resolve Markdown links and bare procedure filenames relative to the document
+that names them, starting from the absolute path of the loaded `SKILL.md`.
+For example, its `references/orchestration-workflow.md` belongs to that skill,
+not to `plugin/skills/aivv` under the consuming project's working directory.
+Use the loaded package's shared `.aivv` contract and tools through the runtime
+resolver below. Standalone skills carry their own `.aivv` bootstrap copy; their
+shared runtime remains the sibling `aivv-runtime` selected by the resolver.
+
+Keep procedure reads in that installation for the invocation. Do not substitute
+a workspace checkout, another cached version, or a legacy copy merely because
+it contains a matching filename. An explicit development override may select a
+different runtime; keep that choice visible and use its procedures consistently.
+
+## Helper resolution
+
 For Codex agent and skill paths, `<codex-home>` means `$CODEX_HOME` when it is
 set, otherwise `$HOME/.codex` on POSIX; on PowerShell use `$env:CODEX_HOME`
 when set, otherwise `$HOME/.codex`. Project-scoped installs continue to use
