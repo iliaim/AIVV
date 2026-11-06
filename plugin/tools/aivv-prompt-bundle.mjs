@@ -5,6 +5,8 @@ import { randomBytes } from 'node:crypto';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessProviderTrust } from './provider-trust.mjs';
+import { getProvider } from './provider-registry.mjs';
+import { resolveModelSelection } from './model-selection.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 // Dual-path root: in the AIVV dev checkout this script lives at <repo>/plugin/tools/, and
@@ -53,18 +55,6 @@ const EVIDENCE_CLASSES = 'target-file,session-context,methodology-docs,role-docs
 const SUBJECT_TYPES = new Set(['session', 'file', 'idea', 'project', 'artifact', 'user-journey', 'plan']);
 const MAX_PROMPT_BYTES = Number.parseInt(process.env.AIVV_PROMPT_BUNDLE_MAX_BYTES || String(2 * 1024 * 1024), 10);
 
-const PROVIDER_COMMAND_SOURCES = {
-  anthropic: 'skills/aivv/references/non-native-provider-commands/claude.json',
-  openai: 'skills/aivv/references/non-native-provider-commands/codex.json',
-  gemini: 'skills/aivv/references/non-native-provider-commands/gemini.json',
-};
-
-const PROVIDER_ADAPTER_SOURCES = {
-  anthropic: '.aivv/platform-adapters/anthropic.md',
-  openai: '.aivv/platform-adapters/openai.md',
-  gemini: '.aivv/platform-adapters/gemini.md',
-};
-
 function assertMandatoryEmbeddedSourcesAreRequired() {
   const required = new Set(REQUIRED_SOURCES);
   const missing = MANDATORY_EMBEDDED_SOURCES.filter(source => !required.has(source));
@@ -82,6 +72,8 @@ function parseArgs(argv) {
     providerEgressConsent: false,
     provider: null,
     model: null,
+    modelSource: null,
+    authMode: null,
     request: null,
     requireSource: [],
     timeout: '180',
@@ -92,6 +84,7 @@ function parseArgs(argv) {
     else if (arg === '--provider-egress-consent') args.providerEgressConsent = true;
     else if (arg === '--provider') args.provider = argv[++i];
     else if (arg === '--model') args.model = argv[++i];
+    else if (arg === '--auth-mode') args.authMode = argv[++i];
     else if (arg === '--request') args.request = argv[++i];
     else if (arg === '--require-source') args.requireSource.push(argv[++i]);
     else if (arg === '--timeout') args.timeout = argv[++i];
@@ -253,7 +246,9 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
   }
 
   const targetContent = readFileSync(targetAbs, 'utf8');
-  const providerCommandSource = PROVIDER_COMMAND_SOURCES[req.provider || sourceTexts.__provider] || null;
+  const providerMetadata = getProvider(req.provider || sourceTexts.__provider);
+  const providerCommandSource = providerMetadata.command_source;
+  const providerAdapterSource = providerMetadata.adapter_source;
   const sessionTag = promptDelimiter('SESSION_CONTEXT');
   const targetTag = promptDelimiter('TARGET_ARTIFACT');
   const requestTag = promptDelimiter('REVIEW_REQUEST');
@@ -320,9 +315,9 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     '## Operational Reviewer Methodology',
     '',
     ...sourceBodyBlocks(sourceTexts, MANDATORY_EMBEDDED_SOURCES.slice(1)),
-    `Source: ${PROVIDER_ADAPTER_SOURCES[sourceTexts.__provider]}`,
+    `Source: ${getProvider(sourceTexts.__provider).adapter_source}`,
     '',
-    sourceTexts[PROVIDER_ADAPTER_SOURCES[sourceTexts.__provider]].trim(),
+    sourceTexts[getProvider(sourceTexts.__provider).adapter_source].trim(),
     '',
     '## Non-Native Provider Command Context',
     '',
@@ -421,6 +416,8 @@ function dispatchArgsFor(args, req, sourceList) {
     join(SCRIPT_DIR, 'dispatch.mjs'),
     '--provider', args.provider,
     '--model', args.model,
+    '--model-source', args.modelSource,
+    '--auth-mode', args.authMode,
     '--reviewer-id', req.reviewer_label || 'alpha',
     '--timeout', args.timeout,
     '--source-list', sourceList.join(','),
@@ -440,7 +437,7 @@ function enforcePromptBundleTrust(args, sourceList, prompt = '') {
     root: ROOT,
     provider: args.provider,
     model: args.model,
-    authMode: 'auto',
+    authMode: args.authMode || 'auto',
     destinationShape: destinationShapeFor(args),
     evidenceClasses: EVIDENCE_CLASSES.split(','),
     sourceList,
@@ -456,21 +453,58 @@ function enforcePromptBundleTrust(args, sourceList, prompt = '') {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.request || !args.provider || !args.model) {
-    process.stderr.write('[AIVV] --request, --provider, and --model are required\n');
+  if (!args.request || !args.provider) {
+    process.stderr.write('[AIVV] --request and --provider are required\n');
     process.exit(4);
   }
 
   const sourceTexts = {};
   const request = resolveCallerSuppliedPath(args.request, 'request', process.cwd());
-  const providerCommandSource = PROVIDER_COMMAND_SOURCES[args.provider];
-  const providerAdapterSource = PROVIDER_ADAPTER_SOURCES[args.provider];
-  if (!providerCommandSource) {
-    process.stderr.write('[AIVV] UNKNOWN_PROVIDER_COMMAND_CONTEXT: ' + args.provider + '\n');
+  let providerMetadata;
+  try {
+    providerMetadata = getProvider(args.provider);
+  } catch (error) {
+    process.stderr.write('[AIVV] UNKNOWN_PROVIDER_COMMAND_CONTEXT: ' + error.message + '\n');
     process.exit(4);
   }
+  const providerCommandSource = providerMetadata.command_source;
+  const providerAdapterSource = providerMetadata.adapter_source;
   const req = readJson(request.absPath);
   validateRequest(req);
+  const modelSelectionInput = req.model_selection && typeof req.model_selection === 'object'
+    ? req.model_selection
+    : {};
+  const legacySlotOverrides = modelSelectionInput.legacy_slot_overrides || {
+    primary: req.reviewer_primary ?? null,
+    secondary: req.reviewer_secondary ?? null,
+    fast: req.reviewer_fast ?? null,
+  };
+  let modelSelection;
+  try {
+    modelSelection = resolveModelSelection({
+      provider: args.provider,
+      requestedModel: args.model || req.model || null,
+      policy: modelSelectionInput.policy || req.model_policy || 'aivv-recommended',
+      providerOverrides: modelSelectionInput.provider_overrides || req.model_overrides || {},
+      legacySlotOverrides,
+    });
+  } catch (error) {
+    process.stderr.write('[AIVV] MODEL_SELECTION_FAILED: ' + error.message + '\n');
+    process.exit(4);
+  }
+  args.model = modelSelection.model;
+  args.modelSource = modelSelection.model_source;
+  const authModes = req.provider_auth_modes || modelSelectionInput.provider_auth_modes || {};
+  const legacyAuthKey = providerMetadata.legacy_auth_mode_key;
+  args.authMode = args.authMode || authModes[args.provider] ||
+    (legacyAuthKey ? req[legacyAuthKey] : null) || req.auth_mode || 'auto';
+  if (!['auto', 'cli', 'api_key'].includes(args.authMode)) {
+    process.stderr.write('[AIVV] INVALID_PROVIDER_AUTH_MODE: unsupported auth mode for provider ' + args.provider + '\n');
+    process.exit(4);
+  }
+  for (const warning of modelSelection.warnings) {
+    process.stderr.write('[AIVV] MODEL_SELECTION_WARNING: ' + warning + '\n');
+  }
   if (!args.renderPromptOnly && !hasConfirmedScope(req)) {
     process.stderr.write('[AIVV] SCOPE_CONFIRMATION_REQUIRED: resolve and announce the final scope and review method, then supply review_scope.confirmed=true, subject_type (' + [...SUBJECT_TYPES].join(', ') + '), and non-empty final_scope and approach (or strategy). This field records caller authorization; it does not require a second approval prompt. Prompt-only rendering remains available.\n');
     process.exit(9);
@@ -540,6 +574,7 @@ function main() {
 
   if (args.renderPromptOnly) {
     const metadata = JSON.parse(result.stdout);
+    metadata.model_source = args.modelSource;
     metadata.step4_cold_prompt = coldPrompt;
     metadata.bundle_required_sources = REQUIRED_SOURCES;
     metadata.mandatory_embedded_sources = MANDATORY_EMBEDDED_SOURCES;

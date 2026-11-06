@@ -59,7 +59,7 @@ and set `full_prompt_available:false` when content is omitted.
 
 `reviewer_roster` entries:
 `{label, display_name, dispatch_path, provider?, model?, model_source?, lens,
-status, status_reason?, finding_refs}`. For native Codex/host-inherited model
+status, status_reason?, finding_refs}`. For native host-inherited model
 where exact model is unavailable, use `model:"inherited"` and
 `model_source:"host-inherited-unreported"`.
 

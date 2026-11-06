@@ -55,6 +55,6 @@ Operational rules:
   ```
   Use the host's clickable local-file-link convention when available; otherwise print the absolute path and the manual `aivv view` command.
 - If resolved `post_review_html_open_mode == "link"` (recommended default), stop after showing the `Open report` affordance. Do not steal browser focus.
-- If resolved `post_review_html_open_mode == "open"`, also best-effort open the generated report. On Codex when the Browser plugin / in-app browser is available, prefer navigating the Codex in-app browser to an existing local-served report URL when the report is already served; use `file://<absolute-report-path>` only when the browser allows local-file navigation. If the in-app browser surface is unavailable or blocks the target URL, fall back to rerunning the viewer command with `--open` so `_lib.sh` uses the OS opener. Browser-open failures are non-fatal; keep the `Open report` link visible.
+- If resolved `post_review_html_open_mode == "open"`, also best-effort open the generated report using the active platform adapter’s report-opening route when it provides one. If that route is unavailable or cannot open the target, rerun the viewer command with `--open` to use the viewer’s OS opener. Open failures are non-fatal; keep the `Open report` link visible.
 
 ---

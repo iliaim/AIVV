@@ -12,13 +12,12 @@
 |---|---|---|---|
 | 1 | **codex CLI subprocess** | `codex auth` (OAuth) | No API key needed. Uses existing authenticated session. |
 | 2 | **`OPENAI_API_KEY` env var** | `export OPENAI_API_KEY=sk-...` | Traditional API key path. |
-| 2b | **`~/.codex/config.json` `apiKey` field** | Written by `codex` CLI on initial setup | Read as fallback when env var is unset. |
 
 **No auth found:** exits with code 3 and prints guidance listing the options above.
 
 Force API key only: `--auth-mode api_key`
 
-Per-provider config override: `auth_mode_openai: "cli"` | `"api_key"` | `"auto"` (see the latest config schema, currently `config.v6.schema.json`)
+For shared authentication settings, see [Configuration keys](../configuration.md#configuration-keys) and the [golden configuration schema](../schemas/config.schema.json) (config.schema.json:519-530).
 
 ## Capability matrix
 
@@ -77,9 +76,9 @@ Append a JSON-mode instruction to the prompt before invoking the CLI (identical 
 
 Parse + extract + retry logic is identical to the Gemini CLI path (see `gemini.md`).
 
-## Auth fallback: `~/.codex/config.json`
+## API-key fallback
 
-The codex CLI stores auth config at `~/.codex/config.json`. In `auto` mode, `dispatch.mjs` reads the `apiKey` field from this file when `OPENAI_API_KEY` is not set. File is read synchronously at dispatch start; if missing or malformed, falls through to exit code 3.
+When the `codex` CLI is unavailable or fails, `dispatch.mjs` falls back to `OPENAI_API_KEY`; it does not read `~/.codex/config.json`. (dispatch.mjs:1759-1774)
 
 ## Error handling (API path)
 

@@ -119,6 +119,7 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 6 and `/aivv-fix` notices |
 | `multi_model_enabled` | Case D master switch | Step 5.0.5 |
 | `reviewer_provider_priority` | provider ordering and fallback walk | multi-model-dispatch.md |
+| `model_policy`, `model_overrides`, `provider_auth_modes` | runtime model/auth selection keyed by provider ID | multi-model-dispatch.md |
 | `multi_model_fallback_strategy` | ask/subagents/none slot fallback | multi-model-dispatch.md |
 
 ## Backward Compatibility

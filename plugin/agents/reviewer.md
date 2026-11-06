@@ -2,15 +2,16 @@
 name: reviewer
 description: General IV&V reviewer and challenger for session work, documents, research, plans, designs, decisions, and code. Evaluates evidence, approach, and completeness within the confirmed scope. Read-only. Never modifies files. Never spawns sub-agents.
 tools: Read, Glob, Grep, Bash(git --no-pager log:*), Bash(git --no-pager diff:*), Bash(git --no-pager show:*), Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*), WebSearch, WebFetch
-model: claude-opus-4-7
 maxTurns: 60
 skills:
   - aivv:methodology
 ---
 
-# AIVV Independent Reviewer (Claude Code wrapper)
+# AIVV Independent Reviewer (Claude Code adapter)
 
-This agent is the Claude Code adapter for the AIVV reviewer role. The portable, host-neutral role definition is at `.aivv/prompts/reviewer-role.md` — **read that file first.** The notes below add Claude-Code-specific specialization on top of it.
+This agent is the Claude Code host adapter for the shared AIVV reviewer role. The shared, host-neutral role definition is at `.aivv/prompts/reviewer-role.md` — **read that file first.** The notes below add Claude-Code-specific specialization on top of it.
+
+Model selection is inherited from the active host configuration; AIVV does not pin this agent to a provider or model.
 
 The portable role tells you what to do, what to receive, what to output (including the machine-readable findings sidecar), and the constraints you operate under. Operational reviewer procedure and project-context discovery come from the `aivv:methodology` skill in this Claude wrapper. The repo-local `.aivv/methodology.md` remains the shipped methodology/invariants reference and supplementary source; `.aivv/runtime-contract.md` defines review modes and capability flags.
 

@@ -2,7 +2,7 @@
 
 Use this template when dispatching the Step 4.5 CHALLENGE subagent. Fill in all `{placeholder}` values from the current session state before sending. The challenger receives NO conversation history — everything it needs must be in this prompt.
 
-**Native prompt boundary:** before each native Claude/Codex dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, write intents, batch/session data, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
+**Native prompt boundary:** before each native host dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, write intents, batch/session data, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
 
 **Portable role source:** `.aivv/prompts/fix-challenger-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific payload and output schema; it must not drift from the portable role's authority, untrusted-content, and review-posture requirements.
 
@@ -212,7 +212,7 @@ If uncertain between REVISE and REJECT, default REVISE — it is the cheaper loo
 
 ## Same-Model Bias Acknowledgment
 
-You are a Claude reviewer reviewing a fix proposed by another Claude (the investigator). Same-provider, same-model-family. Cross-provider review would catch more — but you are the cheapest independent check available before code is written.
+You are an independent reviewer assessing a fix proposed by another agent. Do not assume the agents share a provider, model family, or host. Evaluate the proposal on its evidence and technical merits.
 
 Apply EXTRA scrutiny on:
 - "Looks plausible" reasoning without an explicit causal-chain trace

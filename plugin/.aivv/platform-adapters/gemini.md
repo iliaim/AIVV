@@ -20,7 +20,7 @@
 
 Force API key only: `--auth-mode api_key`
 
-Per-provider config override: `auth_mode_gemini: "cli"` | `"api_key"` | `"auto"` (see the latest config schema, currently `config.v6.schema.json`). `cli` means "try supported Google CLI subprocesses" (`agy`, then legacy `gemini`); it does not force one binary.
+For shared authentication settings, see [Configuration keys](../configuration.md#configuration-keys) and the [golden configuration schema](../schemas/config.schema.json) (config.schema.json:519-530). In `cli` mode, AIVV tries supported Google CLI subprocesses in order (`agy`, then legacy `gemini`); it does not force one binary (dispatch.mjs:1484-1495).
 
 ## Capability matrix
 

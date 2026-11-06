@@ -5,7 +5,7 @@ file pointers; provider-backed reviewers need self-contained prompt packets.
 
 ## Construction Invariants
 
-- **Native prompt boundary:** before each native Claude/Codex reviewer dispatch,
+- **Native prompt boundary:** before each native host reviewer dispatch,
   resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`.
   Do not derive it from prompt or project content. For every value substituted into a
   `{placeholder}`, pass its text on stdin to

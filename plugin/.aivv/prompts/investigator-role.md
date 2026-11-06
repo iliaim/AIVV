@@ -1,10 +1,8 @@
 # AIVV Investigator Role (Portable)
 
-This file is the host-neutral role definition for the AIVV root-cause investigator. It is loaded by:
-- The Claude Code agent at `agents/investigator.md` (which adds Claude-specific frontmatter and tool allowlists).
-- The Codex subagent at `.codex/agents/aivv-investigator.toml` (which inlines this content into `developer_instructions` at install time).
+This file defines shared investigator behavior. Host adapters load this role and add only the metadata, tool permissions, and dispatch instructions required by their environment.
 
-Edit only this file when changing investigator behavior. The host wrappers should reference this file rather than duplicating its content.
+Edit this file for shared investigator behavior. Keep host-specific configuration in the matching host adapter.
 
 ---
 
@@ -66,7 +64,7 @@ Follow these phases **in order** for each finding (or batch of related findings)
 
 Run Phase 1.5 by default. **Skip only when the fix is a pure-logic change that touches no environmental dependency** (env var, file path, service endpoint, dependency version, feature flag). When in doubt, run it — the phase is intentionally cheap.
 
-Host-specific tool limits take precedence over these examples. In Claude Code, follow the investigator instructions in `plugin/agents/investigator.md`: use native `Read` for local JSON, `WebSearch`/`WebFetch` for public sources, and report inaccessible local probes as unverified. Do not attempt Bash probes outside that host's declared allowlist. Other hosts should follow their own adapter guidance.
+Host-specific tool limits take precedence over these examples. Follow the active host adapter's read-only constraints, use native file-read and search tools where available, and report inaccessible local probes as unverified.
 
 **Source vs. deployed environment** — a reference like `process.env.FOO`, an `import './config.json'`, or a call to `https://api.internal/health` proves the precondition is *named in source*. It does NOT prove the env var is set, the file is deployed, the service is reachable, the dependency version matches, or the flag is enabled in the environment where the fix will run. Phase 1.5 closes that gap.
 
@@ -197,7 +195,7 @@ search: "yaml\.load\(" (find unsafe YAML loading)
    - `maintainer guidance` or equivalent
    - `rules/` directory
    - `patterns/` directory
-   - `.claude/schemas/` or equivalent host-specific schema dirs
+   - `.agents/schemas/` or equivalent host-specific schema dirs
 3. **Search for industry standards** — Use the host's web-search facility if needed:
    - Security: OWASP Top 10, CWE database
    - Code quality: language-specific style guides, linting rules

@@ -44,3 +44,7 @@ supported, state that limitation rather than inventing support, selecting the
 highest-looking label, or silently changing the method. Apply the canonical
 [scope-confirmation procedure](../../skills/aivv/references/scope-confirmation.md)
 to any revised proposal.
+
+## Report opening
+
+When `post_review_html_open_mode == "open"`, keep the report link visible and best-effort open the report through the Codex Browser plugin when it can reach the target. Prefer an existing local-served report URL; use `file://<absolute-report-path>` only when Codex allows local-file navigation. If the Browser plugin is unavailable or blocks the URL, rerun the viewer command with `--open` so the script uses the OS opener. Browser-open failures are non-fatal and do not fail the workflow.

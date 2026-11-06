@@ -6,9 +6,9 @@ user-invocable: false
 
 # AIVV Review Methodology (Artifact-Centric)
 
-This skill defines HOW to conduct an independent verification & validation review, including operational review procedure and project-context discovery. It is preloaded into the `aivv:reviewer` agent and should not be invoked directly by users. For Codex installs, this same source is packaged under the flat skill name `aivv-methodology`.
+This skill defines HOW to conduct an independent verification & validation review, including operational review procedure and project-context discovery. It is support material for reviewer roles and is not directly invoked by users. Host adapters package and expose it using their native skill-discovery mechanisms.
 
-The repo-local `.aivv/methodology.md` file is the shipped methodology/invariants reference, epistemic claim, and supplementary source for AIVV. It is not, by itself, the complete installed Codex reviewer role-support source, and portable reviewers must not assume they can always read it by repo-relative path.
+The repo-local .aivv/methodology.md file is the shipped methodology/invariants reference and supplementary source. It is not, by itself, the complete installed reviewer role-support source, and portable reviewers must not assume they can always read it by repo-relative path.
 
 ## Core Mindset
 

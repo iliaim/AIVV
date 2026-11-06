@@ -3,13 +3,14 @@ name: investigator
 description: Deep root cause analysis specialist for code issues. Investigates findings from IV&V reviews using 5 Whys, codebase pattern scanning, and best practice research. Read-only — never modifies files. Returns structured JSON analysis. Use when resolving IV&V findings, debugging root causes, or investigating code quality issues.
 tools: Read, Glob, Grep, Bash(git --no-pager log:*), Bash(git --no-pager diff:*), Bash(git --no-pager show:*), Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*), Bash(cat:*), Bash(head:*), Bash(tail:*), Bash(grep:*), Bash(ls:*), Bash(wc:*), WebSearch, WebFetch
 disallowedTools: Edit, Write, NotebookEdit
-model: claude-opus-4-7
 maxTurns: 25
 ---
 
 # Root Cause Investigator (Claude Code wrapper)
 
-This agent is the Claude Code adapter for the AIVV investigator role. The portable, host-neutral role definition — including the full Investigation Protocol (Phases 1, 1.5, 2, 3, 4, 5), output format, and verdict definitions — is at `.aivv/prompts/investigator-role.md`. **Read that file first.** The notes below add Claude-Code-specific specialization on top of it.
+This agent is the Claude Code adapter for the AIVV investigator role. The shared, host-neutral role definition — including the full Investigation Protocol (Phases 1, 1.5, 2, 3, 4, 5), output format, and verdict definitions — is at `.aivv/prompts/investigator-role.md`. **Read that file first.** The notes below add Claude-Code-specific specialization on top of it.
+
+Model selection is inherited from the active host configuration; AIVV does not pin this agent to a provider or model.
 
 The portable role contains your identity, what you receive, what you output, and the methodology you must follow. It also references `.aivv/methodology.md` and `.aivv/runtime-contract.md`.
 

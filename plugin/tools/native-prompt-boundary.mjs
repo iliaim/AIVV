@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-// Native Claude/Codex prompts are assembled by their host instructions rather than
+// Native host prompts are assembled by their adapter instructions rather than
 // by a renderer. This helper supplies the unpredictable per-dispatch component used
 // by those instructions to fence every substituted evidence value.
 const [, , mode, nonce, field] = process.argv;

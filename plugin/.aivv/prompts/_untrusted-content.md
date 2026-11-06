@@ -65,7 +65,7 @@ shipped without the boundary.
 ## Structural delimiter enforcement
 
 Provider prompts are rendered with random nonce-delimited `<AIVV_UNTRUSTED_*_nonce>`
-fences, and `tools/prompt-behavior-guard.mjs` checks the rendered prompt. Native Claude/Codex
+fences, and `tools/prompt-behavior-guard.mjs` checks the rendered prompt. Native host
 prompt templates generate one fresh nonce per dispatch with the shipped
 `tools/native-prompt-boundary.mjs --nonce` helper. Each substituted placeholder value is
 passed through that helper's `--wrap <nonce> <FIELD>` mode, which emits a matching
