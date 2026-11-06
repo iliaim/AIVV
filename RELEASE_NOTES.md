@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.3.1 — scope announcements and routine edits
+
+- Announce resolved scope and method for clear explicit read-only reviews by default; ask for genuine ambiguity, missing authority, material scope expansion, or an explicit ask preference.
+- Keep per-intent approval for explicitly unknown risky shapes, while ordinary source/config language labels and inert prompt-shaped fixture text use the existing write-intent, challenge, target-path, and verification gates.
+
 ## 0.3.0 — general review and confirmed scope
 
 - Default to the `general` lens for documents, research, plans, designs, workflows, decisions, and code. Explicit configured lenses remain unchanged; historical findings retain their original lens semantics.

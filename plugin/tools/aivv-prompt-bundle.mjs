@@ -263,8 +263,8 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
   const lens = req.lens || 'general';
   const thoroughness = req.thoroughness || 'balanced';
   // Optional additive request contract: review_scope may carry the caller's
-  // subject, final scope, approach, and confirmation status. Its text stays
-  // inside a nonce-delimited untrusted block; absence never implies confirmation.
+  // subject, final scope, approach, and resolved-authorization status. Its text
+  // stays inside a nonce-delimited untrusted block; absence never implies scope.
   const reviewScope = req.review_scope && typeof req.review_scope === 'object' && !Array.isArray(req.review_scope)
     ? req.review_scope
     : {};
@@ -275,9 +275,9 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     ? reviewScope.final_scope
     : '';
   const scopeConfirmed = hasConfirmedScope(req);
-  const scopeConfirmationStatus = scopeConfirmed
-    ? 'confirmed by caller'
-    : (reviewScope.confirmed === true ? 'incomplete' : (finalScope ? 'not confirmed' : 'not supplied'));
+  const scopeResolutionStatus = scopeConfirmed
+    ? 'resolved from caller request'
+    : (reviewScope.confirmed === true ? 'incomplete' : (finalScope ? 'not resolved' : 'not supplied'));
   const reviewApproach = reviewApproachFor(reviewScope);
   const scopeTag = promptDelimiter('REVIEW_SCOPE');
   const artifactPrimary = subjectType !== 'session';
@@ -338,11 +338,11 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     req.what_to_review || 'Review the supplied target artifact using AIVV methodology.',
     '</' + requestTag + '>',
     '',
-    '## Review Scope and Approach (scope confirmation: ' + scopeConfirmationStatus + ')',
+    '## Review Scope and Approach (scope status: ' + scopeResolutionStatus + ')',
     '',
-    'Treat this caller-supplied scope as confirmed only when its status says confirmed; missing or incomplete scope metadata is not confirmation.',
+    'Treat this caller-supplied scope as authorized only when its status says resolved; review_scope.confirmed means the caller resolved and authorized the scope from the request, not that a second approval prompt occurred. Missing or incomplete scope metadata is not authorization.',
     '<' + scopeTag + '>',
-    `Scope confirmation: ${scopeConfirmationStatus}`,
+    `Scope resolution: ${scopeResolutionStatus}`,
     `Subject type: ${subjectType}`,
     `Final scope: ${finalScope || 'not supplied'}`,
     `Review approach: ${reviewApproach || 'not supplied'}`,
@@ -472,7 +472,7 @@ function main() {
   const req = readJson(request.absPath);
   validateRequest(req);
   if (!args.renderPromptOnly && !hasConfirmedScope(req)) {
-    process.stderr.write('[AIVV] SCOPE_CONFIRMATION_REQUIRED: confirm the final scope and review method, then supply review_scope.confirmed=true, subject_type (' + [...SUBJECT_TYPES].join(', ') + '), and non-empty final_scope and approach (or strategy). Prompt-only rendering remains available.\n');
+    process.stderr.write('[AIVV] SCOPE_CONFIRMATION_REQUIRED: resolve and announce the final scope and review method, then supply review_scope.confirmed=true, subject_type (' + [...SUBJECT_TYPES].join(', ') + '), and non-empty final_scope and approach (or strategy). This field records caller authorization; it does not require a second approval prompt. Prompt-only rendering remains available.\n');
     process.exit(9);
   }
   const lensSource = lensSourceFor(req.lens || 'general');

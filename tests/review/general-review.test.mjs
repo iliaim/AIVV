@@ -50,6 +50,18 @@ function lensEnum(schema, pathParts) {
 try {
   const goldenConfig = readJson('plugin/.aivv/schemas/config.schema.json');
   assert.equal(goldenConfig.properties.default_lenses.default, 'general');
+  assert.equal(goldenConfig.properties.scope_confirmation_mode.default, 'announce',
+    'clear explicit read-only reviews announce resolved scope/method without a second approval prompt');
+  assert.deepEqual(goldenConfig.properties.scope_confirmation_mode.enum, ['ask', 'announce']);
+  const scopePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv/references/scope-confirmation.md'), 'utf8');
+  assert.match(scopePolicy, /A clear, explicit request for a\s+read-only review authorizes that review/);
+  assert.match(scopePolicy, /Ask when[\s\S]*?proceeding would materially expand[\s\S]*?the requested scope/);
+  assert.match(scopePolicy, /explicitly selected ask mode \(`--ask-scope` or\s+`scope_confirmation_mode: "ask"` with manual config provenance\)/,
+    'an explicit user preference for scope confirmation remains honored');
+  assert.match(scopePolicy, /Treat old wizard\/default `ask`\s+values as `announce`/,
+    'a persisted old default does not masquerade as an explicit user preference');
+  assert.match(scopePolicy, /Never broaden\s+scope silently/);
+  assert.doesNotMatch(scopePolicy, /clear proposal always requires confirmation/);
 
   const findingSchema = readJson('plugin/.aivv/schemas/finding.json');
   assert.equal(findingSchema.properties.lens.default, 'code', 'legacy findings without lens keep the code default');
@@ -89,7 +101,7 @@ try {
   assert.ok(defaultPrompt.includes(checklistBody), 'general checklist must be embedded in the portable reviewer prompt');
   assert.match(defaultPrompt, /## Supplied Artifact \(PRIMARY - this is the review subject\)/);
   assert.match(defaultPrompt, /## Session Activity \(SUPPORTING CONTEXT - clarify intent and constraints\)/);
-  assert.match(defaultPrompt, /Scope confirmation: confirmed by caller/);
+  assert.match(defaultPrompt, /Scope resolution: resolved from caller request/);
   const scopeBlock = defaultPrompt.match(/<(AIVV_UNTRUSTED_REVIEW_SCOPE_[a-f0-9]+)>([\s\S]*?)<\/\1>/);
   assert.ok(scopeBlock, 'review scope must remain inside its nonce-delimited trust boundary');
   assert.match(scopeBlock[2], /Check this design specification/);
@@ -158,7 +170,7 @@ try {
   const incompleteScope = renderPrompt('incomplete-scope', {
     review_scope: { subject_type: 'file', final_scope: '   ', approach: 'Review the document.', confirmed: true },
   }).step4_cold_prompt;
-  assert.match(incompleteScope, /scope confirmation: incomplete/,
+  assert.match(incompleteScope, /scope status: incomplete/,
     'confirmed=true without a non-empty final_scope must not claim confirmation');
 
   const explicitCodePrompt = renderPrompt('explicit-code', { lens: 'code' }).step4_cold_prompt;

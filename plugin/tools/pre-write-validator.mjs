@@ -14,19 +14,8 @@ export const ASSERTION_KINDS = new Set([
   "shell-syntax-valid"
 ]);
 
-const UNSUPPORTED_SHAPES = new Set([
-  "toml",
-  "yaml",
-  "yml",
-  "js",
-  "ts",
-  "py",
-  "unsupported-risky-shape"
-]);
+const UNSUPPORTED_SHAPES = new Set(["unsupported-risky-shape"]);
 
-const PROMPT_SHAPE_RE =
-  /ignore previous instructions|system prompt|developer message|OUTPUT FORMAT|tool call|challenger_status|concern_kind|close the fence|reopen the fence/i;
-const PROMPT_BOUNDARY_RE = /(?:^|\W)(BEGIN|END)(?:\W|$)/;
 const REVIEW_LOG_SCOPE_KIND_ENUM = new Set(["process", "session", "artifact", "user-journey", "project"]);
 const REVIEW_LOG_EVIDENCE_KIND_ENUM = new Set(["internal-repo", "websearch", "webfetch", "runtime", "command", "state-log", "thread", "unverified", "unverifiable"]);
 const REVIEW_LOG_RECOMMENDED_NEXT_STEP_ENUM = new Set(["fix-now", "investigate-first", "document", "defer-with-rationale", "accept-risk"]);
@@ -194,14 +183,18 @@ export function detectorVerdict(fixture) {
   if (rootPathVerdict.status === "halt") return rootPathVerdict;
 
   const shapes = collectShapes(fixture);
-  const contents = [JSON.stringify(fixture), ...(fixture.write_intents ?? []).map(intentContent)].join("\n");
+  const intents = fixture.write_intents?.length ? fixture.write_intents : [fixture];
+  const intentBytes = intents.flatMap((intent) => [intent.exact_content, intent.exact_content_or_patch,
+    ...(Array.isArray(intent.proposed_edits) ? intent.proposed_edits.flatMap((edit) => [edit.old_string, edit.new_string]) : [])])
+    .filter((content) => typeof content === "string");
 
-  if (contents.includes("\u0000")) {
+  if (intentBytes.some((content) => content.includes("\u0000"))) {
     return { status: "halt", reason: "unsupported-risky-shape" };
   }
-  if (shapes.includes("prompt-shaped") || PROMPT_SHAPE_RE.test(contents) || PROMPT_BOUNDARY_RE.test(contents)) {
-    return { status: "halt", reason: "unsupported-risky-shape" };
-  }
+  // Prompt-shaped content is data in an inspectable write intent. The
+  // challenger evaluates its meaning; it is not an independent per-byte
+  // authorization gate. Process-rule authority uses the existing Branch D
+  // decision route.
   for (const intent of fixture.write_intents ?? [fixture]) {
     const intentShapes = [
       intent.content_shape,
