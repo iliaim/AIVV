@@ -197,7 +197,8 @@ scope_confirmation: {
   "classification_reason",   // one of the six values in Section 2
   "proposed_scope",
   "options_offered",
-  "user_choice",             // "explicit-request-announced" or ambiguity resolution
+  "user_choice",             // "explicit-request-announced", actual ask-mode confirmation,
+                             // or the user's ambiguity-resolution answer
   "final_scope",
   "dropped_scope",            // only when the user narrowed scope
   "suppression_reason"       // null when the review runs
