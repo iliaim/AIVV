@@ -21,8 +21,8 @@ capability degradation.
 2. Setup/eval/maintenance early branch
 3. Extract structured session context
 4. Gather change context
-5. Scope confirmation
-6. Lens composition/detection/consent
+5. Scope resolution
+6. Lens composition/detection
 7. Construct reviewer prompt
 8. Dispatch reviewers
 9. Present results
@@ -97,9 +97,9 @@ continue; the notice may reappear on the next invocation.
 If the user config is unavailable or unreadable after Step 1.5's warning, skip
 both notices and continue without a second warning.
 
-These fire before the Step 3.4 scope-and-method confirmation proposal; those
-pre-review configuration/hint writes may already be complete if confirmation is
-later held.
+These fire before Step 3.4 scope resolution and announcement; those pre-review
+configuration/hint writes may already be complete if a genuine ambiguity or
+authority question later holds the review.
 
 ## Step 1.95: Eval
 
@@ -121,7 +121,7 @@ Reviewer subagents do not see conversation history. Extract before git diff. **P
 For session reviews, scan full conversation. For file/idea/plan routes, scan
 artifact-relevant history. If fewer than three categories have substance, prepend
 limited-context warning. Record `multi_topic: true|false`. Compute the
-`lens_ceiling` only after the scope has been confirmed, against the confirmed
+`lens_ceiling` only after the requested scope is resolved, against the resolved
 session subset.
 
 For codemod/bulk-rename/formatter sessions, prepend to the reviewer prompt: `⚠️ This session involved mechanical/automated changes. Diff volume does NOT reflect decision count.` so bulk output is not over-weighted as review surface.
@@ -146,29 +146,34 @@ non-code materials; Git is not a review prerequisite.
 File path: read specified files and include artifact-relevant session context.
 Quoted text: treat as idea/approach to challenge.
 
-## Step 3.4: Scope Confirmation
+## Step 3.4: Scope Resolution And Announcement
 
-Use `review-shape-resolution.md` and `scope-confirmation.md`. Present the full
-goal, subject, material boundaries, relevant questions/strategy, and preliminary
-lens/depth method, then get confirmation for every actual review, including
-explicit file/idea/plan routes, clear topics, and `--dry-run`. This produces
-`final_scope` and scope provenance for Step 7.5. If confirmation is pending,
-canceled, or unavailable, stop before lens detection, reviewer dispatch,
-calibration, review-log writing, and fix handoff. Earlier preamble writes may
-already have happened.
+Use `review-shape-resolution.md` and `scope-confirmation.md` to establish
+`final_scope` and its provenance. A clear explicit request to perform a
+read-only review authorizes that review unless `--ask-scope` or a manual-
+provenance `scope_confirmation_mode: "ask"` was explicitly selected; otherwise
+do not ask the user to reconfirm its scope. After resolving the final lens/depth method in Step 3.5/3.6, announce the
+goal, subject, material boundaries, relevant questions/strategy, and method
+together before dispatch. Ask only to resolve genuine ambiguity, missing
+authority, or a material scope expansion. `--ask-scope` and a manual-provenance
+`scope_confirmation_mode: "ask"` request confirmation of a clear scope. Old
+wizard/default `ask` values resolve to announce unless the flag is supplied.
+Earlier preamble writes may already have happened if such a question holds the
+review.
 
-## Step 3.5/3.6: Lens Detection And Consent
+## Step 3.5/3.6: Lens Detection And Method Resolution
 
-After the confirmed `final_scope`, use `review-shape-resolution.md` to apply
+After `final_scope` is resolved, use `review-shape-resolution.md` to apply
 deterministic floors, recompute `reviewer_lens_assignments`, and resolve
-`lens_detection_mode`. If final lenses, reviewer depth, replication, or coverage
-changed from the confirmed proposal, show the complete final scope and method
-and reconfirm before Step 4. Defer `ask`-mode lens consent to that full final
-proposal; do not issue a lens-only prompt that omits scope or depth.
+`lens_detection_mode`. Then announce the complete final scope and method before
+Step 4. Do not ask the user to approve routine lens/depth resolution within the
+requested scope unless the user explicitly selected an ask preference. Ask if the
+resolved method would materially broaden scope or needs authority the user did
+not grant; do not issue a lens-only question that hides such a change.
 `--auto-lens` means smart; `--no-auto-lens` means off.
-If the changed final proposal is pending, canceled, or unavailable, hold after
-detection and before reviewer prompt construction, dispatch, calibration,
-review-log writing, or fix handoff.
+If a genuine scope or authority question is pending or the user cancels, hold
+before reviewer prompt construction, dispatch, calibration, review-log writing,
+or fix handoff.
 
 ## Step 4: Reviewer Prompt
 
@@ -203,10 +208,9 @@ per-invocation shard `<calibration_dir>/<lens>/<invocation-id>.jsonl`
 ## Step 7.5: Review Log
 
 Read `review-log-schema.md`. Write `review-<invocation_id>.json` for every
-actual review that passed scope confirmation and any changed-method
-confirmation and ran, including clean reviews. Do not write it for a review
-held before complete confirmation. Persist lens detection, scope
-confirmation, plan_review, severity calibration, predecessor linkage, and
+actual review that resolved and announced scope/method and ran, including clean
+reviews. Do not write it for a review held on a genuine scope or authority
+question. Persist lens detection, scope-resolution audit, plan_review, severity calibration, predecessor linkage, and
 impact-likelihood extension fields.
 
 ## Step 7.5.5: Cleanup

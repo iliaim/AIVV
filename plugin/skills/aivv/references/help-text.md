@@ -40,8 +40,8 @@ Runtime-evidence flags:
 
 Auto lens / scope:
   --auto-lens | --no-auto-lens      Force / disable smart lens detection this run
-  --auto-scope | --ask-scope        --auto-scope is deprecated; both require confirmation
-  Every review confirms its subject, materials, and method before dispatch, including --dry-run
+  --auto-scope | --ask-scope        Announce clear scope/method | explicitly request confirmation
+  Ambiguity, missing authority, and material scope expansion always require clarification
 
 Multi-model flags (per-run overrides; do not persist):
   --multi-model | --no-multi-model  Force cross-provider (Case D) / native review this run

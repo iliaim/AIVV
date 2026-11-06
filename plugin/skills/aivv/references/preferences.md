@@ -70,9 +70,13 @@ Unknown lens names warn and fall back to `general`; do not halt. Do not append
 `general` to an explicit or configured lens list. Fixed full-* wrappers retain
 their documented specialist lens lists.
 
-For `scope_confirmation_mode`, treat legacy `announce` as readable input but
-warn that it is deprecated and resolve it to `ask`. Every actual review still
-requires the confirmation gate in `scope-confirmation.md`.
+For `scope_confirmation_mode`, `announce` is the default: clear explicit
+read-only requests proceed after the final scope and method are announced. An
+`ask` value is a stored preference only when its config has manual provenance;
+old wizard/default `ask` values resolve in-memory to `announce`. The explicit
+`--ask-scope` flag always requests confirmation for this invocation. Ambiguity,
+missing authority, and material scope expansion require clarification in either
+mode.
 
 Validate `default_target` directory exists. Stale paths warn and fall back to
 cwd for this invocation.
@@ -105,11 +109,11 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `outer_loop_severity_floor` | legacy continuation floor | `/aivv-fix` outer loop |
 | `thoroughness` | tier defaults and dispatch metadata | Step 1.5; Step 4 |
 | `direction` | direction challenge posture | Step 4 metadata |
-| `lens_detection_mode` | ask/smart/off consent mode | Step 3.6 |
+| `lens_detection_mode` | report candidates/add relevant lenses/disable optional detection; no lens-only approval prompt | Step 3.6 |
 | `severity_model` | `legacy_4pass` or `impact_likelihood` | severity methodology |
 | `project_context` | deployment/data/jurisdiction context | severity and legal applicability |
 | `severity_cell_map` | partial impact-likelihood table override | severity methodology |
-| `scope_confirmation_mode` | required ask behavior; legacy announce warns and normalizes to ask | Step 3.4 |
+| `scope_confirmation_mode` | announce default; manual-provenance ask confirms scope/method; ambiguity/authority boundary always asks | Step 3.4 |
 | `_provenance` | wizard/manual/default source tracking | default_lens_replicate binding gate |
 | `_setup_hint_shown_at` | setup-hint suppression timestamp | Step 6 hint |
 | `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 6 and `/aivv-fix` notices |

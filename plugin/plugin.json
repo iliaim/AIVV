@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "aivv",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "General advisory review of session work, documents, plans, decisions, and code, with finding investigation and gated remediation.",
   "author": {
     "name": "Ilia Imerlishvili",
@@ -23,7 +23,7 @@
       "interface": {
         "displayName": "AIVV",
         "shortDescription": "General reviews and guided fixes",
-        "longDescription": "Review session work, documents, plans, decisions, and code after confirming the scope and approach. Investigate selected findings and apply fixes through explicit safety gates. AIVV records review state outside the project checkout and reports when reviewer isolation or other capabilities are unavailable. It does not replace tests, security testing, or organizational review.",
+        "longDescription": "Review session work, documents, plans, decisions, and code. AIVV announces the resolved scope and approach for clear explicit read-only requests, and asks when scope, authority, or material boundaries are unclear. Investigate selected findings and apply fixes through explicit safety gates. AIVV records review state outside the project checkout and reports when reviewer isolation or other capabilities are unavailable. It does not replace tests, security testing, or organizational review.",
         "developerName": "Ilia Imerlishvili",
         "category": "Developer Tools",
         "capabilities": [

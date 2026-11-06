@@ -95,11 +95,12 @@ Parser anchors:
 - 2y. Extract `--no-direction` / `--direction` before config binding; explicit
   CLI value wins over project/user/default preference.
 
-### Step 3.4: Scope Confirmation
+### Step 3.4: Scope Resolution
 
-Present and confirm the complete goal, subject, material boundaries, questions
-or strategy, and proposed review method for every actual review. Hold before
-lens detection or dispatch until confirmed; see
+Resolve the complete goal, subject, material boundaries, questions or strategy,
+and final review method. Announce that scope and method before dispatch. A clear
+explicit read-only review request authorizes itself; ask only about genuine
+ambiguity, missing authority, or material scope expansion. See
 [`scope-confirmation.md`](references/scope-confirmation.md).
 
 ### Step 3.5: Lens Composition
@@ -108,7 +109,7 @@ Compose requested/default lenses after Step 3.4.
 
 Lens detection — deterministic FLOOR:
 filter suggestions through `final_scope`; never expand scope merely because a
-detect signal appears outside the confirmed scope.
+detect signal appears outside the requested scope.
 
 ## Route Loading
 

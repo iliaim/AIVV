@@ -8,14 +8,15 @@ Set `fix_chain_requested = true` only for explicit `--fix` or resolved
 `auto_chain_fix: always`. Otherwise Step 8 is skipped.
 
 This step is reached only after the review's scope and final method have been
-confirmed under [scope-confirmation.md](scope-confirmation.md). A pending review
-cannot dispatch reviewers, write a review log, or hand off to fixes.
+resolved and announced under [scope-confirmation.md](scope-confirmation.md). A
+review held for genuine ambiguity or missing authority cannot dispatch
+reviewers, write a review log, or hand off to fixes.
 
 If a legacy caller supplies `scope_fix_chain_suppressed = true`, keep the chain
 withheld and emit:
 
 ```text
-Review scope is not confirmed; fix handoff is withheld. Confirm the scope and review method before running the review and any fix handoff.
+Review scope is unresolved; fix handoff is withheld. Resolve the scope and review method before running the review and any fix handoff.
 ```
 
 ## Decision Checkpoint
