@@ -230,13 +230,18 @@ function validateRequest(req) {
   }
 }
 
+function reviewApproachFor(scope) {
+  if (typeof scope.approach === 'string' && scope.approach.trim()) return scope.approach;
+  if (typeof scope.strategy === 'string' && scope.strategy.trim()) return scope.strategy;
+  return '';
+}
+
 function hasConfirmedScope(req) {
   const scope = req.review_scope;
   if (!scope || typeof scope !== 'object' || Array.isArray(scope)) return false;
-  const approach = typeof scope.approach === 'string' && scope.approach.trim() ? scope.approach : scope.strategy;
   return SUBJECT_TYPES.has(scope.subject_type) && scope.confirmed === true &&
     typeof scope.final_scope === 'string' && Boolean(scope.final_scope.trim()) &&
-    typeof approach === 'string' && Boolean(approach.trim());
+    Boolean(reviewApproachFor(scope));
 }
 
 function buildColdPrompt(req, sourceTexts, sourceList, target) {
@@ -273,9 +278,7 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
   const scopeConfirmationStatus = scopeConfirmed
     ? 'confirmed by caller'
     : (reviewScope.confirmed === true ? 'incomplete' : (finalScope ? 'not confirmed' : 'not supplied'));
-  const reviewApproach = typeof reviewScope.approach === 'string' && reviewScope.approach.trim()
-    ? reviewScope.approach
-    : (typeof reviewScope.strategy === 'string' && reviewScope.strategy.trim() ? reviewScope.strategy : '');
+  const reviewApproach = reviewApproachFor(reviewScope);
   const scopeTag = promptDelimiter('REVIEW_SCOPE');
   const artifactPrimary = subjectType !== 'session';
   const artifactHeading = subjectType === 'plan'
