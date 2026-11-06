@@ -50,6 +50,8 @@ reviewer count, lens, depth and requested model/reasoning settings. For example:
 - **Excludes:** Registration, internet-only barriers, staffing, and implementation.
 - **Method:** 1 reviewer; general review; balanced depth; GPT-6 Luna at extra-high (`xhigh`).
 
+I'll start this review now. You can redirect or narrow the scope.
+
 For a clear request, follow this with a brief statement that the review is
 starting; do not turn the announcement into another permission question or a
 timed approval wait. The user can still redirect or narrow the review.
