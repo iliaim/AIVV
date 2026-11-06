@@ -57,13 +57,43 @@ starting; do not turn the announcement into another permission question or a
 timed approval wait. The user can still redirect or narrow the review.
 
 When a question is necessary, put the structured context and meaningful
-alternatives in chat, then use a concise native question with matching options
-and the host's custom-input control. Keep enough subject and boundary context
-in the question to identify the choice. Do not assume native popups render
-Markdown, tables, or preserved line breaks; the formatted chat proposal must
-stand on its own. After the answer, show the resolved scope and method in the
-same readable format before dispatch. Ask again only if a material ambiguity
-or authority gap remains, or explicit ask mode requires confirmation.
+alternatives in chat, then use a concise, structured native question with
+matching options and the host's custom-input control. Apply this presentation
+to ambiguity questions, explicit ask-mode confirmations, and any necessary
+question after narrowing; formatting never adds a confirmation gate.
+
+In the native question's text field, use a short heading, a blank line, and
+separate labeled bullet lines for the relevant goal or unresolved subject,
+materials, boundaries and method. Combine or omit inapplicable lines, keep
+each line short, and end with one focused question. Use real newline characters,
+not literal `\n` text or a single long paragraph. Use bold for the heading when
+the host adapter records support; plain labels and Unicode bullets are enough
+for the other lines. For example, in explicit ask mode:
+
+**Review scope**
+
+• Goal: Check whether residents without a computer can attend both sessions.
+• Materials: workshop-plan.md and relevant access requirements from this chat.
+• Excludes: Registration, internet-only barriers, staffing, and implementation.
+• Method: 1 reviewer; general lens; balanced depth; GPT-6 Luna at extra-high (xhigh).
+
+Confirm this review, change the scope, or cancel?
+
+Put those alternatives in the native option fields, with custom input available;
+do not hide them only in prose. For ambiguity, replace the confirmation question
+with the unresolved choice and offer concrete subjects/boundaries grounded in
+the available material. Do not present a candidate scope as already resolved.
+After the answer, show the resolved scope and method in formatted chat before
+dispatch. Ask again only if a material ambiguity or authority gap remains, or
+explicit ask mode requires confirmation.
+
+Check the active host adapter's verified formatting capabilities before choosing
+rich text; see [Codex native question formatting](../../../.aivv/platform-adapters/codex.md#native-question-formatting)
+for Codex. On hosts with unknown
+or limited support, use a plain heading and labeled lines or a compact plain-text
+question; keep its subject and boundaries identifiable and all material choices
+in the native options. The formatted chat proposal must stand on its own on
+every host. Do not rely on tables, nested lists, or other unverified rich text.
 
 Use the resolved values for the current invocation; the sample values are only
 illustrative. `--dry-run` still performs a review and therefore uses the same
