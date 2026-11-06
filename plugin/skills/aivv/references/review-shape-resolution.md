@@ -16,6 +16,9 @@ confirmation, smart-lens detection, or high-risk floor reporting.
    `--reviewers=N`, `--lens=<list>`, `--lens-replicate=M`, `--full-*`
    wrappers, `--auto-lens` / `--no-auto-lens`, and `--auto-scope` /
    `--ask-scope`.
+   <!-- Codex-SPECIFIC --> Resolve native model and reasoning labels under the
+   [Codex adapter](../../../.aivv/platform-adapters/codex.md#native-model-and-reasoning-labels)
+   before describing the proposed method.
 2. Load config/default overlays from [`preferences.md`](preferences.md). An
    omitted `default_lenses` resolves to the golden default `general`; do not
    inject `general` into an explicit, configured, or fixed wrapper lens list.

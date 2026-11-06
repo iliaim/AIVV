@@ -1,6 +1,6 @@
 # AIVV — Agentic Independent Validation & Verification
 
-AIVV is an open-source, cross-agent package for structured review of session work, documents, research, plans, designs, decisions, and code, with remediation and calibration. It keeps review rules, prompts, schemas, and state formats shared, with host adapters for Claude Code and Codex tool names, permissions, dispatch, and installation. Both hosts have native plugin packages. Codex cold reviewer and investigator dispatch has been verified end to end; its custom read-only profiles still need a separate install step. The live check suppressed AIVV state writes, so persisted review state remains unverified on Codex.
+AIVV is an open-source, cross-agent package for structured review of session work, documents, research, plans, designs, decisions, and code, with remediation and calibration. It keeps review rules, prompts, schemas, and state formats shared, with host adapters for Claude Code and Codex tool names, permissions, dispatch, and installation. Both hosts have native plugin packages. Codex custom read-only profiles still need a separate install step; the [Codex adapter](plugin/.aivv/platform-adapters/codex.md) records verified desktop review, confirmation, persistence, and restart rediscovery coverage and its limits.
 
 ## What it does
 
