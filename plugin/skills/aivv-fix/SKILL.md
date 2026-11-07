@@ -40,7 +40,7 @@ Flow: 1 COLLECT findings → 2 TRIAGE batches → 2.5 CONTAIN critical blast rad
 
 ## Common Mistakes
 
-Do not rely on `git diff` in Steps 5/6, skip same-file batching, auto-proceed on architectural changes, or loop past 3 cycles; use the session change log, batch related findings, ask on restructuring, and present the convergence gate.
+Do not rely on `git diff` in Steps 5/6, skip same-file batching, or auto-proceed on architectural changes. Preserve the immutable authorized scope in every re-dispatch. One invocation-wide semantic rework budget covers every fix-plan re-authoring and verification re-entry, including readiness revisions, challenge, pre-write, stale-intent, class-verdict, architecture-check, investigator-output, duplicate-intent, red-green, and verification failures. At exhaustion, report unresolved findings and stop without reopening scope or asking for another approval. Transport/format retries and independent outer-loop reviews keep their separate limits.
 
 ## Reference Loading
 
@@ -70,7 +70,21 @@ Calibration data is appended inline as JSONL; see Step 7.
 
 ## Target Project Resolution
 
-**Read before resolving the target project:** [`.aivv/target-resolution.md`](../../.aivv/target-resolution.md). Bind and cache storage context before maintenance, collection, or dispatch, using the installed `tools/storage-paths.mjs resolve` helper; all generated state uses external `<state_dir>` and calibration uses `<calibration_dir>`. `session_changes.target_project` is the immutable base for finding file references. Policy lookup remains separate and retains original provenance. Finding ancestors never choose the fresh storage target. Do not improvise precedence, write local `.aivv/state/` migration markers, or re-resolve after cwd changes.
+**Runtime pin and preflight:** before Step 1.0 state maintenance, source parsing,
+scope questions, or dispatch, resolve the loaded installation once with
+`runtime-root.mjs --preflight aivv-fix [skill-directory]`. Export the returned
+absolute path as `AIVV_ROOT` and use it for all subsequent procedure reads and
+helper calls. If the command reports `AIVV_INSTALLATION_INCOMPLETE`, show that
+diagnostic once and stop the invocation; do not retry the read or substitute a
+workspace/cache copy. A new invocation may start after that selected installation
+is repaired. For an actual fix workflow, allocate one invocation ID immediately
+after preflight and the Step 1.0 recovery decision, but before source parsing or
+investigation. A valid Resume choice reuses the prior log's invocation ID, scope,
+and retry count; a new run gets a fresh ID. Keep that ID and retry counter
+through every re-entry. Step 5 reuses the bound ID when it first persists a new
+fix log. Help and registry-only early exits do not create a fix invocation.
+
+**Read before resolving the target project:** [`.aivv/target-resolution.md`](../../.aivv/target-resolution.md). Bind and cache storage context before maintenance, collection, or dispatch, using the pinned `tools/storage-paths.mjs resolve` helper; all generated state uses external `<state_dir>` and calibration uses `<calibration_dir>`. `session_changes.target_project` is the immutable base for finding file references. Policy lookup remains separate and retains original provenance. Finding ancestors never choose the fresh storage target. Do not improvise precedence, write local `.aivv/state/` migration markers, or re-resolve after cwd changes.
 
 ## Instructions
 
@@ -143,7 +157,7 @@ After flag extraction and any successful `--review-id` resolution, resolve user/
 
 **MUST-READ:** [fix-preferences.md](references/fix-preferences.md) before binding any `/aivv-fix`-specific preference key or emitting the `auto_apply_v1` notice. The preference-resolution target chain, the per-category `fix_apply_policy` values, the legacy `apply_polish_mode` mapping, the `--apply-all-polish`/`--dangerously-auto-apply` precedence, the malformed-config handling, and the `auto_apply_v1` marker-write contract are fixed contracts. Do not improvise key names, precedence, or the marker write.
 
-**Early-exit registry handlers + lifecycle-selector routing:** when `--list-wont-fix` or `--forget-wont-fix=<identifier>` was extracted, run the matching read-only/write registry handler and return (skip Steps 1.1–7). When a lifecycle selector (`--incident`/`--problem`/`--issue`/`--github-issue`) was extracted, resolve `AIVV_ROOT` through the shared runtime-root contract, then run `"$AIVV_ROOT/tools/incident-lifecycle-route.mjs"` before ordinary source parsing and bind `lifecycle_context` + `FixSession.source` from the route result.
+**Early-exit registry handlers + lifecycle-selector routing:** when `--list-wont-fix` or `--forget-wont-fix=<identifier>` was extracted, run the matching read-only/write registry handler and return (skip Steps 1.1–7). When a lifecycle selector (`--incident`/`--problem`/`--issue`/`--github-issue`) was extracted, use the `AIVV_ROOT` pinned and preflighted at invocation start, then run `"$AIVV_ROOT/tools/incident-lifecycle-route.mjs"` before ordinary source parsing and bind `lifecycle_context` + `FixSession.source` from the route result.
 
 **MUST-READ:** [fix-flags.md](references/fix-flags.md) before invoking either registry handler or routing a lifecycle selector — the handler exit codes, the fingerprint-resolution rule, the route-helper invocation, and the "lifecycle routing MUST NOT create `FixSession.source = incident/problem/issue/github_issue`" invariant are fixed contracts.
 
@@ -168,6 +182,36 @@ After findings are loaded and before investigation or planning output can imply 
 ```
 
 Earlier steps may perform the state maintenance, preference update, or action-request claim described in their route. Record `write_boundary_shown: true` in the eventual fix log for every non-dry-run invocation. In `--dry-run`, render the same boundary but do not write a fix log, preserving dry-run's no-remediation-write contract.
+
+Before triage, create one immutable `authorized_scope` snapshot from the source
+request: the user's goal, selected finding IDs and locations, included
+boundaries, and explicit exclusions. For `--review-id`, derive it from the
+selected review's scope and only the findings selected for this fix; for a
+conversation/literal or task-file route, use that source and the parsed findings.
+If the request authorizes remediation across the target project, record that
+project-wide boundary; if it names narrower files, topics, or exclusions, keep
+those limits explicit. A discovered sibling is actionable only when it falls
+inside this recorded boundary. Carry the snapshot unchanged into every
+investigator, challenger, verifier, and re-entry prompt, and check every
+proposed file against it before approval or write.
+
+Encode explicit file or directory boundaries in the snapshot's canonical,
+target-relative `included_paths` and `excluded_paths` arrays, in addition to the
+human-readable `included` and `excluded` summaries. Leave `included_paths` empty
+when the request imposes no narrower path inclusion; when non-empty, every
+write target must match one listed path or a descendant. Every path in
+`excluded_paths` blocks that path and descendants. Do not infer path limits from
+finding locations alone. The fix-log validator checks write intents, planned
+files, recorded changes, and modified/created file lists against these arrays.
+If a stated path limit cannot be represented safely, do not write outside it;
+report the affected finding unresolved.
+
+Alternatives may change implementation while remaining inside this scope. An
+alternative that changes
+the goal or crosses an excluded boundary is a proposed scope change: do not
+adopt it or ask to reopen scope in this invocation; report the finding
+unresolved. A new top-level user request is a new invocation. Persist the
+snapshot in every new fix log.
 
 ---
 
@@ -201,6 +245,10 @@ Before spawning investigators, ask whether a reversible containment action is av
 
 Default assumption: root cause is unknown. Reproduce informal findings when required, run the CRITICAL/MAJOR change-attribution probe, and either dispatch a cold investigator per batch, use the low-risk fast path when every [fast-path.md](references/fast-path.md) eligibility gate passes, or document the rare high-confidence skip inline. Documentation-gap findings normally require investigator routing; the only exception is a fast-path-eligible documentation gap whose exact `verbatim_doc_content` is already known. If cold dispatch is unavailable, record the capability degradation and follow the reference's Branch E fallback rules.
 
+Include the immutable `authorized_scope` snapshot in every investigator prompt.
+Investigate and propose fixes only for its selected findings and boundaries; do
+not reinterpret a proposed correction as permission to change the task.
+
 Before investigator dispatch, compute `architectural_remediation_assessment` and pass the reason-coded object into `{architectural_remediation_assessment}`. The weak/strong seed rules live in [investigation-dispatch.md](references/investigation-dispatch.md); the investigator must prove or disprove each reason with file/grep evidence.
 
 ### Step 4: PLAN — Present Investigation Results
@@ -211,7 +259,7 @@ Collect investigator JSON, mark consumed handles, close them before Step 3 re-en
 
 Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](references/finding-collection.md). Then apply Gate 1/2/3; Gate 1 challenges root cause and Step 4.5 later challenges the fix plan.
 
-**Auto-proceed precheck:** do not move any finding to Step 5 yet. Auto-apply is allowed only after `fix_confidence` is high, policy is `auto`, write-intent readiness passes, CHALLENGE and consequence gates clear, and no blocker remains. Route trade-offs, architecture/shared-interface changes, medium/low confidence, conflicts, and high-blast-radius action-driving findings to the decision queue, targeted re-investigation, or skip/escalate handling.
+**Auto-proceed precheck:** do not move any finding to Step 5 yet. Auto-apply is allowed only after `fix_confidence` is high, policy is `auto`, write-intent readiness passes, CHALLENGE and consequence gates clear, and no blocker remains. Route trade-offs, architecture/shared-interface changes, medium/low confidence, conflicts, and high-blast-radius action-driving findings to the decision queue, evidence-backed targeted re-investigation only when the shared retry budget has room, or skip/escalate handling.
 #### `fix_confidence` computation (per approved finding, computed here — consumed by Step 4.5)
 
 After Gate 1/2/3 resolves and before evaluating the Step 4.5 trigger, compute `fix_confidence` per approved finding via the one-way demotion ladder (`high → medium → low`, floor at `low`), then persist it on every `session_changes.changes_summary[]` entry and in the `review_meta` calibration record.
@@ -236,7 +284,7 @@ Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `w
 
 ### Step 4.5: CHALLENGE — Independent Fix-Plan Review
 
-After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), and after Step 4.4 has materialized `write_intents[]`, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews proposed fixes and escaped `write_intents[]` snapshots BEFORE code is written — when revision is cheap. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
+After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), and after Step 4.4 has materialized `write_intents[]`, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews the immutable `authorized_scope`, proposed fixes, and escaped `write_intents[]` snapshots BEFORE code is written — when revision is cheap. A revision requires a specific evidence-backed defect and a concrete correction inside `authorized_scope`; uncertainty alone is advisory. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
 
 ---
 
@@ -254,7 +302,7 @@ When `lifecycle_context` is present, initialize `session_changes.lifecycle_conte
 
 ### Step 5.4: PRE-WRITE-VALIDATE — deterministic embedded-content checks
 
-Run deterministic checks for every approved write intent with required or missing detector assertions before the host write primitive. `jq-parses`, `schema-coherence`, and `line-cite-valid` failures halt and re-route for re-authoring; never bypass required assertions without an explicit valid user approval record.
+Run deterministic checks for every approved write intent with required or missing detector assertions before the host write primitive. `jq-parses`, `schema-coherence`, and `line-cite-valid` failures halt and re-route for re-authoring only when the shared invocation-wide rework budget has room; otherwise report the finding unresolved and do not write it. Never bypass required assertions without an explicit valid user approval record.
 
 ### Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)
 
@@ -264,7 +312,7 @@ Run the fix-bundle coherence pass after per-finding fixes and before verifier di
 
 ### Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions
 
-Check `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields exactly as the reference specifies. Halt only on corrupted `cycle_count < 1`; otherwise append warnings and continue to verifier dispatch.
+Check `authorized_scope`, retry history, `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields exactly as the reference specifies. Halt on corrupted scope or retry state; otherwise append warnings and continue to verifier dispatch.
 
 ---
 
@@ -286,7 +334,13 @@ When a newly-authored verification method is claimed as recurrence prevention, S
 
 See [verifier-dispatch.md](references/verifier-dispatch.md) for dispatch, independence, result parsing, and convergence rules.
 
-Compile verification context from the `session_changes` log rather than git, dispatch the scoped verifier with target-project anchoring, enforce the same-agent-verification exclusions, parse resolver/regression outcomes, queue calibration records, and enforce the convergence gate after bounded verification loops. Do not attempt a 4th fix cycle without explicit user direction.
+Compile verification context from the `session_changes` log and immutable
+`authorized_scope`, dispatch the scoped verifier with target-project anchoring,
+enforce the same-agent-verification exclusions, parse resolver/regression
+outcomes, queue calibration records, and apply the single invocation-wide
+rework budget. When it is exhausted, report unresolved findings and the bounded
+retry history; do not ask for permission to repeat or widen already-authorized
+work.
 
 When a predecessor review is linked, Step 6 must carry each predecessor finding's `runtime_evidence` outcome into the verifier prompt summary. Missing or refuted runtime evidence on UI/rendered-DOM findings does not block source-level verification, but any READY_TO_MERGE conclusion is source-coherent only and should include the runtime-evidence advisory from `verifier-dispatch.md`.
 

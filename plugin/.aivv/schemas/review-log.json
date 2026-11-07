@@ -219,8 +219,56 @@
           "additionalProperties": true,
           "properties": {
             "mode": {"type": "string", "minLength": 1},
+            "was_trivial": {"type": "boolean"},
             "classification_reason": {"type": "string", "minLength": 1},
-            "user_choice": {"type": "string", "minLength": 1}
+            "proposed_scope": {"type": "string", "minLength": 1},
+            "options_offered": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "user_choice": {"type": "string", "minLength": 1},
+            "invocation_id": {"type": "string", "minLength": 1},
+            "proposal_id": {"type": "string", "minLength": 1},
+            "proposal_revision": {"type": "integer", "minimum": 1},
+            "confirmed_scope": {"type": "string", "minLength": 1},
+            "resolved_method": {
+              "type": "object",
+              "required": ["display", "review_mode", "reviewer_count", "lenses", "thoroughness", "direction_enabled", "severity_model", "replication_count", "reviewers"],
+              "additionalProperties": false,
+              "properties": {
+                "display": {"type": "string", "minLength": 1},
+                "review_mode": {"enum": ["cold_single_review", "cold_multi_review", "cold_multi_model", "same_agent_review", "evidence_only_review"]},
+                "reviewer_count": {"type": "integer", "minimum": 1, "maximum": 16},
+                "lenses": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 16,
+                  "uniqueItems": true,
+                  "items": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]}
+                },
+                "thoroughness": {"type": "string", "minLength": 1},
+                "direction_enabled": {"type": "boolean"},
+                "severity_model": {"type": "string", "minLength": 1},
+                "replication_count": {"type": "integer", "minimum": 1, "maximum": 16},
+                "reviewers": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 16,
+                  "items": {
+                    "type": "object",
+                    "required": ["label", "lens", "dispatch_path", "provider", "model", "reasoning"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "label": {"type": "string", "minLength": 1},
+                      "lens": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
+                      "dispatch_path": {"type": "string", "minLength": 1},
+                      "provider": {"type": ["string", "null"]},
+                      "model": {"type": ["string", "null"]},
+                      "reasoning": {"type": ["string", "null"]}
+                    }
+                  }
+                }
+              }
+            },
+            "dropped_scope": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "suppression_reason": {"type": ["string", "null"]}
           }
         }
       }
@@ -308,6 +356,7 @@
           "provider": {"type": ["string", "null"]},
           "model": {"type": ["string", "null"]},
           "model_source": {"type": ["string", "null"]},
+          "reasoning": {"type": ["string", "null"]},
           "lens": {"enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"]},
           "status": {"enum": ["completed", "failed", "skipped", "degraded", "unfilled"]},
           "status_reason": {"type": ["string", "null"]},

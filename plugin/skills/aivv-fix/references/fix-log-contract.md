@@ -11,6 +11,60 @@ Read from `skills/aivv-fix/SKILL.md` before writing or recovering `session_chang
 
 ### Step 5: EXECUTE — Apply Approved Fixes
 
+Every new fix log carries the immutable `authorized_scope` snapshot captured at
+Step 1.9 and these shared retry fields:
+
+- `rework_retry_count`: starts at 0; increments once before each semantic
+  re-authoring or verification re-entry.
+- `max_rework_retries`: fixed at 3 for the invocation.
+- `rework_retry_history`: append-only entries with retry number, gate, affected
+  finding IDs, evidenced defect, and evidence locator.
+
+Before each durable full-object update, validate the candidate against the exact
+prior persisted fix log using the invocation's `storage_context_file`. The first
+write uses `--new`; every subsequent write uses `--update`, which reads the live
+prior log through `storage-paths.mjs` under its read lock. The validator requires
+the same invocation ID and structurally identical `authorized_scope`, a
+nondecreasing retry count that can advance by at most one, and an unchanged
+append-only history prefix. A legacy
+in-progress log without this baseline cannot be resumed as if its retry count
+were zero; stop that resume and offer a fresh top-level invocation from the
+original selected findings.
+
+`authorized_scope` contains the source, goal, selected finding IDs, included
+boundaries, and exclusions. Copy it byte-for-byte through updates. Stage-specific
+counters cannot create separate retry budgets. The transition validator requires
+each `cycle_count` increment to occur in the same update as one new `verification`
+retry event, and rejects decreases or jumps. Historical logs may omit additive
+fields; current writers may not.
+
+The fix-log validator also checks every actionable finding reference against
+`authorized_scope.finding_ids`, including retry entries, write intents, changes,
+plans, verification records, dispositions, and lifecycle context. It permits
+only the selected ID itself or the documented derived IDs `<parent>-cls<N>`,
+`<parent>-cls-overflow`, and `<parent>-sib<N>` for a selected parent. A candidate
+cannot keep the original scope snapshot while silently replacing a selected
+finding with an unrelated ID; correct the candidate inside the authorized
+selection or leave that work unresolved.
+
+Record explicit file/directory limits as canonical target-relative paths in
+`authorized_scope.included_paths` and `authorized_scope.excluded_paths`;
+descriptive summaries remain in `included` and `excluded`. Empty
+`included_paths` means there is no narrower explicit inclusion. When it is
+non-empty, every write intent, planned file, recorded change, and modified or
+created file must match one listed path or descendant. Any target matching an
+excluded path or descendant halts validation. Finding locations alone do not
+create path boundaries. Do not use globs; a single dot denotes the target
+project root, and every other entry must be a project-relative path without
+`..`.
+
+For `source: "review_id"`, retain `source_review_relative_path` from the exact
+review selected during Step 1.05, including an `archive/` prefix when applicable.
+Before a fix-log write or update, the validator reads that exact source through
+the storage helper, checks that its `id` matches `source_review_id`, and checks
+that every selected root finding exists in the source review. Keep the source
+ID and relative path immutable through the fix invocation.
+
 **Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents and any Step 4.5 challenge; but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
 
 Trivial fixes still record readiness. They normally use `risk_tier: "low"` and `approval_mode: "auto"` only when W10 classifies them as auto-eligible and no consequence gate applies.
@@ -123,7 +177,17 @@ The execution-shape contract below (pattern interpretation, target scoping, argv
 
 For each approved **top-level** finding whose `category` is `code-bug` or `design-flaw`:
 
-1. **Verdict presence (fail-closed).** If the finding has neither a non-empty `root_cause_analysis.class_signature` NOR a valid `root_cause_analysis.class_assessment`, the verdict is **missing**: do NOT fix the finding this pass. Record a `missing-class-verdict` warning naming the finding id and route the finding to **targeted re-investigation** (re-enter Step 3 INVESTIGATE for that finding with the missing-verdict reason appended). This re-investigation is bounded by a **dedicated per-finding counter `class_verdict_reinvestigation_iterations` (default cap 1)** — NOT `cycle_count`. The separation is deliberate and mirrors the `pre_write_validation_iterations` precedent: `cycle_count` bumps only on Step 6 post-EXECUTE verifier re-entry and Step 4 root-cause backtrack, so a pre-EXECUTE verdict loop must not consume the post-EXECUTE 3-cycle convergence budget. **Terminal state when the cap is exhausted:** the finding is routed to the W10 decision queue marked `deferred` with reason `class-verdict-budget-exhausted` and surfaced in the run summary — never silently dropped, never looped. Rejection routes to re-investigation/deferral, it does NOT abort the fix session — a single under-specified finding cannot brick the batch (same posture as the `architectural-remediation-check-missing` fail-closed outcome). Exempt categories — `improvement`, `documentation-gap`, `clarification-needed`, `process-violation` — are skipped by the gate; if one of them DID emit a `class_signature`, it still flows through the variant scan in step 4.
+**Authorized-scope gate for discovery:** Before a `class_signature` or
+`scope_search_seed` scan, resolve the permitted paths from the immutable
+`authorized_scope` snapshot. If the source request authorized the target project,
+that root may be included; otherwise honor its narrower file/topic boundaries.
+Filter candidate paths before reading or dispatching sibling triage. Never read
+or write an excluded path. Do not emit or fix a discovered sibling outside the
+recorded boundary; report it as an out-of-scope observation only when its
+existence is already known from in-scope evidence. This gate overrides broad
+search examples below.
+
+1. **Verdict presence (fail-closed).** If the finding has neither a non-empty `root_cause_analysis.class_signature` nor a valid `root_cause_analysis.class_assessment`, the verdict is **missing**: do not fix the finding on this pass. A targeted re-investigation is allowed only if the shared invocation-wide `rework_retry_count` has room; append a `class-verdict` retry event before re-entering Step 3. At the cap, report the finding unresolved with reason `rework-retry-budget-exhausted`; do not move it to a new decision queue or ask to reopen scope. This pre-execution re-entry consumes the same three-retry budget as challenge, pre-write, stale-intent, red-green, and verifier rework. Exempt categories — `improvement`, `documentation-gap`, `clarification-needed`, `process-violation` — are skipped by the class-verdict gate; if one emits a `class_signature`, it still flows through the variant scan in step 4.
 
 2. **`class_assessment` completeness (fail-closed).** A `class_assessment` is valid only when it is a JSON object carrying all three sub-fields: `self_contained == true` (the literal boolean), a non-empty `justification`, and a non-empty `searched_pattern_negative` (non-empty = ≥1 non-whitespace character; whitespace-only or non-string does NOT count). An assessment that is not an object, or has any missing/blank/wrong-typed sub-field, is **not a valid verdict** → treated as missing in step 1 (re-investigation). If a finding emits BOTH `class_signature` and a valid `class_assessment`, `class_signature` governs and the assessment is ignored (per the json-schema.md contract) — proceed to step 4, skip step 3.
 
@@ -133,8 +197,8 @@ For each approved **top-level** finding whose `category` is `code-bug` or `desig
 
 5. **Blast-radius routing (count + contract evidence — count alone never routes to the lane).** Let `cap = class_breadth_triage_cap` (golden config, default 10):
    - **candidates ≤ cap →** triage all candidates (step 6).
-   - **candidates > cap AND duplicated-contract evidence present** (the candidates implement the same design-decision contract / share a manual-sync invariant, per the architectural-remediation `sibling_surface_scan` criterion) **→** route the parent to the **architectural-remediation lane**. The orchestrator does this by setting the **seed signals** `architectural_remediation_assessment.required = true`, `architectural_remediation_check.triggered = true`, and `scan_required = true`, then **kicking targeted re-investigation** of the parent (bounded by `class_verdict_reinvestigation_iterations`) so the *investigator* authors the full `architectural_remediation_check` structure the lane requires (local option, architectural option, the richly-shaped `sibling_surface_scan[]` objects, `alternative_approaches[]` mapping, `recommended_option`, `decision_route`, `blast_radius`). The orchestrator passes the candidate locators to the investigator as the scan seed; it does **not** itself populate `sibling_surface_scan[]` (the candidate locators are bare `<file>:<line>` strings, not the object shape the lane's fail-closed completeness check consumes per apply-policy-and-gates.md). This is the class-root-cause case — one structural fix, not N site patches.
-   - **candidates > cap WITHOUT contract evidence →** triage the first `cap` candidates (step 6), then **list the overflow explicitly** and emit a single deferred next-cycle sub-finding `{"id":"<parent>-cls-overflow","verdict":"deferred","summary":"<K> additional class_signature candidates beyond cap=<cap>; not silently swallowed","files":[...]}`. Overflow is surfaced, never hidden. Count alone does NOT route to the architectural lane (a wide-but-shallow pattern is N independent tactical fixes, not a class root cause). **Next-cycle behavior:** a `-cls-overflow` whose candidates remain unfixed will re-surface on the parent next cycle (the cap admits the next `cap` candidates as the prior ones get fixed and leave `files_to_modify`); this is intended drain-over-cycles, not a loop — each cycle makes progress. With `class_breadth_triage_cap = 1` (that knob's schema minimum) the pattern degrades to one sibling per cycle plus an overflow listing the rest; valid but slow, so leave it at its default unless the project deliberately wants single-site-per-cycle drainage.
+   - **candidates > cap AND duplicated-contract evidence present** (the candidates implement the same design-decision contract / share a manual-sync invariant, per the architectural-remediation `sibling_surface_scan` criterion) **→** route the parent to the **architectural-remediation lane**. The orchestrator sets seed signals `architectural_remediation_assessment.required = true`, `architectural_remediation_check.triggered = true`, and `scan_required = true`, then asks the investigator to author the full `architectural_remediation_check` structure (local and architectural options, shaped `sibling_surface_scan[]`, `alternative_approaches[]` mapping, `recommended_option`, `decision_route`, and `blast_radius`). If this is a new investigator pass to repair a specific missing-output defect, consume one shared `architecture-check` retry before dispatch; if no budget remains, report the finding unresolved. Pass candidate locators as scan seeds; the orchestrator does not synthesize the investigator's evidence. This is the class-root-cause case — one structural fix, not N site patches.
+   - **candidates > cap WITHOUT contract evidence →** triage the first `cap` candidates (step 6), then list the overflow explicitly and emit one deferred next-cycle sub-finding `{"id":"<parent>-cls-overflow","verdict":"deferred","summary":"<K> additional class_signature candidates beyond cap=<cap>; not silently swallowed","files":[...]}`. Overflow is surfaced, never hidden. Count alone does NOT route to the architectural lane. Remaining candidates may surface in a later user-initiated outer review cycle as fixed candidates leave `files_to_modify`; this is cross-invocation drainage, not permission to reopen the current fix scope. Keep the configured cap at its default unless the project deliberately chooses narrower per-cycle batches.
 
 6. **Class-sibling triage (batched; the `speculative-pattern-projection` guard).** Dispatch a **read-only investigator** (the same read/grep/git tool surface, no write tools) with the [`class-sibling-triage-template.md`](class-sibling-triage-template.md) prompt, **one batched dispatch per parent finding** over the in-scope candidates; this dispatch does NOT increment `cycle_count` (it is in-cycle scope expansion). It reads each candidate site and returns a per-site verdict into `root_cause_analysis.class_sibling_triage[]`: `confirmed` | `false-positive` (+reason) | `ambiguous`. **Missing-verdict fail-safe (enforced, not assumed):** after the pass returns, the orchestrator computes `omitted = candidate_locators \ triaged_locators` and injects a synthetic `{verdict: "ambiguous", reason: "missing-from-triage-output"}` for each omitted candidate before consuming the results — a truncated or partial triage output can never let an unjudged site fall through to auto-fix; it falls toward investigation. Triage is what makes class breadth safe to act on — a grep match is a *hypothesis*, never an auto-fix target (the speculative-pattern-projection anti-pattern: a pattern that *could* exist at the projected site but *does not in fact*). Per-site empirical confirmation against the parent's root cause is mandatory before any sibling is fixed.
 
@@ -171,7 +235,7 @@ The seed is required for fixes that change a canonical name, public API, schema 
 
 For each approved fix (in priority order: CRITICAL first):
 
-1. **Track session changes (in-memory AND persisted to disk)**: Initialize a change log. Compute an invocation ID at the start of Step 5 (format: `YYYY-MM-DDTHH-MM-SS-<4-char-random>`, for example, the documented timestamp-and-suffix format). Create the persistence file at `<state_dir>/fix-<invocation_id>.json` where `<target>` is the path resolved in Step 5.0 and cached in `session_changes.target_project`. Filename prefix is `fix-`; historical prefixes remain read-only/importable and are never renamed in the project.
+1. **Track session changes (in-memory AND persisted to disk)**: Initialize a change log. Reuse the invocation ID bound after runtime preflight and the Step 1.0 recovery decision (format: `YYYY-MM-DDTHH-MM-SS-<4-char-random>`); a valid Resume reuses the persisted ID. Create the persistence file at `<state_dir>/fix-<invocation_id>.json` where `<target>` is the path resolved in Step 5.0 and cached in `session_changes.target_project`. Filename prefix is `fix-`; historical prefixes remain read-only/importable and are never renamed in the project.
 
    **Schema**:
    ```json
@@ -185,6 +249,7 @@ For each approved fix (in priority order: CRITICAL first):
      "target_project": "/absolute/path/resolved/at/Step/5.0",
      "source": "review_id",
      "source_review_id": "<review-id>",
+     "source_review_relative_path": "<review-relative-path-from-Step-1.05>",
      "source_argument": "<task-ID | quoted-text | blank>",
      "lifecycle_context": {
        "selector_type": "issue",
@@ -303,7 +368,7 @@ For each approved fix (in priority order: CRITICAL first):
    - `dangerously_auto_apply` — null/absent for normal runs. When `--dangerously-auto-apply` is explicitly confirmed, set `{confirmed: true, confirmation_source, bypassed_gates, applied_count}` and mirror per-change `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on each affected `changes_summary[]` entry. Step 5's final audit banner reads this object; do not reconstruct the count from git diff.
    - `warnings` — top-level array of orchestrator-side warnings (dispatch fallbacks, schema-mismatch notes, recovery events). Separate from `changes_summary[].root_cause` which documents actual finding root causes — do NOT overload. Warning-object shape: `{"code": "<identifier>", "finding_id": "<F###>"|null, "ts": "<RFC 3339>", ...contextual fields}`. Common codes: `category-fallback` (see [investigator-field-definitions.md](investigator-field-definitions.md) Category section), `stale-skill-cache` (if the Step 8 canary fires in /aivv), `schema-migration` (on-read handling of historical session log paths). Surfaced in Step 7 DOCUMENT if non-empty.
 
-  **Lifecycle write-back contract:** When `lifecycle_context` is present, load the lifecycle record from `lifecycle_context.record_path` before investigation and pass a compact context summary to the investigator. `rca_status: "not-started"` and `rca_status: "draft"` mean investigation-first. Incident/problem writes are limited to schema-backed RCA/prevention fields (`root_cause_analysis`, `incident_context`, `prevention_plan`, `rca_status`, `updated_at` when supported, and `links`). Local issue writes are limited to schema-backed workflow fields (`status`, `updated_at` when supported, `links`, `closure_decision` when closing, `timeline`, and `sync.status`). Resolve `AIVV_ROOT` through the shared runtime-root contract, then validate every lifecycle write with `node "$AIVV_ROOT/tools/incident-state.mjs" validate --file "<record-file>" --state-dir "<state_dir>" --kind "<incident|problem|local-issue>"`. Draft or apply GitHub changes only through `node "$AIVV_ROOT/tools/incident-github-sync.mjs" plan --context "$storage_context_file" --issue "<issue-record>" --repo "<owner>/<repo>"` and `node "$AIVV_ROOT/tools/incident-github-sync.mjs" apply --context "$storage_context_file" --issue "<issue-record>" --repo "<owner>/<repo>" --confirm`; `/aivv-fix` must not call `gh` directly.
+  **Lifecycle write-back contract:** When `lifecycle_context` is present, load the lifecycle record from `lifecycle_context.record_path` before investigation and pass a compact context summary to the investigator. `rca_status: "not-started"` and `rca_status: "draft"` mean investigation-first. Incident/problem writes are limited to schema-backed RCA/prevention fields (`root_cause_analysis`, `incident_context`, `prevention_plan`, `rca_status`, `updated_at` when supported, and `links`). Local issue writes are limited to schema-backed workflow fields (`status`, `updated_at` when supported, `links`, `closure_decision` when closing, `timeline`, and `sync.status`). Use the `AIVV_ROOT` pinned and preflighted at this invocation's start, then validate every lifecycle write with `node "$AIVV_ROOT/tools/incident-state.mjs" validate --file "<record-file>" --state-dir "<state_dir>" --kind "<incident|problem|local-issue>"`. Draft or apply GitHub changes only through `node "$AIVV_ROOT/tools/incident-github-sync.mjs" plan --context "$storage_context_file" --issue "<issue-record>" --repo "<owner>/<repo>"` and `node "$AIVV_ROOT/tools/incident-github-sync.mjs" apply --context "$storage_context_file" --issue "<issue-record>" --repo "<owner>/<repo>" --confirm`; `/aivv-fix` must not call `gh` directly.
 
    **Write semantics** (full-object publication, not literal append-to-entries):
 
@@ -313,24 +378,26 @@ For each approved fix (in priority order: CRITICAL first):
    ```
 
    - Initialize only after the dry-run gate through the shared storage mutation helper.
-   - Create the session file with `status: "in-progress"` and `cycle_count: 1`.
-   - After every in-memory `session_changes` mutation, stage the complete validated JSON in private scratch and publish to `<state_dir>/fix-<invocation_id>.json` under the shared target operation lock. Never write active state with a host Write/apply_patch operation outside the helper; this would race import. Invocation-specific names preserve the existing independent-session model.
+   - Reuse the invocation ID bound after Step 1.0 recovery selection and create the session file with `status: "in-progress"` and `cycle_count: 1`. Include any evidence-backed rework retries already consumed in memory before this first durable write; the first persisted snapshot becomes the transition baseline.
+   - After every in-memory `session_changes` mutation, stage the complete candidate in private scratch and validate it with `node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fix-log <candidate> --context "$storage_context_file" --new` for the first write or `--update` thereafter. The validator reads the exact persisted record itself; do not supply a model-authored or stale prior snapshot. Then publish to `<state_dir>/fix-<invocation_id>.json` under the shared target operation lock. Never write active state with a host Write/apply_patch operation outside the helper; this would race import. Invocation-specific names preserve the existing independent-session model.
    - **JSON emission canonical form (dev.26+):** to ensure byte-stable output across orchestrator agent invocations and across hosts, follow the same canonical-form rules documented in [/aivv Step 7.5](../../aivv/SKILL.md#step-75-write-review-log-orchestrator-side-unconditional) ("JSON emission canonical form" subsection). Briefly: 2-space indent, key order matches the field-source/object-shape table above (top-to-bottom), exactly one trailing `\n`, raw UTF-8 (no `\u` escapes for non-ASCII), absent optional fields are OMITTED (not `null`), empty arrays as `[]`, all timestamps in UTC `Z` form, paths in POSIX forward-slash form even on Windows. Maintainer-side schema-fixture validation (run by AIVV's own pre-release validator) embodies the canonical form for fix-log shape; if your output differs from a freshly-emitted dev.26+ fix log's shape (modulo per-invocation ID/timestamp/finding values), you have drifted from canonical.
-   - **Bump `cycle_count`** at the start of each Step 6 *re-entry* (before spawning the next verifier) and persist immediately. The first Step 6 entry uses `cycle_count: 1` from creation — do NOT bump on first entry. Only subsequent re-entries (after a failed verification or regression loop) increment. Without this, crash-recovery would read `cycle_count: 1` regardless of how many cycles had actually run and could silently reset the 3-cycle convergence gate.
+   - The first Step 6 verifier dispatch uses `cycle_count: 1`. When an evidence-backed verifier defect qualifies for re-entry, increment `rework_retry_count`, append its `verification` retry event, and increment `cycle_count` together in one validated update before returning to Step 3. The next Step 6 verifier uses that already-incremented value; do not increment it again at dispatch. The shared `rework_retry_count` is the sole semantic rework cap.
    - Set `status: "completed"` and `completed_at` at the end of Step 7.
-   - Set `status: "failed"` if Step 6's convergence gate (cycle > 3) or regression stop fires without user resolution.
+   - Set `status: "failed"` if Step 6 stops with unresolved findings because the shared retry budget is exhausted, or because a regression stop fires without resolution. `cycle_count` alone never fails or extends the invocation.
 
    **Recovery on re-invocation**:
    When `/aivv-fix` is invoked and `<state_dir>/` contains existing session files:
    1. Find the most recent file by `invoked_at`.
-   2. If `status: "in-progress"`: present to the user: *"A prior `/aivv-fix` invocation at {invoked_at} did not complete. Files modified: {files_modified}. Options: (a) Resume — continue from the last logged change; (b) Restart — start fresh, review currently-modified files manually; (c) Discard — mark the prior session as abandoned (`status: "abandoned"`) and start fresh. Which?"*
-   3. If `status: "failed" | "completed"`: no recovery prompt; the file is read only for the scan boundary (see Step 1).
+   2. If `status: "in-progress"` and its immutable `authorized_scope` plus retry state validate: present to the user: *"A prior `/aivv-fix` invocation at {invoked_at} did not complete. Files modified: {files_modified}. Options: (a) Resume — continue from the last logged change using the same invocation ID, scope, and retry count; (b) Restart — start fresh, review currently-modified files manually; (c) Discard — mark the prior session as abandoned (`status: "abandoned"`) and start fresh. Which?"*
+   3. If `status: "in-progress"` but its scope/retry baseline is missing or invalid, do not offer Resume: report that the old record cannot safely continue and offer only Restart from the original selected findings or Discard. Do not initialize its retry count to zero or infer a broader scope.
+   4. If `status: "failed" | "completed"`: no recovery prompt; the file is read only for the scan boundary (see Step 1).
 
-   4. If `status: "abandoned"` AND the session was auto-reaped (has a `warnings` entry with `code: "reaped-stale"`): present to the user: *"A prior `/aivv-fix` invocation at {invoked_at} was auto-reaped after 7 days of inactivity. Files modified: {files_modified}. Options: (a) Resume — restore status to in-progress and continue; (b) Restart — start fresh, review currently-modified files manually; (c) Ignore — leave as abandoned and start a new session. Which?"*
+   5. If `status: "abandoned"` AND the session was auto-reaped (has a `warnings` entry with `code: "reaped-stale"`) and its scope/retry baseline validates: present to the user: *"A prior `/aivv-fix` invocation at {invoked_at} was auto-reaped after 7 days of inactivity. Files modified: {files_modified}. Options: (a) Resume — restore status to in-progress and continue with the same invocation ID, scope, and retry count; (b) Restart — start fresh, review currently-modified files manually; (c) Ignore — leave as abandoned and start a new session. Which?"*
       - On "Resume": set the reaped file's status back to `in-progress`, clear the `reaped-stale` warning, and continue from where it left off.
       - On "Restart" or "Ignore": create a new session; the reaped file remains abandoned.
+   6. If the auto-reaped record lacks a valid scope/retry baseline, omit Resume and offer Restart or Ignore only.
 
-   5. If `status: "abandoned"` AND NOT auto-reaped (manually marked by user in a prior session): no recovery prompt.
+   7. If `status: "abandoned"` AND NOT auto-reaped (manually marked by user in a prior session): no recovery prompt.
 
    **Collision safety**: The `<4-char-random>` suffix in the invocation ID prevents concurrent invocations from colliding on filename. Do not re-use or share session files across invocations.
 

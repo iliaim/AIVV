@@ -36,6 +36,20 @@ function resolve(resolver, { skillDir = '', ...env }) {
   return result.stdout.trim();
 }
 
+function preflight(resolver, profile, { skillDir = '', ...env }) {
+  return spawnSync(process.execPath, [resolver, '--preflight', profile, skillDir], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      AIVV_ROOT: '',
+      CLAUDE_PLUGIN_ROOT: '',
+      PLUGIN_ROOT: '',
+      SKILL_BASE_DIR: '',
+      ...env,
+    },
+  });
+}
+
 try {
   const codexHome = path.join(temporaryRoot, 'codex-home');
   const legacyRuntime = path.join(codexHome, 'aivv-runtime');
@@ -64,6 +78,33 @@ try {
     legacyRuntime,
     'the existing Codex installer layout should continue to resolve its external runtime',
   );
+
+  const standaloneBase = path.join(temporaryRoot, 'standalone');
+  const standaloneSkill = path.join(standaloneBase, 'skills', 'aivv');
+  mkdirSync(path.join(standaloneSkill, '.aivv'), { recursive: true });
+  writeFileSync(path.join(standaloneSkill, 'SKILL.md'), '# standalone skill\n');
+  copyFileSync(resolverSource, path.join(standaloneSkill, '.aivv/runtime-root.mjs'));
+  const standaloneRuntime = path.join(standaloneBase, 'aivv-runtime');
+  makeRuntimeRoot(standaloneRuntime);
+  assert.equal(
+    resolve(path.join(standaloneSkill, '.aivv/runtime-root.mjs'), { skillDir: standaloneSkill }),
+    standaloneRuntime,
+    'a standalone skill bootstrap must select its documented sibling runtime',
+  );
+
+  const incompleteRoot = path.join(temporaryRoot, 'incomplete-selected-root');
+  const incompleteResolver = makeRuntimeRoot(incompleteRoot);
+  const incompletePreflight = preflight(incompleteResolver, 'aivv', {
+    AIVV_ROOT: incompleteRoot,
+    CODEX_HOME: codexHome,
+  });
+  assert.equal(incompletePreflight.status, 3);
+  assert.match(incompletePreflight.stderr, /AIVV_INSTALLATION_INCOMPLETE/);
+  assert.ok(incompletePreflight.stderr.length < 8192,
+    'an installation diagnostic should fit within the host capture limit');
+  assert.match(incompletePreflight.stderr, /No alternate runtime root was used/);
+  assert.equal(incompletePreflight.stderr.trim().split(/\r?\n/).length, 1,
+    'an incomplete selected root should stop once with one installation diagnostic');
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
 }

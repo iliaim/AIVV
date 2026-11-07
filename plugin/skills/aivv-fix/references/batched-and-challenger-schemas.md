@@ -43,14 +43,8 @@ The Step 4.5 CHALLENGE subagent returns this structure (see `references/fix-chal
     {
       "finding_id": "F001",
       "verdict": "APPROVE",
-      "concerns": [
-        {
-          "kind": "unverified-execution-claim",
-          "summary": "Verification script reads manifest key '/page' but Next.js route groups produce '/(app)/page'",
-          "evidence": "scripts/verify-manifest.mjs:14",
-          "alternative": "Use Object.keys(manifest.pages).filter(k => k.includes('page')) to find the actual key"
-        }
-      ],
+      "concerns": [],
+      "non_blocking_observations": ["The proposed script's behavior is not established by the supplied evidence."],
       "execution_evidence_needed": ["node scripts/verify-manifest.mjs 2>&1"]
     }
   ]
@@ -62,10 +56,15 @@ The Step 4.5 CHALLENGE subagent returns this structure (see `references/fix-chal
 | Value | Meaning | Loop action |
 |-------|---------|-------------|
 | `APPROVE` | No blocking concerns | Proceed to Step 5 EXECUTE |
-| `REVISE` | Concerns present; fix direction is correct, needs adjustment | Loop to Step 3 INVESTIGATE (challenge_iterations++) |
-| `REJECT` | Fix direction is wrong; alternative supplied | Loop to Step 3 with alternative as primary input (challenge_iterations++) |
+| `REVISE` | Evidence-backed, actionable in-scope defect; correction keeps the goal and boundaries | Re-enter Step 3 only if the invocation-wide rework budget has room |
+| `REJECT` | Evidence shows the fix direction is wrong; concrete in-scope alternative supplied | Re-enter Step 3 only if the invocation-wide rework budget has room |
 
 Batch-level `verdict` = worst across all `per_finding` verdicts (REJECT > REVISE > APPROVE).
+
+`concerns` contains only blocking, evidence-backed defects. Uncertainty or
+hypothetical risk belongs in `non_blocking_observations` and does not trigger
+rework by itself. An out-of-scope alternative must be labeled and cannot become
+the primary fix direction.
 
 ### Concern kinds
 
@@ -77,4 +76,5 @@ Batch-level `verdict` = worst across all `per_finding` verdicts (REJECT > REVISE
 | `recurring-class-miss` | `class_signature` scan found siblings NOT in `files_to_modify` |
 | `unverified-execution-claim` | New verification code reads keys/paths that may not match the actual artifact |
 | `better-alternative-exists` | When `alternative_approaches[]` is populated, a genuinely viable listed or omitted alternative would produce a better outcome for this project's context. Minimum-sufficient-remediation failures without a real alternative use `other`. |
+| `scope-expansion` | Proposed alternative changes the user's goal or crosses an explicit exclusion; it cannot be adopted in this invocation |
 | `other` | Concern doesn't fit the above categories |

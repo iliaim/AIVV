@@ -33,6 +33,12 @@ capability degradation.
 
 ## Step 1: Parse Arguments
 
+After help/setup/eval/maintenance early exits and the AIVV runtime preflight,
+allocate one invocation ID before reading state, extracting session context, or
+asking a scope question. Reuse it for every proposal ID and the eventual review
+log. A scope/method revision increments the proposal revision only; it never
+creates a new invocation ID.
+
 Use `argument-parsing.md` for non-default flags, ambiguous positionals, config,
 runtime, eval, maintenance, setup, or help paths.
 
@@ -108,7 +114,7 @@ review steps.
 
 ## Step 2: Session Context
 
-Reviewer subagents do not see conversation history. Extract before git diff. **Per-category scan attestation (required):** for each of the 7 categories your internal reasoning MUST include a line `[N. Category]: scanned: <count> messages; scope: full-session|artifact-relevant; content: <one-sentence summary> OR none surfaced` — a category with no attestation line was not scanned; return to it. Concrete message-counts are required over checkbox-style confirmation (these lines anchor reasoning; they need not appear in reviewer-facing output).
+Reviewer subagents do not see conversation history. Make one bounded extraction pass over the host-available conversation context before git diff: full-session for a session review, artifact-relevant history for a file, idea, or plan review. For each of the seven categories below, record exactly one status—`observed`, `none`, or `unavailable`—with a compact summary for `observed`. Do not count messages or return to rescan a category because its status is missing. Use `none` only when the selected context was available and the pass found no evidence; use `unavailable` when the host cannot provide that category or the available history is incomplete enough that absence cannot be claimed. Keep earlier goals, constraints, and decisions that explain the current state; do not use a recent-messages-only cutoff. Reviewer subagents receive only the resulting scoped context, not the raw conversation.
 
 - Goals & objectives
 - Decisions, with unverified correctness claims marked
@@ -118,11 +124,15 @@ Reviewer subagents do not see conversation history. Extract before git diff. **P
 - Trade-offs
 - Current state
 
-For session reviews, scan full conversation. For file/idea/plan routes, scan
-artifact-relevant history. If fewer than three categories have substance, prepend
-limited-context warning. Record `multi_topic: true|false`. Compute the
-`lens_ceiling` only after the requested scope is resolved, against the resolved
-session subset.
+For session reviews, extract from the full conversation once. For file/idea/plan
+routes, extract from artifact-relevant history once. If fewer than three
+categories have substance, prepend the limited-context warning. Record
+`multi_topic: true|false`. After Step 3.4 resolves or narrows `final_scope`,
+filter every extracted category to that scope before prompt construction; remove
+content about `dropped_scope`. If a mixed summary cannot be separated without
+re-scanning, omit it and mark the category `unavailable` for the narrowed scope.
+Do not send excluded-topic context to reviewers. Compute `lens_ceiling` only
+after this filter, against the resolved session subset.
 
 For codemod/bulk-rename/formatter sessions, prepend to the reviewer prompt: `⚠️ This session involved mechanical/automated changes. Diff volume does NOT reflect decision count.` so bulk output is not over-weighted as review surface.
 
@@ -152,10 +162,13 @@ Use `review-shape-resolution.md` and `scope-confirmation.md` to establish
 `final_scope` and its provenance. A clear explicit request to perform a
 read-only review authorizes that review unless `--ask-scope` or a manual-
 provenance `scope_confirmation_mode: "ask"` was explicitly selected; otherwise
-do not ask the user to reconfirm its scope. After resolving the final lens/depth method in Step 3.5/3.6, announce the
-goal, subject, material boundaries, relevant questions/strategy, and method
-together before dispatch. Ask only to resolve genuine ambiguity, missing
-authority, or a material scope expansion. `--ask-scope` and a manual-provenance
+do not ask the user to reconfirm its scope. After resolving the final lens/depth method in Step 3.5/3.6, build the
+`resolved_method` record defined in `scope-confirmation.md`. Use that same record
+to render the proposal, configure dispatch, and populate the reviewer roster
+and prompt profile in the audit log; do not independently reconstruct the
+method at any of those points. Announce the goal, subject, material boundaries,
+relevant questions/strategy, and method together before dispatch. Ask only to
+resolve genuine ambiguity, missing authority, or a material scope expansion. `--ask-scope` and a manual-provenance
 `scope_confirmation_mode: "ask"` request confirmation of a clear scope. Old
 wizard/default `ask` values resolve to announce unless the flag is supplied.
 Earlier preamble writes may already have happened if such a question holds the
@@ -165,8 +178,15 @@ review.
 
 After `final_scope` is resolved, use `review-shape-resolution.md` to apply
 deterministic floors, recompute `reviewer_lens_assignments`, and resolve
-`lens_detection_mode`. Then announce the complete final scope and method before
-Step 4. Do not ask the user to approve routine lens/depth resolution within the
+`lens_detection_mode`. Then create the immutable proposal tuple from the current
+invocation ID, revision, `final_scope`, and canonical `resolved_method`. Only the
+active proposal may have an unanswered question. When a question is needed,
+accept an answer only from the exact awaited host question and bind it to the
+active proposal ID. If the host cannot associate a response with that question,
+treat it as unanswered, not as approval. Close the question before superseding
+a proposal; cancellation ends the invocation and later answers to that question
+are stale. Then announce the complete final scope and method before Step 4. Do
+not ask the user to approve routine lens/depth resolution within the
 requested scope unless the user explicitly selected an ask preference. Ask if the
 resolved method would materially broaden scope or needs authority the user did
 not grant; do not issue a lens-only question that hides such a change.

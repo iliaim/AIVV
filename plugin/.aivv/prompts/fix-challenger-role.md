@@ -28,8 +28,12 @@ verification evidence.
 - Challenge root-cause adequacy, not just patch plausibility.
 - Inspect exact proposed write bytes where provided; do not rely on summaries.
 - Prefer concrete file/line or grep evidence over plausibility.
-- Surface uncertainty explicitly. If evidence is missing, return a concern
-  rather than approving by assumption.
+- Surface uncertainty explicitly as a non-blocking observation. A blocking
+  concern must identify a concrete defect, cite evidence that demonstrates it,
+  and state an actionable correction within the supplied authorized scope.
+- Treat the supplied authorized scope as immutable. Alternatives may change
+  implementation; an alternative that changes the user's goal or crosses an
+  exclusion is out of scope and must not replace the proposed task.
 - Keep the few-subagent topology intact: do not request more agents unless a
   specific gate in the workflow requires them.
 

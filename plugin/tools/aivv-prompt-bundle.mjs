@@ -168,7 +168,35 @@ function resolveCallerSuppliedPath(inputPath, label, base) {
   return { absPath: realPath, relPath };
 }
 
-function arrayLines(values) {
+function sessionCategoryLines(sessionContext, canonicalField, label, unavailableFields, aliases = []) {
+  const candidates = [canonicalField, ...aliases];
+  const markedUnavailable = candidates.some((name) => unavailableFields.has(name)) ||
+    unavailableFields.has(label);
+  const arrays = candidates
+    .filter((name) => Object.prototype.hasOwnProperty.call(sessionContext, name))
+    .map((name) => sessionContext[name])
+    .filter(Array.isArray);
+  if (arrays.length === 0) {
+    unavailableFields.add(canonicalField);
+    return 'Status: unavailable';
+  }
+  const values = [...new Set(arrays.flat())];
+  if (values.length === 0) {
+    if (markedUnavailable) {
+      unavailableFields.add(canonicalField);
+      return 'Status: unavailable';
+    }
+    return 'Status: none';
+  }
+  const renderedValues = values.map(value => '- ' + value).join('\n');
+  if (markedUnavailable) {
+    unavailableFields.add(canonicalField);
+    return 'Status: unavailable';
+  }
+  return 'Status: observed\n' + renderedValues;
+}
+
+function plainArrayLines(values) {
   if (!Array.isArray(values) || values.length === 0) return '- none surfaced after scan';
   return values.map(value => '- ' + value).join('\n');
 }
@@ -253,6 +281,7 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
   const targetTag = promptDelimiter('TARGET_ARTIFACT');
   const requestTag = promptDelimiter('REVIEW_REQUEST');
   const sc = req.session_context || {};
+  const unavailableFields = new Set(Array.isArray(sc.unavailable_fields) ? sc.unavailable_fields : []);
   const reviewerLabel = req.reviewer_label || 'alpha';
   const reviewMode = req.review_mode || 'cold_multi_model';
   const lens = req.lens || 'general';
@@ -354,25 +383,28 @@ function buildColdPrompt(req, sourceTexts, sourceList, target) {
     '',
     '<' + sessionTag + '>',
     '### Goals & Objectives',
-    arrayLines(sc.goals_objectives),
+    sessionCategoryLines(sc, 'goals', 'Goals & Objectives', unavailableFields, ['goals_objectives']),
     '',
     '### Decisions Made',
-    arrayLines(sc.decisions_made),
+    sessionCategoryLines(sc, 'decisions', 'Decisions Made', unavailableFields, ['decisions_made']),
     '',
-    '### Work Performed',
-    arrayLines(sc.work_performed),
+    '### Files Touched',
+    sessionCategoryLines(sc, 'files_touched', 'Files Touched', unavailableFields),
+    '',
+    '### Approaches Tried',
+    sessionCategoryLines(sc, 'approaches', 'Approaches Tried', unavailableFields),
     '',
     '### Problems Encountered',
-    arrayLines(sc.problems_encountered),
+    sessionCategoryLines(sc, 'problems', 'Problems Encountered', unavailableFields, ['problems_encountered']),
     '',
     '### Trade-offs & Risks',
-    arrayLines(sc.tradeoffs_risks),
+    sessionCategoryLines(sc, 'tradeoffs', 'Trade-offs & Risks', unavailableFields, ['tradeoffs_risks']),
     '',
     '### Current State',
-    arrayLines(sc.current_state),
+    sessionCategoryLines(sc, 'current_state', 'Current State', unavailableFields),
     '',
     '### Unavailable Fields',
-    arrayLines(sc.unavailable_fields),
+    plainArrayLines(Array.from(unavailableFields).sort()),
     '</' + sessionTag + '>',
     '',
     artifactHeading,

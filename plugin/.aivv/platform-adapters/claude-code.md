@@ -70,7 +70,7 @@ prompt: {cold reviewer prompt from SKILL.md Step 4}
 The agent response text is parsed as reviewer findings (not NDJSON). See SKILL.md Case D 5.D.4–5.D.5 for the full dispatch and result-parsing instructions.
 
 **Gemini + OpenAI on Claude Code:**
-Resolve `AIVV_ROOT` through the shared [runtime-root contract](../runtime-root.md), then use `"$AIVV_ROOT/tools/dispatch.mjs"` via Bash background jobs, same as other hosts. No session conflict — Google CLI subprocesses (`agy` or legacy `gemini`) and `codex` are unrelated binaries.
+Use the `AIVV_ROOT` pinned and preflighted at the current AIVV invocation's start, then use `"$AIVV_ROOT/tools/dispatch.mjs"` via Bash background jobs, same as other hosts. No session conflict — Google CLI subprocesses (`agy` or legacy `gemini`) and `codex` are unrelated binaries.
 
 **Probe behavior on Claude Code:**
 `dispatch.mjs --probe --provider anthropic --provider-egress-consent` exits 0 with a "native Agent tool path available" message when `CLAUDECODE=1`. This correctly signals availability without triggering the CLI-subprocess path. A machine-parseable JSON line is also written to stderr: `{"aivv_capability":"anthropic","dispatch_path":"agent-tool","reason":"claude-code-session-detected"}`.
@@ -187,7 +187,7 @@ When an AIVV skill declares an MCP dependency, the dependency is on the MCP serv
 
 ## Session persistence and host access
 
-Resolve storage using the installed `tools/storage-paths.mjs` helper after resolving `AIVV_ROOT`; do not construct paths from the consuming CWD. The helper selects a per-target-instance directory under the user’s platform state root, with report cache separate from durable history. See [runtime-contract.md](../runtime-contract.md) for the shared storage contract and [state-maintenance.md](../state-maintenance.md) for explicit legacy import.
+Resolve storage using the installed `tools/storage-paths.mjs` helper after using the `AIVV_ROOT` pinned and preflighted at invocation start; do not construct paths from the consuming CWD. The helper selects a per-target-instance directory under the user’s platform state root, with report cache separate from durable history. See [runtime-contract.md](../runtime-contract.md) for the shared storage contract and [state-maintenance.md](../state-maintenance.md) for explicit legacy import.
 
 Legacy `.aivv/state/`, `.aivv/calibration/` and `.claude/sessions/` history stays readable and unchanged. Ordinary invocations do not create or update these consuming-project directories. Existing tracked history remains intact; new generated history is personal. Explicit configuration, report output and runtime-probe artifacts retain their documented project-output behavior. Provider trust remains installation-owned.
 

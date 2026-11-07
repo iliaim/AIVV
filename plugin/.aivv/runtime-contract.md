@@ -91,7 +91,20 @@ Required fields:
 - `current_state`
 - `unavailable_fields`
 
-`unavailable_fields` is mandatory. Hosts must mark missing conversation or tool-history categories explicitly.
+`unavailable_fields` is mandatory. Hosts must mark missing conversation or
+tool-history categories explicitly. The canonical category fields are `goals`,
+`decisions`, `files_touched`, `approaches`, `problems`, `tradeoffs`, and
+`current_state`. A non-empty field is `observed`; an available empty field is
+`none`; an absent or explicitly unavailable field is `unavailable`. Do not
+represent a missing field as an empty array unless the selected context was
+actually available and the extraction found no evidence.
+
+For each of the seven categories, the orchestrator records one extraction status
+(`observed`, `none`, or `unavailable`) during a single bounded pass. After scope
+resolution, it filters observed values to the resolved material boundary before
+building the reviewer packet. `unavailable_fields` lists categories marked
+unavailable; it does not include categories intentionally removed by scope
+narrowing.
 
 ### `ReviewRequest`
 
@@ -176,9 +189,21 @@ Required fields:
 - `verification_cycles`
 - `source` (one of `conversation`, `review_id`, `literal`, `task_file` — names the finding origin)
 
+Every new `/aivv-fix` invocation also carries an immutable `authorized_scope`
+snapshot and one invocation-wide `rework_retry_count` (maximum 3) with an
+append-only retry history. This budget counts semantic fix-plan re-authoring
+and verification re-entry across all gates. Transport/format correction and
+the separately authorized outer review loop retain their own handling.
+Stage counters such as `challenge_iterations` and `cycle_count` remain
+diagnostic only; they are not independent rework budgets.
+
+The scope snapshot records explicit file/directory limits in canonical
+project-relative `included_paths` and `excluded_paths`; the pre-write and
+fix-log validators enforce those limits on proposed and recorded write paths.
+
 Existing fix-log schema remains canonical until a schema migration is explicitly planned.
 
-When `FixSession.source == "review_id"`, persisted fix logs must set `source_review_id` to the consumed review id. Compatibility readers may also accept legacy `review_id`, `review_id_consumed`, or `source_argument`, but new writers use `source_review_id` as the canonical join key.
+When `FixSession.source == "review_id"`, carry the exact `source_review_relative_path` selected during resolution into the fix log with `source_review_id`. The validator re-reads that source to bind authorized finding IDs to the consumed review. Compatibility readers may also accept legacy `review_id`, `review_id_consumed`, or `source_argument`, but new writers use `source_review_id` as the canonical join key.
 
 ---
 
@@ -197,7 +222,7 @@ When `FixSession.source == "review_id"`, persisted fix logs must set `source_rev
 | `write_state(object)` | Writes state. **Orchestrator-only** for `review-*.json` and `fix-*.json`; reviewer/investigator subagents return findings via consolidated response and do NOT write state directly. | Agent stages validated JSON in private scratch, then publishes through the shared storage mutation helper under the target operation lock. No Python helper or direct host write to active state. |
 | `apply_fix(plan)` | Applies fixes through the host's edit mechanism. | Use the host adapter's declared source-edit operation. |
 | `handoff_to_fix(review_result)` | Invokes or continues the fix workflow, preferably via `review_id`. | Cross-skill invocation via host's peer-skill mechanism + durable `--review-id=<id>` argument. |
-| `claim_remediation_request(request_id, target)` | Atomically claims a queued local Action Inbox request only when its canonical state directory, target repository, current Git revision, and workspace-state snapshot still match. Claiming does not apply a fix or bypass triage, investigation, write-intent, or verification gates. | Resolve `AIVV_ROOT` through the shared runtime-root contract, then run `node "$AIVV_ROOT/tools/aivv-action-inbox.mjs" claim --request-id <uuid> --state-dir <state_dir> --storage-context <storage_context_file> --target <target>`; never use a target-relative `tools/` path. Then invoke `/aivv-fix --action-request=<uuid> --target=<target>`. |
+| `claim_remediation_request(request_id, target)` | Atomically claims a queued local Action Inbox request only when its canonical state directory, target repository, current Git revision, and workspace-state snapshot still match. Claiming does not apply a fix or bypass triage, investigation, write-intent, or verification gates. | Use the `AIVV_ROOT` already pinned and preflighted for this invocation, then run `node "$AIVV_ROOT/tools/aivv-action-inbox.mjs" claim --request-id <uuid> --state-dir <state_dir> --storage-context <storage_context_file> --target <target>`; never use a target-relative `tools/` path. Then invoke `/aivv-fix --action-request=<uuid> --target=<target>`. |
 | `capture_workspace_state()` | Returns a stable comparable string of workspace state. Used by SHA-snapshot guard when `can_enforce_readonly` is `partial`/`unsupported`. (Operation renamed from `snapshot_workspace_sha`; field names retained for backward-compat per OQ4.) | Shell capture of `( cd '<target>' && git status --porcelain=v1 -z; echo ''; git diff --no-color --no-ext-diff HEAD )`. String comparison detects drift. |
 | `compute_fingerprint(location, description)` | Produces a deterministic identifier for wont-fix dedup, recurrence joins, and review/fix handoff. | For file-backed findings, hash `<normalized_file>:<lowercased_description>`. For scoped findings, hash `<scope_ref.kind>:<scope_ref.ref>:<lowercased_description>`. Use shell heredoc-stdin form into `git hash-object --stdin --no-filters` to avoid shell escaping bugs. SHA-1 hex. Legacy SHA-256 fingerprints remain historical until explicit import; never rewrite the project original. |
 | `schema_gate(route)` | Halts only when state required by the current route exceeds the supported max; warns and continues for unrelated historical state. | Agent reads state file headers, parses `schema_version`, emits `STATE_SCHEMA_NEWER_HISTORICAL` for unselected newer state, and halts with route-specific errors such as `REVIEW_SCHEMA_NEWER` only when the selected artifact must be read. |

@@ -42,6 +42,7 @@ const REVIEW_LOG_MODERN_REQUIRED_FIELDS = [
   "fingerprint"
 ];
 const FIX_LOG_STATUS_ENUM = new Set(["in-progress", "completed", "failed", "abandoned"]);
+const FIX_LOG_SOURCE_ENUM = new Set(["conversation", "review_id", "literal", "task_file"]);
 const FIX_LOG_LIFECYCLE_SELECTOR_TYPE_ENUM = new Set(["incident", "problem", "issue", "github_issue"]);
 const FIX_LOG_LIFECYCLE_RECORD_KIND_ENUM = new Set(["incident", "problem", "issue"]);
 const FIX_LOG_LIFECYCLE_SOURCE_MODE_ENUM = new Set(["review-sourced", "finding-sourced", "investigation-only"]);
@@ -150,7 +151,46 @@ export function hasAllRequiredAssertions(fixture) {
   return true;
 }
 
-export function targetPathVerdict(targetFile) {
+function targetProjectPathVerdict(targetFile, targetProject) {
+  const relative = canonicalProjectRelativePath(targetFile);
+  if (relative === null || !nonBlankString(targetProject) || !path.isAbsolute(targetProject)) {
+    return { status: "halt", reason: "unsupported-risky-path" };
+  }
+
+  let projectRoot;
+  try {
+    projectRoot = fs.realpathSync(targetProject);
+    if (!fs.statSync(projectRoot).isDirectory()) {
+      return { status: "halt", reason: "unsupported-risky-path" };
+    }
+  } catch {
+    return { status: "halt", reason: "unsupported-risky-path" };
+  }
+
+  const absoluteTarget = path.resolve(projectRoot, ...relative.split("/"));
+  if (absoluteTarget !== projectRoot && !absoluteTarget.startsWith(`${projectRoot}${path.sep}`)) {
+    return { status: "halt", reason: "unsupported-risky-path" };
+  }
+
+  // Reject every existing symlink component. This also covers a final target
+  // symlink and directory symlinks that would redirect an otherwise in-scope
+  // relative path outside the selected project tree.
+  let current = projectRoot;
+  for (const segment of relative.split("/")) {
+    current = path.join(current, segment);
+    try {
+      if (fs.lstatSync(current).isSymbolicLink()) {
+        return { status: "halt", reason: "unsupported-risky-path" };
+      }
+    } catch (error) {
+      if (error?.code === "ENOENT") break;
+      return { status: "halt", reason: "unsupported-risky-path" };
+    }
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+export function targetPathVerdict(targetFile, targetProject) {
   if (!targetFile) return { status: "pass", reason: "pass" };
   const normalized = path.posix.normalize(targetFile.replaceAll("\\", "/"));
   const segments = normalized.split("/");
@@ -167,6 +207,9 @@ export function targetPathVerdict(targetFile) {
   ) {
     return { status: "halt", reason: "unsupported-risky-path" };
   }
+  if (targetProject !== undefined) {
+    return targetProjectPathVerdict(normalized, targetProject);
+  }
   return { status: "pass", reason: "pass" };
 }
 
@@ -176,10 +219,16 @@ function bypassApproval(fixture, intent) {
 
 export function detectorVerdict(fixture) {
   for (const intent of fixture.write_intents ?? []) {
-    const pathVerdict = targetPathVerdict(intent.target_file ?? fixture.target_file);
+    const pathVerdict = targetPathVerdict(
+      intent.target_file ?? fixture.target_file,
+      fixture.command === "aivv-fix" ? fixture.target_project : undefined,
+    );
     if (pathVerdict.status === "halt") return pathVerdict;
   }
-  const rootPathVerdict = targetPathVerdict(fixture.target_file);
+  const rootPathVerdict = targetPathVerdict(
+    fixture.target_file,
+    fixture.command === "aivv-fix" ? fixture.target_project : undefined,
+  );
   if (rootPathVerdict.status === "halt") return rootPathVerdict;
 
   const shapes = collectShapes(fixture);
@@ -449,7 +498,87 @@ export function assertionExecutionVerdict(fixture) {
   return { status: "pass", reason: "pass" };
 }
 
-export function validateFixture(fixture) {
+function validateFixtureAuthorizedScopeBinding(fixture, contextFile, proposalOnly = false) {
+  if (!nonBlankString(fixture.invocation_id) || !AIVV_INVOCATION_ID_RE.test(fixture.invocation_id)) {
+    return { status: "halt", reason: "fix-log-authorized-scope-invocation-invalid" };
+  }
+  if (!nonBlankString(contextFile)) {
+    return { status: "halt", reason: "fix-log-authorized-scope-context-missing" };
+  }
+
+  let storageContext;
+  try {
+    storageContext = JSON.parse(fs.readFileSync(contextFile, "utf8"));
+  } catch {
+    return { status: "halt", reason: "fix-log-authorized-scope-context-invalid" };
+  }
+
+  let targetProject;
+  if (!absolutePath(fixture.target_project)) {
+    return { status: "halt", reason: "fix-log-authorized-scope-target-invalid" };
+  }
+  try {
+    targetProject = fs.realpathSync(fixture.target_project);
+  } catch {
+    return { status: "halt", reason: "fix-log-authorized-scope-target-invalid" };
+  }
+  if (!plainObject(storageContext) ||
+      !absolutePath(storageContext.target) || targetProject !== storageContext.target ||
+      !REVIEW_LOG_SHA256_RE.test(storageContext.instance_key ?? "")) {
+    return { status: "halt", reason: "fix-log-authorized-scope-target-invalid" };
+  }
+
+  let persistedContent;
+  try {
+    persistedContent = storageRead(contextFile, "state", `fix-${fixture.invocation_id}.json`);
+  } catch (error) {
+    const stderr = typeof error?.stderr === "string" ? error.stderr : error?.stderr?.toString("utf8") ?? "";
+    if (proposalOnly && stderr.includes("STORAGE_NOT_FOUND")) return { status: "pass", reason: "pass" };
+    return { status: "halt", reason: "fix-log-authorized-scope-baseline-unavailable" };
+  }
+  let persistedFixLog;
+  try {
+    persistedFixLog = JSON.parse(persistedContent);
+  } catch {
+    return { status: "halt", reason: "fix-log-authorized-scope-baseline-unavailable" };
+  }
+  if (!plainObject(persistedFixLog) ||
+      persistedFixLog.id !== fixture.invocation_id ||
+      persistedFixLog.command !== "aivv-fix" || persistedFixLog.status !== "in-progress" ||
+      persistedFixLog.target_project !== storageContext.target ||
+      !plainObject(persistedFixLog.storage_context) ||
+      persistedFixLog.storage_context.instance_key !== storageContext.instance_key ||
+      persistedFixLog.storage_context.target_project !== storageContext.target) {
+    return { status: "halt", reason: "fix-log-authorized-scope-baseline-mismatch" };
+  }
+
+  const baselineScopeVerdict = validateAuthorizedScopeAndRetryState(persistedFixLog);
+  if (baselineScopeVerdict.status === "halt") {
+    return { status: "halt", reason: "fix-log-authorized-scope-baseline-invalid" };
+  }
+  if (stableJson(fixture.authorized_scope) !== stableJson(persistedFixLog.authorized_scope)) {
+    return { status: "halt", reason: "fix-log-authorized-scope-changed-before-write" };
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+export function validateFixture(fixture, { contextFile, proposalOnly = false } = {}) {
+  if (fixture?.command === "aivv-fix" && !plainObject(fixture.authorized_scope)) {
+    return { status: "halt", reason: "fix-log-authorized-scope-missing" };
+  }
+  if (fixture?.command === "aivv-fix") {
+    const scopeBindingVerdict = validateFixtureAuthorizedScopeBinding(fixture, contextFile, proposalOnly);
+    if (scopeBindingVerdict.status === "halt") return scopeBindingVerdict;
+  }
+  if (fixture?.authorized_scope !== undefined) {
+    if (!plainObject(fixture.authorized_scope) ||
+        !validStringArray(fixture.authorized_scope.included_paths) ||
+        !validStringArray(fixture.authorized_scope.excluded_paths)) {
+      return { status: "halt", reason: "fix-log-authorized-path-boundary-invalid" };
+    }
+    const scopePathVerdict = validateAuthorizedWritePaths(fixture);
+    if (scopePathVerdict.status === "halt") return scopePathVerdict;
+  }
   for (const check of [branchIntentVerdict, staleVerdict, bypassVerdict, detectorVerdict]) {
     const verdict = check(fixture);
     if (verdict.status === "halt") return verdict;
@@ -468,18 +597,14 @@ export function validateFixture(fixture) {
   if (assertionExecution.status === "halt") return assertionExecution;
   const shell = shellSyntaxVerdict(fixture);
   if (shell.status === "halt") return shell;
-  if (fixture.pre_write_validation_iterations >= fixture.max_pre_write_validation_iterations) {
-    return { status: "halt", reason: "pre-write-iterations-exceeded" };
-  }
-  if (fixture.stale_intent_regenerations >= fixture.max_stale_intent_regenerations) {
-    return { status: "halt", reason: "stale-intent-regeneration-cap-exceeded" };
-  }
   if (fixture.challenge_budget_remaining === 0 && fixture.write_intents?.some((intent) => intent.content_shape !== "plain-prose")) {
     return { status: "halt", reason: "challenge-budget-halted-risky-write-intent" };
   }
   const confidence = confidenceVerdict(fixture);
   if (confidence.status === "halt") return confidence;
-  return { status: "pass", reason: "pass" };
+  return proposalOnly && fixture.command === "aivv-fix"
+    ? { status: "pass", reason: "pass", proposal_only: true, write_authorized: false }
+    : { status: "pass", reason: "pass" };
 }
 
 function nonBlankString(value) {
@@ -501,13 +626,24 @@ function plainObject(value) {
   return value && typeof value === "object" && !Array.isArray(value);
 }
 
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (plainObject(value)) {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function absolutePath(value) {
+  return nonBlankString(value) && !value.includes("\0") &&
+    /^(?:\/|[A-Za-z]:[\\/]|\\\\)/.test(value);
+}
+
 // Provenance preserves the original policy lookup across handoffs; it grants no
 // authority. The receiver still resolves its current storage instance and policy.
 function validateStorageContext(context, targetProject, prefix) {
   if (context === undefined) return { status: "pass", reason: "pass" };
   const fields = ["instance_key", "target_project", "policy_target"];
-  const absolutePath = (value) => nonBlankString(value) && !value.includes("\0") &&
-    /^(?:\/|[A-Za-z]:[\\/]|\\\\)/.test(value);
   if (
     !plainObject(context) || Object.keys(context).length !== fields.length ||
     !fields.every((field) => Object.hasOwn(context, field)) ||
@@ -781,17 +917,40 @@ function validReviewScopeEvidenceSource(item) {
     optionalNonBlankString(item.ref);
 }
 
-function validReviewScopeConfirmation(value) {
+function validReviewScopeConfirmation(value, invocationId, finalScope, requireBinding = false) {
   if (value === undefined) return true;
-  return plainObject(value) &&
-    optionalNonBlankString(value.mode) &&
-    optionalNonBlankString(value.classification_reason) &&
-    optionalNonBlankString(value.user_choice);
+  if (!plainObject(value)) return false;
+  if (!requireBinding && (
+    !optionalNonBlankString(value.mode) ||
+    !optionalNonBlankString(value.classification_reason) ||
+    !optionalNonBlankString(value.user_choice)
+  )) return false;
+  const bindingFieldsPresent = value.proposal_id !== undefined ||
+    value.proposal_revision !== undefined || value.resolved_method !== undefined ||
+    value.invocation_id !== undefined || value.confirmed_scope !== undefined;
+  if (!bindingFieldsPresent) return !requireBinding;
+  if (requireBinding && (
+    !["announce", "ask"].includes(value.mode) ||
+    !nonBlankString(value.classification_reason) ||
+    typeof value.was_trivial !== "boolean" ||
+    !nonBlankString(value.proposed_scope) ||
+    !validStringArray(value.options_offered) ||
+    !nonBlankString(value.user_choice)
+  )) return false;
+  return nonBlankString(value.invocation_id) && value.invocation_id === invocationId &&
+    Number.isInteger(value.proposal_revision) && value.proposal_revision >= 1 &&
+    value.proposal_id === `${invocationId}:scope:${value.proposal_revision}` &&
+    nonBlankString(value.confirmed_scope) && value.confirmed_scope === finalScope &&
+    (requireBinding ? plainObject(value.resolved_method) : (value.resolved_method === undefined || optionalNonBlankString(value.resolved_method) || plainObject(value.resolved_method)));
 }
 
-function validateReviewScope(reviewLog) {
+function validateReviewScope(reviewLog, { requireConfirmationBinding = false } = {}) {
   const scope = reviewLog.review_scope;
-  if (scope === undefined) return { status: "pass", reason: "pass" };
+  if (scope === undefined) {
+    return requireConfirmationBinding
+      ? { status: "halt", reason: "review-log-scope-confirmation-missing" }
+      : { status: "pass", reason: "pass" };
+  }
   if (
     !plainObject(scope) ||
     !REVIEW_LOG_SUBJECT_TYPE_ENUM.has(scope.subject_type) ||
@@ -800,7 +959,13 @@ function validateReviewScope(reviewLog) {
     !optionalNonBlankString(scope.state_target) ||
     !optionalStringArray(scope.included_files) ||
     !optionalStringArray(scope.excluded_or_dropped_scope) ||
-    !validReviewScopeConfirmation(scope.scope_confirmation)
+    (requireConfirmationBinding && scope.scope_confirmation === undefined) ||
+    !validReviewScopeConfirmation(
+      scope.scope_confirmation,
+      reviewLog.id,
+      scope.final_scope,
+      requireConfirmationBinding,
+    )
   ) {
     return { status: "halt", reason: "review-log-review-scope-invalid" };
   }
@@ -822,11 +987,92 @@ function validReviewerRosterEntry(entry) {
     optionalNullableString(entry.provider) &&
     optionalNullableString(entry.model) &&
     optionalNullableString(entry.model_source) &&
+    optionalNullableString(entry.reasoning) &&
     optionalNullableString(entry.status_reason) &&
     (entry.finding_refs === undefined || (
       Array.isArray(entry.finding_refs) &&
       entry.finding_refs.every((ref) => typeof ref === "string" && REVIEW_LOG_FINDING_REF_RE.test(ref))
     ));
+}
+
+function sameJsonValue(left, right) {
+  return stableJson(left) === stableJson(right);
+}
+
+function renderBoundReviewMethodDisplay(method) {
+  const reviewers = method.reviewers.map((reviewer) => {
+    const provider = reviewer.provider ?? "unreported";
+    const model = reviewer.model === "inherited" ? "inherited/unreported" : (reviewer.model ?? "unreported");
+    const reasoning = reviewer.reasoning ?? "unreported";
+    return `${reviewer.label}/${reviewer.lens} via ${reviewer.dispatch_path} provider=${provider} model=${model} reasoning=${reasoning}`;
+  });
+  const reviewerNoun = method.reviewer_count === 1 ? "reviewer" : "reviewers";
+  return `${method.reviewer_count} ${reviewerNoun}; mode ${method.review_mode}; lenses ${method.lenses.join(", ")}; ` +
+    `${method.thoroughness} depth; ${method.replication_count} ${method.replication_count === 1 ? "reviewer" : "reviewers"} per lens; ` +
+    `direction ${method.direction_enabled ? "on" : "off"}; severity model ${method.severity_model}; ${reviewers.join("; ")}`;
+}
+
+function validateBoundReviewMethod(reviewLog) {
+  const method = reviewLog.review_scope?.scope_confirmation?.resolved_method;
+  const profile = reviewLog.review_prompt_profile;
+  const roster = reviewLog.reviewer_roster;
+  if (!plainObject(method) || !Array.isArray(roster) || !plainObject(profile)) {
+    return { status: "halt", reason: "review-log-bound-method-metadata-missing" };
+  }
+  if (!nonBlankString(method.display) ||
+      !Number.isInteger(method.reviewer_count) || method.reviewer_count < 1 || method.reviewer_count > 16 ||
+      !validStringArray(method.lenses) || method.lenses.length === 0 ||
+      new Set(method.lenses).size !== method.lenses.length ||
+      method.lenses.some((lens) => !REVIEW_LOG_LENS_ENUM.has(lens)) ||
+      !["cold_single_review", "cold_multi_review", "cold_multi_model", "same_agent_review", "evidence_only_review"].includes(method.review_mode) ||
+      !nonBlankString(method.thoroughness) || typeof method.direction_enabled !== "boolean" ||
+      !nonBlankString(method.severity_model) ||
+      !Number.isInteger(method.replication_count) || method.replication_count < 1 || method.replication_count > 16 ||
+      !Array.isArray(method.reviewers) || method.reviewers.length !== method.reviewer_count ||
+      roster.length !== method.reviewer_count || reviewLog.reviewers !== method.reviewer_count ||
+      profile.reviewer_count !== method.reviewer_count || profile.thoroughness !== method.thoroughness ||
+      profile.direction_enabled !== method.direction_enabled || profile.severity_model !== method.severity_model ||
+      method.review_mode !== reviewLog.review_mode || !sameJsonValue(profile.lens, reviewLog.lens)) {
+    return { status: "halt", reason: "review-log-bound-method-invalid" };
+  }
+
+  const assignedLenses = roster.map((entry) => entry.lens);
+  const uniqueLenses = [...new Set(assignedLenses)];
+  const topLevelLensMatches = Array.isArray(reviewLog.lens)
+    ? sameJsonValue(reviewLog.lens, assignedLenses)
+    : assignedLenses.every((lens) => lens === reviewLog.lens);
+  if (!sameJsonValue(method.lenses, uniqueLenses) ||
+      !topLevelLensMatches) {
+    return { status: "halt", reason: "review-log-bound-method-lens-mismatch" };
+  }
+
+  const counts = new Map();
+  for (const lens of assignedLenses) counts.set(lens, (counts.get(lens) || 0) + 1);
+  const replications = [...counts.values()];
+  if (replications.some((count) => count !== replications[0]) ||
+      method.replication_count !== replications[0]) {
+    return { status: "halt", reason: "review-log-bound-method-replication-mismatch" };
+  }
+
+  const reviewerSettings = roster.map((entry) => ({
+    label: entry.label,
+    lens: entry.lens,
+    dispatch_path: entry.dispatch_path,
+    provider: entry.provider ?? null,
+    model: entry.model ?? null,
+    reasoning: entry.reasoning ?? null,
+  }));
+  if (!Array.isArray(method.reviewers) || method.reviewers.some((entry) =>
+    !plainObject(entry) || !Object.prototype.hasOwnProperty.call(entry, "provider") ||
+    !Object.prototype.hasOwnProperty.call(entry, "model") ||
+    !Object.prototype.hasOwnProperty.call(entry, "reasoning")) ||
+    !sameJsonValue(method.reviewers, reviewerSettings)) {
+    return { status: "halt", reason: "review-log-bound-method-reviewer-settings-mismatch" };
+  }
+  if (method.display !== renderBoundReviewMethodDisplay(method)) {
+    return { status: "halt", reason: "review-log-bound-method-display-mismatch" };
+  }
+  return { status: "pass", reason: "pass" };
 }
 
 function validateReviewerRoster(reviewLog) {
@@ -959,6 +1205,24 @@ function normalizedFindingIdentityKey(value) {
   const numeric = trimmed.match(/^F0*([0-9]+)$/i);
   if (numeric) return `numeric:F${Number(numeric[1])}`;
   return `literal:${trimmed}`;
+}
+
+function canonicalProjectRelativePath(value, allowRoot = false) {
+  if (!nonBlankString(value)) return null;
+  const slashPath = value.trim().replaceAll("\\", "/");
+  if (slashPath.startsWith("/") || /^[A-Za-z]:/.test(slashPath) ||
+      slashPath.split("/").includes("..") || /[*?\[\]]/.test(slashPath)) return null;
+  const normalized = path.posix.normalize(slashPath);
+  if (normalized === ".") return allowRoot ? "." : null;
+  if (normalized === ".." || normalized.startsWith("../")) return null;
+  return normalized;
+}
+
+function pathMatchesScopeBoundary(target, boundary) {
+  const comparableTarget = process.platform === "win32" ? target.toLowerCase() : target;
+  const comparableBoundary = process.platform === "win32" ? boundary.toLowerCase() : boundary;
+  return comparableBoundary === "." || comparableTarget === comparableBoundary ||
+    comparableTarget.startsWith(`${comparableBoundary}/`);
 }
 
 function hasNormalizedFindingIdCollision(ids) {
@@ -1177,7 +1441,7 @@ function validateFinalDispositions(fixLog) {
   return { status: "pass", reason: "pass" };
 }
 
-export function validateReviewLogNewWrite(reviewLog) {
+export function validateReviewLogNewWrite(reviewLog, { requireBoundScopeConfirmation = false } = {}) {
   if (!reviewLog || typeof reviewLog !== "object" || Array.isArray(reviewLog)) {
     return { status: "halt", reason: "review-log-object-invalid" };
   }
@@ -1185,6 +1449,10 @@ export function validateReviewLogNewWrite(reviewLog) {
   if (storageContextVerdict.status === "halt") return storageContextVerdict;
   if (reviewLog.schema_version !== 2) {
     return { status: "halt", reason: "review-log-schema-version-invalid" };
+  }
+  if (requireBoundScopeConfirmation &&
+      (!nonBlankString(reviewLog.id) || !AIVV_INVOCATION_ID_RE.test(reviewLog.id))) {
+    return { status: "halt", reason: "review-log-id-invalid" };
   }
   if (!REVIEW_LOG_STATUS_ENUM.has(reviewLog.status)) {
     return { status: "halt", reason: "review-log-status-invalid" };
@@ -1255,7 +1523,7 @@ export function validateReviewLogNewWrite(reviewLog) {
     validateTrustSummary,
     validateDecisionCheckpoint,
     validateAssurancePlan,
-    validateReviewScope,
+    (value) => validateReviewScope(value, { requireConfirmationBinding: requireBoundScopeConfirmation }),
     validateReviewerRoster,
     validatePlanReview,
     validateReviewPromptProfile,
@@ -1264,6 +1532,10 @@ export function validateReviewLogNewWrite(reviewLog) {
   ]) {
     const verdict = check(reviewLog);
     if (verdict.status === "halt") return verdict;
+  }
+  if (requireBoundScopeConfirmation) {
+    const boundMethodVerdict = validateBoundReviewMethod(reviewLog);
+    if (boundMethodVerdict.status === "halt") return boundMethodVerdict;
   }
   const runtimeEvidenceVerdict = validateReviewRuntimeEvidence(reviewLog);
   if (runtimeEvidenceVerdict.status !== "valid") {
@@ -1275,9 +1547,269 @@ export function validateReviewLogNewWrite(reviewLog) {
   return { status: "pass", reason: "pass" };
 }
 
-export function validateFixLogNewWrite(fixLog) {
+function validateAuthorizedScopeAndRetryState(fixLog) {
+  const scope = fixLog.authorized_scope;
+  if (scope === undefined || (
+    !plainObject(scope) ||
+    !FIX_LOG_SOURCE_ENUM.has(scope.source) ||
+    (fixLog.source !== undefined && scope.source !== fixLog.source) ||
+    !nonBlankString(scope.goal) ||
+    !validStringArray(scope.finding_ids) || scope.finding_ids.length === 0 ||
+    !validStringArray(scope.included) || scope.included.length === 0 ||
+    !validStringArray(scope.excluded) ||
+    !validStringArray(scope.included_paths) ||
+    !validStringArray(scope.excluded_paths) ||
+    (scope.source_reference !== undefined && !nonBlankString(scope.source_reference))
+  )) {
+    return { status: "halt", reason: "fix-log-authorized-scope-invalid" };
+  }
+
+  if (!Number.isInteger(fixLog.rework_retry_count) ||
+      fixLog.rework_retry_count < 0 || fixLog.rework_retry_count > 3 ||
+      fixLog.max_rework_retries !== 3 ||
+      !Array.isArray(fixLog.rework_retry_history) ||
+      fixLog.rework_retry_history.length !== fixLog.rework_retry_count) {
+    return { status: "halt", reason: "fix-log-rework-retry-state-invalid" };
+  }
+  const gates = new Set(["challenge", "pre-write", "stale-intent", "class-verdict", "verification", "red-green", "investigator-output", "duplicate-intent", "architecture-check", "plan-readiness"]);
+  for (let index = 0; index < fixLog.rework_retry_history.length; index += 1) {
+    const item = fixLog.rework_retry_history[index];
+    if (!plainObject(item) || item.retry_number !== index + 1 || !gates.has(item.gate) ||
+        !validStringArray(item.finding_ids) || item.finding_ids.length === 0 ||
+        !nonBlankString(item.defect) || !nonBlankString(item.evidence)) {
+      return { status: "halt", reason: "fix-log-rework-retry-history-invalid" };
+    }
+  }
+
+  const authorizedIds = scope.finding_ids;
+  const findingIdsIn = [];
+  const collectArrayIds = (items, key) => {
+    if (!Array.isArray(items)) return;
+    for (const item of items) {
+      if (typeof item === "string") findingIdsIn.push(item);
+      else if (plainObject(item) && typeof item[key] === "string") findingIdsIn.push(item[key]);
+    }
+  };
+  for (const field of ["findings_addressed", "findings_deferred", "findings_wont_fix"]) {
+    collectArrayIds(fixLog[field], "finding_id");
+  }
+  for (const field of ["write_intents", "changes_summary", "fix_plans", "verification_cycles", "objective_evidence", "final_dispositions"]) {
+    collectArrayIds(fixLog[field], "finding_id");
+  }
+  for (const snapshot of fixLog.prior_cycle_snapshots ?? []) {
+    if (plainObject(snapshot)) collectArrayIds(snapshot.changes_summary, "finding_id");
+  }
+  for (const item of fixLog.rework_retry_history) collectArrayIds(item.finding_ids, "finding_id");
+  if (plainObject(fixLog.lifecycle_context) && typeof fixLog.lifecycle_context.finding_id === "string") {
+    findingIdsIn.push(fixLog.lifecycle_context.finding_id);
+  }
+
+  const isWithinAuthorizedScope = (findingId) => authorizedIds.some((parentId) => {
+    if (findingId === parentId) return true;
+    if (!findingId.startsWith(`${parentId}-`)) return false;
+    const suffix = findingId.slice(parentId.length + 1);
+    return /^(?:cls(?:[1-9][0-9]*|overflow)|sib[1-9][0-9]*)$/.test(suffix);
+  });
+  if (findingIdsIn.some((findingId) => !isWithinAuthorizedScope(findingId))) {
+    return { status: "halt", reason: "fix-log-finding-outside-authorized-scope" };
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+function validateAuthorizedWritePaths(fixLog) {
+  const scope = fixLog.authorized_scope;
+  for (const field of ["write_intents", "changes_summary", "files_modified", "files_created", "fix_plans", "prior_cycle_snapshots"]) {
+    if (fixLog[field] !== undefined && !Array.isArray(fixLog[field])) {
+      return { status: "halt", reason: "fix-log-write-path-records-invalid" };
+    }
+  }
+  const included = scope.included_paths.map((value) => canonicalProjectRelativePath(value, true));
+  const excluded = scope.excluded_paths.map((value) => canonicalProjectRelativePath(value, true));
+  if (included.some((value) => value === null) || excluded.some((value) => value === null)) {
+    return { status: "halt", reason: "fix-log-authorized-path-boundary-invalid" };
+  }
+  if (fixLog.command === "aivv-fix" && !nonBlankString(fixLog.target_project)) {
+    return { status: "halt", reason: "fix-log-target-project-missing" };
+  }
+
+  const targets = [];
+  const addTarget = (value, required = false) => {
+    if (value === undefined && !required) return null;
+    const normalized = canonicalProjectRelativePath(value);
+    if (normalized === null) return { status: "halt", reason: "fix-log-write-target-path-invalid" };
+    targets.push(normalized);
+    return null;
+  };
+  for (const intent of fixLog.write_intents ?? []) {
+    if (plainObject(intent)) {
+      const verdict = addTarget(intent.target_file, true);
+      if (verdict) return verdict;
+    }
+  }
+  for (const change of fixLog.changes_summary ?? []) {
+    if (plainObject(change) && change.file !== undefined) {
+      const verdict = addTarget(change.file);
+      if (verdict) return verdict;
+    }
+  }
+  for (const field of ["files_modified", "files_created"]) {
+    for (const file of fixLog[field] ?? []) {
+      const verdict = addTarget(file, true);
+      if (verdict) return verdict;
+    }
+  }
+  for (const plan of fixLog.fix_plans ?? []) {
+    if (plainObject(plan)) {
+      if (plan.expected_files !== undefined && !Array.isArray(plan.expected_files)) {
+        return { status: "halt", reason: "fix-log-write-path-records-invalid" };
+      }
+      for (const file of plan.expected_files ?? []) {
+        const verdict = addTarget(file, true);
+        if (verdict) return verdict;
+      }
+    }
+  }
+  for (const snapshot of fixLog.prior_cycle_snapshots ?? []) {
+    if (!plainObject(snapshot)) continue;
+    if (snapshot.changes_summary !== undefined && !Array.isArray(snapshot.changes_summary)) {
+      return { status: "halt", reason: "fix-log-write-path-records-invalid" };
+    }
+    for (const change of snapshot.changes_summary ?? []) {
+      if (plainObject(change) && change.file !== undefined) {
+        const verdict = addTarget(change.file);
+        if (verdict) return verdict;
+      }
+    }
+  }
+
+  for (const target of targets) {
+    if (excluded.some((boundary) => pathMatchesScopeBoundary(target, boundary))) {
+      return { status: "halt", reason: "fix-log-write-target-explicitly-excluded" };
+    }
+    if (included.length > 0 && !included.some((boundary) => pathMatchesScopeBoundary(target, boundary))) {
+      return { status: "halt", reason: "fix-log-write-target-outside-explicit-inclusions" };
+    }
+    if (fixLog.command === "aivv-fix") {
+      const targetVerdict = targetPathVerdict(target, fixLog.target_project);
+      if (targetVerdict.status === "halt") return targetVerdict;
+    }
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+function validateFixLogSourceReviewBinding(fixLog, contextFile) {
+  if (fixLog.source !== "review_id") return { status: "pass", reason: "pass" };
+  const relative = fixLog.source_review_relative_path;
+  if (!nonBlankString(relative) || path.isAbsolute(relative) || relative.split(/[\\/]/).includes("..")) {
+    return { status: "halt", reason: "fix-log-source-review-path-invalid" };
+  }
+  if (!nonBlankString(contextFile)) {
+    return { status: "halt", reason: "fix-log-source-review-context-missing" };
+  }
+
+  const storageHelper = path.join(path.dirname(fileURLToPath(import.meta.url)), "storage-paths.mjs");
+  let sourceReview;
+  try {
+    const content = execFileSync(process.execPath, [
+      storageHelper, "read", "--context", contextFile, "--area", "state",
+      "--relative", relative,
+    ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    sourceReview = JSON.parse(content);
+  } catch {
+    return { status: "halt", reason: "fix-log-source-review-read-failed" };
+  }
+  if (!plainObject(sourceReview) || sourceReview.id !== fixLog.source_review_id || !Array.isArray(sourceReview.findings)) {
+    return { status: "halt", reason: "fix-log-source-review-mismatch" };
+  }
+  const sourceFindingIds = new Set(sourceReview.findings
+    .filter((finding) => plainObject(finding) && nonBlankString(finding.ref))
+    .map((finding) => finding.ref));
+  if (fixLog.authorized_scope.finding_ids.some((id) => !sourceFindingIds.has(id))) {
+    return { status: "halt", reason: "fix-log-scope-finding-not-in-source-review" };
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+function storageRead(contextFile, area, relative) {
+  const storageHelper = path.join(path.dirname(fileURLToPath(import.meta.url)), "storage-paths.mjs");
+  return execFileSync(process.execPath, [
+    storageHelper, "read", "--context", contextFile, "--area", area,
+    "--relative", relative,
+  ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+}
+
+function validateReviewLogBackfill(candidate, contextFile, relative) {
+  if (!nonBlankString(contextFile) || !nonBlankString(relative) || path.isAbsolute(relative) ||
+      relative.split(/[\\/]/).includes("..")) {
+    return { status: "halt", reason: "review-log-backfill-location-invalid" };
+  }
+  let previous;
+  try {
+    previous = JSON.parse(storageRead(contextFile, "state", relative));
+  } catch {
+    return { status: "halt", reason: "review-log-backfill-prior-read-failed" };
+  }
+  if (!plainObject(previous) || !plainObject(candidate) || previous.id !== candidate.id ||
+      previous.schema_version !== 2 || previous.command !== "aivv" ||
+      !nonBlankString(previous.id) || !AIVV_INVOCATION_ID_RE.test(previous.id) ||
+      !REVIEW_LOG_STATUS_ENUM.has(previous.status) ||
+      !nonBlankString(previous.invoked_at) || !absolutePath(previous.target_project) ||
+      !Array.isArray(previous.findings) || previous.findings.some((finding) => !plainObject(finding))) {
+    return { status: "halt", reason: "review-log-backfill-identity-mismatch" };
+  }
+  const priorWithoutLink = { ...previous };
+  const candidateWithoutLink = { ...candidate };
+  delete priorWithoutLink.fix_invocation_id;
+  delete candidateWithoutLink.fix_invocation_id;
+  if (stableJson(priorWithoutLink) !== stableJson(candidateWithoutLink)) {
+    return { status: "halt", reason: "review-log-backfill-mutates-historical-review" };
+  }
+  const fixId = candidate.fix_invocation_id;
+  if (!nonBlankString(fixId) || !AIVV_INVOCATION_ID_RE.test(fixId)) {
+    return { status: "halt", reason: "review-log-backfill-fix-id-invalid" };
+  }
+  if (previous.fix_invocation_id !== undefined && previous.fix_invocation_id !== null &&
+      previous.fix_invocation_id !== fixId) {
+    return { status: "halt", reason: "review-log-backfill-existing-fix-link-conflict" };
+  }
+
+  let fixPaths;
+  try {
+    const storageHelper = path.join(path.dirname(fileURLToPath(import.meta.url)), "storage-paths.mjs");
+    fixPaths = JSON.parse(execFileSync(process.execPath, [
+      storageHelper, "list", "--context", contextFile, "--area", "state",
+      "--prefix", "fix-", "--archive",
+    ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+  } catch {
+    return { status: "halt", reason: "review-log-backfill-fix-list-failed" };
+  }
+  const expectedFixName = `fix-${fixId}.json`;
+  const matches = Array.isArray(fixPaths)
+    ? fixPaths.filter((candidatePath) => typeof candidatePath === "string" && candidatePath.split(/[\\/]/).at(-1) === expectedFixName)
+    : [];
+  const selectedFixPath = matches.includes(expectedFixName)
+    ? expectedFixName
+    : matches.length === 1 ? matches[0] : null;
+  if (!selectedFixPath) return { status: "halt", reason: "review-log-backfill-fix-log-not-found-or-ambiguous" };
+  let fixLog;
+  try {
+    fixLog = JSON.parse(storageRead(contextFile, "state", selectedFixPath));
+  } catch {
+    return { status: "halt", reason: "review-log-backfill-fix-log-read-failed" };
+  }
+  if (!plainObject(fixLog) || fixLog.id !== fixId || fixLog.source !== "review_id" ||
+      fixLog.source_review_id !== candidate.id || fixLog.source_review_relative_path !== relative) {
+    return { status: "halt", reason: "review-log-backfill-fix-source-mismatch" };
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+export function validateFixLogNewWrite(fixLog, { contextFile } = {}) {
   if (!fixLog || typeof fixLog !== "object" || Array.isArray(fixLog)) {
     return { status: "halt", reason: "fix-log-object-invalid" };
+  }
+  if (!nonBlankString(fixLog.id) || !AIVV_INVOCATION_ID_RE.test(fixLog.id)) {
+    return { status: "halt", reason: "fix-log-id-invalid" };
   }
   const storageContextVerdict = validateStorageContext(fixLog.storage_context, fixLog.target_project, "fix-log");
   if (storageContextVerdict.status === "halt") return storageContextVerdict;
@@ -1290,6 +1822,10 @@ export function validateFixLogNewWrite(fixLog) {
   if (!FIX_LOG_STATUS_ENUM.has(fixLog.status)) {
     return { status: "halt", reason: "fix-log-status-invalid" };
   }
+  const scopeAndRetryVerdict = validateAuthorizedScopeAndRetryState(fixLog);
+  if (scopeAndRetryVerdict.status === "halt") return scopeAndRetryVerdict;
+  const scopePathsVerdict = validateAuthorizedWritePaths(fixLog);
+  if (scopePathsVerdict.status === "halt") return scopePathsVerdict;
   const lifecycleContextVerdict = validateFixLogLifecycleContext(fixLog);
   if (lifecycleContextVerdict.status === "halt") return lifecycleContextVerdict;
   if (fixLog.source !== "review_id") {
@@ -1311,6 +1847,8 @@ export function validateFixLogNewWrite(fixLog) {
   if (fixLog.source_review_id.trim().startsWith("review-")) {
     return { status: "halt", reason: "fix-log-source-review-id-prefixed" };
   }
+  const sourceReviewVerdict = validateFixLogSourceReviewBinding(fixLog, contextFile);
+  if (sourceReviewVerdict.status === "halt") return sourceReviewVerdict;
   if (!Array.isArray(fixLog.findings_addressed) || fixLog.findings_addressed.length === 0 || fixLog.findings_addressed.some((id) => !nonBlankString(id))) {
     return { status: "halt", reason: "fix-log-findings-addressed-invalid" };
   }
@@ -1359,31 +1897,175 @@ export function validateFixLogNewWrite(fixLog) {
   return { status: "pass", reason: "pass" };
 }
 
-export function validateFile(file) {
-  return validateFixture(JSON.parse(fs.readFileSync(file, "utf8")));
+export function validateFixLogTransition(fixLog, previousFixLog, { contextFile } = {}) {
+  const candidateVerdict = validateFixLogNewWrite(fixLog, { contextFile });
+  if (candidateVerdict.status === "halt") return candidateVerdict;
+  if (!nonBlankString(fixLog.id)) {
+    return { status: "halt", reason: "fix-log-transition-id-missing" };
+  }
+
+  if (previousFixLog === undefined) {
+    const initialVerificationRetries = fixLog.rework_retry_history.filter((entry) => entry.gate === "verification").length;
+    if (fixLog.status !== "in-progress" || fixLog.cycle_count !== 1 || initialVerificationRetries !== 0) {
+      return { status: "halt", reason: "fix-log-initial-baseline-invalid" };
+    }
+    return { status: "pass", reason: "pass" };
+  }
+
+  if (!plainObject(previousFixLog) || previousFixLog.id !== fixLog.id) {
+    return { status: "halt", reason: "fix-log-transition-invocation-mismatch" };
+  }
+  const candidateWarnings = Array.isArray(fixLog.warnings) ? fixLog.warnings : [];
+  const reapedResume = previousFixLog.status === "abandoned" &&
+    Array.isArray(previousFixLog.warnings) &&
+    previousFixLog.warnings.some((warning) => plainObject(warning) && warning.code === "reaped-stale") &&
+    fixLog.status === "in-progress" &&
+    !candidateWarnings.some((warning) => plainObject(warning) && warning.code === "reaped-stale");
+  if (previousFixLog.status !== "in-progress" && !reapedResume) {
+    return { status: "halt", reason: "fix-log-transition-prior-state-not-in-progress" };
+  }
+  if (validateAuthorizedScopeAndRetryState(previousFixLog).status === "halt") {
+    return { status: "halt", reason: "fix-log-transition-baseline-missing-or-invalid" };
+  }
+  if (stableJson(previousFixLog.authorized_scope) !== stableJson(fixLog.authorized_scope)) {
+    return { status: "halt", reason: "fix-log-authorized-scope-mutated" };
+  }
+  for (const field of ["source", "source_review_id", "source_review_relative_path", "source_argument", "target_project", "storage_context", "lifecycle_context"]) {
+    if (stableJson(previousFixLog[field]) !== stableJson(fixLog[field])) {
+      return { status: "halt", reason: `fix-log-${field.replaceAll("_", "-")}-mutated` };
+    }
+  }
+  const priorCount = previousFixLog.rework_retry_count;
+  const nextCount = fixLog.rework_retry_count;
+  if (nextCount < priorCount || nextCount > priorCount + 1) {
+    return { status: "halt", reason: "fix-log-rework-retry-count-transition-invalid" };
+  }
+  const priorHistory = previousFixLog.rework_retry_history;
+  const nextHistory = fixLog.rework_retry_history;
+  if (priorHistory.some((entry, index) => stableJson(entry) !== stableJson(nextHistory[index]))) {
+    return { status: "halt", reason: "fix-log-rework-retry-history-mutated" };
+  }
+  if (nextCount === priorCount && stableJson(priorHistory) !== stableJson(nextHistory)) {
+    return { status: "halt", reason: "fix-log-rework-retry-history-mutated" };
+  }
+  const priorCycle = previousFixLog.cycle_count;
+  const nextCycle = fixLog.cycle_count;
+  const priorVerificationRetries = priorHistory.filter((entry) => entry.gate === "verification").length;
+  const nextVerificationRetries = nextHistory.filter((entry) => entry.gate === "verification").length;
+  const verificationRetryAdded = nextVerificationRetries === priorVerificationRetries + 1 &&
+    nextHistory[nextHistory.length - 1]?.gate === "verification";
+  const cycleAdvanced = nextCycle === priorCycle + 1;
+  if (!Number.isInteger(priorCycle) || priorCycle < 1 ||
+      !Number.isInteger(nextCycle) || (nextCycle !== priorCycle && !cycleAdvanced) ||
+      cycleAdvanced !== verificationRetryAdded) {
+    return { status: "halt", reason: "fix-log-verification-cycle-unbacked" };
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+export function validateFile(file, options = {}) {
+  const fixture = JSON.parse(fs.readFileSync(file, "utf8"));
+  const verdict = validateFixture(fixture, options);
+  if (verdict.status !== "halt") return verdict;
+  if (!Number.isInteger(fixture.rework_retry_count) || fixture.rework_retry_count < 0 ||
+      fixture.max_rework_retries !== 3) {
+    return {
+      status: "halt",
+      reason: "rework-retry-budget-metadata-missing-or-invalid",
+      blocked_reason: verdict.reason,
+    };
+  }
+  if (fixture.rework_retry_count >= fixture.max_rework_retries) {
+    return {
+      status: "halt",
+      reason: "rework-retry-budget-exhausted",
+      blocked_reason: verdict.reason,
+    };
+  }
+  return verdict;
+}
+
+function loadPersistedFixLog(contextFile, fixLog) {
+  const storageContext = JSON.parse(fs.readFileSync(contextFile, "utf8"));
+  if (!plainObject(storageContext) ||
+      storageContext.target !== fixLog.target_project ||
+      !plainObject(fixLog.storage_context) ||
+      storageContext.instance_key !== fixLog.storage_context.instance_key) {
+    return { error: "fix-log-transition-storage-context-mismatch" };
+  }
+  const storageHelper = path.join(path.dirname(fileURLToPath(import.meta.url)), "storage-paths.mjs");
+  try {
+    const content = execFileSync(process.execPath, [
+      storageHelper, "read", "--context", contextFile, "--area", "state",
+      "--relative", `fix-${fixLog.id}.json`,
+    ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    return { previous: JSON.parse(content) };
+  } catch (error) {
+    const stderr = typeof error?.stderr === "string" ? error.stderr : error?.stderr?.toString("utf8") ?? "";
+    if (stderr.includes("STORAGE_NOT_FOUND")) return { missing: true };
+    return { error: "fix-log-transition-state-read-failed" };
+  }
 }
 
 function main(argv) {
   const fixLogIndex = argv.indexOf("--fix-log");
   if (fixLogIndex >= 0) {
     const fixLogFile = argv[fixLogIndex + 1];
-    if (!fixLogFile) {
-      console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fix-log <candidate-fix-log.json>");
+    const contextIndex = argv.indexOf("--context");
+    const contextFile = contextIndex >= 0 ? argv[contextIndex + 1] : "";
+    const newIndex = argv.indexOf("--new");
+    const updateIndex = argv.indexOf("--update");
+    if (!fixLogFile || !contextFile || (newIndex >= 0) === (updateIndex >= 0)) {
+      console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fix-log <candidate-fix-log.json> --context <storage-context.json> --new|--update");
       return 2;
     }
-    const verdict = validateFixLogNewWrite(JSON.parse(fs.readFileSync(fixLogFile, "utf8")));
+    const candidate = JSON.parse(fs.readFileSync(fixLogFile, "utf8"));
+    if (!nonBlankString(candidate.id) || !AIVV_INVOCATION_ID_RE.test(candidate.id)) {
+      console.log(JSON.stringify({ status: "halt", reason: "fix-log-id-invalid" }));
+      return 1;
+    }
+    const persisted = loadPersistedFixLog(contextFile, candidate);
+    let verdict;
+    if (persisted.error) {
+      verdict = { status: "halt", reason: persisted.error };
+    } else if (newIndex >= 0) {
+      verdict = persisted.previous
+        ? { status: "halt", reason: "fix-log-invocation-already-exists" }
+        : validateFixLogTransition(candidate, undefined, { contextFile });
+    } else {
+      verdict = persisted.missing
+        ? { status: "halt", reason: "fix-log-transition-prior-log-missing" }
+        : validateFixLogTransition(candidate, persisted.previous, { contextFile });
+    }
     console.log(JSON.stringify(verdict));
     return verdict.status === "pass" ? 0 : 1;
   }
 
   const reviewLogIndex = argv.indexOf("--review-log");
-  if (reviewLogIndex >= 0) {
-    const reviewLogFile = argv[reviewLogIndex + 1];
-    if (!reviewLogFile) {
-      console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log <candidate-review-log.json>");
+  const reviewLogBackfillIndex = argv.indexOf("--review-log-backfill");
+  if (reviewLogIndex >= 0 || reviewLogBackfillIndex >= 0) {
+    if (reviewLogIndex >= 0 && reviewLogBackfillIndex >= 0) {
+      console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log <new-review-log.json> | --review-log-backfill <candidate-review-log.json> --context <storage-context.json> --relative <stored-review-path>");
       return 2;
     }
-    const verdict = validateReviewLogNewWrite(JSON.parse(fs.readFileSync(reviewLogFile, "utf8")));
+    const strictScopeBinding = reviewLogIndex >= 0;
+    const reviewLogFile = argv[(strictScopeBinding ? reviewLogIndex : reviewLogBackfillIndex) + 1];
+    const contextIndex = argv.indexOf("--context");
+    const relativeIndex = argv.indexOf("--relative");
+    const contextFile = contextIndex >= 0 ? argv[contextIndex + 1] : "";
+    const relative = relativeIndex >= 0 ? argv[relativeIndex + 1] : "";
+    if (!reviewLogFile) {
+      console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log <new-review-log.json> | --review-log-backfill <candidate-review-log.json> --context <storage-context.json> --relative <stored-review-path>");
+      return 2;
+    }
+    if (!strictScopeBinding && (!contextFile || !relative)) {
+      console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log-backfill <candidate-review-log.json> --context <storage-context.json> --relative <stored-review-path>");
+      return 2;
+    }
+    const candidate = JSON.parse(fs.readFileSync(reviewLogFile, "utf8"));
+    const verdict = strictScopeBinding
+      ? validateReviewLogNewWrite(candidate, { requireBoundScopeConfirmation: true })
+      : validateReviewLogBackfill(candidate, contextFile, relative);
     console.log(JSON.stringify(verdict));
     return verdict.status === "pass" ? 0 : 1;
   }
@@ -1391,12 +2073,15 @@ function main(argv) {
   const fileIndex = argv.indexOf("--fixture");
   const file = fileIndex >= 0 ? argv[fileIndex + 1] : argv[0];
   if (!file) {
-    console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fixture <fixture.json>");
+    console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fixture <fixture.json> [--proposal-only | --context <storage-context.json>]");
     console.error("   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log <candidate-review-log.json>");
     console.error("   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fix-log <candidate-fix-log.json>");
     return 2;
   }
-  const verdict = validateFile(file);
+  const contextIndex = argv.indexOf("--context");
+  const contextFile = contextIndex >= 0 ? argv[contextIndex + 1] : "";
+  const proposalOnly = argv.includes("--proposal-only");
+  const verdict = validateFile(file, { contextFile, proposalOnly });
   console.log(JSON.stringify(verdict));
   return verdict.status === "pass" ? 0 : 1;
 }

@@ -7,6 +7,12 @@ description: "Use to inspect AIVV review and fix history, render or export repor
 
 The viewer reads AIVV history, normalizes legacy review logs into a canonical envelope, and presents summaries, reports, or a multi-review findings browser.
 
+Before a viewer invocation reads history or calls a shared helper, pin and
+preflight one `AIVV_ROOT` with the `aivv-view` profile. Reuse that absolute path
+for the view scripts and compatibility-index helper. If preflight reports
+`AIVV_INSTALLATION_INCOMPLETE`, show the diagnostic once and stop; do not
+resolve another cache or retry missing files.
+
 ## Usage
 
 ```bash
@@ -113,7 +119,7 @@ The next eligible agent explicitly consumes the request with `/aivv-fix --action
 
 ## Historical Compatibility Index
 
-Historical review/fix logs may lack deterministic fingerprints or canonical join keys. Compatibility is derived-index-only: resolve `AIVV_ROOT` through the bundled `.aivv/runtime-root.md` runtime-root contract, then run `node "$AIVV_ROOT/tools/state-compat-index.mjs"` to scan the canonical external state store or an explicitly selected historical store, emit a schema-validated `.aivv/schemas/state-compat-index.json` artifact, and leave original logs unchanged.
+Historical review/fix logs may lack deterministic fingerprints or canonical join keys. Compatibility is derived-index-only: use the `AIVV_ROOT` pinned and preflighted at viewer invocation start, then run `node "$AIVV_ROOT/tools/state-compat-index.mjs"` to scan the canonical external state store or an explicitly selected historical store, emit a schema-validated `.aivv/schemas/state-compat-index.json` artifact, and leave original logs unchanged.
 
 The helper proposes only deterministic values from existing fields and records ambiguous or non-backfillable gaps as `unsafe`. It rejects mutation flags such as `--apply` and `--in-place`; in-place historical migration requires a separate future plan and explicit authorization.
 

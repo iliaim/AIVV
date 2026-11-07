@@ -13,7 +13,7 @@ Evaluate execution readiness in this order:
 3. **Containment check**: when active blast radius exists, decide whether a reversible containment action is available. Containment is symptom-level risk reduction; it never replaces root-cause investigation or Branch A/B/C/D/E/F execution.
 4. **Investigation route**: use the low-risk fast path only when every eligibility gate passes; otherwise dispatch or fall back per `investigation-dispatch.md`. Preserve category and `recommended_next_step` for later gates.
 5. **Plan reconciliation**: merge batches whose `files_to_modify` overlap, handle special verdicts, run architectural-remediation and Gate 1/2/3 checks, then compute `fix_confidence`.
-6. **Write readiness**: materialize fresh `write_intents[]`, run detector assertions, and dispatch Step 4.5 CHALLENGE when triggered. A challenger REVISE/REJECT invalidates affected intents and returns to investigation/planning.
+6. **Write readiness**: materialize fresh `write_intents[]`, run detector assertions, and dispatch Step 4.5 CHALLENGE when triggered. Only a specific evidence-backed in-scope defect can produce a REVISE/REJECT re-entry; it consumes the shared retry budget and invalidates affected intents before investigation/planning.
 7. **Final route classification**: after write intents, challenge, red-green intent, and consequence gates settle, classify each finding as exactly one of Auto-eligible, Decision queue, Architecture decision queue, or Skipped by policy.
 8. **Execution halt or dispatch**: `--dry-run` halts before stateful remediation writes. Non-dry-run findings approved for execution dispatch to Branch A/B/C/D/E/F by `category`, then run Step 5.4+ mechanical checks and Step 6 verification.
 

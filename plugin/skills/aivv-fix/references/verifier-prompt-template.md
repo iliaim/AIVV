@@ -2,7 +2,7 @@
 
 Use the fenced template below verbatim when building the scoped verification prompt in Step 6. Fill in all `{placeholder}` values from the session change log. **When the orchestrator's pre-evaluation gate matches (Step 6 step 2 — `heading_count >= 3` OR `warnings_count > 0`), additionally (a) populate the fenced template's `## Step 5.5 Warnings` section from `jq '.warnings' <fix_log>`, AND (b) append the `ADDITIONAL VERIFICATION` section below the closing fence as the prompt's terminal block. When the gate does not match, leave `## Step 5.5 Warnings` as the empty-array placeholder and OMIT the `ADDITIONAL VERIFICATION` addendum entirely.**
 
-**Native prompt boundary:** before each native host dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, session changes, warnings, evidence, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
+**Native prompt boundary:** before each native host dispatch, use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, session changes, warnings, evidence, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
 
 **Portable role source:** `.aivv/prompts/verifier-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific change log and verification checklist; it must not drift from the portable role's authority, untrusted-content, and scoped-verification requirements.
 
@@ -14,6 +14,15 @@ Verify that the following findings have been properly resolved by the applied fi
 
 ## Original Findings (Checklist)
 {For each finding: ID, severity, description, proposed fix}
+
+## Immutable Authorized Scope
+{authorized_scope from the fix log}
+
+Verify that the applied changes resolve the original findings within this
+scope. Treat `included_paths` and `excluded_paths` as enforceable
+project-relative write limits. A changed implementation is acceptable; a
+changed goal or expanded boundary is not. Report any scope drift as unresolved,
+even if the new task was completed successfully.
 
 ## Session Changes Applied (PRIMARY — this is what you are verifying)
 **Important**: These changes come from the orchestrator's session log, NOT from git.
@@ -68,7 +77,7 @@ When reporting on each finding, use one of three resolution states:
 - **RESOLVED — fix introduced new issue: [describe]**: finding addressed, but step 6 found a separate problem in the fix code.
 - **NOT RESOLVED**: finding not yet addressed.
 
-*(Orchestrator fix_outcome mapping: `RESOLVED — implementation clean` → `fix_outcome: resolved`; `RESOLVED — fix introduced new issue` → `fix_outcome: verifier-pass-with-residual-warning` + new finding surfaced; `NOT RESOLVED` → re-enters Step 3 INVESTIGATE.)*
+*(Orchestrator fix_outcome mapping: `RESOLVED — implementation clean` → `fix_outcome: resolved`; `RESOLVED — fix introduced new issue` → `fix_outcome: verifier-pass-with-residual-warning` + new finding surfaced; `NOT RESOLVED` → the orchestrator checks whether the verifier supplied a specific evidence-backed defect and an actionable in-scope correction. Only then may it consume the shared retry budget and re-enter Step 3; otherwise record unresolved and stop.)*
 
 ## Working Directory
 

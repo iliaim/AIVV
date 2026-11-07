@@ -5,7 +5,7 @@ Read before provider-backed dispatch/synthesis. Owns Case D
 
 ## Runtime Root
 
-Resolve AIVV_ROOT through the bundled runtime-root contract. Host adapters own active and legacy install locations; do not infer the runtime from the consuming project's tools directory.
+Use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv` invocation's start. Do not resolve it again during dispatch or infer the runtime from the consuming project's tools directory. Host adapters own active and legacy install locations.
 
 Set `PROMPT_BUNDLE_MJS="$AIVV_ROOT/tools/aivv-prompt-bundle.mjs"` and
 `CATALOG_PATH="$AIVV_ROOT/tools/model-catalog.json"`. Resolve provider IDs,

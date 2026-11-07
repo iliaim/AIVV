@@ -13,25 +13,27 @@ aivv_view_runtime_root() {
   fi
 
   local codex_home="${CODEX_HOME:-${HOME:-}/.codex}"
-  runtime_root_helper="${AIVV_RUNTIME_ROOT_HELPER:-}"
-  local candidate
-  for candidate in \
-    "${AIVV_ROOT:-}/.aivv/runtime-root.mjs" \
-    "${CLAUDE_PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-    "${PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-    "$skill_dir/.aivv/runtime-root.mjs" \
-    "$skill_dir/../../.aivv/runtime-root.mjs" \
-    "$codex_home/aivv-runtime/.aivv/runtime-root.mjs"; do
-    if [ -z "$runtime_root_helper" ] && [ -f "$candidate" ]; then
-      runtime_root_helper="$candidate"
-    fi
-  done
+  if [ -n "${AIVV_ROOT:-}" ]; then
+    runtime_root_helper="$AIVV_ROOT/.aivv/runtime-root.mjs"
+  elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+    runtime_root_helper="$CLAUDE_PLUGIN_ROOT/.aivv/runtime-root.mjs"
+  elif [ -n "${PLUGIN_ROOT:-}" ]; then
+    runtime_root_helper="$PLUGIN_ROOT/.aivv/runtime-root.mjs"
+  elif [ -n "${AIVV_RUNTIME_ROOT_HELPER:-}" ]; then
+    runtime_root_helper="$AIVV_RUNTIME_ROOT_HELPER"
+  elif [ -f "$skill_dir/../../plugin.json" ]; then
+    runtime_root_helper="$skill_dir/../../.aivv/runtime-root.mjs"
+  elif [ -d "$skill_dir/.aivv" ]; then
+    runtime_root_helper="$skill_dir/.aivv/runtime-root.mjs"
+  else
+    runtime_root_helper="$codex_home/aivv-runtime/.aivv/runtime-root.mjs"
+  fi
 
   if [ ! -f "$runtime_root_helper" ]; then
-    echo "aivv-view: AIVV runtime-root resolver not found: $runtime_root_helper" >&2
-    return 1
+    echo "[AIVV] AIVV_INSTALLATION_INCOMPLETE: runtime-root resolver not found in the selected installation. Repair or reinstall this AIVV installation, restart the host, and retry in a new invocation." >&2
+    return 3
   fi
-  node "$runtime_root_helper" --print "$skill_dir"
+  node "$runtime_root_helper" --preflight aivv-view "$skill_dir"
 }
 
 require_jq() {

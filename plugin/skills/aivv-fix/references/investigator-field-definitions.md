@@ -379,7 +379,7 @@ Hash, stale-intent, and bypass invariants are delegated to [write-intents-and-pr
 
 ### `pre_write_assertions` (optional, sibling on `fix_proposal`; required inside `write_intents[]`)
 
-Required when `verbatim_doc_content` contains a fenced ```` ```json ```` or ```` ```jsonschema ```` block, an `L<N>`-form line citation, or any deterministic structural assertion. Step 5.4 PRE-WRITE-VALIDATE runs these assertions before applying the fix. Investigators that omit `pre_write_assertions` on schema-bearing or citation-bearing fixes get the fix re-investigated (Branch E).
+Required when `verbatim_doc_content` contains a fenced ```` ```json ```` or ```` ```jsonschema ```` block, an `L<N>`-form line citation, or any deterministic structural assertion. Step 5.4 PRE-WRITE-VALIDATE runs these assertions before applying the fix. Omission on schema-bearing or citation-bearing fixes is a specific investigator-output defect: re-author only inside `authorized_scope` and within the shared retry budget; otherwise leave the finding unresolved (Branch E).
 
 Kinds: `jq-parses`, `schema-coherence`, `line-cite-valid`, and `shell-syntax-valid`. Their per-kind args and halt behavior live in [write-intents-and-prewrite-validation.md](write-intents-and-prewrite-validation.md). The legacy `count-matches-enumeration` kind remains intentionally dropped; eliminate count-claims-paired-with-enumerations at authoring time per maintainer guidance dev.119+.
 

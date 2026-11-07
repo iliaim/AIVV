@@ -4,8 +4,13 @@ Read before native reviewer dispatch, lifecycle cleanup, or same-agent fallback.
 
 ## Preflight
 
-Before prompts, confirm Step 4 `review_mode`. If preflight/dispatch changes the
-path, update Review Dispatch Metadata first.
+Before prompts, confirm Step 4 `review_mode`. If preflight/dispatch changes any
+field of `resolved_method`—including review mode, reviewer count or assignments,
+lenses, depth, replication, direction, severity model, or provider/model/reasoning—
+update the canonical `resolved_method`, supersede the
+current proposal, close its question, and announce a new proposal before any
+replacement dispatch. Ask only under the scope/method confirmation rules; an
+old confirmation never authorizes the changed method.
 
 1. Check `can_spawn_cold_agents` via `.aivv/runtime-contract.md` and platform adapter.
 2. <!-- Codex-SPECIFIC --> In Codex, hidden subagent tools are not proof of
@@ -69,9 +74,9 @@ v0.1 limitation.
 Read resolved `multi_model_enabled` from Step 1.5 after CLI/project/user/default
 binding. Per-run `--multi-model` / `--no-multi-model` override configs. If true,
 skip Cases A/B/C and read `multi-model-dispatch.md`; provider availability is
-only `node "$AIVV_ROOT/tools/dispatch.mjs" --probe ...`, after resolving
-`AIVV_ROOT` through the shared runtime-root contract. Do not infer from env vars/model
-files or Anthropic-internal variants. If false, branch on N.
+only `node "$AIVV_ROOT/tools/dispatch.mjs" --probe ...` using the root pinned
+and preflighted at this `/aivv` invocation's start. Do not re-resolve it or infer
+from env vars/model files or Anthropic-internal variants. If false, branch on N.
 
 ## Case A: N = 1
 

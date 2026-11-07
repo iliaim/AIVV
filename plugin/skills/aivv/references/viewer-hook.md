@@ -14,24 +14,12 @@ Read from `skills/aivv/SKILL.md` when optional post-review HTML viewer behavior 
 If resolved config has `post_review_html_viewer: true` AND no fix chain will run (`--fix` was not set and resolved `auto_chain_fix` did not set `fix_chain_requested = true`), render a static HTML report after Step 7.5 has written durable review state:
 
 ```bash
-AIVV_CODEX_HOME="${CODEX_HOME:-${HOME:-}/.codex}"
-AIVV_RUNTIME_ROOT_HELPER="${AIVV_RUNTIME_ROOT_HELPER:-}"
-for AIVV_RUNTIME_ROOT_CANDIDATE in \
-  "${AIVV_ROOT:-}/.aivv/runtime-root.mjs" \
-  "${CLAUDE_PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-  "${PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-  "${SKILL_BASE_DIR:-}/.aivv/runtime-root.mjs" \
-  "${SKILL_BASE_DIR:-}/../../.aivv/runtime-root.mjs" \
-  "$AIVV_CODEX_HOME/aivv-runtime/.aivv/runtime-root.mjs"; do
-  if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ] && [ -f "$AIVV_RUNTIME_ROOT_CANDIDATE" ]; then
-    AIVV_RUNTIME_ROOT_HELPER="$AIVV_RUNTIME_ROOT_CANDIDATE"
-  fi
-done
-if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ]; then
-  echo "AIVV runtime-root resolver not found; set AIVV_ROOT, PLUGIN_ROOT, CODEX_HOME, or SKILL_BASE_DIR" >&2
-  exit 1
+# AIVV_ROOT was resolved and preflighted once at invocation start. Keep this
+# post-review hook on that same installation; do not resolve again here.
+if [ -z "${AIVV_ROOT:-}" ]; then
+  echo "AIVV invocation lost its preflighted runtime root; viewer hook stopped" >&2
+  exit 3
 fi
-AIVV_ROOT="$(node "$AIVV_RUNTIME_ROOT_HELPER" --print "${SKILL_BASE_DIR:-}")"
 storage_context="$(cat "$storage_context_file")"
 state_dir="$(printf '%s' "$storage_context" | jq -r .state_dir)"
 reports_dir="$(printf '%s' "$storage_context" | jq -r .reports_dir)"

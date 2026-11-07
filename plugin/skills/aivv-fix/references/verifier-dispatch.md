@@ -8,7 +8,7 @@ Read from `skills/aivv-fix/SKILL.md` before Step 6 VERIFY.
 - Scoped verifier dispatch
 - Same-agent verification discipline
 - Verifier result parsing
-- Convergence gate
+- Shared retry limit
 
 ### Step 6: VERIFY — Scoped Re-Verification
 
@@ -16,12 +16,14 @@ After all fixes applied:
 
 1. **Compile verification context from session change log** (NOT from git):
    - Use the `session_changes` log from Step 5 — this is the source of truth. Read `<state_dir>/fix-<invocation_id>.json` (canonical external state; legacy originals are read-only). `<target>` is `session_changes.target_project` from Step 5.0.
+   - Read `authorized_scope` from that same fix log and copy it unchanged into the verifier prompt; do not reconstruct or widen it from current context.
    - For each file in `files_modified` and `files_created`: read the current file content
    - Compile the original findings as a verification checklist
    - **Do NOT rely on `git diff` or `git log`** — in multi-agent parallel environments, other sessions may be making unrelated commits that would confuse the verifier
 
 2. **Dispatch a scoped verifier**: Before spawning a verifier, apply the lifecycle pre-spawn cleanup rule from Host Adapter Mapping. This is the same AIVV-owned-handle-only cleanup used before investigator dispatch; preserve any cleanup warning in `session_changes.warnings` when possible. Then launch a cold reviewer subagent using the template in [verifier-prompt-template.md](verifier-prompt-template.md) — read and fill in all `{placeholder}` values from the session change log before sending.
 
+   - `{authorized_scope}` → copy the immutable object from the same fix log byte-for-byte. The verifier must check the original goal and boundaries; it must not infer a revised task from later summaries.
    - `{target_project}` → fill with `session_changes.target_project` (the absolute path resolved at Step 5.0 and cached on the session object). **Worktree-CWD note (, sibling of #30/#39):** the verifier greps `<cited_file>` / `<written_doc_file>` and "find ALL occurrences in the modified file" — and every such path is recorded **relative** to the target project (per the Step 5.7 `os.path.join(target_project, entry.file)` contract). The verifier subagent inherits the orchestrator's shell CWD, which may be a stale git worktree at a different commit than the target, so a bare relative grep would verify against the wrong tree (false `RESOLVED`/`NOT RESOLVED`). The template's `## Working Directory` block anchors all file operations on this absolute path — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint). **Timing advantage over the Step-3 investigator:** the verifier dispatches at Step 6, *after* the canonical Step-5.0 resolution, so `session_changes.target_project` is already cached and absolute — fill it directly, with none of the provisional-resolution nuance the investigator's Step-3 (pre-Step-5.0) dispatch required.
 
    Track each verifier handle with `cycle_number`, `role: "verifier"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 6 parses the verifier verdict for the current cycle. Close the consumed verifier before spawning any next-cycle verifier.
@@ -67,12 +69,12 @@ After all fixes applied:
 3. **Parse verification results**:
    - After parsing the verifier verdict for the current cycle, mark the verifier handle `output_consumed: true`. Close the consumed verifier before the next-cycle verifier is spawned. If the next immediate step requires targeted interactive follow-up with the verifier for clarification, keep that verifier's `output_consumed` value `false` until the clarification is integrated; surface and persist the reason in `session_changes.warnings` when possible.
    - **All findings verified as resolved + no regressions** → Proceed to Step 7
-   - **Some findings not resolved** → Do NOT immediately retry the fix. First diagnose why it didn't resolve: *"Was the root cause identification wrong? Was the fix addressing the symptom instead of the cause?"* Increment cycle counter, then loop to Step 3 — the investigator must re-examine the root cause, not just propose a different fix for the same symptom
+   - **Some findings not resolved** → Do NOT retry based on the label alone. Read the verifier's cited evidence. Re-enter Step 3 only when it establishes a specific defect in the prior fix or investigation and identifies a concrete correction inside `authorized_scope`; in one validated state update, append one evidence-backed `verification` retry event, increment the shared counter, and increment `cycle_count` before returning to Step 3. If the verifier reports uncertainty, missing context, or an unsupported conclusion without an actionable defect, stop that finding as unresolved and report the evidence gap without consuming a retry. At the cap, report unresolved and stop.
    - **New regressions introduced** → Use the session change log to isolate which batch caused the regression:
      1. Look at `session_changes.changes_summary` — each entry records which finding it addresses and which files it touched
      2. Cross-reference the regression location against which batch modified those files
      3. Present the specific batch + files to the user as the likely regression source
-     4. Increment cycle counter, loop to Step 3 for the regression only — not the full finding set
+     4. Re-enter Step 3 for the regression only when the evidence identifies a specific fix defect and a concrete in-scope correction. In one validated state update, append one evidence-backed `verification` retry event, increment the shared counter, and increment `cycle_count` before returning to Step 3. If not, or if the shared budget is exhausted, stop and report the regression and unresolved findings; do not reopen scope.
      > **Note**: This is inter-batch isolation, not intra-batch. Fixes within a batch are interdependent by design (that is why they were batched). Regression hunting happens at the batch boundary, not within a batch.
 
    **Auto-emit calibration on regression (Step 11b):**
@@ -100,24 +102,10 @@ After all fixes applied:
 
    Emit these records in Step 7 DOCUMENT (not here). Queue them in an in-memory `pending_calibration` list.
 
-4. **Convergence enforcement**:
-   - Track cycle count (starts at 1)
-   - **If cycle count > 3**: Stop looping. This is NOT a failed hypothesis — this is a wrong architecture. Present the architectural question to the user:
-
-     > The resolve-verify loop has not converged after 3 cycles. {N} findings remain unresolved.
-     >
-     > **Before attempting more fixes, look for these architectural problem signals:**
-     > - Each fix reveals new shared state, coupling, or a problem in a different place
-     > - Fixes require "massive refactoring" to implement correctly
-     > - Each fix creates new symptoms elsewhere
-     > - The same root cause keeps reappearing in different forms
-     >
-     > **If any of these match, the architecture needs rethinking — not more fixes.**
-     > Should we: (A) refactor the underlying architecture that is causing these issues, or (B) document the remaining findings as known issues and proceed?
-     >
-     > Here are the remaining findings and what was tried in each cycle: {cycle_history}
-
-   - Do NOT attempt a 4th fix cycle without explicit user direction after presenting the above.
-   - **If findings increased** from previous cycle (regression): Stop immediately. Present the `session_changes` log to the user, identify which batch likely caused the regression based on which files were modified, and recommend reverting the specific files listed. Do NOT assume git state is clean — inform the user which files to check.
+4. **Shared retry-budget enforcement**:
+   - `cycle_count` starts at 1. Increment it in the same validated update as each accepted `verification` retry, before re-entering Step 3; the next Step 6 verifier uses that value. It is not a separate retry cap.
+   - One `/aivv-fix` invocation has `max_rework_retries: 3`. Each actionable verifier failure that re-enters investigation consumes one retry, shared with plan-readiness, challenger, pre-write, stale-intent, class-verdict, architecture-check, investigator-output, duplicate-intent, and red-green rework.
+   - At `rework_retry_count == max_rework_retries`, stop re-entry and report each unresolved finding with the cycle history and evidence. Do not ask the user to authorize another cycle or to reopen the already-authorized scope. A later top-level fix request is a new invocation.
+   - **If findings increased** from the previous cycle (regression): stop immediately. Present the `session_changes` evidence, identify which batch likely introduced the regression, and report the affected findings unresolved. Do NOT assume git state is clean; name the files the user should inspect. Do not start another cycle from the regression report.
 
 ---
