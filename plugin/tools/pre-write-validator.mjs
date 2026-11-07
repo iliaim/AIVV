@@ -1062,7 +1062,7 @@ function validateBoundReviewMethod(reviewLog) {
     model: entry.model ?? null,
     reasoning: entry.reasoning ?? null,
   }));
-  if (method.reviewers.some((entry) =>
+  if (!Array.isArray(method.reviewers) || method.reviewers.some((entry) =>
     !plainObject(entry) || !Object.prototype.hasOwnProperty.call(entry, "provider") ||
     !Object.prototype.hasOwnProperty.call(entry, "model") ||
     !Object.prototype.hasOwnProperty.call(entry, "reasoning")) ||
