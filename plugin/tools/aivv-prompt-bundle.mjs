@@ -181,13 +181,7 @@ function sessionCategoryLines(sessionContext, canonicalField, label, unavailable
     return 'Status: unavailable';
   }
   const values = [...new Set(arrays.flat())];
-  if (values.length === 0) {
-    if (markedUnavailable) {
-      unavailableFields.add(canonicalField);
-      return 'Status: unavailable';
-    }
-    return 'Status: none';
-  }
+  if (values.length === 0 && !markedUnavailable) return 'Status: none';
   const renderedValues = values.map(value => '- ' + value).join('\n');
   if (markedUnavailable) {
     unavailableFields.add(canonicalField);
