@@ -95,8 +95,8 @@ external registry stays empty; legacy registries remain historical until explici
 import and never refill current state automatically.
 
 <!-- CLAUDE-CODE-SPECIFIC -->
-On Claude Code: invoke the runtime-contract heredoc-stdin pattern via `Bash` tool.
-On Codex: invoke via `shell_command`; use its PowerShell single-quoted here-string
+On Claude Code: invoke the runtime-contract quoted-heredoc stdin form via `Bash` tool.
+On Codex: invoke via `shell_command`; use its PowerShell single-quoted string
 form when appropriate. Compute once per finding and compare against the read-side
 matching view; do not alter the existing fingerprint or approval contract.
 

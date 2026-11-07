@@ -63,10 +63,10 @@ Calibration data is appended inline as JSONL; see Step 7.
 /aivv-fix --action-request=<uuid> --target=/path/project  # claim a local selected-findings batch
 /aivv-fix --dangerously-auto-apply     # confirmed per-run bypass
 /aivv-fix --list-wont-fix              # read-only registry
-/aivv-fix --forget-wont-fix=<key>      # remove registry entry
+/aivv-fix --forget-wont-fix=<key>      # remove registry entry (with --dry-run: preview only)
 ```
 
-**Flags:** parse with [fix-flags.md](references/fix-flags.md). `--action-request` is an explicit user-selected batch handoff, not an auto-apply bypass: it requires `--target`, claims the request once, revalidates its review and revision, and then uses all ordinary gates. `--dry-run` may run pre-invocation state maintenance but performs no remediation writes; after its gate, it writes no fix/session/calibration/verifier state. `--dangerously-auto-apply` is a confirmed per-run bypass only; it never overrides `--dry-run`.
+**Flags:** parse with [fix-flags.md](references/fix-flags.md). `--action-request` is an explicit user-selected batch handoff, not an auto-apply bypass: it requires `--target`, claims the request once, revalidates its review and revision, and then uses all ordinary gates. `--dry-run` writes nothing: no state maintenance (initialization, import, stale-session reaping, notice markers) and no fix/session/calibration/verifier state. `--dangerously-auto-apply` is a confirmed per-run bypass only; it never overrides `--dry-run`.
 
 ## Target Project Resolution
 
@@ -128,8 +128,8 @@ route selectors that make state required (`--review-id`, `--resume`, `--resolve`
 registry selectors). Bind the shared context before maintenance. The preamble
 performs route-sensitive schema checks and authorized external maintenance;
 legacy originals remain untouched. Selected missing/corrupt/newer artifacts
-keep their route errors; unrelated history warns. Dry-run skips remediation
-writes, but authorized pre-invocation state maintenance may still write.
+keep their route errors; unrelated history warns. Dry-run only inspects state:
+it never initializes, imports, reaps, or writes it.
 **Route-first cost rule:** execute Step 1 in this order: minimal `--target` pre-parse → preamble → full flag parse → source-route classification (`review_id`/`resume`/`resolve`, lifecycle selector, task ID, literal, or conversation) → load only that route's collector/resolver. Do not load conversation Signal 0-4 rules for a successful `--review-id` route, lifecycle helpers without a lifecycle selector, or task-file extraction details for literal/conversation routes. Safety gates still run in normal order once findings exist.
 **Flag extraction first.** Before source parsing, parse and strip flags from the argument string per the reference (the flag catalog covers `--dry-run`, `--target=`, `--review-id=`, `--resume`, `--resolve`, `--incident`/`--problem`/`--issue`/`--github-issue`, `--list-wont-fix`, `--forget-wont-fix=`, `--outer-cycle=`, `--root-review-id=`, `--apply-all-polish`, and `--dangerously-auto-apply`). If `--dry-run` is present, stop at Step 4.3 after investigation planning output; do not load write-intent, challenger, execution, verifier, or calibration references unless the user starts a non-dry-run invocation.
 
@@ -272,7 +272,7 @@ If `dry_run == true`, stop here after investigation results, batch reconciliatio
 - findings that would be fixed, skipped, escalated, or require user decisions;
 - proposed files to modify when investigators supplied them;
 - confidence and reason-coded blockers;
-- the exact message: `DRY RUN: no remediation writes were made. After the dry-run gate, no write intents, challenger dispatch, execution, verifier dispatch, fix log, session changes, or calibration writes occurred. Any authorized pre-invocation state maintenance ran before the gate.`
+- the exact message: `DRY RUN: no remediation writes were made. After the dry-run gate, no write intents, challenger dispatch, execution, verifier dispatch, fix log, session changes, or calibration writes occurred, and no pre-invocation state maintenance ran.`
 
 After this halt, do not materialize `write_intents[]`, dispatch the fix-plan challenger, enter Step 4.6, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
 
