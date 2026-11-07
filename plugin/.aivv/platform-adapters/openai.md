@@ -2,7 +2,7 @@
 
 > Provider adapter: this document describes provider/backend behavior (model dispatch via `dispatch.mjs` subprocess), not host execution capabilities. Host capabilities are owned by the active host adapter (`claude-code.md` / `codex.md`).
 **Status:** Cycle 2 — implementation in `tools/dispatch.mjs` (not yet shipped)
-**Probe command:** resolve `AIVV_ROOT` through the shared [runtime-root contract](../runtime-root.md), then run `node "$AIVV_ROOT/tools/dispatch.mjs" --probe --provider openai --provider-egress-consent`
+**Probe command:** use the `AIVV_ROOT` pinned and preflighted at the current AIVV invocation's start, then run `node "$AIVV_ROOT/tools/dispatch.mjs" --probe --provider openai --provider-egress-consent`
 
 ## Auth strategy (`--auth-mode auto`, the default)
 

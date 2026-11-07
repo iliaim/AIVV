@@ -117,6 +117,13 @@ detect signal appears outside the requested scope.
   install), otherwise `../../.aivv/runtime-root.md` (native plugin package).
   Bind procedure paths there before opening the workflow; the consuming
   project's working directory is not the skill root.
+- Before any actual review reads state, extracts context, asks a scope question,
+  or dispatches a reviewer, run the selected runtime's
+  `runtime-root.mjs --preflight aivv [skill-directory]` once. Export its result
+  as `AIVV_ROOT` and use that same root for every helper and procedure in this
+  invocation. If it reports `AIVV_INSTALLATION_INCOMPLETE`, surface that single
+  diagnostic and stop; do not fall back to another installation or retry the
+  missing reference.
 - Contract lookup/help summary: this file only. If the answer is in Contract
   Snapshot, stop; do not list/read the reference tree for confirmation.
 - Real reviews: read [orchestration-workflow.md](references/orchestration-workflow.md) first; it owns execution and routes to the other references.

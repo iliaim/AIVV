@@ -19,15 +19,12 @@ The minimum test in this gate is defect-reproduction and verification evidence, 
      - **Wrong-reason fail:** the test errors before reaching the defective-behavior assertion. Fix the test setup before proceeding.
 
 3. **Verify the test fails only when executable without pre-Step-5 writes.** Run it if the reproduction uses existing files or a no-write runtime observation. If it passes: STOP — the test does not reproduce the issue.
-   Two possible explanations:
-   - The finding was a false positive (the issue does not exist in the current code).
-   - The test does not correctly capture the issue.
-   Re-investigate before writing the fix.
+   A passing test is evidence that this test run did not reproduce the reported behavior. Do not label the finding false-positive or re-investigate solely because the result is uncertain. Stop the affected finding before writing and report the test result; re-enter investigation only if inspection identifies a specific defect in the test or prior investigation and a concrete in-scope correction, consuming the shared retry budget.
    If verification requires materialized test-file bytes, defer the actual write and the pre-fix failing run to Step 5 EXECUTE. The Step 5 run must write the test intent before the fix, capture right-reason failure evidence, then apply the fix.
 
 4. **Apply the fix** (Step 5 EXECUTE).
 
-5. **Verify the test passes.** Run it again. If it still fails: the fix did not address the root cause. Return to Step 3 INVESTIGATE (increment `cycle_count` — this step fires after the fix is applied, making it a post-write verification failure equivalent to a Step 6 failure; it consumes the same 3-cycle convergence budget. Do NOT increment `challenge_iterations`, which is reserved for pre-EXECUTE challenger churn per SKILL.md counter semantics).
+5. **Verify the test passes.** Run it again. If it still fails: the fix did not address the root cause. Return to Step 3 INVESTIGATE only if the shared `rework_retry_count` has room; increment it once and append a `red-green` retry event. This consumes the same invocation-wide budget as challenge and Step 6 verification re-entry. `cycle_count` and `challenge_iterations` remain diagnostic counters only. At the cap, report the finding unresolved and do not re-author.
 
 6. **Log the test** in the eventual Step 5 `session_changes.changes_summary[]` entry with `type: "verification-method"` and `change: "Added failing test <test_name> during Step 5 before fix; passes after fix."` after the write and test evidence are recorded. Also persist `red_green_evidence`:
    - Use `red_green_evidence.claim: "prevention"` only when the log contains both the right-reason pre-fix failure and the post-fix pass.

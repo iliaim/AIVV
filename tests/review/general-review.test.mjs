@@ -62,6 +62,10 @@ try {
     'a persisted old default does not masquerade as an explicit user preference');
   assert.match(scopePolicy, /Never broaden\s+scope silently/);
   assert.doesNotMatch(scopePolicy, /clear proposal always requires confirmation/);
+  assert.match(scopePolicy, /Keep one active proposal and at most\s+one unanswered scope question/);
+  assert.match(scopePolicy, /Cancellation marks the current invocation terminal/);
+  assert.match(scopePolicy, /Ignore later answers to its stale prompt/);
+  assert.match(scopePolicy, /An answer authorizes only the exact awaited host question/);
 
   const findingSchema = readJson('plugin/.aivv/schemas/finding.json');
   assert.equal(findingSchema.properties.lens.default, 'code', 'legacy findings without lens keep the code default');
@@ -118,6 +122,28 @@ try {
   }).step4_cold_prompt;
   assert.match(ideaPrompt, /## Session Activity \(SUPPORTING CONTEXT - clarify intent and constraints\)/);
   assert.match(ideaPrompt, /## Supplied Artifact \(PRIMARY - this is the review subject\)/);
+
+  const categoryPrompt = renderPrompt('session-categories', {
+    session_context: {
+      goals: ['Keep the original user goal in view.'],
+      decisions: [],
+      files_touched: ['src/selected-file.js'],
+      approaches: [],
+      problems: ['This partial summary belongs to excluded scope.'],
+      tradeoffs: [],
+      current_state: ['Waiting for the scoped review.'],
+      unavailable_fields: ['problems', 'tradeoffs'],
+    },
+  }).step4_cold_prompt;
+  assert.match(categoryPrompt, /### Goals & Objectives\nStatus: observed\n- Keep the original user goal in view\./);
+  assert.match(categoryPrompt, /### Decisions Made\nStatus: none/);
+  assert.match(categoryPrompt, /### Files Touched\nStatus: observed\n- src\/selected-file\.js/);
+  assert.match(categoryPrompt, /### Approaches Tried\nStatus: none/);
+  assert.match(categoryPrompt, /### Problems Encountered\nStatus: unavailable/);
+  assert.match(categoryPrompt, /### Trade-offs & Risks\nStatus: unavailable/);
+  assert.match(categoryPrompt, /### Current State\nStatus: observed\n- Waiting for the scoped review/);
+  assert.doesNotMatch(categoryPrompt, /This partial summary belongs to excluded scope/,
+    'unavailable categories must not leak partial or out-of-scope summaries');
 
   for (const reviewScope of [
     undefined,
@@ -262,6 +288,62 @@ try {
   };
   assert.deepEqual(validateReviewLogNewWrite(persistedReview), { status: 'pass', reason: 'pass' },
     'new review persistence validator must accept general in reviewer and nested lens arrays');
+
+  const invocationBoundReview = structuredClone(persistedReview);
+  const method = {
+    display: '2 reviewers; mode cold_multi_review; lenses general, code; balanced depth; 1 reviewer per lens; direction on; severity model default; alpha/general via agent-tool provider=unreported model=unreported reasoning=unreported; beta/code via agent-tool provider=unreported model=unreported reasoning=unreported',
+    reviewer_count: 2,
+    review_mode: 'cold_multi_review',
+    lenses: ['general', 'code'],
+    thoroughness: 'balanced',
+    direction_enabled: true,
+    severity_model: 'default',
+    replication_count: 1,
+    reviewers: [
+      { label: 'alpha', lens: 'general', dispatch_path: 'agent-tool', provider: null, model: null, reasoning: null },
+      { label: 'beta', lens: 'code', dispatch_path: 'agent-tool', provider: null, model: null, reasoning: null },
+    ],
+  };
+  invocationBoundReview.review_prompt_profile = {
+    prompt_name: 'aivv-review',
+    lens: ['general', 'code'],
+    reviewer_count: 2,
+    thoroughness: 'balanced',
+    direction_enabled: true,
+    severity_model: 'default',
+  };
+  invocationBoundReview.review_scope = {
+    subject_type: 'artifact',
+    final_scope: 'Review the design specification artifact.',
+    scope_confirmation: {
+      mode: 'announce',
+      was_trivial: false,
+      classification_reason: 'explicit-artifact-request',
+      proposed_scope: 'Review the design specification artifact.',
+      options_offered: [],
+      invocation_id: invocationBoundReview.id,
+      proposal_id: `${invocationBoundReview.id}:scope:1`,
+      proposal_revision: 1,
+      user_choice: 'explicit-request-announced',
+      confirmed_scope: 'Review the design specification artifact.',
+      resolved_method: method,
+    },
+  };
+  assert.deepEqual(validateReviewLogNewWrite(invocationBoundReview, { requireBoundScopeConfirmation: true }),
+    { status: 'pass', reason: 'pass' },
+    'strict review writes must bind invocation, proposal, scope, and the dispatched reviewer method');
+  const staleMethodReview = structuredClone(invocationBoundReview);
+  staleMethodReview.review_scope.scope_confirmation.resolved_method.display = '1 reviewer; different method';
+  assert.equal(validateReviewLogNewWrite(staleMethodReview, { requireBoundScopeConfirmation: true }).reason,
+    'review-log-bound-method-display-mismatch',
+    'a confirmation cannot be persisted with a method display different from the dispatched method');
+  const malformedInvocationReview = structuredClone(invocationBoundReview);
+  malformedInvocationReview.id = 'not-an-invocation-id';
+  malformedInvocationReview.review_scope.scope_confirmation.invocation_id = malformedInvocationReview.id;
+  malformedInvocationReview.review_scope.scope_confirmation.proposal_id = `${malformedInvocationReview.id}:scope:1`;
+  assert.equal(validateReviewLogNewWrite(malformedInvocationReview, { requireBoundScopeConfirmation: true }).reason,
+    'review-log-id-invalid',
+    'strict review writes must reject malformed invocation IDs even when all bindings repeat them');
 } finally {
   rmSync(TEMP_ROOT, { recursive: true, force: true });
 }

@@ -34,7 +34,7 @@ Emit schema-version-2 logs in this order when present:
 13. `assurance_plan` when findings need objective closure evidence
 14. optional audit blocks: `review_scope`, `plan_review`,
     `review_prompt_profile`, `reviewer_evidence_packet`, `reviewer_roster`,
-    `lens_detection`, `scope_confirmation`, `severity_calibration`
+    `lens_detection`, `severity_calibration`
 15. optional `workspace_sha_start`, `workspace_sha_end`
 16. `findings`
 17. optional `runtime_evidence_ingest`
@@ -58,25 +58,46 @@ includes `session`, `file`, `idea`, `project`, `artifact`, `user-journey`, and
 and set `full_prompt_available:false` when content is omitted.
 
 `reviewer_roster` entries:
-`{label, display_name, dispatch_path, provider?, model?, model_source?, lens,
-status, status_reason?, finding_refs}`. For native host-inherited model
-where exact model is unavailable, use `model:"inherited"` and
-`model_source:"host-inherited-unreported"`.
+`{label, display_name, dispatch_path, provider?, model?, model_source?,
+reasoning?, lens, status, status_reason?, finding_refs}`. For strict new logs,
+record unavailable provider/model/reasoning settings as `null` and display them
+as `unreported`. For a native host-inherited model whose exact name is
+unavailable, use `model:"inherited"` and
+`model_source:"host-inherited-unreported"`; the confirmed method display renders
+that sentinel as `inherited/unreported`.
 
 `lens_detection` shape:
 `{mode, floor_matches, high_risk_matches, ceiling, applied, not_applied,
 user_choice, lens_origin, suppression_reason}`. Persist only redacted/capped
 `trigger_excerpt` values.
 
-`scope_confirmation` shape for a review that actually ran (the historic field
-name is retained; see the canonical scope-resolution procedure in
+`review_scope.scope_confirmation` shape for a review that actually ran (the
+historic field name is retained; see the canonical scope-resolution procedure in
 [`scope-confirmation.md`](scope-confirmation.md)):
 `{mode, was_trivial, classification_reason, proposed_scope, options_offered,
-user_choice, final_scope, dropped_scope?, suppression_reason}`. Omit on early
-exits, voided reviews, or a hold before scope/method resolution. `mode` records
-the resolved `announce` or `ask` policy. The default is `announce`; a manually
+invocation_id, proposal_id, proposal_revision, user_choice, confirmed_scope,
+resolved_method, dropped_scope?, suppression_reason}`. `confirmed_scope` must
+exactly equal the sibling `review_scope.final_scope`; `resolved_method` is the
+structured method record whose `display` value was shown to the user. It
+includes review mode, reviewer count, ordered lenses, thoroughness, direction,
+severity model, replication, and per-reviewer label/lens/dispatch path plus
+provider/model/reasoning settings. New review writes must emit
+`review_prompt_profile` and `reviewer_roster` so the validator can compare the
+confirmed method with the executed method. The method shape is
+`{display, review_mode, reviewer_count, lenses, thoroughness, direction_enabled,
+severity_model, replication_count, reviewers:[{label, lens, dispatch_path,
+provider, model, reasoning}]}`. `display` is the canonical,
+validator-reconstructed method line shown to the user; `reviewers` is ordered
+exactly like the executed roster. Copy each roster value. Store unavailable
+values as `null`; for a host-inherited model with no exact name, use the roster
+sentinel `model:"inherited"`, which is displayed as `inherited/unreported`.
+`proposal_id` is bound to the
+top-level `id`/`invocation_id` and invocation-local revision; superseded or
+cancelled proposals are never persisted as approvals. Omit on early exits,
+voided reviews, or a hold before scope/method resolution. `mode` records the
+resolved `announce` or `ask` policy. The default is `announce`; a manually
 configured ask preference or explicit `--ask-scope` remains visible in the
-record.
+record. Historical logs without proposal fields remain readable.
 
 `severity_calibration` shape:
 `{model:"impact_likelihood", under_rating_mirror, track_split,
@@ -96,14 +117,25 @@ target match, an intervening `/aivv-fix`, and Jaccard overlap of finding files
 Before writing, materialize the complete candidate to a temp JSON file and run:
 
 ```bash
-# Resolve AIVV_ROOT using the shared runtime-root contract in
-# the bundled `.aivv/runtime-root.md` contract, then invoke the validator by absolute path.
-node "$AIVV_ROOT/tools/pre-write-validator.mjs" --review-log <candidate-review-log.json>
+# Use the AIVV_ROOT pinned and preflighted at this `/aivv` invocation's start;
+# invoke the validator by absolute path without resolving a second root.
+node "$AIVV_ROOT/tools/pre-write-validator.mjs" --review-log <new-review-log.json>
 ```
 
 It must return `{"status":"pass","reason":"pass"}`. Any `halt` means fix the
-in-memory synthesis and retry. This producer gate is stricter than the durable
-schema because historical logs remain readable.
+in-memory synthesis and retry. For actual review writes, it requires the full
+invocation/proposal/scope/method binding. To update an existing historical
+review log during fix backfill, use `--review-log-backfill`; that mode preserves
+legacy readability and does not authorize dispatch or a new review. It requires
+the invocation storage context and exact stored relative path, verifies an
+existing same-ID review, rejects changes outside the `fix_invocation_id`
+backfill, and confirms the referenced fix log points to that review:
+
+```bash
+node "$AIVV_ROOT/tools/pre-write-validator.mjs" \
+  --review-log-backfill <candidate-review-log.json> \
+  --context "$storage_context_file" --relative "$source_review_relative_path"
+```
 
 Every structured audit block is checked against its durable shape: `review_scope`,
 `reviewer_roster`, `plan_review`, `review_prompt_profile`, `reviewer_evidence_packet`,

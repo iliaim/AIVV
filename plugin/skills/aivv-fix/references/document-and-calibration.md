@@ -6,17 +6,37 @@ Detail relocated from `skills/aivv-fix/SKILL.md` Step 7 DOCUMENT. The inline ske
 
 **Predecessor backfill on fix-log → review-log:** when `/aivv-fix` is chained from a `/aivv` review (source == "review_id"), update the originating review log's `fix_invocation_id` field with the current fix-log's `id`. This enables Case B cross-invocation predecessor resolution in subsequent rounds.
 
-For every `FixSession.source == "review_id"` write, also persist the originating review id in `source_review_id` even when the incoming argument was stored as `review_id` or `source_argument`. `source_review_id` is the canonical viewer/join key; `review_id` may be preserved for backward compatibility, but it is not a substitute. Before the durable fix-log write, materialize the candidate fix log to a temp JSON file and run:
+Also persist `source_review_relative_path` exactly as returned by review-ID
+resolution, including `archive/` when selected. The validator re-reads that
+source review through the invocation's storage context and verifies the source
+ID and every selected root finding before it accepts the fix-log candidate.
+
+For every `FixSession.source == "review_id"` write, also persist the originating
+review id in `source_review_id` even when the incoming argument was stored as
+`review_id` or `source_argument`. `source_review_id` is the canonical viewer/join
+key; `review_id` may be preserved for backward compatibility, but it is not a
+substitute. Before the durable fix-log write, materialize the candidate fix log
+to a temp JSON file and run:
 
 ```bash
-# Resolve AIVV_ROOT using the shared runtime-root contract in
-# the bundled `.aivv/runtime-root.md` contract, then invoke the validator by absolute path.
-node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fix-log <candidate-fix-log.json>
+# Use the AIVV_ROOT pinned and preflighted at this `/aivv-fix` invocation's
+# start; invoke the validator by absolute path without resolving a second root.
+node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fix-log <candidate-fix-log.json> \
+  --context "$storage_context_file" --new
 ```
+
+Use `--new` only for the initial `in-progress` fix-log write. For each later
+update, validate with `--fix-log <candidate-fix-log.json> --context
+"$storage_context_file" --update`. The validator reads the persisted
+`fix-<invocation_id>.json` itself through the storage helper. This checks that
+the invocation ID and authorized scope stay fixed and retry count and
+append-only history cannot be reset or rewritten. A legacy in-progress log
+without these fields cannot safely resume; start a new top-level invocation
+from its original selected findings.
 
 If the validator returns non-pass, repair the candidate before writing. Do not use legacy `review_id` or `source_argument` as a substitute for `source_review_id` on new review-sourced fix logs; new writes must also carry nonempty `findings_addressed[]` and nonempty `changes_summary[]`, with unambiguous bidirectional normalized ID coverage: every `changes_summary[].finding_id` must join to `findings_addressed[]`, every addressed finding must have at least one matching `changes_summary[]` entry, and ambiguous normalization collisions across `findings_addressed[]` and `changes_summary[].finding_id` must halt before write.
 
-Historical logs are not rewritten in place by compatibility tooling. Resolve `AIVV_ROOT` through the shared runtime-root contract, then use `node "$AIVV_ROOT/tools/state-compat-index.mjs" --context "$storage_context_file" --state-dir "<state_dir>" --output "<state_dir>/compat-index.json"` to derive safe read-side proposals: missing/prefixed fix-log `source_review_id`, review-log `fix_invocation_id` when exactly one fix log joins to the review, and deterministic finding fingerprints. If multiple fix logs join to one review, the helper records the `fix_invocation_id` gap as `unsafe` instead of guessing.
+Historical logs are not rewritten in place by compatibility tooling. Use the `AIVV_ROOT` pinned and preflighted at this invocation's start, then use `node "$AIVV_ROOT/tools/state-compat-index.mjs" --context "$storage_context_file" --state-dir "<state_dir>" --output "<state_dir>/compat-index.json"` to derive safe read-side proposals: missing/prefixed fix-log `source_review_id`, review-log `fix_invocation_id` when exactly one fix log joins to the review, and deterministic finding fingerprints. If multiple fix logs join to one review, the helper records the `fix_invocation_id` gap as `unsafe` instead of guessing.
 
 Retain `FixSession.source_review_relative_path` from review-ID resolution and
 use that exact selected relative path for both the read and write, including an
@@ -30,6 +50,9 @@ source_review_relative_path="<FixSession.source_review_relative_path>"
 node "$AIVV_ROOT/tools/storage-paths.mjs" read --context "$storage_context_file" \
   --area state --relative "$source_review_relative_path" > "$review_snapshot"
 jq --arg fid "$fix_id" '. + {fix_invocation_id: $fid}' "$review_snapshot" > "$candidate"
+node "$AIVV_ROOT/tools/pre-write-validator.mjs" \
+  --review-log-backfill "$candidate" --context "$storage_context_file" \
+  --relative "$source_review_relative_path"
 node "$AIVV_ROOT/tools/storage-paths.mjs" write --context "$storage_context_file" \
   --area state --relative "$source_review_relative_path" --source "$candidate"
 ```

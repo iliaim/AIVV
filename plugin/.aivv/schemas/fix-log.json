@@ -95,7 +95,36 @@
       "description": "Canonical FixSession.source per .aivv/runtime-contract.md. Names the finding origin. Required on writes from skill version 0.2+; optional on reads for backward compatibility with pre-runtime-contract fix logs (those use source_type instead).",
       "enum": ["conversation", "review_id", "literal", "task_file"]
     },
+    "authorized_scope": {
+      "description": "Immutable objective and finding boundary captured before investigation. The validator binds actionable finding references to finding_ids, allowing only documented -cls<N>, -cls-overflow, and -sib<N> children of selected IDs. Required by current /aivv-fix writers; optional for historical logs.",
+      "type": "object",
+      "required": ["source", "goal", "finding_ids", "included", "excluded"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {"enum": ["conversation", "review_id", "literal", "task_file"]},
+        "source_reference": {"type": "string", "minLength": 1},
+        "goal": {"type": "string", "minLength": 1},
+        "finding_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "included": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "excluded": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "included_paths": {
+          "type": "array",
+          "description": "Explicit project-relative file or directory inclusions. Empty means no narrower explicit path inclusion; otherwise every write target must match one of these paths or descendants.",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "excluded_paths": {
+          "type": "array",
+          "description": "Explicit project-relative file or directory exclusions. A write target matching one of these paths or descendants is outside authorized scope.",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "source_review_id": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+    "source_review_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exact active or archive-relative storage path selected during review-id resolution. New review-sourced fix logs retain it so the validator can re-read the source review and verify that authorized finding IDs came from that review."
+    },
     "lifecycle_context": {
       "type": "object",
       "description": "Optional side-channel context for /aivv-fix invocations routed from incident/problem/local-issue/GitHub selectors. This does not change FixSession.source.",
@@ -144,48 +173,79 @@
       "type": "array",
       "items": {"type": "string"}
     },
-    "cycle_count": {"type": "integer", "minimum": 1},
+    "cycle_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Verification rework cycle position. Increment exactly once in the same update as each evidence-backed verification retry event; validator enforces the transition."
+    },
+    "rework_retry_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "default": 0,
+      "description": "Invocation-wide semantic re-authoring and verification retries consumed. One initial attempt is free; each fix-plan re-entry after an evidenced defect consumes one retry."
+    },
+    "max_rework_retries": {
+      "const": 3,
+      "description": "Single fixed per-invocation cap shared by every semantic fix-plan re-authoring or verification retry, including plan-readiness, challenge, pre-write, stale-intent, class-verdict, investigator-output, duplicate-intent, architecture-check, red-green, and verification gates."
+    },
+    "rework_retry_history": {
+      "type": "array",
+      "description": "Append-only evidence record for each consumed semantic rework retry; length must equal rework_retry_count.",
+      "items": {
+        "type": "object",
+        "required": ["retry_number", "gate", "finding_ids", "defect", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "retry_number": {"type": "integer", "minimum": 1, "maximum": 3},
+          "gate": {"enum": ["challenge", "pre-write", "stale-intent", "class-verdict", "verification", "red-green", "investigator-output", "duplicate-intent", "architecture-check", "plan-readiness"]},
+          "finding_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "defect": {"type": "string", "minLength": 1},
+          "evidence": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "challenge_iterations": {
       "type": "integer",
       "minimum": 0,
       "default": 0,
-      "description": "Number of Step 4.5 CHALLENGE REVISE/REJECT loop iterations in this invocation. Distinct from cycle_count (which counts Step 6 verifier re-entries). Cap: 3 per invocation."
+      "description": "Diagnostic count of challenge revisions. The shared rework_retry_count is the only semantic rework cap."
     },
     "pre_write_validation_iterations": {
       "type": "integer",
       "minimum": 0,
       "default": 0,
-      "description": "Number of Step 5.4 deterministic pre-write validation re-authoring iterations. Distinct from challenge_iterations and cycle_count."
+      "description": "Diagnostic count of Step 5.4 pre-write re-authoring iterations; does not create a separate retry budget."
     },
     "max_pre_write_validation_iterations": {
       "type": "integer",
       "minimum": 1,
       "default": 3,
-      "description": "Resolved cap for Step 5.4 deterministic pre-write validation retries."
+      "description": "Legacy diagnostic value; current writers use max_rework_retries as the sole semantic rework cap."
     },
     "stale_intent_regenerations": {
       "type": "integer",
       "minimum": 0,
       "default": 0,
-      "description": "Number of stale write-intent regeneration re-entries into Step 3. Distinct from challenge_iterations and pre_write_validation_iterations."
+      "description": "Diagnostic count of stale write-intent re-authoring re-entries; each consumes the shared rework_retry_count."
     },
     "max_stale_intent_regenerations": {
       "type": "integer",
       "minimum": 1,
       "default": 3,
-      "description": "Resolved cap for stale write-intent regeneration."
+      "description": "Legacy diagnostic value; current writers use max_rework_retries as the sole semantic rework cap."
     },
     "class_verdict_reinvestigation_iterations": {
       "type": "integer",
       "minimum": 0,
       "default": 0,
-      "description": "Number of Step 5 pre-loop class-verdict re-investigation re-entries into Step 3 (a code-bug/design-flaw finding lacking a valid class_signature/class_assessment). Distinct from cycle_count (which bumps only on Step 6 post-EXECUTE verifier re-entry / Step 4 backtrack) and from pre_write_validation_iterations."
+      "description": "Diagnostic count of class-verdict re-investigation re-entries; each consumes the shared rework_retry_count."
     },
     "max_class_verdict_reinvestigation_iterations": {
       "type": "integer",
       "minimum": 1,
       "default": 1,
-      "description": "Resolved cap for Step 5 pre-loop class-verdict re-investigation. On exhaustion the finding routes to the W10 decision queue (deferred / class-verdict-budget-exhausted), never silently dropped."
+      "description": "Legacy diagnostic value; current writers use max_rework_retries as the sole semantic rework cap. Exhausted findings are reported unresolved, not moved to a new authorization queue."
     },
     "dangerously_auto_apply": {
       "type": "object",

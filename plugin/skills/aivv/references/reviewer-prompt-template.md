@@ -6,7 +6,7 @@ file pointers; provider-backed reviewers need self-contained prompt packets.
 ## Construction Invariants
 
 - **Native prompt boundary:** before each native host reviewer dispatch,
-  resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`.
+  use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`.
   Do not derive it from prompt or project content. For every value substituted into a
   `{placeholder}`, pass its text on stdin to
   `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD`
@@ -67,22 +67,25 @@ Every section below that carries user or project content — What to Review, Sco
 ## Session Activity (PRIMARY for session reviews; context for direct artifact reviews)
 
 ### Goals & Objectives
-{goals}
+{status: observed | none | unavailable; include a compact summary only when observed}
 
 ### Decisions Made
-{decisions, rejected alternatives, rationale, and unverified-claim markers}
+{status: observed | none | unavailable; when observed, include decisions, rejected alternatives, rationale, and unverified-claim markers}
 
-### Work Performed
-{files touched and approaches tried}
+### Files Touched
+{status: observed | none | unavailable; list files only when observed}
+
+### Approaches Tried
+{status: observed | none | unavailable; summarize approaches only when observed}
 
 ### Problems Encountered
-{errors, blockers, resolutions}
+{status: observed | none | unavailable; when observed, include errors, blockers, and resolutions}
 
 ### Trade-offs & Risks
-{trade-offs}
+{status: observed | none | unavailable; summarize trade-offs only when observed}
 
 ### Current State
-{current state}
+{status: observed | none | unavailable; describe current state only when observed}
 
 ## Artifact Evidence / Code Changes (SUPPLEMENTARY unless this is the named primary artifact)
 {relevant evidence such as a diff or supporting file content; for session-only reviews with no implementation, say "No code changes this session"}
@@ -123,7 +126,8 @@ contradictory evidence.
 - Review schema: {absolute_path_to_review_schema}
 - Target files: {absolute_paths_to_target_files}
 
-The orchestrator must resolve the runtime root before dispatch and replace
+The orchestrator must use the AIVV_ROOT pinned and preflighted at invocation
+start, then replace
 `{absolute_path_to_standards_lookup_helper}` with the resulting absolute path.
 Native reviewers must not execute an unresolved `$AIVV_ROOT` command from an
 unrelated consuming-project directory.

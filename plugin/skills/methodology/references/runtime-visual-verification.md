@@ -41,7 +41,7 @@ This change alters rendered behavior in {files/components}. Code-level review fo
 
 Matched triggers: {comma-separated VVT-IDs with one-line descriptions}
 
-Verify externally via Playwright-class browser automation, Chrome DevTools-class in-browser inspection, or manual screenshot comparison before merge. When using the B3 workflow, resolve `AIVV_ROOT` through the bundled `.aivv/runtime-root.md` runtime-root contract, then run `node "$AIVV_ROOT/tools/runtime-evidence.mjs" emit --review <review-log.json>`, execute the generated specs in the target project, and ingest Playwright JSON with `node "$AIVV_ROOT/tools/runtime-evidence.mjs" ingest --review <review-log.json> --results <results.json>`. Specific things to verify per trigger are documented at `.aivv/standards/visual-verification-triggers.md`.
+Verify externally via Playwright-class browser automation, Chrome DevTools-class in-browser inspection, or manual screenshot comparison before merge. When using the B3 workflow inside `/aivv`, use its pinned and preflighted `AIVV_ROOT`, then run `node "$AIVV_ROOT/tools/runtime-evidence.mjs" emit --review <review-log.json>`, execute the generated specs in the target project, and ingest Playwright JSON with `node "$AIVV_ROOT/tools/runtime-evidence.mjs" ingest --review <review-log.json> --results <results.json>`. Specific things to verify per trigger are documented at `.aivv/standards/visual-verification-triggers.md`.
 ```
 
 If NO triggers match, do NOT emit this block — code-level review stands on its own.

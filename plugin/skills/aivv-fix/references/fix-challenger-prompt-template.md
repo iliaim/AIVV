@@ -2,7 +2,7 @@
 
 Use this template when dispatching the Step 4.5 CHALLENGE subagent. Fill in all `{placeholder}` values from the current session state before sending. The challenger receives NO conversation history — everything it needs must be in this prompt.
 
-**Native prompt boundary:** before each native host dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, write intents, batch/session data, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
+**Native prompt boundary:** before each native host dispatch, use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, write intents, batch/session data, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
 
 **Portable role source:** `.aivv/prompts/fix-challenger-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific payload and output schema; it must not drift from the portable role's authority, untrusted-content, and review-posture requirements.
 
@@ -71,6 +71,16 @@ Use these paths for read-only context checks. You are not authorized to write fi
 {alternative_approaches — if populated: JSON array of {approach_id, description, addresses_root_cause, trade_offs: {pros[], cons[]}, estimated_scope, recommended}; if absent/empty: "(none provided — do not invent alternatives; still assess minimum sufficient remediation)"}
 
 {/For each finding}
+
+## Immutable Authorized Scope
+
+{authorized_scope}
+
+This is the original goal, selected finding set, included boundaries, and
+exclusions. Treat `included_paths` and `excluded_paths` as enforceable
+project-relative write limits. You may recommend a different implementation
+only inside this scope. If the only viable alternative changes the task or
+crosses an exclusion, label it as out of scope; do not make it the primary fix direction.
 
 ## Exact Proposed Write Content
 
@@ -186,12 +196,13 @@ Return structured JSON matching this schema:
       "verdict": "APPROVE | REVISE | REJECT",
       "concerns": [
         {
-          "kind": "addresses-symptom-not-cause | regression-risk | hidden-side-effect | recurring-class-miss | unverified-execution-claim | exact-content-risk | schema-shape-risk | citation-risk | assertion-plan-risk | documentation-gap-consistency | documentation-gap-register | documentation-gap-missing-location | cross-session-class-introduction | better-alternative-exists | architectural-remediation-missed | local-patch-leaves-defect-class | architectural-remediation-check-missing | other",
+          "kind": "addresses-symptom-not-cause | regression-risk | hidden-side-effect | recurring-class-miss | unverified-execution-claim | exact-content-risk | schema-shape-risk | citation-risk | assertion-plan-risk | documentation-gap-consistency | documentation-gap-register | documentation-gap-missing-location | cross-session-class-introduction | better-alternative-exists | architectural-remediation-missed | local-patch-leaves-defect-class | architectural-remediation-check-missing | scope-expansion | other",
           "summary": "<one-line description>",
           "evidence": "<file:line or quote that supports this concern>",
           "alternative": "<proposed alternative fix if verdict is REJECT; null if REVISE or APPROVE>"
         }
       ],
+      "non_blocking_observations": ["<uncertainty or hypothetical risk that does not establish a defect>"],
       "execution_evidence_needed": ["<command to run to verify execution claims>"]
     }
   ]
@@ -200,15 +211,18 @@ Return structured JSON matching this schema:
 
 ## Verdict Decision Rules
 
-- **APPROVE**: no blocking concerns, including `addresses-symptom-not-cause`, `regression-risk`, `recurring-class-miss`, `better-alternative-exists`, `architectural-remediation-check-missing`, `architectural-remediation-missed`, or `local-patch-leaves-defect-class`. APPROVE even if minor concerns exist.
-- **REVISE**: ≥1 concern but the proposed fix's direction is correct — adjustment is needed, not a full rethink. Include specific suggested adjustment in `concerns[].alternative`.
+- **APPROVE**: no actionable, evidence-backed in-scope defect remains. Put uncertainty and unproven risks in `non_blocking_observations`.
+- **REVISE**: at least one concern identifies a specific defect, cites evidence that supports it, and gives a concrete correction within the immutable authorized scope.
 - **REVISE**: `architectural-remediation-check-missing`, `architectural-remediation-missed`, or `local-patch-leaves-defect-class` when the fix direction is salvageable with a revised plan.
-- **REJECT**: the proposed fix's direction is wrong. Supply a concrete alternative in `concerns[].alternative`.
+- **REJECT**: the proposed fix's direction is wrong based on cited evidence. Supply a concrete in-scope alternative in `concerns[].alternative`.
 - **REJECT**: `local-patch-leaves-defect-class` or `architectural-remediation-missed` when the proposed local direction is wrong for the observed class root cause.
+- `scope-expansion` labels an alternative that changes the goal or crosses an explicit boundary. It is not permission to adopt that alternative.
 
 Batch-level `verdict` = worst across all findings (REJECT > REVISE > APPROVE).
 
-If uncertain between REVISE and REJECT, default REVISE — it is the cheaper loop.
+If evidence does not establish a specific defect, do not infer one: use APPROVE
+unless another actionable blocker is supported, and record the uncertainty as
+non-blocking. Rework is authorized by evidence, not by uncertainty.
 
 ## Same-Model Bias Acknowledgment
 

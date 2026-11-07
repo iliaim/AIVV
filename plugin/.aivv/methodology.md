@@ -250,9 +250,13 @@ Reviewer agents receive this improvement-articulation rule through the operation
 6. **Verify** spawns a scoped reviewer to re-verify fixes.
 7. **Document** captures lessons learned and updates calibration.
 
-Cycle gate: if Verify fails 3× on the same findings, the architecture itself is the problem — stop and escalate, don't attempt a 4th fix cycle.
+Rework gate: one `/aivv-fix` invocation has a shared budget of three semantic
+rework retries across challenge, re-authoring, and verification. At exhaustion,
+stop rework, preserve the authorized scope, and report unresolved findings with
+the evidence and retry history; do not ask to reopen the same work. The count is
+not proof that the architecture itself is defective.
 
-**`acknowledged-deferred-at-cap`** (AIVV-self only): a finding that remains after the fix workflow's cycle cap and satisfies the documented auto-disposition rule in `/aivv-fix` Step 4 convergence enforcement (`recommended_next_step ∈ {document, defer-with-rationale, accept-risk}` with legacy fallback to severity ∈ {MINOR, POLISH}, `grounded_by` exclusively cites the appropriate validation stages, and the target-project marker identifies AIVV-self). It is auto-classified without a user prompt and written to `<lens>.jsonl` as `kind: "auto_deferred_at_cap"`. This per-cycle disposition does not populate the wont-fix registry; the same finding may resurface in a later cycle. The rule avoids repeated disposition prompts without weakening the underlying checks. External-project `/aivv-fix` invocations are unaffected.
+**`acknowledged-deferred-at-cap`** (AIVV-self only): a finding that remains after the shared fix-rework budget is exhausted and satisfies the documented auto-disposition rule (`recommended_next_step ∈ {document, defer-with-rationale, accept-risk}` with legacy fallback to severity ∈ {MINOR, POLISH}, `grounded_by` exclusively cites the appropriate validation stages, and the target-project marker identifies AIVV-self). It is auto-classified without a user prompt and written to `<lens>.jsonl` as `kind: "auto_deferred_at_cap"`. This per-cycle disposition does not populate the wont-fix registry; the final report must still label the finding unresolved. It may resurface in a later user-initiated cycle. External-project `/aivv-fix` invocations are unaffected.
 
 ## Key Invariants
 

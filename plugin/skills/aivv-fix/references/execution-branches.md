@@ -19,14 +19,14 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
 
    **Root-cause verification (applies to every branch):**
    - State the root cause explicitly: *"The root cause is X. This fix eliminates X by doing Y."*
-   - If you cannot state the root cause clearly, do NOT proceed — go back to Step 3 and investigate deeper (increment the cycle counter; this backtrack counts toward the 3-cycle limit)
+   - If available evidence does not support a clear root cause, stop this finding as unresolved; uncertainty alone does not trigger another investigation. Re-enter Step 3 only when a specific prior investigation defect is evidenced, a concrete in-scope correction path is available, and the shared `rework_retry_count` has room. Record that defect and evidence before re-entry; otherwise report the evidence gap without writing.
    - A fix that merely prevents the symptom from manifesting (e.g., catching an exception that should never be thrown, adding a guard that hides an underlying invariant violation) is NOT acceptable
    - Ask: *"If I apply this fix, could the same root cause produce a different symptom elsewhere?"* If yes, the fix is incomplete
 
    **Branch A — `code-bug` (default path, most common):**
    - REQUIRED before any host write primitive: consume the approved Step 4.4 `write_intents[]` entries for this finding. Branch A writes require `kind: "generated_patch"` with exact `proposed_edits[]` preimage/postimage pairs; opaque patch hunks or missing `proposed_edits[]` HALT as `no-pre-write-inspectable-intent`.
    - Immediately before each Edit/apply operation, recompute the Branch A intent hash from the exact pending old/new bytes. If the recomputed hash differs from `content_sha`, HALT as `stale-write-intent-content-mismatch`.
-   - Fix ALL instances — if the codebase scan found similar patterns, they share the same root cause and must all be fixed
+   - Fix all confirmed instances within `authorized_scope`. Do not read or modify an explicitly excluded area; report any known out-of-scope instance without treating it as authorization to expand the task.
    - Follow existing code patterns and conventions
    - **Log each change** to `session_changes.changes_summary` with `category: "code-bug"` and `type: "code-edit"` — record the file, what was changed, and which finding it addresses
 

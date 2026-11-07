@@ -31,6 +31,52 @@ Every proposal must make these items clear:
   lens or lenses, and replicate count or thoroughness tier when applicable.
 - **Decision:** tell the user how to redirect or narrow the review if needed.
 
+### Invocation-bound proposal lifecycle
+
+At the start of each actual review, allocate one `invocation_id` (the same value
+written as the review log's top-level `id`) and an invocation-local proposal
+revision starting at 1. A proposal is the tuple
+`{invocation_id, proposal_revision, final_scope, resolved_method}`.
+`resolved_method` is one structured record with the exact `display` line shown
+to the user, review mode, reviewer count, ordered distinct lenses, thoroughness,
+direction setting, severity model, replication count, and each reviewer's label,
+lens, dispatch path, provider, model, and reasoning setting. This record is the
+single source for the announcement, dispatch configuration, and audit log.
+Render `display` exactly as:
+`<N> reviewer(s); mode <review_mode>; lenses <L1, L2>; <depth> depth; <M>
+reviewer(s) per lens; direction <on|off>; severity model <model>; <label>/<lens>
+via <dispatch_path> provider=<provider> model=<model> reasoning=<setting>` for
+each reviewer in roster order, joined by semicolons. The new-write validator
+reconstructs this line and rejects a mismatch. Store unavailable roster values
+as `null` and render them as `unreported`. For a host-inherited model whose exact
+name is unavailable, store the roster sentinel `model:"inherited"` and render it
+as `inherited/unreported`; use an exact resolved model when the runtime knows it.
+Do not silently omit an affecting setting. Keep one active proposal and at most
+one unanswered scope question.
+An answer authorizes only the exact awaited host question that produced it; bind
+the answer to that question's active `proposal_id`. Do not infer the association
+from answer wording. If the host cannot identify which question the answer
+belongs to, treat it as unanswered rather than as approval. An answer does not
+transfer to another invocation or to changed scope/method.
+
+When the user changes or narrows scope, or any field of `resolved_method`
+changes—including review mode, reviewer count or assignments, lenses, depth,
+replication, direction, severity model, provider/model, or reasoning—consume
+and close any answered question, mark that proposal superseded, increment the
+revision, and construct the new proposal from the revised scope and method.
+Never leave the prior question active while announcing or asking about the
+revision. Any confirmation associated with a superseded proposal is stale and
+must be ignored. Re-announce the complete scope and method for the new proposal;
+ask again only if the new scope/method is ambiguous, needs authority, materially
+expands the original request, or explicit ask mode still requires confirmation
+of the new proposal. Do not dispatch under an unannounced replacement method.
+
+Cancellation marks the current invocation terminal. Do not dispatch reviewers,
+write a review log or calibration, or enter the `/aivv-fix` handoff for that
+invocation. Ignore later answers to its stale prompt; only a new top-level
+`/aivv` request creates a new invocation. This does not roll back authorized
+preamble maintenance that already ran before the scope question.
+
 Show scope and method together in user-visible chat before dispatch, including
 after an ambiguity question has been answered. A saved audit block, reviewer
 prompt, or confirmation choice alone is not that announcement. State the
@@ -48,7 +94,7 @@ reviewer count, lens, depth and requested model/reasoning settings. For example:
 - **Materials:** `workshop-plan.md` and relevant access requirements from this chat.
 - **Includes:** How those residents can attend both sessions; gaps and simpler alternatives.
 - **Excludes:** Registration, internet-only barriers, staffing, and implementation.
-- **Method:** 1 reviewer; general review; balanced depth; GPT-6 Luna at extra-high (`xhigh`).
+- **Method:** 1 reviewer; mode cold_single_review; lenses general; balanced depth; 1 reviewer per lens; direction off; severity model legacy_4pass; reviewer-1/general via subagent provider=OpenAI model=GPT-6 Luna reasoning=xhigh.
 
 I'll start this review now. You can redirect or narrow the scope.
 
@@ -75,7 +121,7 @@ for the other lines. For example, in explicit ask mode:
 • Goal: Check whether residents without a computer can attend both sessions.
 • Materials: workshop-plan.md and relevant access requirements from this chat.
 • Excludes: Registration, internet-only barriers, staffing, and implementation.
-• Method: 1 reviewer; general lens; balanced depth; GPT-6 Luna at extra-high (xhigh).
+• Method: 1 reviewer; mode cold_single_review; lenses general; balanced depth; 1 reviewer per lens; direction off; severity model legacy_4pass; reviewer-1/general via subagent provider=OpenAI model=GPT-6 Luna reasoning=xhigh.
 
 Confirm this review, change the scope, or cancel?
 
@@ -84,8 +130,10 @@ do not hide them only in prose. For ambiguity, replace the confirmation question
 with the unresolved choice and offer concrete subjects/boundaries grounded in
 the available material. Do not present a candidate scope as already resolved.
 After the answer, show the resolved scope and method in formatted chat before
-dispatch. Ask again only if a material ambiguity or authority gap remains, or
-explicit ask mode requires confirmation.
+dispatch. If the answer changes either value, it resolves the prior question but
+does not confirm the revised proposal. Ask again only if a material ambiguity
+or authority gap remains, or explicit ask mode requires confirmation of the new
+proposal.
 
 Check the active host adapter's verified formatting capabilities before choosing
 rich text; see [Codex native question formatting](../../../.aivv/platform-adapters/codex.md#native-question-formatting)
@@ -219,26 +267,39 @@ does not read outer-loop state itself.
 
 ## 8. Audit Block
 
-For a review that actually runs, write the existing additive `scope_confirmation`
-fields in `review-<id>.json`:
+For a review that actually runs, write the additive `review_scope.scope_confirmation`
+fields in `review-<invocation_id>.json`. The log's top-level `id` is the same
+`invocation_id`; `proposal_id` is `<invocation_id>:scope:<proposal_revision>`,
+and `confirmed_scope` must exactly equal the sibling `review_scope.final_scope`.
+`resolved_method` stores the complete canonical method object shown with that
+confirmed scope and used to configure dispatch:
 
 ```text
-scope_confirmation: {
+review_scope.scope_confirmation: {
   "mode",                    // resolved announce or ask policy
   "was_trivial",
   "classification_reason",   // one of the six values in Section 2
   "proposed_scope",
   "options_offered",
+  "invocation_id",           // equals the review log's top-level id
+  "proposal_id",             // exact invocation-local proposal whose answer was used
+  "proposal_revision",
   "user_choice",             // "explicit-request-announced", actual ask-mode confirmation,
                              // or the user's ambiguity-resolution answer
-  "final_scope",
+  "confirmed_scope",         // exact final scope covered by this proposal/answer
+  "resolved_method",         // structured method record; display is the exact shown line
   "dropped_scope",            // only when the user narrowed scope
   "suppression_reason"       // null when the review runs
 }
 ```
 
-Use only these existing fields; do not add approval state, scope fingerprints,
-or confirmation machinery to the log. Do not write this block, calibration,
+For strict new review-log writes, the validator checks the structured method
+against the top-level reviewer count and lens assignments, `review_prompt_profile`,
+and `reviewer_roster`. The profile and roster must be emitted for every new
+review log. Historical backfill remains compatible with older records.
+
+Do not add a second approval gate for clear explicit read-only requests. Do not
+persist answers for cancelled or superseded proposals. Do not write this block, calibration,
 or a review log unless the resolved scope and method have been announced and
 the review actually runs. The normal preamble may already have
 written configuration, hints, or maintenance state as described in Section 4.

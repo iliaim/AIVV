@@ -29,7 +29,7 @@ Detail relocated from `skills/aivv-fix/SKILL.md` Step 4.5 CHALLENGE. The inline 
 - Remaining batches proceed to Step 5 without challenge only when every `write_intents[]` entry is safe high-confidence plain prose (`detector_result.verdict: "pass"`, `detector_result.content_shapes: []`, `detector_result.detection_confidence: "high"`, and no required assertions) and every `prevention_plan.mechanism == "none-new"`.
 - Risky, unclassified, low/medium-confidence, bypassed, or near-miss write-intent batches HALT before write as `challenge-budget-exhausted-write-intent-risk`. Record warning code `challenge_budget_exhausted_write_intent_risk` and final-report status `challenge-budget-halted-risky` / `challenge-budget-halted-risky-write-intent`.
 - Reason phrase for deterministic logs: `challenge-budget-halted-risky-write-intent` means a risky write intent could not receive exact-content challenge coverage because the challenge budget was exhausted.
-- Safe skipped batches get one note in the final report: `[Step 4.5 skipped — challenge budget exhausted at N batches; safe high-confidence plain-prose write intents only; re-run with narrower argument to get coverage]` and status `challenge-skipped-safe`.
+- Safe skipped batches get one note in the final report: `[Step 4.5 skipped — challenge budget exhausted at N batches; safe high-confidence plain-prose write intents only]` and status `challenge-skipped-safe`. Do not ask the user to narrow or reopen the already-authorized scope to recover challenge coverage; report any risky batch halted by the cap as unresolved.
 - Emit a `challenge_budget_exhausted` calibration record in Step 7.
 
 ## 4.5.2 — Dispatch
@@ -48,6 +48,7 @@ Track each challenger handle with `batch_id`, `role: "challenger"`, `dispatch_pa
 **Prompt construction:** use `fix-challenger-prompt-template.md`. Fill:
 - `{batch_id}`: e.g., `B1`
 - `{finding_id_list}`: e.g., `F001, F002`
+- `{authorized_scope}`: immutable snapshot captured in Step 1.9; include the original goal, selected findings, included boundaries, and exclusions.
 - `{For each finding}` block: one block per finding with investigator fields from Step 3 output
 - `{round_number_block}`: `"(none — this is cycle 1)"` on cycle 1; `"Round N (predecessor review: <id>)"` on cycle ≥ 2
 - `{predecessor_findings_summary}`: empty on cycle 1; prior-round findings + outcomes on cycle ≥ 2
@@ -65,19 +66,31 @@ After parsing the challenger's JSON verdict and recording the decision, mark tha
 
 **APPROVE:** proceed to Step 4.6 RED-GREEN TEST GATE (then Step 5 EXECUTE).
 
-**REVISE:** loop to Step 3 INVESTIGATE with the challenger's `concerns` appended to the investigator prompt as an explicit "Address these specific concerns:" block. Increment `challenge_iterations` (NOT `cycle_count` — see counter semantics below). If `--dangerously-auto-apply` was confirmed, record `CHALLENGE` plus the challenger's concrete concerns as bypass reasons for the affected findings, but still discard affected write intents and re-enter Step 3 per the write-intent invalidation contract; the bypass suppresses the user decision prompt, not stale/rejected-intent regeneration.
+**REVISE:** only when a concern identifies a specific defect, cites evidence that supports it, and gives a concrete correction inside `authorized_scope`. If the shared retry budget has room, record one retry event, append the concern to the investigator prompt, discard affected write intents, and re-enter Step 3. If the budget is exhausted, leave those findings unresolved and report them. `--dangerously-auto-apply` does not bypass this rule or the retry budget.
 
-**REJECT:** loop to Step 3 INVESTIGATE with the challenger's `concerns[].alternative` as the primary fix direction. Increment `challenge_iterations`. If `--dangerously-auto-apply` was confirmed, record `CHALLENGE` plus the challenger's concrete concerns/alternatives as bypass reasons for the affected findings, but still discard affected write intents and re-enter Step 3 per the write-intent invalidation contract; the bypass suppresses the user decision prompt, not stale/rejected-intent regeneration.
+**REJECT:** only when evidence shows the proposed fix direction is wrong and the challenger supplies a concrete alternative inside `authorized_scope`. If the shared retry budget has room, record one retry event and investigate that alternative as a candidate implementation. An out-of-scope alternative is not adopted; report the finding unresolved. If the budget is exhausted, do not re-enter Step 3.
+
+**Uncertainty-only output:** record missing evidence or hypothetical risk under `non_blocking_observations`. It does not invalidate an otherwise supported plan, does not trigger another investigation, and does not consume a retry. The `concerns` array contains only actionable blockers.
 
 **Immediate targeted-follow-up exception:** If the next immediate step requires targeted interactive follow-up with a specific challenger, keep that challenger's `output_consumed` value `false` until the follow-up response is integrated. Surface and persist the reason in `session_changes.warnings` when possible. This is the only valid reason to leave a completed challenger subagent open after its current response.
 
-**Escalation gate:** if the SAME finding receives REJECT in two successive Step 4.5 evaluations within one invocation, halt and present BOTH challengers' analyses to the user as a contradiction. Do NOT auto-proceed to a third attempt.
+Do not add a separate double-REJECT escalation prompt. If evidence-backed concerns conflict, include both in the next in-budget investigation. If they remain unresolved at the shared cap, report the evidence and leave the finding unresolved.
 
-**Counter semantics — `challenge_iterations` (NEW) vs `cycle_count` (EXISTING):**
-- `challenge_iterations`: NEW top-level field on fix-log, initialized to 0 at Step 4.5 entry. Bumps on every batch REVISE/REJECT verdict. Per-invocation budget cap = 3. When cap reached, halt Step 4.5 looping — unresolved REVISE/REJECT findings escalate to user: `"challenger and investigator did not converge after 3 challenge iterations — your call."` The field must be added to the fix-log schema in Task 8 alongside the type-enum extension.
-- `cycle_count`: EXISTING field; bumps ONLY on Step 6 verifier re-entry (post-EXECUTE) and Step 4 root-cause backtrack. NOT incremented by Step 4.5. Collapsing the two counters would let per-batch challenger churn exhaust the Step 6 3-cycle convergence gate before any code is written.
-- Same-finding double-REJECT escalation fires independently of `challenge_iterations` — it is a per-finding ping-pong guard (max 2 REJECT per finding per invocation), not the per-invocation budget counter.
-- Total worst-case loop budget on one finding: 3 challenge iterations (Step 4.5) + 3 verification cycles (Step 6) = 6 LLM passes, surfacing as 2 separate escalation prompts.
+**Shared semantic retry budget:** `rework_retry_count` starts at 0 and
+`max_rework_retries` is 3 for the entire `/aivv-fix` invocation. Before every
+re-entry that re-authors a fix plan or repeats post-write verification, increment
+the count once and append one `rework_retry_history` entry with the gate, affected
+finding IDs, defect, and evidence. A batch re-entry consumes one retry, regardless
+of its number of findings. `challenge_iterations` and `cycle_count` remain stage
+diagnostics only; they never grant another retry. Transport and invalid-JSON
+retries that do not change the fix proposal are outside this budget. Outer-loop
+review cycles are new invocations and remain governed by the outer-loop contract.
+
+At `rework_retry_count == max_rework_retries`, do not re-investigate, re-author,
+or dispatch another verifier for unresolved findings. Report them as unresolved
+with the retry history. Do not ask the user to repeat or widen already-authorized
+scope. Independently approved batches may continue through their existing safety
+gates; unresolved batches do not write.
 
 **Calibration (deferred to Step 7):**
 - When REVISE/REJECT led to a fix change AND Step 6 verifier confirms the revised fix resolved the finding → emit `challenger_caught_issue` record.

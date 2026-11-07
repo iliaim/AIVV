@@ -55,29 +55,25 @@ When `/aivv-calibrate` triggers:
 1. Preserve the read-only default. Honor `--migrate` only when the user's original
    arguments include it, and limit it to legacy calibration files in the
    selected target.
-2. Resolve the AIVV plugin/runtime root, then run the deterministic helper from
-   that root while preserving the user's original target arguments. Do not
-   assume the reviewed target project contains AIVV's `tools/` directory.
+2. Resolve and preflight the loaded AIVV runtime root once before reading
+   calibration data, then run the deterministic helper from that pinned root
+   while preserving the user's original target arguments. If preflight reports
+   `AIVV_INSTALLATION_INCOMPLETE`, show that diagnostic once and stop; do not
+   retry or select another cache. Do not assume the reviewed target project
+   contains AIVV's `tools/` directory.
 
    ```bash
-   AIVV_CODEX_HOME="${CODEX_HOME:-${HOME:-}/.codex}"
-   AIVV_RUNTIME_ROOT_HELPER="${AIVV_RUNTIME_ROOT_HELPER:-}"
-   for AIVV_RUNTIME_ROOT_CANDIDATE in \
-     "${AIVV_ROOT:-}/.aivv/runtime-root.mjs" \
-     "${CLAUDE_PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-     "${PLUGIN_ROOT:-}/.aivv/runtime-root.mjs" \
-     "${SKILL_BASE_DIR:-}/.aivv/runtime-root.mjs" \
-     "${SKILL_BASE_DIR:-}/../../.aivv/runtime-root.mjs" \
-     "$AIVV_CODEX_HOME/aivv-runtime/.aivv/runtime-root.mjs"; do
-     if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ] && [ -f "$AIVV_RUNTIME_ROOT_CANDIDATE" ]; then
-       AIVV_RUNTIME_ROOT_HELPER="$AIVV_RUNTIME_ROOT_CANDIDATE"
-     fi
-   done
-   if [ -z "$AIVV_RUNTIME_ROOT_HELPER" ]; then
-     echo "AIVV runtime-root resolver not found; set AIVV_ROOT, PLUGIN_ROOT, CODEX_HOME, or SKILL_BASE_DIR" >&2
-     exit 1
+   # Select the resolver once using the procedure in .aivv/runtime-root.md.
+   # If that selected resolver is absent, stop with the installation diagnostic;
+   # do not search a lower-priority cache.
+   if [ ! -f "${AIVV_RUNTIME_ROOT_HELPER:-}" ]; then
+     echo "[AIVV] AIVV_INSTALLATION_INCOMPLETE: runtime-root resolver not found in the selected installation. Repair or reinstall this AIVV installation, restart the host, and retry in a new invocation." >&2
+     exit 3
    fi
-   AIVV_ROOT="$(node "$AIVV_RUNTIME_ROOT_HELPER" --print "${SKILL_BASE_DIR:-}")"
+   if ! AIVV_ROOT="$(node "$AIVV_RUNTIME_ROOT_HELPER" --preflight aivv-calibrate "${SKILL_BASE_DIR:-}")"; then
+     exit 3
+   fi
+   export AIVV_ROOT
    AIVV_CALIBRATE_MJS="$AIVV_ROOT/tools/aivv-calibrate.mjs"
    ```
 

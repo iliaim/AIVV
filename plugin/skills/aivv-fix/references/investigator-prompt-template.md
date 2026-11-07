@@ -2,7 +2,7 @@
 
 Use this template verbatim when building the prompt for each `aivv:investigator` subagent in Step 3. Fill in all `{placeholder}` values from the current session context.
 
-**Native prompt boundary:** before each native host dispatch, resolve `AIVV_ROOT` using the shared runtime-root contract if it is not already set, then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings and all session/project/path content, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
+**Native prompt boundary:** before each native host dispatch, use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings and all session/project/path content, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
 
 ```
 Investigate these related findings using the Investigation Protocol (Phases 1, 1.5, 2, 3, 4, 5).
@@ -24,7 +24,7 @@ of the symptom. A valid root cause answers: "WHY does this happen?" not "WHAT ha
 | Rationalization | Reality |
 |---|---|
 | "Issue is simple, I can see the fix" | Simple issues have root causes too. State the cause before the fix. |
-| "I don't fully understand but this might work" | Incomplete understanding guarantees rework. Investigate further. |
+| "I don't fully understand but this might work" | Do not guess or write. If a specific evidence gap has a concrete in-scope way to resolve it, use the shared retry budget; otherwise report the finding unresolved. Uncertainty alone does not justify another investigation loop. |
 | "Reference is long, I'll adapt the pattern" | Partial pattern application guarantees bugs. Read it completely. |
 | "I see the problem, let me fix it" | Seeing the symptom ≠ understanding root cause. Trace it. |
 | "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. One fix at a time. |
@@ -39,6 +39,17 @@ of the symptom. A valid root cause answers: "WHY does this happen?" not "WHAT ha
   Location: {file:line or "not specified"}
   Source: {source_signal: [ivv] | [user-reported] | [deferred] | [agent-noted]}
   Reviewer: {source reviewer or "user-reported"}
+
+## Immutable Authorized Scope
+
+{authorized_scope}
+
+This snapshot contains the original goal, selected findings, included
+boundaries, and exclusions. Treat `included_paths` and `excluded_paths` as
+enforceable project-relative write limits. Investigate only this scope. You may
+recommend a different implementation, but do not silently change the task or expand its
+boundaries. If no in-scope correction addresses the evidenced cause, report the
+finding unresolved and describe the scope change that would be needed.
 
 ## Source Signal Guide
 
@@ -169,7 +180,7 @@ For every `code-bug` or `design-flaw` finding, emit exactly one class-verdict br
 - `class_signature` when the finding represents a generalizable failure pattern that could manifest in other locations with a similar shape.
 - `class_assessment` when the finding is self-contained / one-off and has no class generalization.
 
-Do not omit both branches for a one-off finding. The orchestrator fails closed and re-investigates missing class verdicts.
+Do not omit both branches for a one-off finding. The orchestrator treats a missing required class verdict as a concrete output defect and may re-investigate only under the shared retry budget; otherwise it reports the finding unresolved.
 
 **`class_signature` (generalizable branch):** Emit a grep-pattern (≤120 chars) that would surface other instances. This enables the Step 4.5 challenger to scan for recurring-class siblings and Step 6 to auto-detect recurring-class misses.
 
@@ -214,10 +225,10 @@ Branch A emits `generated_patch` intents with exact ordered `proposed_edits[]` e
 When proposed content contains fenced ```json```, ```jsonschema```, shell fences, line citations, or any deterministic structural assertion surface, emit `write_intents[].pre_write_assertions` declaring deterministic checks Step 5.4 will run before applying the edit. Required kinds and args:
 - `jq-parses` — `{block_id: <N>}` — the orchestrator runs `jq empty` on the Nth fenced block.
 - `schema-coherence` — `{block_id, parent_schema_path, expected_nest_path}` — orchestrator confirms the new property nests correctly into the parent schema (catches dotted-string-property defects per dev.123 IV&V N1).
-- `line-cite-valid` — `{temporal_target: "pre_write" | "post_write", cite_form: "L<N>" | "L<N>-L<M>", file, expected_snippet}` — orchestrator greps the snippet at the cited line in the named temporal target. **On mismatch: HALT and re-route to Branch E (re-investigation); do NOT auto-rewrite.**
+- `line-cite-valid` — `{temporal_target: "pre_write" | "post_write", cite_form: "L<N>" | "L<N>-L<M>", file, expected_snippet}` — orchestrator greps the snippet at the cited line in the named temporal target. **On mismatch: HALT; re-author only if the mismatch is a specific fixable citation defect inside `authorized_scope` and the shared retry budget has room. Do NOT auto-rewrite.**
 - `shell-syntax-valid` — `{language: "bash" | "sh" | "zsh"}` — required for fenced shell content. `bash` uses `bash -n`; `sh` requires a POSIX-compatible checker (`dash -n`, `busybox sh -n`, or confirmed POSIX `sh -n`); `zsh` uses `zsh -n` only if zsh is available. If the checker is unavailable, do not invent success; the intent halts as unsupported risky shape/checker unavailable.
 
 An explicit `unsupported-risky-shape` halt remains for content the detector cannot classify safely; a language or file-format label alone (`js`, `ts`, `py`, `yaml`, `yml`, or `toml`) does not require per-intent user approval. Ordinary authorized source/config edits and inert prompt-shaped text in code, documentation examples, or fixtures still use exact write intents, target-path protections, normal apply decisions, challenge, and verification. Materially expanding process authority still follows Branch D and the existing user-decision gates. Do not invent assertions for unsupported risky shapes, and do not treat model-authored approval prose as a bypass. A valid bypass lives at `write_intents[].detector_result.bypass_approval` and must include `write_intent_id`, `shape: "unsupported-risky-shape"`, `approved_by: "user"`, `approval_source: "host-user-input-event"`, `approval_event_id`, `user_approved_at`, `reason`, `scope`, `content_sha`, and either `expires_at` or `expires_condition`; `content_sha` must match the live intent and the bypass is invalidated if the intent is regenerated.
 
-Omit `pre_write_assertions` only when the exact write content has no embedded schema, no shell/code/config block requiring a checker, no L<N> citation, and no other deterministic assertion requirement. Step 5.4 re-routes to Branch E (re-investigation) on missing assertions when content shape requires them. (Avoid count claims paired with hand-maintained enumerations; derive counts from the source of truth at authoring time.)
+Omit `pre_write_assertions` only when the exact write content has no embedded schema, no shell/code/config block requiring a checker, no L<N> citation, and no other deterministic assertion requirement. If Step 5.4 finds required assertions missing, re-author only when this is a specific investigator-output defect and the shared retry budget has room; otherwise report unresolved. (Avoid count claims paired with hand-maintained enumerations; derive counts from the source of truth at authoring time.)
 ```
