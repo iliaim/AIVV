@@ -224,7 +224,7 @@ When `FixSession.source == "review_id"`, carry the exact `source_review_relative
 | `handoff_to_fix(review_result)` | Invokes or continues the fix workflow, preferably via `review_id`. | Cross-skill invocation via host's peer-skill mechanism + durable `--review-id=<id>` argument. |
 | `claim_remediation_request(request_id, target)` | Atomically claims a queued local Action Inbox request only when its canonical state directory, target repository, current Git revision, and workspace-state snapshot still match. Claiming does not apply a fix or bypass triage, investigation, write-intent, or verification gates. | Use the `AIVV_ROOT` already pinned and preflighted for this invocation, then run `node "$AIVV_ROOT/tools/aivv-action-inbox.mjs" claim --request-id <uuid> --state-dir <state_dir> --storage-context <storage_context_file> --target <target>`; never use a target-relative `tools/` path. Then invoke `/aivv-fix --action-request=<uuid> --target=<target>`. |
 | `capture_workspace_state()` | Returns a stable comparable string of workspace state. Used by SHA-snapshot guard when `can_enforce_readonly` is `partial`/`unsupported`. (Operation renamed from `snapshot_workspace_sha`; field names retained for backward-compat per OQ4.) | Shell capture of `( cd '<target>' && git status --porcelain=v1 -z; echo ''; git diff --no-color --no-ext-diff HEAD )`. String comparison detects drift. |
-| `compute_fingerprint(location, description)` | Produces a deterministic identifier for wont-fix dedup, recurrence joins, and review/fix handoff. | For file-backed findings, hash `<normalized_file>:<lowercased_description>`. For scoped findings, hash `<scope_ref.kind>:<scope_ref.ref>:<lowercased_description>`. Use shell heredoc-stdin form into `git hash-object --stdin --no-filters` to avoid shell escaping bugs. SHA-1 hex. Legacy SHA-256 fingerprints remain historical until explicit import; never rewrite the project original. |
+| `compute_fingerprint(location, description)` | Produces a deterministic identifier for wont-fix dedup, recurrence joins, and review/fix handoff. | For file-backed findings, hash `<normalized_file>:<lowercased_description>`. For scoped findings, hash `<scope_ref.kind>:<scope_ref.ref>:<lowercased_description>`. Use the safe stdin forms in "Canonical Fingerprint Formula" (a quoted Bash heredoc or a single-quoted PowerShell string) into `git hash-object --stdin --no-filters` so finding text is never shell-parsed. SHA-1 hex. Legacy SHA-256 fingerprints remain historical until explicit import; never rewrite the project original. |
 | `schema_gate(route)` | Halts only when state required by the current route exceeds the supported max; warns and continues for unrelated historical state. | Agent reads state file headers, parses `schema_version`, emits `STATE_SCHEMA_NEWER_HISTORICAL` for unselected newer state, and halts with route-specific errors such as `REVIEW_SCHEMA_NEWER` only when the selected artifact must be read. |
 
 ---
@@ -248,23 +248,23 @@ Normalization rules:
 2. For scoped findings, trim surrounding whitespace from `scope_ref.kind` and `scope_ref.ref`, then join them with one `:` and no extra prefix.
 3. Lowercase the finding `description` value using Unicode-aware lowercase. Preserve punctuation and ordinary whitespace. If a legacy input contains embedded newlines, replace them with single spaces before hashing.
 
-Unix-like shells:
+The hashed bytes are the UTF-8 canonical input followed by exactly one LF. Both forms below produce those bytes, so existing fingerprints stay valid.
+
+Unix-like shells. Quote the delimiter so the shell never expands `$()`, backticks, or backslashes in finding text. Choose a delimiter that does not equal any complete line of the composed input (a file path can contain line breaks): start with `EOF_AIVV_FP` and append `_` until no line matches.
 
 ```bash
-git hash-object --stdin --no-filters <<EOF_AIVV_FP
+git hash-object --stdin --no-filters <<'EOF_AIVV_FP'
 <location_identifier>:<lowercased_description>
 EOF_AIVV_FP
 ```
 
-PowerShell shells:
+PowerShell shells. Enclose the input in a single-quoted string and double every single-quote character inside it. PowerShell treats U+0027 and the typographic quotes U+2018, U+2019, U+201A, and U+201B all as single quotes, so double each of the five. `$`, `$()`, backticks, double quotes, and backslashes then stay literal, and the pipeline supplies the final LF.
 
 ```powershell
-@'
-<location_identifier>:<lowercased_description>
-'@ | git hash-object --stdin --no-filters
+'<identifier with single-quote characters doubled>' | git hash-object --stdin --no-filters
 ```
 
-Use a PowerShell single-quoted here-string so `$`, `$()`, backticks, quotes, and backslashes remain literal. Do not inline the description into any expandable or shell-parsed string such as `printf "%s" ...` or a PowerShell double-quoted string; finding text may contain shell-significant bytes. The orchestrator constructs the normalized input string in context, passes it through stdin, and records the resulting SHA-1 hex.
+Do not use a PowerShell here-string (`@' ... '@`): an input line of `'@` ends it early and the text after it runs as PowerShell code. Do not use an unquoted heredoc, and do not inline the description into any expandable or shell-parsed string such as `printf "%s" ...` or a PowerShell double-quoted string; finding text may contain shell-significant bytes. The orchestrator constructs the normalized input string in context, passes it through stdin, and records the resulting SHA-1 hex.
 
 ## State Concurrency
 
