@@ -1,6 +1,6 @@
 # AIVV — Agentic Independent Validation & Verification
 
-AIVV is an open-source, cross-agent package for structured review of session work, documents, research, plans, designs, decisions, and code, with remediation and calibration. Shared review behavior, prompts, schemas, and state formats are provider-neutral. Host capabilities and provider transport/auth differences are declared in separate adapters; the runtime registry centralizes supported provider IDs, model defaults and acceptance status, and prompt-source metadata. The currently supported host integrations are Claude Code and Codex. The provider registry lists implemented provider IDs and model metadata; each registered provider requires a matching tested transport adapter. Adding another host or provider requires a tested adapter; the shared workflow does not assume that every possible integration is already installed.
+AIVV is an open-source, cross-agent package for structured review of session work, documents, research, plans, designs, decisions, and code, with remediation and calibration. Shared review behavior, prompts, schemas, and state formats are provider-neutral. Host capabilities and provider transport/auth differences are declared in separate adapters; the runtime registry centralizes supported provider IDs, model defaults and acceptance status, and prompt-source metadata. Claude Code and Codex have operational host integrations; Hermes Agent has an experimental local skills-only discovery adapter, with review and remediation capabilities still unverified. The provider registry lists implemented provider IDs and model metadata; each registered provider requires a matching tested transport adapter. Adding another host or provider requires a tested adapter; the shared workflow does not assume that every possible integration is already installed.
 
 ## What it does
 
@@ -36,6 +36,10 @@ From a clone of the AIVV repository, install the read-only reviewer and investig
 ```
 
 Restart Codex, start a new chat, and ask, “Review the changes in this repository with AIVV.” See [INSTALL.md](INSTALL.md) for PowerShell instructions and Codex hook trust details.
+
+## Hermes Agent (experimental local discovery)
+
+Hermes can discover AIVV's canonical skills from a clone of the public `main` branch through `skills.external_dirs`; Hermes requires a local filesystem path, so this does not copy skills or install a native Hermes plugin. Discovery is not proof of isolated review, read-only enforcement, persistence, or remediation support. See [INSTALL.md](INSTALL.md) for setup and limitations.
 
 ## Documentation
 

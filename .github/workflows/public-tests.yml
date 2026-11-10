@@ -41,7 +41,7 @@ jobs:
         run: node tests/security/aivv-fix-scope.test.mjs
       - name: Verify active plugin runtime-root resolution
         run: node tests/runtime-root.test.mjs
-      - name: Verify Claude and Codex package metadata
+      - name: Verify host-adapter assets and Claude/Codex marketplace metadata
         run: node tests/plugin-package.test.mjs
       - name: Verify general review defaults and portable runtime contract
         run: node tests/review/general-review.test.mjs

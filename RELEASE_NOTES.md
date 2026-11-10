@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.5.1 — experimental Hermes skills discovery
+
+- Add an experimental Hermes skills-only adapter with portable instructions for installing canonical skills from a clone of the public `main` branch; discovery does not imply verified review or remediation support.
+- Remove the obsolete Hermes-specific adapter and proof artifacts in favor of the documented external-skills route.
+
 ## 0.5.0 — provider-neutral runtime
 
 - Centralize provider, model, authentication, and prompt-source metadata; select providers and models through the shared runtime contract.

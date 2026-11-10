@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -13,7 +13,8 @@ import {
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const STORAGE_HELPER = path.join(REPO_ROOT, 'plugin/tools/storage-paths.mjs');
-const TEMP_ROOT = mkdtempSync(path.join(os.tmpdir(), 'aivv-fix-scope-'));
+// macOS commonly exposes the temp root through /var while realpath resolves /private/var.
+const TEMP_ROOT = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'aivv-fix-scope-')));
 const TARGET = path.join(TEMP_ROOT, 'target');
 const HOME = path.join(TEMP_ROOT, 'home');
 const CONTEXT_FILE = path.join(TEMP_ROOT, 'storage-context.json');

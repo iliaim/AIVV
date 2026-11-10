@@ -13,6 +13,12 @@ for the view scripts and compatibility-index helper. If preflight reports
 `AIVV_INSTALLATION_INCOMPLETE`, show the diagnostic once and stop; do not
 resolve another cache or retry missing files.
 
+<!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, load the host adapter with
+`read_file` from `${HERMES_SKILL_DIR}/../../.aivv/platform-adapters/hermes-agent.md`
+before using host-specific operations. Do not open that sibling path with
+`skill_view` because Hermes rejects parent traversal. If the template token is
+unexpanded, stop with `AIVV_INSTALLATION_INCOMPLETE`.
+
 ## Usage
 
 ```bash

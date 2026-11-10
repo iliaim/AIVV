@@ -14,6 +14,12 @@ Routes require only the capabilities they use: read, reviewer dispatch, or write
 
 Same as `/aivv` — see the Host notes paragraph at the end of the [`/aivv` skill](../aivv/SKILL.md), the Adapter Operations table in [`.aivv/runtime-contract.md`](../../.aivv/runtime-contract.md), and the per-host adapters in [`.aivv/platform-adapters/`](../../.aivv/platform-adapters/). Additional `/aivv-fix`-specific operations:
 
+<!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, load the host adapter with
+`read_file` from `${HERMES_SKILL_DIR}/../../.aivv/platform-adapters/hermes-agent.md`
+before using host-specific operations. Do not open that sibling path with
+`skill_view` because Hermes rejects parent traversal. If the template token is
+unexpanded, stop with `AIVV_INSTALLATION_INCOMPLETE`.
+
 <!-- CLAUDE-CODE-SPECIFIC: the table below names Claude Code tool surfaces (Agent / subagent_type) explicitly; Codex column maps to Codex equivalents. -->
 
 | Adapter operation | Claude Code | Codex |
