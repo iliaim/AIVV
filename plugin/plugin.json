@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "aivv",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "General advisory review of session work, documents, plans, decisions, and code, with finding investigation and gated remediation.",
   "author": {
     "name": "Ilia Imerlishvili",

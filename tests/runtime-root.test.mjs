@@ -100,11 +100,26 @@ try {
   });
   assert.equal(incompletePreflight.status, 3);
   assert.match(incompletePreflight.stderr, /AIVV_INSTALLATION_INCOMPLETE/);
+  assert.match(incompletePreflight.stderr, /platform-adapters\/hermes-agent\.md/,
+    'an incomplete package should fail closed when the shared Hermes adapter is absent');
   assert.ok(incompletePreflight.stderr.length < 8192,
     'an installation diagnostic should fit within the host capture limit');
   assert.match(incompletePreflight.stderr, /No alternate runtime root was used/);
   assert.equal(incompletePreflight.stderr.trim().split(/\r?\n/).length, 1,
     'an incomplete selected root should stop once with one installation diagnostic');
+
+  for (const [profile, skillName] of [
+    ['aivv', 'aivv'],
+    ['aivv-fix', 'aivv-fix'],
+    ['aivv-view', 'aivv-view'],
+    ['aivv-calibrate', 'aivv-calibrate'],
+  ]) {
+    const skillDir = path.join(root, 'plugin', 'skills', skillName);
+    const result = preflight(resolverSource, profile, { skillDir });
+    assert.equal(result.status, 0, `${profile} source preflight failed: ${result.stderr}`);
+    assert.equal(result.stdout.trim(), path.join(root, 'plugin'),
+      `${profile} should resolve the canonical package from its loaded skill directory`);
+  }
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
 }

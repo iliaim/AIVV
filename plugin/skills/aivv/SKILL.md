@@ -141,3 +141,9 @@ continuation into `/aivv-fix --review-id=<id>`. Missing progress UI is not a
 safety, or verification gates. State writes are orchestrator-only and use
 the shared storage mutation helper. Bind target/storage context before maintenance
 and preserve policy provenance per `.aivv/target-resolution.md`.
+
+<!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, first load the host adapter with
+`read_file` using the substituted absolute path
+`${HERMES_SKILL_DIR}/../../.aivv/platform-adapters/hermes-agent.md`. Do not use
+`skill_view` for this sibling path; it rejects parent traversal. If the template
+token remains literal, stop with `AIVV_INSTALLATION_INCOMPLETE`.

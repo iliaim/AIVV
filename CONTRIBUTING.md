@@ -10,7 +10,7 @@ Keep review methodology, prompt contracts, schemas, lenses, and state behavior i
 
 1. Explain the user-visible problem or improvement and keep the change focused.
 2. Include or update appropriate verification for behavior changes.
-3. Run `node tests/security/investigator-bash-guard.test.mjs`, `node tests/plugin-package.test.mjs`, and `node tests/provider-agnostic-contract.test.mjs`. When changing a host adapter, run its documented validation command. When Claude Code is available, also run `claude plugin validate --profile directory plugin` from the repository root, and describe the checks you ran.
+3. Run `node tests/security/investigator-bash-guard.test.mjs`, `node tests/plugin-package.test.mjs`, and `node tests/provider-agnostic-contract.test.mjs`. When changing a host adapter, run its documented validation command. When Claude Code is available, run `claude plugin validate plugin` and `claude plugin validate .claude-plugin/marketplace.json` from the repository root, and describe the checks you ran. The current validator may warn that the standalone Claude plugin manifest omits `version`; the marketplace intentionally supplies it, and `tests/plugin-package.test.mjs` verifies the versions stay aligned. It may also warn that the existing `icon` field is unrecognized; retain or change that field only as a separate packaging decision, not to silence the warning.
 4. Do not include credentials, private project data, or review artifacts from real repositories.
 
 Please describe behavior changes and any limitations in the pull request. Maintainers may ask for revisions, defer the change, or close it without merging.
