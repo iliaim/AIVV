@@ -272,6 +272,7 @@
         "required": ["finding_id"],
         "properties": {
           "finding_id": {"type": "string", "minLength": 1},
+          "class_scan": {"type": "object", "description": "Result of the Step 5 class-verdict scan when it ran early at Step 4.4.5; Step 5 and a resumed run reuse it instead of scanning again."},
           "red_run": {
             "type": "object",
             "required": ["status"],

@@ -228,11 +228,14 @@ try {
     'a pending user decision still comes before any project write');
   assert.match(redGate, /Undo the early test write\*\* whenever the fix for its finding is not applied in this invocation/,
     'a failing test must not be left behind');
-  assert.match(redGate, /first run the finding's read-only class-verdict scan[^\n]*?write early only if it leaves the finding's confidence and route unchanged/,
+  assert.match(redGate, /first run the finding's read-only class-verdict scan[^\n]*?write early only if the verdict gate passes and the scan leaves the finding's confidence and route unchanged\. Record the result on the finding's decision-ledger entry as `class_scan`/,
     'a decision that only the Step 5 class scan can raise must be known before the early write');
   assert.match(redGate, /only while the file still matches the content this run wrote/,
     'undo must not delete a file the user changed after the run stopped');
   assert.match(reference('fix-log-contract.md'), /On "Restart": first undo any early test write as in item 2/);
+  assert.match(reference('fix-log-contract.md'), /reuse the result recorded as `class_scan` on its `decision_ledger\[\]` entry and do not run those steps again/,
+    'Step 5 and a resumed run must not rescan with the failing test already on disk');
+  assert.match(reference('fix-log-contract.md'), /confirm the file still holds the content this run wrote/);
   assert.match(redGate, /Before the early write, add the test path to `files_created` or `files_modified`/,
     'an early test write must be visible to recovery before it happens');
   assert.match(reference('fix-log-contract.md'), /files created: \{files_created\}/, 'the recovery prompt shows created files');
