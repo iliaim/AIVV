@@ -420,7 +420,7 @@ function resolveRoute(args) {
 try {
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     console.log([
-      "usage: node <AIVV_ROOT>/tools/incident-lifecycle-route.mjs (--incident|--problem|--issue <id> | --github-issue <url|owner/repo#N|N>) [--target <dir> | --context <storage-context.json>]",
+      "usage: node <AIVV_ROOT>/tools/incident-lifecycle-route.mjs (--incident|--problem|--issue <id> | --github-issue <url|owner/repo#N|#N>) [--target <dir> | --context <storage-context.json>]",
       "Prints one JSON route on stdout. Exit 0 on a resolved route, 2 when blocked ({status: \"blocked\", reason, ...}).",
     ].join("\n"));
     process.exit(0);

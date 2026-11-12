@@ -88,6 +88,12 @@ assert.equal(driftedVerdict.reason, "stale-write-intent-content-mismatch",
 assert.match(driftedVerdict.detail, /WI-1/);
 const wholeText = { write_intents: [{ id: "WI-2", branch: "B", kind: "verbatim_doc_content", exact_content_or_patch: "doc text\n", content_sha: sha256("doc text\n") }] };
 assert.equal(staleVerdict(wholeText).status, "pass");
+const wholeTextEmptyEdits = structuredClone(wholeText);
+wholeTextEmptyEdits.write_intents[0].proposed_edits = [];
+assert.equal(staleVerdict(wholeTextEmptyEdits).status, "pass", "an empty edits array does not turn a whole-text intent into a patch");
+assert.equal(staleVerdict({ write_intents: [{ id: "WI-3", recorded_content_sha: "0".repeat(64) }] }).reason,
+  "stale-write-intent-content-mismatch", "a legacy recorded hash with no bytes still halts");
+assert.doesNotThrow(() => staleVerdict({ write_intents: [{ id: "WI-4", proposed_edits: [null] }] }));
 wholeText.write_intents[0].exact_content_or_patch = "other text\n";
 assert.equal(staleVerdict(wholeText).reason, "stale-write-intent-content-mismatch");
 

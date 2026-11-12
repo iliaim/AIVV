@@ -164,7 +164,7 @@ Then terminate the skill (do NOT proceed to Steps 5 sub-items, 6, or 7).
 
 Before the scope_search_seed pre-loop, enforce the mandatory class verdict on the approved findings, scan for class siblings, and triage them. This is the class-breadth counterpart of the scope_search_seed pre-loop: `scope_search_seed` answers *which other files need the same change* (scope breadth); `class_signature` answers *which other locations have the same bug* (class breadth). Both pre-loops run before any per-finding fix branch; the class-verdict gate runs first because a finding without a verdict is not ready for either scan.
 
-**Early scan reuse.** For a finding whose steps 1–5 already ran at Step 4.4.5 ([red-green-gate.md](red-green-gate.md)), reuse the result recorded as `class_scan` on its `decision_ledger[]` entry and do not run those steps again; continue from step 6.
+**Early scan reuse.** For a finding whose steps 1–5 already ran at Step 4.4.5 ([red-green-gate.md](red-green-gate.md)), reuse the result recorded as `class_scan` on its `decision_ledger[]` entry and do not run those steps again; continue from step 6. A recorded failed verdict gate keeps its step 1 outcome.
 
 The execution-shape contract below (pattern interpretation, target scoping, argv tokenization, own-locator exclusion, time budget) is shared by step 3's `searched_pattern_negative` execution AND step 4's `class_signature` variant scan — they are the same grep machinery pointed at different patterns.
 

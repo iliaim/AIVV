@@ -38,7 +38,7 @@ Branch-specific production rules:
 Hash semantics:
 - For Branch B/D whole-text intents, `content_sha` is SHA-256 over the exact raw UTF-8 bytes of `exact_content_or_patch`, LF bytes preserved, with no line-ending normalization. Challenger snapshot truncation never changes `content_sha`; hashes always identify the full original proposed content.
 - For Branch A `proposed_edits[].content_sha`, compute SHA-256 over deterministic length-prefixed framing: `old_bytes=<byte_length>\n<old_string>\nnew_bytes=<byte_length>\n<new_string>`, using raw UTF-8 byte lengths.
-- For a Branch A multi-edit top-level `content_sha`, compute SHA-256 over deterministic concatenation of each `proposed_edits[]` framing in array order, separated by `\n--aivv-edit-boundary--\n`.
+- For the top-level `content_sha` of any Branch A intent with `proposed_edits[]` (one edit or many), compute SHA-256 over deterministic concatenation of each `proposed_edits[]` framing in array order, separated by `\n--aivv-edit-boundary--\n`.
 
 B4 is text-write safety only. Any proposed intent whose old/new content contains NUL bytes or non-text binary data HALTS as `unsupported-risky-shape` and requires a separate future design; it must not pass through Branch A/B/D B4 validators.
 
@@ -77,7 +77,7 @@ Detector and assertion registry:
 
 **Persist the plan.** After the detector has run on the batch, publish the `in-progress` fix log per [fix-log-contract.md](fix-log-contract.md) (`--new` first, `--update` after every later change to intents or the ledger).
 
-**Records helper.** `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` produces these records in one call instead of hand-building them: a new `invocation_id`, each intent's `content_sha` (and per-edit `content_sha`), the plan-stage fix-log skeleton, the next `rework_retry_history` entry, and the challenger or verifier prompt with every supplied value already fenced. Run it with `--help` for the request keys. It only produces records; every fix-log write still goes through the validator, and the placeholders it reports as `unfilled` are still yours to fill.
+**Records helper.** `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` produces these records in one call instead of hand-building them: a new `invocation_id`, each intent's `content_sha` (and per-edit `content_sha`), the plan-stage fix-log skeleton, the next `rework_retry_history` entry, and the challenger or verifier prompt with every supplied value already fenced. Run it with `--help` for the request keys. It only produces records; every fix-log write still goes through the validator, and the placeholders it reports as `unfilled` (including per-finding loop sections, which it does not expand) are still yours to fill.
 
 Readiness consumes the materialized write intents from this reference. If `revise plan` is chosen, invalidate all existing `write_intents`. Re-enter Step 4 only when a readiness defect is specific and evidenced, or the user's feedback names a concrete in-scope correction; record one `plan-readiness` retry event before re-authoring. If the user only selects “revise plan” without an actionable correction and no readiness defect is evident, ask once for the specific correction. If none is available, stop and report the finding unresolved. At the shared retry cap, stop without asking to reopen the already-authorized scope. Do not apply stale write intents after a readiness revision.
 

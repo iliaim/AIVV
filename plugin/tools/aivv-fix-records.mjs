@@ -5,7 +5,7 @@
 // It only produces records. pre-write-validator.mjs remains the gate for every write.
 
 import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { incidentTimestamp } from './incident-state.mjs';
@@ -22,7 +22,8 @@ const USAGE = [
   '                                              -> fix_log plan-stage skeleton',
   '    retry           {history, gate, finding_ids, defect, evidence} -> retry_entry',
   '    prompts         [{template, values}, ...] -> prompts, each value fenced with a fresh nonce',
-  '                    template: fix-challenger | verifier | investigator | class-sibling-triage',
+  '                    template: fix-challenger | verifier | investigator',
+  '                    unfilled lists every {placeholder} left for you to fill',
   '  Prints one JSON object. Validate fix-log writes with pre-write-validator.mjs as before.',
 ].join('\n');
 
@@ -86,37 +87,31 @@ function retryEntry(retry) {
   };
 }
 
-// A prompt template is the first fenced block of its reference; nested ```lang fences stay inside it.
+// A prompt template is the outermost fenced block of its reference.
 function templateBody(name) {
   if (typeof name !== 'string' || !/^[a-z]+(-[a-z]+)*$/.test(name)) {
     throw new Refusal('prompt-template-unknown', `template ${JSON.stringify(name)} is not a template name such as fix-challenger or verifier`);
   }
-  const file = path.join(REFERENCES, name === 'class-sibling-triage' ? `${name}-template.md` : `${name}-prompt-template.md`);
+  const file = path.join(REFERENCES, `${name}-prompt-template.md`);
   let text;
   try {
     text = readFileSync(file, 'utf8');
   } catch {
     throw new Refusal('prompt-template-unknown', `no template at ${file}`);
   }
-  const lines = text.split('\n');
+  // The body runs from the first bare fence to the last one, so fenced excerpts inside it stay in.
+  const lines = text.split(/\r?\n/);
   const start = lines.indexOf('```');
-  let nested = false;
-  for (let index = start + 1; start >= 0 && index < lines.length; index += 1) {
-    if (lines[index] === '```') {
-      if (!nested) return lines.slice(start + 1, index).join('\n') + '\n';
-      nested = false;
-    } else if (lines[index].startsWith('```')) {
-      nested = true;
-    }
-  }
-  throw new Refusal('prompt-template-unreadable', `${file} has no closed fenced template block`);
+  const end = lines.lastIndexOf('```');
+  if (start < 0 || end <= start) throw new Refusal('prompt-template-unreadable', `${file} has no closed fenced template block`);
+  return lines.slice(start + 1, end).join('\n') + '\n';
 }
 
 function fillPrompt(request) {
   const values = request.values ?? {};
   const nonce = newNonce();
   const unfilled = new Set();
-  const prompt = templateBody(request.template).replace(/\{([a-z][a-z0-9_]*)\}/g, (token, key) => {
+  const prompt = templateBody(request.template).replace(/\{([a-z][a-z0-9_.]*)[^{}\n]*\}/g, (token, key) => {
     if (!Object.hasOwn(values, key)) {
       unfilled.add(key);
       return token;
@@ -175,4 +170,4 @@ function main(argv) {
 }
 
 // exitCode, not process.exit(): a large prompt must finish flushing to a pipe.
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = main(process.argv.slice(2));
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) process.exitCode = main(process.argv.slice(2));
