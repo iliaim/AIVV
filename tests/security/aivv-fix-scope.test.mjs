@@ -272,6 +272,8 @@ try {
   assert.match(challengerPrompt, /When round ≥ 2: the plan under review is a new corrective plan[^\n]*Review it cold on all axes/,
     'a corrective plan after a failed verification is a first review, not a re-check');
   assert.match(reference('challenge-loop.md'), /`\{prior_challenge_concerns\}`/);
+  assert.match(challengerPrompt, /After a REJECT, the replacement plan is a new direction: review it on all axes/);
+  assert.doesNotMatch(reference('write-intents-and-prewrite-validation.md'), /max_rework_retries: 3/, 'no reference may tell the agent to hard-code the limit');
   assert.match(reference('red-green-gate.md'), /Note each setup repair in the fix log `warnings`/);
   assert.match(challengerPrompt, /Advisory observations never justify another round/);
   assert.match(challengerPrompt, /Sycophantic approval is a failure mode/);
