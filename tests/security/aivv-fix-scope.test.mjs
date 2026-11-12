@@ -267,7 +267,12 @@ try {
   assert.match(challengerPrompt, /\{red_run_evidence/);
   // Issue #26: the reviewer does a cold, independent review; later rounds re-check, they do not widen.
   assert.match(challengerPrompt, /APPROVE is the correct verdict when nothing must-fix is found; finding something is not the goal/);
-  assert.match(challengerPrompt, /this is a re-check, not a new review\. Check only whether each earlier must-fix concern is resolved/);
+  assert.match(challengerPrompt, /\{prior_challenge_concerns[^\n]*\}\n\nWhen earlier concerns are listed: this is a re-check, not a new review\. Check only whether each earlier must-fix concern is resolved/,
+    'the re-check rule belongs to a repeat challenge of the same plan, with the earlier concerns supplied');
+  assert.match(challengerPrompt, /When round ≥ 2: the plan under review is a new corrective plan[^\n]*Review it cold on all axes/,
+    'a corrective plan after a failed verification is a first review, not a re-check');
+  assert.match(reference('challenge-loop.md'), /`\{prior_challenge_concerns\}`/);
+  assert.match(reference('red-green-gate.md'), /Note each setup repair in the fix log `warnings`/);
   assert.match(challengerPrompt, /Advisory observations never justify another round/);
   assert.match(challengerPrompt, /Sycophantic approval is a failure mode/);
   assert.doesNotMatch(challengerPrompt, /Look HARDER|widen the scan, not ratify|Adversarial framing is required|challenge them before/);
@@ -290,9 +295,9 @@ try {
 
   const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
   assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);
-  assert.match(challengePolicy, /At `rework_retry_count == max_rework_retries`[\s\S]*?continue only\s+when another try is clearly justified[\s\S]*?`beyond_limit_reason`[\s\S]*?Without such a reason, do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);
+  assert.match(challengePolicy, /At or past `rework_retry_count == max_rework_retries`[\s\S]*?continue only\s+when another try is clearly justified[\s\S]*?`beyond_limit_reason`[\s\S]*?Without such a reason,\s+do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);
   assert.match(challengePolicy, /setting `max_rework_retries` \(default 3\)/);
-  assert.match(reference('red-green-gate.md'), /setup repair and does not use a rework only while the fix plan, its write intents, and production code are unchanged/,
+  assert.match(reference('red-green-gate.md'), /setup repair and does not use a rework only while the fix plan, the fix's write intents, and production code are unchanged/,
     'a test-setup repair is free only while nothing else moves');
 
   const reviewId = '2026-11-07T12-01-00-a002';

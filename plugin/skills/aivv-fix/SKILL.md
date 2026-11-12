@@ -46,7 +46,7 @@ Flow: 1 COLLECT findings → 2 TRIAGE batches → 2.5 CONTAIN critical blast rad
 
 ## Common Mistakes
 
-Do not rely on `git diff` in Steps 5/6, skip same-file batching, or auto-proceed on architectural changes. Preserve the immutable authorized scope in every re-dispatch. One invocation-wide semantic rework budget covers every fix-plan re-authoring and verification re-entry, including readiness revisions, challenge, pre-write, stale-intent, class-verdict, architecture-check, investigator-output, duplicate-intent, red-green, and verification failures. At exhaustion, report unresolved findings and stop without reopening scope or asking for another approval. Transport/format retries and independent outer-loop reviews keep their separate limits.
+Do not rely on `git diff` in Steps 5/6, skip same-file batching, or auto-proceed on architectural changes. Preserve the immutable authorized scope in every re-dispatch. One invocation-wide semantic rework budget (the `max_rework_retries` setting, default 3; a soft limit defined in [challenge-loop.md](references/challenge-loop.md)) covers every fix-plan re-authoring and verification re-entry, including readiness revisions, challenge, pre-write, stale-intent, class-verdict, architecture-check, investigator-output, duplicate-intent, red-green, and verification failures. At exhaustion, report unresolved findings and stop without reopening scope or asking for another approval. Transport/format retries and independent outer-loop reviews keep their separate limits.
 
 ## Reference Loading
 

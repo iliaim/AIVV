@@ -15,7 +15,7 @@ The minimum test in this gate is defect-reproduction and verification evidence, 
 2. **Validate the intended pre-fix failure shape.**
    - The test MUST fail for the right reason.
      - **Right-reason fail:** the assertion targeting the defective behavior fails while the test harness executes cleanly (no import errors, no syntax errors, no fixture failures).
-     - **Wrong-reason fail:** the test errors before reaching the defective-behavior assertion. Fix the test setup before proceeding. This is a setup repair and does not use a rework only while the fix plan, its write intents, and production code are unchanged; as soon as any of them has to change, it is a rework and is counted.
+     - **Wrong-reason fail:** the test errors before reaching the defective-behavior assertion. Fix the test setup before proceeding. This is a setup repair and does not use a rework only while the fix plan, the fix's write intents, and production code are unchanged (the test's own intent may change); as soon as any of them has to change, it is a rework and is counted. Note each setup repair in the fix log `warnings` so repeated repairs are visible.
 
 3. **Run the test now, before Step 4.5.** If it passes: STOP — the test does not reproduce the issue.
    A passing test is evidence that this test run did not reproduce the reported behavior. Do not label the finding false-positive or re-investigate solely because the result is uncertain. Stop the affected finding before writing the fix and report the test result; re-enter investigation only if inspection identifies a specific defect in the test or prior investigation and a concrete in-scope correction, consuming the shared retry budget.

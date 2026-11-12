@@ -52,6 +52,7 @@ Track each challenger handle with `batch_id`, `role: "challenger"`, `dispatch_pa
 - `{For each finding}` block: one block per finding with investigator fields from Step 3 output
 - `{round_number_block}`: `"(none — this is cycle 1)"` on cycle 1; `"Round N (predecessor review: <id>)"` on cycle ≥ 2
 - `{predecessor_findings_summary}`: empty on cycle 1; prior-round findings + outcomes on cycle ≥ 2
+- `{prior_challenge_concerns}`: `"(none — first challenge of this plan)"` on the first challenge of a batch; when the batch is challenged again after a REVISE or REJECT in this invocation, the earlier challenger's `concerns[]` entries (kind, summary, evidence, alternative), so the challenger re-checks them instead of reviewing from scratch
 - `{target_project}`: session target project path, from `session_changes.target_project`. Use the canonical target/storage context bound before maintenance; do not infer a provisional target from findings. **Worktree-CWD note:** challenger subagents inherit the orchestrator's shell CWD, which may be a git worktree at a different commit than `target_project`. The template's `## Working Directory` block instructs absolute-path file operations anchored on this value — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint), so the challenger searches the real target tree rather than a stale inherited CWD.
 - `{write_intents}`: escaped inert data snapshot of the Step 4.4 `write_intents[]` entries for the batch, including any failing-test intent. Include `content_sha` values for the full proposed content; do not substitute `fix_proposal.description` for exact proposed bytes.
 - `{red_run_evidence}`: per finding, the Step 4.4.5 `red_run` record from the decision ledger — test intent ID, `command_argv`, exit code, right-reason verdict, and output excerpt. Use `(not run — <reason>)` when the gate was skipped or its red run is deferred to Step 5. Never summarize a run that did not happen as a failure.
@@ -88,11 +89,14 @@ diagnostics only; they never grant another retry. Transport and invalid-JSON
 retries that do not change the fix proposal are outside this budget. Outer-loop
 review cycles are new invocations and remain governed by the outer-loop contract.
 
-At `rework_retry_count == max_rework_retries`, the limit is soft: continue only
+At or past `rework_retry_count == max_rework_retries`, the limit is soft: continue only
 when another try is clearly justified, by adding `beyond_limit_reason` to the
 new `rework_retry_history` entry — one line saying what new evidence the last
 rework produced and why one more is expected to converge. This is your recorded
-judgement; no approval is asked. Without such a reason, do not re-investigate, re-author,
+judgement; no approval is asked, and each further rework needs its own reason.
+Wherever this skill says the budget "has room", is "exhausted", or is "at the cap",
+read it with this rule: a justified, recorded reason is room for one more rework.
+Without such a reason, do not re-investigate, re-author,
 or dispatch another verifier for unresolved findings. Report them as unresolved
 with the retry history. Do not ask the user to repeat or widen already-authorized
 scope. Independently approved batches may continue through their existing safety

@@ -18,6 +18,8 @@ Step 1.9 and these shared retry fields:
   re-authoring or verification re-entry.
 - `max_rework_retries`: the resolved `max_rework_retries` setting (default 3), fixed
   for the invocation. It is a soft limit; see [challenge-loop.md](challenge-loop.md).
+  Stamp the resolved value when the log is created (pass it in the `fix_log` seed of
+  `aivv-fix-records.mjs`, which otherwise stamps 3).
 - `rework_retry_history`: append-only entries with retry number, gate, affected
   finding IDs, evidenced defect, and evidence locator; an entry past the limit also carries
   `beyond_limit_reason`.

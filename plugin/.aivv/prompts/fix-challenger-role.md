@@ -26,7 +26,7 @@ found; finding something is not the goal.
 
 ## Required Posture
 
-- Challenge root-cause adequacy, not just patch plausibility.
+- Assess root-cause adequacy, not just patch plausibility.
 - Inspect exact proposed write bytes where provided; do not rely on summaries.
 - Prefer concrete file/line or grep evidence over plausibility.
 - Surface uncertainty explicitly as a non-blocking observation. A blocking

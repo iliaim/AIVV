@@ -314,9 +314,16 @@ export function branchIntentVerdict(fixture) {
 
 export function staleVerdict(fixture) {
   for (const intent of fixture.write_intents ?? []) {
-    const hasEdits = Array.isArray(intent.proposed_edits) && intent.proposed_edits.length > 0 &&
-      intent.proposed_edits.every((edit) => edit && typeof edit === "object" &&
-        [edit.old_string, edit.new_string].every((text) => text === undefined || typeof text === "string"));
+    const listed = Array.isArray(intent.proposed_edits) && intent.proposed_edits.length > 0;
+    const wellFormed = listed && intent.proposed_edits.every((edit) => edit && typeof edit === "object" &&
+      [edit.old_string, edit.new_string].every((text) => text === undefined || typeof text === "string"));
+    // A recorded hash over edits that cannot be hashed is refused, never skipped.
+    if (listed && !wellFormed && (intent.content_sha || intent.recorded_content_sha ||
+        intent.proposed_edits.some((edit) => edit?.content_sha))) {
+      return halt("write-intent-edit-shape-invalid",
+        `write intent ${intent.id ?? "(no id)"}: every proposed_edits[] entry must be an object whose old_string and new_string are strings`);
+    }
+    const hasEdits = wellFormed;
     const hasBytes = hasEdits || typeof intent.exact_content === "string" || typeof intent.exact_content_or_patch === "string";
     // content_sha is the approved hash of the full proposed bytes; recorded_content_sha is its legacy fixture name.
     for (const field of ["recorded_content_sha", "content_sha"]) {
