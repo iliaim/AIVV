@@ -171,6 +171,35 @@ try {
     'fix-log-rework-retry-state-invalid',
     're-authoring and verification cannot exceed the shared three-retry cap');
 
+  // Plan-stage persistence (issue #26 item 9): the fix log exists from Step 4.4,
+  // before any change, carrying the write intents and the decision ledger.
+  const planIntent = {
+    id: 'WI-1', finding_id: 'F001', branch: 'A', target_file: 'src/change.js', operation: 'edit',
+    kind: 'generated_patch', content_sha: 'a'.repeat(64), source_step: 'Step 4.4',
+    pre_write_assertions: [], detector_result: { verdict: 'pass', content_shapes: [], detection_confidence: 'high' },
+    proposed_edits: [{ old_string: 'old', new_string: 'new', content_sha: 'b'.repeat(64) }],
+  };
+  const planLog = { ...baseLog(), write_intents: [planIntent], decision_ledger: [{ finding_id: 'F001', challenge_status: 'not-triggered' }] };
+  assert.deepEqual(validateFixLogTransition(planLog, undefined), { status: 'pass', reason: 'pass' },
+    'a plan-stage fix log with intents and ledger but no change is a valid first write');
+  const ledgerUpdate = structuredClone(planLog);
+  ledgerUpdate.decision_ledger[0].challenge_status = 'approved';
+  assert.deepEqual(validateFixLogTransition(ledgerUpdate, planLog), { status: 'pass', reason: 'pass' },
+    'recording a later decision is an ordinary update of the same invocation');
+  const strayLedger = structuredClone(planLog);
+  strayLedger.decision_ledger.push({ finding_id: 'F999' });
+  assert.equal(validateFixLogNewWrite(strayLedger).reason, 'fix-log-finding-outside-authorized-scope',
+    'a ledger entry cannot record decisions for an unauthorized finding');
+  const badLedger = { ...planLog, decision_ledger: { finding_id: 'F001' } };
+  assert.equal(validateFixLogNewWrite(badLedger).reason, 'fix-log-decision-ledger-invalid');
+
+  const skill = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/SKILL.md'), 'utf8');
+  const decisioning = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/execution-decisioning.md'), 'utf8');
+  assert.match(skill, /### Step 4\.4:[\s\S]*?persist[\s\S]*?`write_intents\[\]`[\s\S]*?### Step 4\.5/,
+    'Step 4.4 must persist the plan before the challenge');
+  assert.doesNotMatch(decisioning, /in-memory decision ledger/,
+    'the decision ledger must not live only in memory');
+
   const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
   assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);
   assert.match(challengePolicy, /At `rework_retry_count == max_rework_retries`[\s\S]*?do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);
@@ -187,6 +216,23 @@ try {
     findings: [{ ref: 'F001', summary: 'Legacy finding without modern evidence fields.' }],
   };
   storeJson(reviewRelative, legacyReview);
+  const reviewPlanLog = {
+    ...baseLog(),
+    id: '2026-11-07T12-03-00-a004',
+    source: 'review_id',
+    source_review_id: reviewId,
+    source_review_relative_path: reviewRelative,
+    authorized_scope: { ...scope(), source: 'review_id' },
+  };
+  assert.deepEqual(validateFixLogTransition(reviewPlanLog, undefined, { contextFile: CONTEXT_FILE }),
+    { status: 'pass', reason: 'pass' },
+    'a review-sourced run can persist its plan before the first change');
+  assert.equal(validateFixLogNewWrite({ ...reviewPlanLog, status: 'completed' }, { contextFile: CONTEXT_FILE }).reason,
+    'fix-log-findings-addressed-invalid',
+    'a completed review-sourced log still has to join findings to changes');
+  assert.equal(validateFixLogNewWrite({ ...reviewPlanLog, findings_addressed: ['F001'] }, { contextFile: CONTEXT_FILE }).reason,
+    'fix-log-changes-summary-invalid',
+    'a finding cannot be recorded as addressed without a change');
   const linkedFix = {
     id: '2026-11-07T12-02-00-a003',
     source: 'review_id',

@@ -264,9 +264,29 @@
         "applied_count": {"type": "integer", "minimum": 0}
       }
     },
+    "decision_ledger": {
+      "type": "array",
+      "description": "Per-finding execution decision ledger (skills/aivv-fix/references/execution-decisioning.md), persisted from Step 4.4 so a compaction, stop, or Resume keeps the plan. Records decisions, not applied changes.",
+      "items": {
+        "type": "object",
+        "required": ["finding_id"],
+        "properties": {
+          "finding_id": {"type": "string", "minLength": 1},
+          "category": {"type": "string"},
+          "batch": {"type": "string"},
+          "containment_status": {"enum": ["not-applicable", "available-when-triggered", "applied", "declined"]},
+          "investigation_route": {"enum": ["cold-investigator", "same-agent-fallback", "fast_path_inline"]},
+          "fix_confidence": {"enum": ["high", "medium", "low"]},
+          "write_intent_status": {"enum": ["missing", "fresh", "stale", "unsupported-risky-shape", "unsupported-risky-path", "validated"]},
+          "challenge_status": {"enum": ["not-triggered", "approved", "revise", "reject", "gate-fused-safe", "budget-skipped-safe", "budget-halted-risky"]},
+          "final_route": {"enum": ["auto-eligible", "decision-queue", "architecture-decision-queue", "skipped-by-policy", "dangerously-auto-approved"]},
+          "final_branch": {"enum": ["A", "B", "C-adr", "C-fallthrough-A", "D", "E", "F"]}
+        }
+      }
+    },
     "write_intents": {
       "type": "array",
-      "description": "B4 pre-write safety intents materialized before Step 4.5 challenger dispatch and before host write primitives.",
+      "description": "B4 pre-write safety intents materialized at Step 4.4 and persisted with the plan-stage fix log, before Step 4.5 challenger dispatch and before host write primitives.",
       "items": {
         "type": "object",
         "required": ["id", "finding_id", "branch", "target_file", "operation", "kind", "content_sha", "source_step", "pre_write_assertions", "detector_result"],

@@ -87,7 +87,7 @@ is repaired. For an actual fix workflow, allocate one invocation ID immediately
 after preflight and the Step 1.0 recovery decision, but before source parsing or
 investigation. A valid Resume choice reuses the prior log's invocation ID, scope,
 and retry count; a new run gets a fresh ID. Keep that ID and retry counter
-through every re-entry. Step 5 reuses the bound ID when it first persists a new
+through every re-entry. Step 4.4 reuses the bound ID when it first persists the
 fix log. Help and registry-only early exits do not create a fix invocation.
 
 **Read before resolving the target project:** [`.aivv/target-resolution.md`](../../.aivv/target-resolution.md). Bind and cache storage context before maintenance, collection, or dispatch, using the pinned `tools/storage-paths.mjs resolve` helper; all generated state uses external `<state_dir>` and calibration uses `<calibration_dir>`. `session_changes.target_project` is the immutable base for finding file references. Policy lookup remains separate and retains original provenance. Finding ancestors never choose the fresh storage target. Do not improvise precedence, write local `.aivv/state/` migration markers, or re-resolve after cwd changes.
@@ -288,6 +288,8 @@ After this halt, do not materialize `write_intents[]`, dispatch the fix-plan cha
 
 Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.5 or Step 5 can proceed. Missing, opaque, stale, risky, or insufficiently validated intents halt according to the reference.
 
+Then persist the plan: write the `in-progress` fix log to `<state_dir>` with `write_intents[]`, `fix_plans[]`, and the `decision_ledger[]`, and update it in the same validated write as each later decision. After a context compaction, a stop, or a Resume, re-read that log instead of rebuilding the plan from memory. See [fix-log-contract.md](references/fix-log-contract.md) for the write and recovery rules.
+
 ### Step 4.5: CHALLENGE — Independent Fix-Plan Review
 
 After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), and after Step 4.4 has materialized `write_intents[]`, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews the immutable `authorized_scope`, proposed fixes, and escaped `write_intents[]` snapshots BEFORE code is written — when revision is cheap. A revision requires a specific evidence-backed defect and a concrete correction inside `authorized_scope`; uncertainty alone is advisory. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
@@ -302,7 +304,7 @@ For every approved finding where a test can be written (`code-bug`, `design-flaw
 
 ### Step 5: EXECUTE — Apply Approved Fixes
 
-Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner, and honor the dry-run halt. Then initialize the fix log and apply each approved fix through its evidence-selected branch, recording the applied changes as specified in that branch's reference.
+Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner, and honor the dry-run halt. Then reuse the fix log persisted at Step 4.4 (initialize it here only when no write intent preceded this step) and apply each approved fix through its evidence-selected branch, recording the applied changes as specified in that branch's reference.
 
 When `lifecycle_context` is present, initialize `session_changes.lifecycle_context` before the first fix-log write, load the lifecycle record for investigator context, and apply only schema-backed write-back fields per the reference (treating `rca_status` not-started/draft as investigation-first). When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply`, tag each dangerous-route `changes_summary` entry, and emit the loud `DANGEROUSLY AUTO-APPLIED <N> fix(es)` audit banner at the end of Step 5 (with `0` if no fix was bypassed). The lifecycle write-back rules + GitHub-sync/validate helpers and the dangerous-audit banner contract are in [execution-branches.md](references/execution-branches.md) — read it before any lifecycle write-back or dangerous-route apply.
 

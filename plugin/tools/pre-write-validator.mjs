@@ -1593,7 +1593,12 @@ function validateAuthorizedScopeAndRetryState(fixLog) {
   for (const field of ["findings_addressed", "findings_deferred", "findings_wont_fix"]) {
     collectArrayIds(fixLog[field], "finding_id");
   }
-  for (const field of ["write_intents", "changes_summary", "fix_plans", "verification_cycles", "objective_evidence", "final_dispositions"]) {
+  if (fixLog.decision_ledger !== undefined &&
+      (!Array.isArray(fixLog.decision_ledger) ||
+       fixLog.decision_ledger.some((entry) => !plainObject(entry) || !nonBlankString(entry.finding_id)))) {
+    return { status: "halt", reason: "fix-log-decision-ledger-invalid" };
+  }
+  for (const field of ["write_intents", "decision_ledger", "changes_summary", "fix_plans", "verification_cycles", "objective_evidence", "final_dispositions"]) {
     collectArrayIds(fixLog[field], "finding_id");
   }
   for (const snapshot of fixLog.prior_cycle_snapshots ?? []) {
@@ -1849,6 +1854,12 @@ export function validateFixLogNewWrite(fixLog, { contextFile } = {}) {
   }
   const sourceReviewVerdict = validateFixLogSourceReviewBinding(fixLog, contextFile);
   if (sourceReviewVerdict.status === "halt") return sourceReviewVerdict;
+  // A plan-stage log (persisted from Step 4.4) has no applied change to join yet.
+  if (fixLog.status !== "completed" && !hasAppliedChanges(fixLog) &&
+      (fixLog.findings_addressed === undefined ||
+       (Array.isArray(fixLog.findings_addressed) && fixLog.findings_addressed.length === 0))) {
+    return { status: "pass", reason: "pass" };
+  }
   if (!Array.isArray(fixLog.findings_addressed) || fixLog.findings_addressed.length === 0 || fixLog.findings_addressed.some((id) => !nonBlankString(id))) {
     return { status: "halt", reason: "fix-log-findings-addressed-invalid" };
   }

@@ -19,7 +19,7 @@ Evaluate execution readiness in this order:
 
 ## Execution Decision Ledger
 
-Keep a per-finding in-memory decision ledger until the fix log exists. Each entry records:
+Keep a per-finding decision ledger. From Step 4.4 it is persisted as `decision_ledger[]` in the fix log and updated in the same validated write as each decision, so a compaction, stop, or Resume does not lose it; before Step 4.4, and under `--dry-run` (which persists nothing), it is held in memory. Each entry records:
 
 - `finding_id`, `category`, severity, disposition, source, and batch.
 - Containment status: `not-applicable`, `available-when-triggered`, `applied`, or `declined`.
@@ -30,7 +30,7 @@ Keep a per-finding in-memory decision ledger until the fix log exists. Each entr
 - Final route: `auto-eligible`, `decision-queue`, `architecture-decision-queue`, `skipped-by-policy`, or `dangerously-auto-approved`.
 - Final branch: `A`, `B`, `C-adr`, `C-fallthrough-A`, `D`, `E`, or `F`.
 
-The ledger prevents later steps from re-deriving decisions from prose. When Step 5 initializes `session_changes`, copy the relevant final route, branch, bypass reasons, and warning state into `changes_summary`, `findings_deferred`, `dangerously_auto_apply`, or `warnings` as applicable.
+The ledger prevents later steps from re-deriving decisions from prose. When Step 5 records applied changes, copy the relevant final route, branch, bypass reasons, and warning state into `changes_summary`, `findings_deferred`, `dangerously_auto_apply`, or `warnings` as applicable.
 
 ## Route Boundaries
 
