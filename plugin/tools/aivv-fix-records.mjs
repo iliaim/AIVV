@@ -36,6 +36,19 @@ class Refusal extends Error {
   }
 }
 
+// Every failure, anticipated or not, leaves as the same one-line JSON object: the message, no stack.
+export function reportError(error) {
+  return { status: 'error', reason: error instanceof Refusal ? error.reason : 'unexpected-error', detail: String(error?.message ?? error) };
+}
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function requireObject(value, name) {
+  if (!isObject(value)) throw new Refusal('request-invalid', `${name} must be an object`);
+}
+
 function hashIntent(intent, index) {
   const label = `write_intents[${index}] (${intent?.id ?? 'no id'})`;
   if (!intent || typeof intent !== 'object' || Array.isArray(intent)) {
@@ -128,9 +141,7 @@ function fillPrompt(request) {
 }
 
 function build(request, now = new Date()) {
-  if (!request || typeof request !== 'object' || Array.isArray(request)) {
-    throw new Refusal('request-invalid', 'the request must be a JSON object');
-  }
+  requireObject(request, 'the request');
   const out = {
     invocation_id: request.invocation_id ?? `${incidentTimestamp(now)}-${randomBytes(2).toString('hex')}`,
   };
@@ -138,11 +149,22 @@ function build(request, now = new Date()) {
     if (!Array.isArray(request.write_intents)) throw new Refusal('write-intent-invalid', 'write_intents must be an array');
     out.write_intents = request.write_intents.map(hashIntent);
   }
+  if (request.fix_log !== undefined) requireObject(request.fix_log, 'fix_log');
   if (request.fix_log !== undefined) out.fix_log = fixLogSkeleton(request.fix_log, out.invocation_id, now, out.write_intents);
-  if (request.retry !== undefined) out.retry_entry = retryEntry(request.retry);
+  if (request.retry !== undefined) {
+    requireObject(request.retry, 'retry');
+    if (request.retry.history !== undefined && !Array.isArray(request.retry.history)) {
+      throw new Refusal('request-invalid', 'retry.history must be an array (the existing rework_retry_history)');
+    }
+    out.retry_entry = retryEntry(request.retry);
+  }
   if (request.prompts !== undefined) {
     if (!Array.isArray(request.prompts)) throw new Refusal('prompt-request-invalid', 'prompts must be an array');
-    out.prompts = request.prompts.map(fillPrompt);
+    out.prompts = request.prompts.map((prompt, index) => {
+      requireObject(prompt, `prompts[${index}]`);
+      if (prompt.values !== undefined) requireObject(prompt.values, `prompts[${index}].values`);
+      return fillPrompt(prompt);
+    });
   }
   return out;
 }
@@ -168,8 +190,7 @@ function main(argv) {
     process.stdout.write(JSON.stringify(build(request), null, 2) + '\n');
     return 0;
   } catch (error) {
-    if (!(error instanceof Refusal)) throw error;
-    process.stdout.write(JSON.stringify({ status: 'error', reason: error.reason, detail: error.message }) + '\n');
+    process.stdout.write(JSON.stringify(reportError(error)) + '\n');
     return 1;
   }
 }
