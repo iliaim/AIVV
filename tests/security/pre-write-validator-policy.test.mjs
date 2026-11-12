@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   bypassVerdict,
   detectorVerdict,
   editFrame,
+  multiEditSha,
   requiredAssertions,
   sha256,
   staleVerdict,
+  validateFixLogNewWrite,
   validateFixture,
 } from "../../plugin/tools/pre-write-validator.mjs";
 
@@ -68,6 +75,28 @@ const stale = intentFixture();
 stale.write_intents[0].recorded_content_sha = sha256("different bytes");
 assert.equal(staleVerdict(stale).reason, "stale-write-intent-content-mismatch",
   "stale exact-byte intents remain invalidated");
+// Issue #26 item 7: content_sha is compared with the bytes, not only checked for shape.
+const hashed = intentFixture();
+hashed.write_intents[0].proposed_edits[0].content_sha = sha256(editFrame({ old_string: "old", new_string: "new" }));
+hashed.write_intents[0].content_sha = multiEditSha(hashed.write_intents[0].proposed_edits);
+assert.equal(staleVerdict(hashed).status, "pass", "matching hashes pass");
+const driftedEdit = structuredClone(hashed);
+driftedEdit.write_intents[0].proposed_edits[0].new_string = "changed after approval";
+const driftedVerdict = staleVerdict(driftedEdit);
+assert.equal(driftedVerdict.reason, "stale-write-intent-content-mismatch",
+  "bytes that no longer match the approved content_sha are stale");
+assert.match(driftedVerdict.detail, /WI-1/);
+const wholeText = { write_intents: [{ id: "WI-2", branch: "B", kind: "verbatim_doc_content", exact_content_or_patch: "doc text\n", content_sha: sha256("doc text\n") }] };
+assert.equal(staleVerdict(wholeText).status, "pass");
+const wholeTextEmptyEdits = structuredClone(wholeText);
+wholeTextEmptyEdits.write_intents[0].proposed_edits = [];
+assert.equal(staleVerdict(wholeTextEmptyEdits).status, "pass", "an empty edits array does not turn a whole-text intent into a patch");
+assert.equal(staleVerdict({ write_intents: [{ id: "WI-3", recorded_content_sha: "0".repeat(64) }] }).reason,
+  "stale-write-intent-content-mismatch", "a legacy recorded hash with no bytes still halts");
+assert.doesNotThrow(() => staleVerdict({ write_intents: [{ id: "WI-4", proposed_edits: [null] }] }));
+wholeText.write_intents[0].exact_content_or_patch = "other text\n";
+assert.equal(staleVerdict(wholeText).reason, "stale-write-intent-content-mismatch");
+
 const regeneratedBypass = intentFixture();
 regeneratedBypass.intent_regenerated = true;
 regeneratedBypass.write_intents[0].content_sha = sha256("approved bytes");
@@ -87,5 +116,61 @@ regeneratedBypass.write_intents[0].detector_result = {
 };
 assert.equal(bypassVerdict(regeneratedBypass).reason, "bypass-invalidated-after-regeneration",
   "regenerated intents still invalidate prior approvals");
+
+// Issue #26 items 5 and 6: a halt names the field and the allowed values, and the
+// command-line tools answer --help and reject unreadable input without a stack trace.
+const fixLog = () => ({
+  schema_version: 2, id: "2026-11-07T12-00-00-a001", command: "aivv-fix", status: "in-progress",
+  source: "conversation", invoked_at: "2026-11-07T12:00:00Z", target_project: os.tmpdir(), cycle_count: 1,
+  authorized_scope: { source: "conversation", goal: "g", finding_ids: ["F001"], included: ["F001"], excluded: [], included_paths: [], excluded_paths: [] },
+  rework_retry_count: 0, max_rework_retries: 3, rework_retry_history: [],
+});
+const wrongGate = fixLog();
+wrongGate.rework_retry_count = 1;
+wrongGate.rework_retry_history = [{ retry_number: 1, gate: "plan", finding_ids: ["F001"], defect: "d", evidence: "e" }];
+const wrongGateVerdict = validateFixLogNewWrite(wrongGate);
+assert.equal(wrongGateVerdict.reason, "fix-log-rework-retry-history-invalid");
+assert.match(wrongGateVerdict.detail, /rework_retry_history\[0\]\.gate/, "the halt names the failing field");
+assert.match(wrongGateVerdict.detail, /"plan"/, "the halt shows the rejected value");
+assert.match(wrongGateVerdict.detail, /plan-readiness/, "the halt lists the allowed values");
+const wrongId = validateFixLogNewWrite({ ...fixLog(), id: "fix-123" });
+assert.equal(wrongId.reason, "fix-log-id-invalid");
+assert.match(wrongId.detail, /YYYY-MM-DDTHH-MM-SS-<4 hex>/);
+const noPaths = fixLog();
+delete noPaths.authorized_scope.included_paths;
+const noPathsVerdict = validateFixLogNewWrite(noPaths);
+assert.equal(noPathsVerdict.reason, "fix-log-authorized-scope-invalid");
+assert.match(noPathsVerdict.detail, /authorized_scope\.included_paths/);
+const wrongStatus = validateFixLogNewWrite({ ...fixLog(), status: "done" });
+assert.match(wrongStatus.detail, /in-progress/);
+
+const toolsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../plugin/tools");
+const validatorCli = path.join(toolsDir, "pre-write-validator.mjs");
+const cli = (tool, args) => spawnSync(process.execPath, [tool, ...args], { encoding: "utf8" });
+const scratch = mkdtempSync(path.join(os.tmpdir(), "aivv-validator-cli-"));
+try {
+  for (const tool of [validatorCli, path.join(toolsDir, "incident-lifecycle-route.mjs")]) {
+    const help = cli(tool, ["--help"]);
+    assert.equal(help.status, 0, `${path.basename(tool)} --help must succeed: ${help.stderr || help.stdout}`);
+    assert.match(help.stdout, /usage:/i);
+  }
+  const malformed = path.join(scratch, "malformed.json");
+  writeFileSync(malformed, "{ not json");
+  const context = path.join(scratch, "context.json");
+  writeFileSync(context, "{}");
+  for (const args of [["--fixture", malformed], ["--fix-log", malformed, "--context", context, "--new"], ["--review-log", malformed]]) {
+    const result = cli(validatorCli, args);
+    assert.equal(result.status, 1, `${args[0]} on malformed JSON must halt, not crash`);
+    const verdict = JSON.parse(result.stdout);
+    assert.equal(verdict.reason, "input-json-invalid");
+    assert.ok(verdict.detail.includes(malformed));
+    assert.doesNotMatch(result.stderr, /SyntaxError|at .*\.mjs/, "no stack trace");
+  }
+  const absent = cli(validatorCli, ["--fixture", path.join(scratch, "absent.json")]);
+  assert.equal(absent.status, 1);
+  assert.equal(JSON.parse(absent.stdout).reason, "input-file-unreadable");
+} finally {
+  rmSync(scratch, { recursive: true, force: true });
+}
 
 console.log("pre-write validator policy tests passed");

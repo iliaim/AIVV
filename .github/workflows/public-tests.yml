@@ -39,6 +39,10 @@ jobs:
         run: node tests/security/pre-write-validator-policy.test.mjs
       - name: Verify AIVV fix scope, path, retry, and backfill boundaries
         run: node tests/security/aivv-fix-scope.test.mjs
+      - name: Verify lifecycle selectors report missing state and malformed GitHub references
+        run: node tests/lifecycle-route.test.mjs
+      - name: Verify the fix records helper emits IDs, hashes, the log skeleton, retry entries, and fenced prompts
+        run: node tests/aivv-fix-records.test.mjs
       - name: Verify active plugin runtime-root resolution
         run: node tests/runtime-root.test.mjs
       - name: Verify host-adapter assets and Claude/Codex marketplace metadata

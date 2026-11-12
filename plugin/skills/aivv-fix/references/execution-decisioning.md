@@ -27,6 +27,7 @@ Keep a per-finding decision ledger. From Step 4.4 it is persisted as `decision_l
 - `fix_confidence` plus demotion reasons.
 - Write-intent status: `missing`, `fresh`, `stale`, `unsupported-risky-shape`, `unsupported-risky-path`, or `validated`.
 - Red run (`red_run`): `not-applicable`, `deferred-to-step-5`, `failed-right-reason`, `failed-wrong-reason`, or `passed`, with the test intent ID, `command_argv`, exit code, and output excerpt when run.
+- Early class scan (`class_scan`): present only when the Step 5 class-verdict scan ran at Step 4.4.5; the verdict-gate outcome, pattern, match set, and resulting confidence and route, so Step 5 and a resumed run reuse it.
 - Challenge status: `not-triggered`, `approved`, `revise`, `reject`, `gate-fused-safe`, `budget-skipped-safe`, or `budget-halted-risky`.
 - Final route: `auto-eligible`, `decision-queue`, `architecture-decision-queue`, `skipped-by-policy`, or `dangerously-auto-approved`.
 - Final branch: `A`, `B`, `C-adr`, `C-fallthrough-A`, `D`, `E`, or `F`.

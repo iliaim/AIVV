@@ -49,6 +49,24 @@ try {
   assert.ok(storedPath.startsWith(context.state_dir + path.sep), 'state must be stored under the resolved external state directory');
   assert.equal(existsSync(path.join(target, '.aivv')), false, 'state writes must not create project-local AIVV history');
 
+  // Issue #26 item 4: a lookup that finds no store must say where it looked.
+  // State is keyed per checkout, so another worktree or clone has its own store.
+  const otherTarget = path.join(temporaryRoot, 'other-checkout');
+  mkdirSync(otherTarget, { recursive: true });
+  const other = JSON.parse(run(['resolve', '--target', otherTarget]));
+  const emptyList = spawnSync(process.execPath, [storageHelper, 'list', '--target', otherTarget, '--area', 'state', '--prefix', 'review-'], { encoding: 'utf8', env });
+  assert.equal(emptyList.status, 0, emptyList.stderr);
+  assert.deepEqual(JSON.parse(emptyList.stdout), [], 'an empty lookup stays a parseable empty list');
+  assert.match(emptyList.stderr, /STORAGE_EMPTY/);
+  assert.ok(emptyList.stderr.includes(other.target) && emptyList.stderr.includes(other.target_dir),
+    'the notice must name the target and the directory that was searched');
+  const populatedList = spawnSync(process.execPath, [storageHelper, 'list', '--context', contextFile, '--area', 'state', '--prefix', 'review-'], { encoding: 'utf8', env });
+  assert.equal(populatedList.stderr, '', 'a lookup that finds records prints no notice');
+  const missingRead = spawnSync(process.execPath, [storageHelper, 'read', '--context', contextFile, '--area', 'state', '--relative', 'review-absent.json'], { encoding: 'utf8', env });
+  assert.equal(missingRead.status, 1);
+  assert.ok(missingRead.stderr.includes('STORAGE_NOT_FOUND') && missingRead.stderr.includes(path.join(context.state_dir, 'review-absent.json')),
+    'a missing file error must name the path that was read');
+
   if (process.platform !== 'win32') {
     assert.equal(statSync(storedPath).mode & 0o777, 0o600, 'state records must be private files');
   }

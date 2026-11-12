@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import os from 'node:os';
+import { mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const helper = path.join(root, 'plugin/tools/native-prompt-boundary.mjs');
@@ -13,6 +15,17 @@ function nonce() {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /^[a-f0-9]{32}\n$/);
   return result.stdout.trim();
+}
+
+// Reached through a symlink, the command must still run rather than exit silently.
+const linkDir = mkdtempSync(path.join(os.tmpdir(), 'aivv-boundary-link-'));
+try {
+  const link = path.join(linkDir, 'tools');
+  symlinkSync(path.dirname(helper), link, 'dir');
+  const viaLink = spawnSync(process.execPath, [path.join(link, 'native-prompt-boundary.mjs'), '--nonce'], { encoding: 'utf8' });
+  assert.match(viaLink.stdout, /^[a-f0-9]{32}\n$/);
+} finally {
+  rmSync(linkDir, { recursive: true, force: true });
 }
 
 const first = nonce();

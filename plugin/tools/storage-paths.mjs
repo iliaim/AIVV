@@ -321,7 +321,7 @@ async function main(argv) {
       if (command === 'read') {
         if (!relative || path.isAbsolute(relative)) fail('STORAGE_PATH_ESCAPE', 'read requires a relative file path');
         const file = validateContainedPath(path.resolve(boundary, relative), boundary);
-        if (file === boundary || !fs.existsSync(file) || !fs.statSync(file).isFile()) fail('STORAGE_NOT_FOUND', 'selected runtime file does not exist');
+        if (file === boundary || !fs.existsSync(file) || !fs.statSync(file).isFile()) fail('STORAGE_NOT_FOUND', `selected runtime file does not exist: ${file}`);
         return fs.readFileSync(file);
       }
       const names = [];
@@ -338,8 +338,12 @@ async function main(argv) {
       if (archive) collect(path.join(boundary, 'archive'), true);
       return names.sort();
     });
-    if (command === 'list') console.log(JSON.stringify(result ?? []));
-    else if (result === undefined) fail('STORAGE_NOT_FOUND', 'selected target has no runtime store');
+    const looked = `target ${context.target}, looked in ${area === 'state' ? context.state_dir : context.calibration_dir}; storage is keyed per checkout, so another worktree or clone has its own store`;
+    if (command === 'list') {
+      if (!result?.length) console.error(`STORAGE_EMPTY: no matching ${area} records (${looked})`);
+      console.log(JSON.stringify(result ?? []));
+    }
+    else if (result === undefined) fail('STORAGE_NOT_FOUND', `selected target has no runtime store (${looked})`);
     else process.stdout.write(result);
   }
   else if (command === 'recover-lock') {

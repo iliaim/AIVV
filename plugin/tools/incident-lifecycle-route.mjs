@@ -24,6 +24,20 @@ function blocked(reason, context = {}) {
   throw Object.assign(new Error(reason), { blockedResponse: { status: "blocked", reason, ...context } });
 }
 
+const GITHUB_SELECTOR_FORMS = "accepted forms: https://github.com/<owner>/<repo>/issues/<N>, <owner>/<repo>#N, or #N (uses this checkout's origin remote)";
+
+// State is kept per checkout, so a fresh worktree or clone has none. Say where it looked.
+function blockMissingState(selector, target, stateDir) {
+  const github = selector?.type === "github_issue";
+  blocked(github ? "github-issue-mirror-missing" : "lifecycle-target-missing", {
+    selector_type: selector?.type,
+    selector: selector?.value,
+    target_project: target,
+    state_dir: stateDir,
+    detail: `no AIVV state for this checkout at ${stateDir}. State is kept per checkout, so ${github ? "an issue mirrored" : "a record created"} from another worktree or clone is not visible here; run from that checkout or pass its --target or --context.`
+  });
+}
+
 function parseArgs(argv) {
   const parsed = { selectors: [] };
   for (let i = 0; i < argv.length; i += 1) {
@@ -67,11 +81,15 @@ function resolveExplicitTarget(rawTarget, selector) {
   const stateDir = stateDirForTarget(target);
   if (!fs.existsSync(target) || !fs.statSync(target).isDirectory() || !fs.existsSync(stateDir)) {
     if (resolveStorage({ target }).legacy_state_dirs.some((dir) => fs.existsSync(dir))) blocked("lifecycle-import-needed", { target_project: target, source: resolveStorage({ target }).legacy_state_dirs, destination: stateDir });
-    blocked("lifecycle-target-missing", {
-      selector_type: selector.type,
-      selector: selector.value,
-      target_project: target
-    });
+    if (!fs.existsSync(target) || !fs.statSync(target).isDirectory()) {
+      blocked("lifecycle-target-missing", {
+        selector_type: selector.type,
+        selector: selector.value,
+        target_project: target,
+        detail: `--target ${target} is not an existing directory`
+      });
+    }
+    blockMissingState(selector, target, stateDir);
   }
   return target;
 }
@@ -104,10 +122,7 @@ function targetFromCwd(selector, kind) {
   const cwd = resolveStorage().target;
   const stateDir = stateDirForTarget(cwd);
   if (!fs.existsSync(stateDir)) {
-    blocked("lifecycle-target-missing", {
-      selector_type: selector.type,
-      selector: selector.value
-    });
+    blockMissingState(selector, cwd, stateDir);
   }
   const matches = matchingLocalRecords(cwd, kind, selector.value);
   if (matches.invalidJson.length > 0) {
@@ -228,7 +243,8 @@ function githubMatches(target, selector) {
   if (!parsed) {
     blocked("github-issue-selector-invalid", {
       selector_type: "github_issue",
-      selector: selector.value
+      selector: selector.value,
+      detail: GITHUB_SELECTOR_FORMS
     });
   }
   if (parsed.bare) {
@@ -390,13 +406,7 @@ function resolveRoute(args) {
   if (selector.type === "github_issue") {
     if (!target) target = resolveStorage().target;
     const stateDir = stateDirForTarget(target);
-    if (!fs.existsSync(stateDir)) {
-      blocked("lifecycle-target-missing", {
-        selector_type: selector.type,
-        selector: selector.value,
-        target_project: target
-      });
-    }
+    if (!fs.existsSync(stateDir)) blockMissingState(selector, target, stateDir);
     kind = "issue";
     entry = resolveGithubRecord(target, selector);
   } else {
@@ -408,17 +418,29 @@ function resolveRoute(args) {
 }
 
 try {
+  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    console.log([
+      "usage: node <AIVV_ROOT>/tools/incident-lifecycle-route.mjs (--incident|--problem|--issue <id> | --github-issue <url|owner/repo#N|#N>) [--target <dir> | --context <storage-context.json>]",
+      "Prints one JSON route on stdout. Exit 0 on a resolved route, 2 when blocked ({status: \"blocked\", reason, ...}).",
+    ].join("\n"));
+    process.exit(0);
+  }
   const args = parseArgs(process.argv.slice(2));
   if (args.context) {
     boundContext = readStorageContext(args.context);
     if (args.target && fs.realpathSync(path.resolve(args.target)) !== boundContext.target) blocked("storage-context-target-mismatch");
     args.target = boundContext.target;
   }
+  const selector = args.selectors[0];
+  if (selector?.type === "github_issue" && selector.value && !selector.value.startsWith("--") && !parseGithubSelector(selector.value)) {
+    blocked("github-issue-selector-invalid", { selector_type: selector.type, selector: selector.value, detail: GITHUB_SELECTOR_FORMS });
+  }
   const context = boundContext || resolveStorage({ target: args.target });
   const route = withExistingStorageReadLock(context, () => resolveRoute(args));
   if (!route) {
     const source = context.legacy_state_dirs.filter((dir) => fs.existsSync(dir));
-    writeJson({ status: "blocked", reason: source.length ? "lifecycle-import-needed" : "lifecycle-target-missing", source, target_project: context.target, destination: context.state_dir }, 2);
+    if (source.length) writeJson({ status: "blocked", reason: "lifecycle-import-needed", source, target_project: context.target, destination: context.state_dir }, 2);
+    blockMissingState(selector, context.target, context.state_dir);
   }
   writeJson(route);
 } catch (error) { writeJson(error.blockedResponse || { status: "blocked", reason: error.code || "lifecycle-storage-error", detail: error.message }, 2); }

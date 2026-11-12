@@ -55,6 +55,35 @@ const FIX_LOG_OBJECTIVE_EVIDENCE_KIND_ENUM = new Set(["test-output", "command-ou
 const FIX_LOG_FINAL_DISPOSITION_ENUM = new Set(["closed", "closed_with_residual_risk", "deferred", "false_positive", "accepted_risk", "reopened", "needs_rework", "needs_evidence"]);
 const FIX_LOG_TERMINAL_EVIDENCE_DISPOSITIONS = new Set(["closed", "closed_with_residual_risk", "false_positive"]);
 
+// A halt carries a machine-readable reason and, where the cause is a specific field,
+// a plain-language detail naming that field and what is accepted.
+function halt(reason, detail) {
+  return detail ? { status: "halt", reason, detail } : { status: "halt", reason };
+}
+
+const INVOCATION_ID_FORMAT = "YYYY-MM-DDTHH-MM-SS-<4 hex> (for example 2026-11-07T12-00-00-a001)";
+const USAGE = [
+  "usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fixture <write-intent-batch.json> [--proposal-only] [--context <storage-context.json>]",
+  "   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fix-log <candidate-fix-log.json> --context <storage-context.json> --new|--update",
+  "   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log <new-review-log.json>",
+  "   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log-backfill <candidate-review-log.json> --context <storage-context.json> --relative <stored-review-path>",
+  "Prints one JSON verdict on stdout: {status: pass|halt, reason, detail?}. Exit 0 on pass, 1 on halt, 2 on a usage error.",
+].join("\n");
+
+function readJsonInput(file) {
+  let text;
+  try {
+    text = fs.readFileSync(file, "utf8");
+  } catch (error) {
+    return { verdict: halt("input-file-unreadable", `cannot read ${file}: ${error.code ?? error.message}`) };
+  }
+  try {
+    return { value: JSON.parse(text) };
+  } catch (error) {
+    return { verdict: halt("input-json-invalid", `${file} is not valid JSON: ${error.message}`) };
+  }
+}
+
 export function sha256(text) {
   return crypto.createHash("sha256").update(text ?? "", "utf8").digest("hex");
 }
@@ -285,10 +314,23 @@ export function branchIntentVerdict(fixture) {
 
 export function staleVerdict(fixture) {
   for (const intent of fixture.write_intents ?? []) {
-    if (intent.recorded_content_sha) {
-      const live = intent.proposed_edits ? multiEditSha(intent.proposed_edits) : sha256(intentContent(intent));
-      if (live !== intent.recorded_content_sha) {
-        return { status: "halt", reason: "stale-write-intent-content-mismatch" };
+    const hasEdits = Array.isArray(intent.proposed_edits) && intent.proposed_edits.length > 0 &&
+      intent.proposed_edits.every((edit) => edit && typeof edit === "object");
+    const hasBytes = hasEdits || typeof intent.exact_content === "string" || typeof intent.exact_content_or_patch === "string";
+    // content_sha is the approved hash of the full proposed bytes; recorded_content_sha is its legacy fixture name.
+    for (const field of ["recorded_content_sha", "content_sha"]) {
+      // Only content_sha is skipped when no bytes are recorded; the legacy field keeps its old strictness.
+      if (!intent[field] || !(hasBytes || field === "recorded_content_sha")) continue;
+      const live = hasEdits ? multiEditSha(intent.proposed_edits) : sha256(intentContent(intent));
+      if (live !== intent[field]) {
+        return halt("stale-write-intent-content-mismatch",
+          `write intent ${intent.id ?? "(no id)"}: ${field} does not match the proposed bytes (recomputed ${live})`);
+      }
+    }
+    for (const [index, edit] of (hasEdits ? intent.proposed_edits : []).entries()) {
+      if (edit?.content_sha && sha256(editFrame(edit)) !== edit.content_sha) {
+        return halt("stale-write-intent-content-mismatch",
+          `write intent ${intent.id ?? "(no id)"}: proposed_edits[${index}].content_sha does not match its old_string/new_string`);
       }
     }
   }
@@ -500,7 +542,7 @@ export function assertionExecutionVerdict(fixture) {
 
 function validateFixtureAuthorizedScopeBinding(fixture, contextFile, proposalOnly = false) {
   if (!nonBlankString(fixture.invocation_id) || !AIVV_INVOCATION_ID_RE.test(fixture.invocation_id)) {
-    return { status: "halt", reason: "fix-log-authorized-scope-invocation-invalid" };
+    return halt("fix-log-authorized-scope-invocation-invalid", `invocation_id is ${JSON.stringify(fixture.invocation_id)}; expected ${INVOCATION_ID_FORMAT}`);
   }
   if (!nonBlankString(contextFile)) {
     return { status: "halt", reason: "fix-log-authorized-scope-context-missing" };
@@ -1549,36 +1591,43 @@ export function validateReviewLogNewWrite(reviewLog, { requireBoundScopeConfirma
 
 function validateAuthorizedScopeAndRetryState(fixLog) {
   const scope = fixLog.authorized_scope;
-  if (scope === undefined || (
-    !plainObject(scope) ||
-    !FIX_LOG_SOURCE_ENUM.has(scope.source) ||
-    (fixLog.source !== undefined && scope.source !== fixLog.source) ||
-    !nonBlankString(scope.goal) ||
-    !validStringArray(scope.finding_ids) || scope.finding_ids.length === 0 ||
-    !validStringArray(scope.included) || scope.included.length === 0 ||
-    !validStringArray(scope.excluded) ||
-    !validStringArray(scope.included_paths) ||
-    !validStringArray(scope.excluded_paths) ||
-    (scope.source_reference !== undefined && !nonBlankString(scope.source_reference))
-  )) {
-    return { status: "halt", reason: "fix-log-authorized-scope-invalid" };
+  if (scope === undefined || !plainObject(scope)) {
+    return halt("fix-log-authorized-scope-invalid", "authorized_scope must be an object");
   }
+  const sources = [...FIX_LOG_SOURCE_ENUM].join(", ");
+  const scopeDefect =
+    !FIX_LOG_SOURCE_ENUM.has(scope.source) ? `authorized_scope.source must be one of: ${sources}` :
+    (fixLog.source !== undefined && scope.source !== fixLog.source) ? `authorized_scope.source (${JSON.stringify(scope.source)}) must equal source (${JSON.stringify(fixLog.source)})` :
+    !nonBlankString(scope.goal) ? "authorized_scope.goal must be a non-blank string" :
+    (!validStringArray(scope.finding_ids) || scope.finding_ids.length === 0) ? "authorized_scope.finding_ids must be a non-empty array of strings" :
+    (!validStringArray(scope.included) || scope.included.length === 0) ? "authorized_scope.included must be a non-empty array of strings" :
+    !validStringArray(scope.excluded) ? "authorized_scope.excluded must be an array of strings (may be empty)" :
+    !validStringArray(scope.included_paths) ? "authorized_scope.included_paths must be an array of strings (use [] for no path restriction)" :
+    !validStringArray(scope.excluded_paths) ? "authorized_scope.excluded_paths must be an array of strings (use [] for no exclusion)" :
+    (scope.source_reference !== undefined && !nonBlankString(scope.source_reference)) ? "authorized_scope.source_reference must be a non-blank string when present" :
+    null;
+  if (scopeDefect) return halt("fix-log-authorized-scope-invalid", scopeDefect);
 
-  if (!Number.isInteger(fixLog.rework_retry_count) ||
-      fixLog.rework_retry_count < 0 || fixLog.rework_retry_count > 3 ||
-      fixLog.max_rework_retries !== 3 ||
-      !Array.isArray(fixLog.rework_retry_history) ||
-      fixLog.rework_retry_history.length !== fixLog.rework_retry_count) {
-    return { status: "halt", reason: "fix-log-rework-retry-state-invalid" };
-  }
+  const retryStateDefect =
+    (!Number.isInteger(fixLog.rework_retry_count) || fixLog.rework_retry_count < 0 || fixLog.rework_retry_count > 3) ? "rework_retry_count must be an integer from 0 to 3" :
+    fixLog.max_rework_retries !== 3 ? "max_rework_retries must be 3" :
+    !Array.isArray(fixLog.rework_retry_history) ? "rework_retry_history must be an array (use [] when no retry was consumed)" :
+    fixLog.rework_retry_history.length !== fixLog.rework_retry_count ? `rework_retry_history has ${fixLog.rework_retry_history.length} entries but rework_retry_count is ${fixLog.rework_retry_count}; they must match` :
+    null;
+  if (retryStateDefect) return halt("fix-log-rework-retry-state-invalid", retryStateDefect);
   const gates = new Set(["challenge", "pre-write", "stale-intent", "class-verdict", "verification", "red-green", "investigator-output", "duplicate-intent", "architecture-check", "plan-readiness"]);
   for (let index = 0; index < fixLog.rework_retry_history.length; index += 1) {
     const item = fixLog.rework_retry_history[index];
-    if (!plainObject(item) || item.retry_number !== index + 1 || !gates.has(item.gate) ||
-        !validStringArray(item.finding_ids) || item.finding_ids.length === 0 ||
-        !nonBlankString(item.defect) || !nonBlankString(item.evidence)) {
-      return { status: "halt", reason: "fix-log-rework-retry-history-invalid" };
-    }
+    const at = `rework_retry_history[${index}]`;
+    const entryDefect =
+      !plainObject(item) ? `${at} must be an object` :
+      item.retry_number !== index + 1 ? `${at}.retry_number must be ${index + 1}` :
+      !gates.has(item.gate) ? `${at}.gate is ${JSON.stringify(item.gate)}; allowed: ${[...gates].join(", ")}` :
+      (!validStringArray(item.finding_ids) || item.finding_ids.length === 0) ? `${at}.finding_ids must be a non-empty array of strings` :
+      !nonBlankString(item.defect) ? `${at}.defect must be a non-blank string` :
+      !nonBlankString(item.evidence) ? `${at}.evidence must be a non-blank string` :
+      null;
+    if (entryDefect) return halt("fix-log-rework-retry-history-invalid", entryDefect);
   }
 
   const authorizedIds = scope.finding_ids;
@@ -1596,7 +1645,7 @@ function validateAuthorizedScopeAndRetryState(fixLog) {
   if (fixLog.decision_ledger !== undefined &&
       (!Array.isArray(fixLog.decision_ledger) ||
        fixLog.decision_ledger.some((entry) => !plainObject(entry) || !nonBlankString(entry.finding_id)))) {
-    return { status: "halt", reason: "fix-log-decision-ledger-invalid" };
+    return halt("fix-log-decision-ledger-invalid", "decision_ledger must be an array of objects, each with a non-blank finding_id");
   }
   for (const field of ["write_intents", "decision_ledger", "changes_summary", "fix_plans", "verification_cycles", "objective_evidence", "final_dispositions"]) {
     collectArrayIds(fixLog[field], "finding_id");
@@ -1615,8 +1664,10 @@ function validateAuthorizedScopeAndRetryState(fixLog) {
     const suffix = findingId.slice(parentId.length + 1);
     return /^(?:cls(?:[1-9][0-9]*|overflow)|sib[1-9][0-9]*)$/.test(suffix);
   });
-  if (findingIdsIn.some((findingId) => !isWithinAuthorizedScope(findingId))) {
-    return { status: "halt", reason: "fix-log-finding-outside-authorized-scope" };
+  const outside = findingIdsIn.filter((findingId) => !isWithinAuthorizedScope(findingId));
+  if (outside.length > 0) {
+    return halt("fix-log-finding-outside-authorized-scope",
+      `finding IDs not in authorized_scope.finding_ids (${authorizedIds.join(", ")}): ${[...new Set(outside)].join(", ")}`);
   }
   return { status: "pass", reason: "pass" };
 }
@@ -1814,18 +1865,18 @@ export function validateFixLogNewWrite(fixLog, { contextFile } = {}) {
     return { status: "halt", reason: "fix-log-object-invalid" };
   }
   if (!nonBlankString(fixLog.id) || !AIVV_INVOCATION_ID_RE.test(fixLog.id)) {
-    return { status: "halt", reason: "fix-log-id-invalid" };
+    return halt("fix-log-id-invalid", `id is ${JSON.stringify(fixLog.id)}; expected ${INVOCATION_ID_FORMAT}`);
   }
   const storageContextVerdict = validateStorageContext(fixLog.storage_context, fixLog.target_project, "fix-log");
   if (storageContextVerdict.status === "halt") return storageContextVerdict;
   if (fixLog.schema_version !== 2) {
-    return { status: "halt", reason: "fix-log-schema-version-invalid" };
+    return halt("fix-log-schema-version-invalid", "schema_version must be 2");
   }
   if (fixLog.command !== "aivv-fix") {
-    return { status: "halt", reason: "fix-log-command-invalid" };
+    return halt("fix-log-command-invalid", 'command must be "aivv-fix"');
   }
   if (!FIX_LOG_STATUS_ENUM.has(fixLog.status)) {
-    return { status: "halt", reason: "fix-log-status-invalid" };
+    return halt("fix-log-status-invalid", `status is ${JSON.stringify(fixLog.status)}; allowed: ${[...FIX_LOG_STATUS_ENUM].join(", ")}`);
   }
   const scopeAndRetryVerdict = validateAuthorizedScopeAndRetryState(fixLog);
   if (scopeAndRetryVerdict.status === "halt") return scopeAndRetryVerdict;
@@ -1975,7 +2026,9 @@ export function validateFixLogTransition(fixLog, previousFixLog, { contextFile }
 }
 
 export function validateFile(file, options = {}) {
-  const fixture = JSON.parse(fs.readFileSync(file, "utf8"));
+  const input = readJsonInput(file);
+  if (input.verdict) return input.verdict;
+  const fixture = input.value;
   const verdict = validateFixture(fixture, options);
   if (verdict.status !== "halt") return verdict;
   if (!Number.isInteger(fixture.rework_retry_count) || fixture.rework_retry_count < 0 ||
@@ -1983,7 +2036,9 @@ export function validateFile(file, options = {}) {
     return {
       status: "halt",
       reason: "rework-retry-budget-metadata-missing-or-invalid",
+      detail: "the fixture must carry rework_retry_count (integer, 0 or more) and max_rework_retries: 3",
       blocked_reason: verdict.reason,
+      blocked_detail: verdict.detail,
     };
   }
   if (fixture.rework_retry_count >= fixture.max_rework_retries) {
@@ -1991,6 +2046,7 @@ export function validateFile(file, options = {}) {
       status: "halt",
       reason: "rework-retry-budget-exhausted",
       blocked_reason: verdict.reason,
+      blocked_detail: verdict.detail,
     };
   }
   return verdict;
@@ -2019,6 +2075,10 @@ function loadPersistedFixLog(contextFile, fixLog) {
 }
 
 function main(argv) {
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(USAGE);
+    return 0;
+  }
   const fixLogIndex = argv.indexOf("--fix-log");
   if (fixLogIndex >= 0) {
     const fixLogFile = argv[fixLogIndex + 1];
@@ -2030,9 +2090,14 @@ function main(argv) {
       console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fix-log <candidate-fix-log.json> --context <storage-context.json> --new|--update");
       return 2;
     }
-    const candidate = JSON.parse(fs.readFileSync(fixLogFile, "utf8"));
-    if (!nonBlankString(candidate.id) || !AIVV_INVOCATION_ID_RE.test(candidate.id)) {
-      console.log(JSON.stringify({ status: "halt", reason: "fix-log-id-invalid" }));
+    const fixLogInput = readJsonInput(fixLogFile);
+    if (fixLogInput.verdict) {
+      console.log(JSON.stringify(fixLogInput.verdict));
+      return 1;
+    }
+    const candidate = fixLogInput.value;
+    if (!nonBlankString(candidate?.id) || !AIVV_INVOCATION_ID_RE.test(candidate.id)) {
+      console.log(JSON.stringify(halt("fix-log-id-invalid", `id is ${JSON.stringify(candidate?.id)}; expected ${INVOCATION_ID_FORMAT}`)));
       return 1;
     }
     const persisted = loadPersistedFixLog(contextFile, candidate);
@@ -2073,7 +2138,12 @@ function main(argv) {
       console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log-backfill <candidate-review-log.json> --context <storage-context.json> --relative <stored-review-path>");
       return 2;
     }
-    const candidate = JSON.parse(fs.readFileSync(reviewLogFile, "utf8"));
+    const reviewLogInput = readJsonInput(reviewLogFile);
+    if (reviewLogInput.verdict) {
+      console.log(JSON.stringify(reviewLogInput.verdict));
+      return 1;
+    }
+    const candidate = reviewLogInput.value;
     const verdict = strictScopeBinding
       ? validateReviewLogNewWrite(candidate, { requireBoundScopeConfirmation: true })
       : validateReviewLogBackfill(candidate, contextFile, relative);
@@ -2084,9 +2154,7 @@ function main(argv) {
   const fileIndex = argv.indexOf("--fixture");
   const file = fileIndex >= 0 ? argv[fileIndex + 1] : argv[0];
   if (!file) {
-    console.error("usage: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fixture <fixture.json> [--proposal-only | --context <storage-context.json>]");
-    console.error("   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --review-log <candidate-review-log.json>");
-    console.error("   or: node <AIVV_ROOT>/tools/pre-write-validator.mjs --fix-log <candidate-fix-log.json>");
+    console.error(USAGE);
     return 2;
   }
   const contextIndex = argv.indexOf("--context");

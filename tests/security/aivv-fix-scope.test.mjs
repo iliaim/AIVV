@@ -228,11 +228,14 @@ try {
     'a pending user decision still comes before any project write');
   assert.match(redGate, /Undo the early test write\*\* whenever the fix for its finding is not applied in this invocation/,
     'a failing test must not be left behind');
-  assert.match(redGate, /first run the finding's read-only class-verdict scan[^\n]*?write early only if it leaves the finding's confidence and route unchanged/,
+  assert.match(redGate, /first run the finding's read-only class-verdict scan[^\n]*?write early only if the verdict gate passes and the scan leaves the finding's confidence and route unchanged\. Record the result on the finding's decision-ledger entry as `class_scan`/,
     'a decision that only the Step 5 class scan can raise must be known before the early write');
   assert.match(redGate, /only while the file still matches the content this run wrote/,
     'undo must not delete a file the user changed after the run stopped');
   assert.match(reference('fix-log-contract.md'), /On "Restart": first undo any early test write as in item 2/);
+  assert.match(reference('fix-log-contract.md'), /reuse the result recorded as `class_scan` on its `decision_ledger\[\]` entry and do not run those steps again/,
+    'Step 5 and a resumed run must not rescan with the failing test already on disk');
+  assert.match(reference('fix-log-contract.md'), /confirm the file still holds the content this run wrote/);
   assert.match(redGate, /Before the early write, add the test path to `files_created` or `files_modified`/,
     'an early test write must be visible to recovery before it happens');
   assert.match(reference('fix-log-contract.md'), /files created: \{files_created\}/, 'the recovery prompt shows created files');
@@ -247,6 +250,15 @@ try {
     .filter((file) => /\.(md|json|mjs|toml)$/.test(file))
     .filter((file) => /Step 4\.6/.test(readFileSync(path.join(pluginRoot, file), 'utf8')));
   assert.deepEqual(stale, [], 'nothing may point at the removed Step 4.6');
+
+  // The references must give one answer on when the investigator or the verifier may be skipped.
+  const dispatch = reference('investigation-dispatch.md');
+  assert.doesNotMatch(dispatch, /\*\*Skip the investigator\*\*/, 'the fast path is the only investigator skip route');
+  assert.match(dispatch, /there is no other skip route/);
+  assert.doesNotMatch(reference('triage.md'), /investigator skip is permitted/);
+  const fastPath = reference('fast-path.md');
+  assert.doesNotMatch(fastPath, /trivially checked/, 'the fast path may not carry its own verifier exemption');
+  assert.match(fastPath, /decided only by the conditions in \[verifier-dispatch\.md\]/);
 
   const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
   assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);

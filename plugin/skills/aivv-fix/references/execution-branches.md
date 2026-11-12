@@ -134,7 +134,7 @@ Lifecycle write-back rules:
 
 ## Dangerous auto-apply audit (when `dangerously_auto_apply_confirmed == true`)
 
-When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply` with `{confirmed: true, confirmation_source, bypassed_gates: [...], applied_count: 0}` before the first write. Invasive improvements remain deferred pending an explicit per-finding apply decision and are excluded from this route. For every eligible finding applied through the dangerous route, increment `applied_count` and include `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on that finding's `changes_summary` entry. At the end of Step 5, emit a loud audit banner:
+When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply` with `{confirmed: true, confirmation_source, bypassed_gates: [...], applied_count: 0}` before the first write, if Step 4.4 has not already recorded it. Invasive improvements remain deferred pending an explicit per-finding apply decision and are excluded from this route. For every eligible finding applied through the dangerous route, increment `applied_count` and include `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on that finding's `changes_summary` entry. At the end of Step 5, emit a loud audit banner:
 
 ```text
 [aivv-fix] DANGEROUSLY AUTO-APPLIED <N> fix(es)
