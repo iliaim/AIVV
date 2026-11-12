@@ -264,9 +264,31 @@
         "applied_count": {"type": "integer", "minimum": 0}
       }
     },
+    "decision_ledger": {
+      "type": "array",
+      "description": "Per-finding execution decision ledger, persisted from Step 4.4 so a compaction, stop, or Resume keeps the plan. Records decisions, not applied changes. Entry fields and their values are defined in skills/aivv-fix/references/execution-decisioning.md.",
+      "items": {
+        "type": "object",
+        "required": ["finding_id"],
+        "properties": {
+          "finding_id": {"type": "string", "minLength": 1},
+          "red_run": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+              "status": {"enum": ["not-applicable", "deferred-to-step-5", "failed-right-reason", "failed-wrong-reason", "passed"]},
+              "test_intent_id": {"type": "string"},
+              "command_argv": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+              "exit": {"type": "integer"},
+              "output_excerpt": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
     "write_intents": {
       "type": "array",
-      "description": "B4 pre-write safety intents materialized before Step 4.5 challenger dispatch and before host write primitives.",
+      "description": "B4 pre-write safety intents materialized at Step 4.4 and persisted with the plan-stage fix log, before Step 4.5 challenger dispatch and before host write primitives.",
       "items": {
         "type": "object",
         "required": ["id", "finding_id", "branch", "target_file", "operation", "kind", "content_sha", "source_step", "pre_write_assertions", "detector_result"],
@@ -378,7 +400,7 @@
     "files_created": {"type": "array", "items": {"type": "string"}},
     "write_boundary_shown": {
       "type": "boolean",
-      "description": "True when the Step 5.0 pre-write boundary was rendered before non-dry-run writes."
+      "description": "True when the Step 1.9 write boundary was rendered before non-dry-run writes."
     },
     "change_readiness": {
       "type": "object",
@@ -595,7 +617,7 @@
           },
           "red_green_evidence": {
             "type": "object",
-            "description": "Step 4.6/5.7 evidence that distinguishes true red-green prevention from post-fix verification-only execution.",
+            "description": "Step 4.4.5/5.7 evidence that distinguishes true red-green prevention from post-fix verification-only execution.",
             "required": ["claim", "post_fix"],
             "properties": {
               "claim": {

@@ -91,7 +91,7 @@ If any lifecycle selector was extracted, route it before ordinary source parsing
    node "$AIVV_ROOT/tools/incident-lifecycle-route.mjs" --context "$storage_context_file" --target "<target>" --github-issue "<url|owner/repo#N>"
    ```
 4. If the helper exits non-zero, halt before Step 2 and surface its JSON `reason`.
-5. Bind `lifecycle_context = route.lifecycle_context` in session state and carry it unchanged into `session_changes.lifecycle_context` at Step 5 initialization.
+5. Bind `lifecycle_context = route.lifecycle_context` in session state and carry it unchanged into `session_changes.lifecycle_context` at the first fix-log write (Step 4.4).
 6. Bind `FixSession.source` from `route.source_mode`:
    - `review-sourced` and `finding-sourced` → `FixSession.source = "review_id"` and `source_review_id = route.source_review_id`.
    - `investigation-only` → `FixSession.source = "conversation"` and do not claim review-sourced findings.

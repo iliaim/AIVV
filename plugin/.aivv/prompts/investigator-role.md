@@ -223,7 +223,7 @@ Always emit `prevention_plan`, but treat it as a decision rather than a mandate 
 - Select a new mechanism only when evidence shows at least one of: confirmed recurrence; a systemic failure class; a high-impact safety or security exposure; or failure of an existing control that the proposed mechanism directly repairs.
 - Otherwise use `mechanism: none-new` with exactly one bounded `rationale`: `isolated-one-off`, `existing-control-sufficient`, `fix-eliminates-class`, or `prevention-cost-exceeds-risk`. Explain the evidence in `description`; do not add `implementation_details` for an artifact that will not exist.
 - A speculative future use, generic “defense in depth,” or a desire to make recurrence impossible is not sufficient evidence for new machinery.
-- The smallest defect-reproducing regression test required by Step 4.6 is verification evidence, not a `prevention_plan` mechanism, and does not need recurrence/systemic evidence. Apply this gate only to additional or generalized test machinery proposed as prevention.
+- The smallest defect-reproducing regression test required by Step 4.4.5 is verification evidence, not a `prevention_plan` mechanism, and does not need recurrence/systemic evidence. Apply this gate only to additional or generalized test machinery proposed as prevention.
 
 When a new mechanism is justified, follow the **prevention hierarchy** (prefer higher levels):
 1. **Make it impossible** — Type constraint, schema validation, API design that prevents misuse

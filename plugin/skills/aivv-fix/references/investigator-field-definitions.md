@@ -320,7 +320,7 @@ SRE-postmortem-style context. **Required for CRITICAL findings; recommended for 
 
 **Key discipline:** `detection_failure` informs the `prevention_plan` decision; it does not automatically justify new machinery. A new mechanism is allowed only when the evidence establishes confirmed recurrence, a systemic failure class, high-impact safety/security exposure, or failure of an existing control that the mechanism directly repairs. Otherwise select `none-new` with a bounded rationale.
 
-The minimum defect-reproducing regression test required by Step 4.6 is recorded as verification evidence, not as `prevention_plan.mechanism: test`, and is exempt from the new-prevention eligibility gate. A broader test harness, generalized coverage rule, or additional prevention test remains subject to the gate.
+The minimum defect-reproducing regression test required by Step 4.4.5 is recorded as verification evidence, not as `prevention_plan.mechanism: test`, and is exempt from the new-prevention eligibility gate. A broader test harness, generalized coverage rule, or additional prevention test remains subject to the gate.
 
 ### `verification_method.command_args` (optional, in `root_cause_analysis`)
 
