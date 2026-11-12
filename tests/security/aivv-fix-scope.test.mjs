@@ -222,12 +222,17 @@ try {
   assert.match(redGate, /Run the test now, before Step 4\.5/);
   assert.match(redGate, /Write early only when no user decision is pending:\*\* readiness for this finding would record `approval_mode: "auto"`/,
     'the early test write is an allow-list tied to the readiness outcome');
-  assert.match(redGate, /already `dangerously-auto-approved`[^\n]*?not policy-skipped, no architecture approval outstanding/,
+  assert.match(redGate, /would route the finding `dangerously-auto-approved`[^\n]*?not policy-skipped, no architecture approval outstanding/,
     'the dangerous route does not by itself permit the early write');
   assert.match(redGate, /In every other case \(policy `ask` or `skip`[^\n]*do not write the test early/,
     'a pending user decision still comes before any project write');
   assert.match(redGate, /Undo the early test write\*\* whenever the fix for its finding is not applied in this invocation/,
     'a failing test must not be left behind');
+  assert.match(redGate, /first run the finding's read-only class-verdict scan[^\n]*?write early only if it leaves the finding's confidence and route unchanged/,
+    'a decision that only the Step 5 class scan can raise must be known before the early write');
+  assert.match(redGate, /only while the file still matches the content this run wrote/,
+    'undo must not delete a file the user changed after the run stopped');
+  assert.match(reference('fix-log-contract.md'), /On "Restart": first undo any early test write as in item 2/);
   assert.match(redGate, /Before the early write, add the test path to `files_created` or `files_modified`/,
     'an early test write must be visible to recovery before it happens');
   assert.match(reference('fix-log-contract.md'), /files created: \{files_created\}/, 'the recovery prompt shows created files');
