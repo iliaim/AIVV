@@ -24,7 +24,8 @@ const USAGE = [
   '    fix_log.max_rework_retries defaults to 3; pass the resolved setting to override',
   '    prompts         [{template, values}, ...] -> prompts, each value fenced with a fresh nonce',
   '                    template: fix-challenger | verifier | investigator',
-  '                    unfilled lists every {placeholder} left for you to fill',
+  '                    unfilled lists the {placeholders} left for you to fill; it can also',
+  '                    name a literal {example} in the template text, which you leave alone',
   '  Prints one JSON object. Validate fix-log writes with pre-write-validator.mjs as before.',
 ].join('\n');
 

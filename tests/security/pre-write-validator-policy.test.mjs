@@ -94,6 +94,8 @@ assert.equal(staleVerdict(wholeTextEmptyEdits).status, "pass", "an empty edits a
 assert.equal(staleVerdict({ write_intents: [{ id: "WI-3", recorded_content_sha: "0".repeat(64) }] }).reason,
   "stale-write-intent-content-mismatch", "a legacy recorded hash with no bytes still halts");
 assert.doesNotThrow(() => staleVerdict({ write_intents: [{ id: "WI-4", proposed_edits: [null] }] }));
+assert.doesNotThrow(() => staleVerdict({ write_intents: [{ id: "WI-5", content_sha: "0".repeat(64), proposed_edits: [{ old_string: 1 }] }] }),
+  "a non-string edit field is left to the shape checks, not thrown");
 wholeText.write_intents[0].exact_content_or_patch = "other text\n";
 assert.equal(staleVerdict(wholeText).reason, "stale-write-intent-content-mismatch");
 

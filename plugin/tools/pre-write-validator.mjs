@@ -315,7 +315,8 @@ export function branchIntentVerdict(fixture) {
 export function staleVerdict(fixture) {
   for (const intent of fixture.write_intents ?? []) {
     const hasEdits = Array.isArray(intent.proposed_edits) && intent.proposed_edits.length > 0 &&
-      intent.proposed_edits.every((edit) => edit && typeof edit === "object");
+      intent.proposed_edits.every((edit) => edit && typeof edit === "object" &&
+        [edit.old_string, edit.new_string].every((text) => text === undefined || typeof text === "string"));
     const hasBytes = hasEdits || typeof intent.exact_content === "string" || typeof intent.exact_content_or_patch === "string";
     // content_sha is the approved hash of the full proposed bytes; recorded_content_sha is its legacy fixture name.
     for (const field of ["recorded_content_sha", "content_sha"]) {
