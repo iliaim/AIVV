@@ -726,7 +726,7 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function incidentTimestamp(date = new Date()) {
+export function incidentTimestamp(date = new Date()) {
   return date.toISOString().replace(/\.[0-9]{3}Z$/, "Z").replace(/:/g, "-").replace(/Z$/, "");
 }
 

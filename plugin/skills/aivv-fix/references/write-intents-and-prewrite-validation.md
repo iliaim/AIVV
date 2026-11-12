@@ -77,6 +77,8 @@ Detector and assertion registry:
 
 **Persist the plan.** After the detector has run on the batch, publish the `in-progress` fix log per [fix-log-contract.md](fix-log-contract.md) (`--new` first, `--update` after every later change to intents or the ledger).
 
+**Records helper.** `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` produces these records in one call instead of hand-building them: a new `invocation_id`, each intent's `content_sha` (and per-edit `content_sha`), the plan-stage fix-log skeleton, the next `rework_retry_history` entry, and the challenger or verifier prompt with every supplied value already fenced. Run it with `--help` for the request keys. It only produces records; every fix-log write still goes through the validator, and the placeholders it reports as `unfilled` are still yours to fill.
+
 Readiness consumes the materialized write intents from this reference. If `revise plan` is chosen, invalidate all existing `write_intents`. Re-enter Step 4 only when a readiness defect is specific and evidenced, or the user's feedback names a concrete in-scope correction; record one `plan-readiness` retry event before re-authoring. If the user only selects “revise plan” without an actionable correction and no readiness defect is evident, ask once for the specific correction. If none is available, stop and report the finding unresolved. At the shared retry cap, stop without asking to reopen the already-authorized scope. Do not apply stale write intents after a readiness revision.
 
 ### Step 5.4: PRE-WRITE-VALIDATE — deterministic embedded-content checks

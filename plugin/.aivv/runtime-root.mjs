@@ -122,6 +122,7 @@ const PREFLIGHT_FILES = {
     "tools/pre-write-validator.mjs",
     "tools/runtime-evidence.mjs",
     "tools/native-prompt-boundary.mjs",
+    "tools/aivv-fix-records.mjs",
     "tools/aivv-action-inbox.mjs",
     "tools/state-import.mjs",
     "tools/incident-lifecycle-route.mjs",
