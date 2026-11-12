@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +9,9 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const resolverSource = path.join(root, 'plugin/.aivv/runtime-root.mjs');
-const temporaryRoot = mkdtempSync(path.join(tmpdir(), 'aivv-runtime-root-'));
+// The resolver reports symlink-free paths, so compare against the real temp
+// directory (macOS links /var to /private/var).
+const temporaryRoot = realpathSync(mkdtempSync(path.join(tmpdir(), 'aivv-runtime-root-')));
 
 function makeRuntimeRoot(runtimeRoot) {
   mkdirSync(path.join(runtimeRoot, '.aivv'), { recursive: true });
@@ -107,6 +109,27 @@ try {
   assert.match(incompletePreflight.stderr, /No alternate runtime root was used/);
   assert.equal(incompletePreflight.stderr.trim().split(/\r?\n/).length, 1,
     'an incomplete selected root should stop once with one installation diagnostic');
+
+  // A consumer that vendors AIVV under .agents/ and exposes it to Claude Code
+  // through a symlinked skills folder must resolve the vendored copy, not a
+  // separate (possibly stale) CODEX_HOME runtime (issue #34).
+  const vendoredProject = path.join(temporaryRoot, 'vendored-project');
+  const vendoredRoot = path.join(vendoredProject, '.agents');
+  cpSync(path.join(root, 'plugin'), vendoredRoot, { recursive: true });
+  mkdirSync(path.join(vendoredProject, '.claude'), { recursive: true });
+  symlinkSync('../.agents/skills', path.join(vendoredProject, '.claude', 'skills'), 'dir');
+  const staleCodexHome = path.join(temporaryRoot, 'stale-codex-home');
+  const staleRuntime = path.join(staleCodexHome, 'aivv-runtime');
+  cpSync(path.join(root, 'plugin'), staleRuntime, { recursive: true });
+  rmSync(path.join(staleRuntime, 'tools', 'aivv-fix-records.mjs'));
+  const symlinkedPreflight = preflight(path.join(vendoredRoot, '.aivv/runtime-root.mjs'), 'aivv-fix', {
+    CODEX_HOME: staleCodexHome,
+    skillDir: path.join(vendoredProject, '.claude', 'skills', 'aivv-fix'),
+  });
+  assert.equal(symlinkedPreflight.status, 0,
+    `a skill loaded through a symlinked skills folder failed preflight: ${symlinkedPreflight.stderr}`);
+  assert.equal(symlinkedPreflight.stdout.trim(), vendoredRoot,
+    'a symlinked skills folder should resolve the installation the skill belongs to before CODEX_HOME');
 
   for (const [profile, skillName] of [
     ['aivv', 'aivv'],
