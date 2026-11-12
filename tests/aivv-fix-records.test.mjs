@@ -114,6 +114,26 @@ try {
   // Helper and validator hash the same field when an intent carries both.
   const both = { id: 'WI-7', exact_content: 'a\n', exact_content_or_patch: 'b\n' };
   assert.equal(run({ write_intents: [both] }).out.write_intents[0].content_sha, sha256(intentContent(both)));
+  // Whatever the request, the helper answers with one JSON object and never a stack trace.
+  for (const [request, reason, detail] of [
+    [{ fix_log: null }, 'request-invalid', /fix_log must be an object/],
+    [{ retry: null }, 'request-invalid', /retry must be an object/],
+    [{ prompts: [null] }, 'request-invalid', /prompts\[0\] must be an object/],
+    [{ prompts: [{ template: 'verifier', values: 7 }] }, 'request-invalid', /prompts\[0\]\.values must be an object/],
+    [{ fix_log: 5 }, 'request-invalid', /fix_log must be an object/],
+    [{ retry: { history: 'x', gate: 'challenge' } }, 'request-invalid', /retry\.history must be an array/],
+  ]) {
+    const refused = run(request);
+    assert.equal(refused.status, 1, JSON.stringify(request));
+    assert.equal(refused.stderr, '', `no stack trace for ${JSON.stringify(request)}`);
+    assert.equal(refused.out.status, 'error');
+    assert.equal(refused.out.reason, reason);
+    assert.match(refused.out.detail, detail);
+  }
+  // An error nobody anticipated takes the same route: one JSON line, non-zero exit, message kept.
+  const { reportError } = await import('../plugin/tools/aivv-fix-records.mjs');
+  assert.deepEqual(reportError(new TypeError('boom')), { status: 'error', reason: 'unexpected-error', detail: 'boom' });
+
   const usage = spawnSync(process.execPath, [helper], { encoding: 'utf8' });
   assert.equal(usage.status, 2);
   assert.match(usage.stderr, /Usage:/);
