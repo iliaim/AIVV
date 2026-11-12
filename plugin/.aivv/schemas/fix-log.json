@@ -98,7 +98,7 @@
     "authorized_scope": {
       "description": "Immutable objective and finding boundary captured before investigation. The validator binds actionable finding references to finding_ids, allowing only documented -cls<N>, -cls-overflow, and -sib<N> children of selected IDs. Required by current /aivv-fix writers; optional for historical logs.",
       "type": "object",
-      "required": ["source", "goal", "finding_ids", "included", "excluded"],
+      "required": ["source", "goal", "finding_ids", "included", "excluded", "included_paths", "excluded_paths"],
       "additionalProperties": false,
       "properties": {
         "source": {"enum": ["conversation", "review_id", "literal", "task_file"]},
@@ -314,7 +314,7 @@
           "operation": {"enum": ["edit", "create", "replace"]},
           "kind": {"enum": ["generated_patch", "verbatim_doc_content", "process_rule_content"]},
           "exact_content_or_patch": {"type": "string"},
-          "content_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "content_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of the full proposed bytes. The pre-write validator recomputes it from the intent content and halts on a mismatch."},
           "source_step": {"const": "Step 4.4"},
           "pre_write_assertions": {
             "type": "array",

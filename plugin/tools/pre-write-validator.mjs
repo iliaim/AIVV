@@ -314,10 +314,20 @@ export function branchIntentVerdict(fixture) {
 
 export function staleVerdict(fixture) {
   for (const intent of fixture.write_intents ?? []) {
-    if (intent.recorded_content_sha) {
-      const live = intent.proposed_edits ? multiEditSha(intent.proposed_edits) : sha256(intentContent(intent));
-      if (live !== intent.recorded_content_sha) {
-        return { status: "halt", reason: "stale-write-intent-content-mismatch" };
+    const hasEdits = Array.isArray(intent.proposed_edits);
+    const hasBytes = hasEdits || typeof intent.exact_content === "string" || typeof intent.exact_content_or_patch === "string";
+    const live = hasEdits ? multiEditSha(intent.proposed_edits) : sha256(intentContent(intent));
+    // content_sha is the approved hash of the full proposed bytes; recorded_content_sha is its legacy fixture name.
+    for (const field of ["recorded_content_sha", "content_sha"]) {
+      if (intent[field] && hasBytes && live !== intent[field]) {
+        return halt("stale-write-intent-content-mismatch",
+          `write intent ${intent.id ?? "(no id)"}: ${field} does not match the proposed bytes (recomputed ${live})`);
+      }
+    }
+    for (const [index, edit] of (hasEdits ? intent.proposed_edits : []).entries()) {
+      if (edit?.content_sha && sha256(editFrame(edit)) !== edit.content_sha) {
+        return halt("stale-write-intent-content-mismatch",
+          `write intent ${intent.id ?? "(no id)"}: proposed_edits[${index}].content_sha does not match its old_string/new_string`);
       }
     }
   }

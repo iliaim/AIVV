@@ -27,6 +27,7 @@ Each `write_intents[]` item has these required fields:
 - `content_sha`: lowercase hex SHA-256 for the full proposed content, never a truncated snapshot.
 - `source_step`: `Step 4.4`.
 - `pre_write_assertions`: array, possibly empty until Task 3 detector rules require entries.
+- `detector_result`: the deterministic detector's result for this intent (`verdict`, `content_shapes`, `detection_confidence`; see the registry below).
 
 Branch-specific production rules:
 - **Branch A** materializes `kind: "generated_patch"` intents with exact preimage/postimage pairs. Opaque patch-hunk-only intents are not accepted. Multi-hunk edits must be decomposed into ordered `proposed_edits[]` entries, each with exact `old_string`, exact `new_string`, and `content_sha`. If a hunk cannot be decomposed to exact old/new text before write, HALT as `no-pre-write-inspectable-intent`.
@@ -42,7 +43,7 @@ Hash semantics:
 B4 is text-write safety only. Any proposed intent whose old/new content contains NUL bytes or non-text binary data HALTS as `unsupported-risky-shape` and requires a separate future design; it must not pass through Branch A/B/D B4 validators.
 
 Stale-intent invalidation:
-- Immediately before a host write primitive, recompute the pending write bytes and compare with the approved `content_sha`. If they differ, HALT as `stale-write-intent-content-mismatch`.
+- Immediately before a host write primitive, recompute the pending write bytes and compare with the approved `content_sha`. If they differ, HALT as `stale-write-intent-content-mismatch`. The validator performs this comparison on every fixture pass, for the intent's top-level `content_sha` and each `proposed_edits[].content_sha`. When the bytes are unchanged since approval and only the recorded hash was computed wrongly, correct the hash (the halt `detail` shows the recomputed value); that is a record correction, not a re-authoring.
 - If an investigator re-runs, Step 4.5 returns an actionable REVISE/REJECT, the target preimage changes, or proposed bytes change for any reason, discard affected intents. Re-enter Step 3 only if `rework_retry_count < max_rework_retries`; increment the shared counter once and append a retry-history entry before re-authoring. Regenerated intents re-run detector, Step 4.5 eligibility, and Step 5.4.
 - `rework_retry_count` is the sole semantic re-authoring and verification budget: three retries across the entire invocation, including stale-intent regeneration and Step 5.4 re-authoring. `challenge_iterations`, `pre_write_validation_iterations`, `stale_intent_regenerations`, `class_verdict_reinvestigation_iterations`, and `cycle_count` remain stage diagnostics and cannot grant extra retries.
 - If a changed preimage cannot be safely regenerated within the remaining budget, halt the affected write and report the finding unresolved. Do not write stale bytes, ask to reopen scope, or reset the shared budget.

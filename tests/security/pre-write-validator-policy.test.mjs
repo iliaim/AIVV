@@ -9,6 +9,7 @@ import {
   bypassVerdict,
   detectorVerdict,
   editFrame,
+  multiEditSha,
   requiredAssertions,
   sha256,
   staleVerdict,
@@ -74,6 +75,22 @@ const stale = intentFixture();
 stale.write_intents[0].recorded_content_sha = sha256("different bytes");
 assert.equal(staleVerdict(stale).reason, "stale-write-intent-content-mismatch",
   "stale exact-byte intents remain invalidated");
+// Issue #26 item 7: content_sha is compared with the bytes, not only checked for shape.
+const hashed = intentFixture();
+hashed.write_intents[0].proposed_edits[0].content_sha = sha256(editFrame({ old_string: "old", new_string: "new" }));
+hashed.write_intents[0].content_sha = multiEditSha(hashed.write_intents[0].proposed_edits);
+assert.equal(staleVerdict(hashed).status, "pass", "matching hashes pass");
+const driftedEdit = structuredClone(hashed);
+driftedEdit.write_intents[0].proposed_edits[0].new_string = "changed after approval";
+const driftedVerdict = staleVerdict(driftedEdit);
+assert.equal(driftedVerdict.reason, "stale-write-intent-content-mismatch",
+  "bytes that no longer match the approved content_sha are stale");
+assert.match(driftedVerdict.detail, /WI-1/);
+const wholeText = { write_intents: [{ id: "WI-2", branch: "B", kind: "verbatim_doc_content", exact_content_or_patch: "doc text\n", content_sha: sha256("doc text\n") }] };
+assert.equal(staleVerdict(wholeText).status, "pass");
+wholeText.write_intents[0].exact_content_or_patch = "other text\n";
+assert.equal(staleVerdict(wholeText).reason, "stale-write-intent-content-mismatch");
+
 const regeneratedBypass = intentFixture();
 regeneratedBypass.intent_regenerated = true;
 regeneratedBypass.write_intents[0].content_sha = sha256("approved bytes");
