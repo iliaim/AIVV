@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
-import { editFrame, multiEditSha, sha256, validateFixLogNewWrite } from '../plugin/tools/pre-write-validator.mjs';
+import { editFrame, intentContent, multiEditSha, sha256, validateFixLogNewWrite } from '../plugin/tools/pre-write-validator.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const helper = path.join(root, 'plugin/tools/aivv-fix-records.mjs');
@@ -102,6 +102,18 @@ try {
   assert.match(noBytes.out.detail, /WI-9/);
   assert.equal(run({ prompts: [{ template: '../../secret', values: {} }] }).out.reason, 'prompt-template-unknown');
   assert.equal(run('{not json').out.reason, 'request-json-invalid');
+  // Reported from a downstream sync: these two crashed with an uncaught TypeError.
+  const dotted = run({ prompts: [{ template: 'verifier', values: { 'execution_evidence.stdout_excerpt': '0' } }] });
+  assert.equal(dotted.status, 0, dotted.stderr);
+  assert.match(dotted.out.prompts[0].prompt, /<AIVV_UNTRUSTED_[a-f0-9]{32}_EXECUTION_EVIDENCE_STDOUT_EXCERPT>\n0\n/);
+  const nullEdit = run({ write_intents: [{ id: 'WI-8', proposed_edits: [null] }] });
+  assert.equal(nullEdit.status, 1);
+  assert.equal(nullEdit.out.reason, 'write-intent-invalid');
+  assert.match(nullEdit.out.detail, /WI-8/);
+  assert.equal(run({ write_intents: [{ id: 'WI-8', proposed_edits: [{ old_string: 1, new_string: 'x' }] }] }).out.reason, 'write-intent-invalid');
+  // Helper and validator hash the same field when an intent carries both.
+  const both = { id: 'WI-7', exact_content: 'a\n', exact_content_or_patch: 'b\n' };
+  assert.equal(run({ write_intents: [both] }).out.write_intents[0].content_sha, sha256(intentContent(both)));
   const usage = spawnSync(process.execPath, [helper], { encoding: 'utf8' });
   assert.equal(usage.status, 2);
   assert.match(usage.stderr, /Usage:/);

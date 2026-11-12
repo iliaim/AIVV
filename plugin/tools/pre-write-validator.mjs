@@ -2042,24 +2042,14 @@ export function validateFile(file, options = {}) {
   const fixture = input.value;
   const verdict = validateFixture(fixture, options);
   if (verdict.status !== "halt") return verdict;
+  // The real halt reason stays on top. Where the run stands against the soft rework limit is a note
+  // for the agent; the fix log's retry history is what enforces a recorded reason past the limit.
   if (!Number.isInteger(fixture.rework_retry_count) || fixture.rework_retry_count < 0 ||
       !Number.isInteger(fixture.max_rework_retries) || fixture.max_rework_retries < 1) {
-    return {
-      status: "halt",
-      reason: "rework-retry-budget-metadata-missing-or-invalid",
-      detail: "the fixture must carry rework_retry_count (integer, 0 or more) and max_rework_retries (the resolved setting; default 3)",
-      blocked_reason: verdict.reason,
-      blocked_detail: verdict.detail,
-    };
+    return { ...verdict, rework_limit_note: "the fixture does not carry a valid rework_retry_count and max_rework_retries, so the rework limit could not be checked here" };
   }
   if (fixture.rework_retry_count >= fixture.max_rework_retries) {
-    return {
-      status: "halt",
-      reason: "rework-retry-budget-exhausted",
-      detail: "at the rework limit: rework again only with a recorded beyond_limit_reason; otherwise report the finding unresolved",
-      blocked_reason: verdict.reason,
-      blocked_detail: verdict.detail,
-    };
+    return { ...verdict, rework_limit_note: `at or past the rework limit (${fixture.rework_retry_count} of ${fixture.max_rework_retries}): rework again only when clearly justified, recording beyond_limit_reason on the new rework_retry_history entry; otherwise report the finding unresolved` };
   }
   return verdict;
 }

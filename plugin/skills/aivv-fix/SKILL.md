@@ -292,7 +292,7 @@ Then persist the plan: after the Step 5.0 target reuse and pre-write banner, wri
 
 ### Step 4.4.5: RED-GREEN TEST GATE — failing test before the plan challenge
 
-For every approved finding where a test can be written (`code-bug`, `design-flaw` with testable behavior): run the failing test now, before Step 4.5, and confirm it fails for the right reason (red). A test that needs new bytes on disk is written here only when no user decision is pending for its finding; it is the only project write allowed before Step 5, it is recorded in the fix log, and it is undone if the fix is not applied. Otherwise the test stays an intent and the red run happens in Step 5 after approval. Record the red result in the decision ledger. Step 5 applies the fix, re-runs the test (green), and logs `red_green_evidence` on the `changes_summary` entry. See [red-green-gate.md](references/red-green-gate.md).
+For every approved finding where a test can be written (`code-bug`, `design-flaw` with testable behavior): run the failing test now, before Step 4.5, and confirm it fails for the right reason (red). A test that needs new bytes on disk is written here only under the early-write rule in [red-green-gate.md](references/red-green-gate.md) step 3 (no user decision pending is necessary, not sufficient); it is the only project write allowed before Step 5, it is recorded in the fix log, and it is undone if the fix is not applied. Otherwise the test stays an intent and the red run happens in Step 5 after approval. Record the red result in the decision ledger. Step 5 applies the fix, re-runs the test (green), and logs `red_green_evidence` on the `changes_summary` entry. See [red-green-gate.md](references/red-green-gate.md).
 
 ---
 
