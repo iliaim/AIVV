@@ -47,8 +47,8 @@ Fast-path findings still run:
 
 1. Step 4 field propagation and apply-policy classification.
 2. Step 4.4 write-intent materialization.
-3. Step 4.5 CHALLENGE when its normal triggers fire.
-4. Step 4.6 red-green gate when applicable.
+3. Step 4.4.5 red-green gate when applicable.
+4. Step 4.5 CHALLENGE when its normal triggers fire.
 5. Step 5 execution branches.
 6. Step 5.5+ mechanical verification checks.
 7. Step 6 verifier when the change is not trivially checked by the recorded deterministic verification plan.

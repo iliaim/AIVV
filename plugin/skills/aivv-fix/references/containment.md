@@ -27,6 +27,6 @@ When recommending a containment action that itself causes service disruption, pr
 2. If the user chooses to apply a containment action:
    - Apply it immediately (it is a fix to the symptom, not the root cause).
    - Log it in `session_changes.changes_summary` with `type: "code-edit"` and `change: "CONTAINMENT: <description>. Temporary. Root cause fix follows."`.
-   - Note: the Step 4.6 RED-GREEN TEST GATE does NOT apply to containment actions (they are intentionally symptom-level). The test gate applies to the root-cause fix that follows.
+   - Note: the Step 4.4.5 RED-GREEN TEST GATE does NOT apply to containment actions (they are intentionally symptom-level). The test gate applies to the root-cause fix that follows.
 
 3. Proceed to Step 3 INVESTIGATE for all batches (containment does not replace investigation).

@@ -42,7 +42,7 @@ If `can_spawn_cold_agents` is unavailable on the active host, investigation fall
 **Not for**: exploratory review (use `/aivv`), formal task sign-off (use `/complete-review` — optional external integration)
 ## Quick Reference
 
-Flow: 1 COLLECT findings → 2 TRIAGE batches → 2.5 CONTAIN critical blast radius when needed → 3 INVESTIGATE with cold investigator or fast path → 4 PLAN approved fixes → 4.5 CHALLENGE when triggered → 4.6 RED/GREEN when testable → 5 EXECUTE with `session_changes` logging → 6 VERIFY with bounded loop → 7 DOCUMENT summary, calibration, and patterns.
+Flow: 1 COLLECT findings → 2 TRIAGE batches → 2.5 CONTAIN critical blast radius when needed → 3 INVESTIGATE with cold investigator or fast path → 4 PLAN approved fixes → 4.4 MATERIALIZE write intents and persist the plan → 4.4.5 RED failing test when testable → 4.5 CHALLENGE when triggered → 5 EXECUTE the fix (test goes GREEN) with `session_changes` logging → 6 VERIFY with bounded loop → 7 DOCUMENT summary, calibration, and patterns.
 
 ## Common Mistakes
 
@@ -183,7 +183,7 @@ For conversation/literal/task-file collection, tag each finding with its source 
 After findings are loaded and before investigation or planning output can imply remediation, render:
 
 ```text
-[aivv-fix] remediation boundary: no remediation files will change before Step 5 EXECUTE.
+[aivv-fix] remediation boundary: no fix is written before Step 5 EXECUTE; the only earlier project write is a failing reproduction test (Step 4.4.5).
 [aivv-fix] proposed writes must first materialize as inspectable write_intents and pass readiness gates.
 ```
 
@@ -280,25 +280,25 @@ If `dry_run == true`, stop here after investigation results, batch reconciliatio
 - confidence and reason-coded blockers;
 - the exact message: `DRY RUN: no remediation writes were made. After the dry-run gate, no write intents, challenger dispatch, execution, verifier dispatch, fix log, session changes, or calibration writes occurred, and no pre-invocation state maintenance ran.`
 
-After this halt, do not materialize `write_intents[]`, dispatch the fix-plan challenger, enter Step 4.6, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
+After this halt, do not materialize `write_intents[]`, enter Step 4.4.5, dispatch the fix-plan challenger, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
 
 ---
 
 ### Step 4.4: MATERIALIZE WRITE INTENTS — inspectable proposed bytes
 
-Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.5 or Step 5 can proceed. Missing, opaque, stale, risky, or insufficiently validated intents halt according to the reference.
+Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.4.5, Step 4.5, or Step 5 can proceed. The failing-test intent of Step 4.4.5 is materialized here with the fix intents. Missing, opaque, stale, risky, or insufficiently validated intents halt according to the reference.
 
 Then persist the plan: write the `in-progress` fix log to `<state_dir>` with `write_intents[]`, `fix_plans[]`, and the `decision_ledger[]`, and update it in the same validated write as each later decision. After a context compaction, a stop, or a Resume, re-read that log instead of rebuilding the plan from memory. See [fix-log-contract.md](references/fix-log-contract.md) for the write and recovery rules.
 
-### Step 4.5: CHALLENGE — Independent Fix-Plan Review
+### Step 4.4.5: RED-GREEN TEST GATE — failing test before the plan challenge
 
-After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), and after Step 4.4 has materialized `write_intents[]`, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews the immutable `authorized_scope`, proposed fixes, and escaped `write_intents[]` snapshots BEFORE code is written — when revision is cheap. A revision requires a specific evidence-backed defect and a concrete correction inside `authorized_scope`; uncertainty alone is advisory. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
+For every approved finding where a test can be written (`code-bug`, `design-flaw` with testable behavior): run the failing test now, before Step 4.5, and confirm it fails for the right reason (red). A test that needs new bytes on disk is written here through the same pre-write checks as any Step 5 write; it is the only project write allowed before Step 5, and it is undone if its finding does not proceed. When the finding already needs a user decision before any write, the test stays an intent and the red run happens in Step 5 after approval. Record the red result in the decision ledger. Step 5 applies the fix, re-runs the test (green), and logs `red_green_evidence` on the `changes_summary` entry. See [red-green-gate.md](references/red-green-gate.md).
 
 ---
 
-### Step 4.6: RED-GREEN TEST GATE (before any code change)
+### Step 4.5: CHALLENGE — Independent Fix-Plan Review
 
-For every approved finding where a test can be written (`code-bug`, `design-flaw` with testable behavior): materialize a failing-test write intent (red), validate the right-reason pre-fix failure, apply the fix in Step 5, verify the test passes (green), and log `red_green_evidence` on the Step 5 `changes_summary` entry.
+After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), after Step 4.4 has materialized `write_intents[]`, and after the Step 4.4.5 red run, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews the immutable `authorized_scope`, proposed fixes, escaped `write_intents[]` snapshots (including the failing test), and the red-run output BEFORE the fix is written — when revision is cheap. A revision requires a specific evidence-backed defect and a concrete correction inside `authorized_scope`; uncertainty alone is advisory. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
 
 ---
 
@@ -334,7 +334,7 @@ Run sibling-surface grep for original strings from the prior cycle and surface s
 
 When enabled by config/flag, execute newly-authored verification code with path-safety checks, timeout handling, captured execution evidence, nonzero-exit warnings, and immediate atomic fix-log persistence.
 
-When a newly-authored verification method is claimed as recurrence prevention, Step 5.7 must read and preserve the Step 4.6 `red_green_evidence` object. If the pre-fix failure evidence is absent, wrong-reason, or only reconstructed from memory, downgrade the entry to `red_green_evidence.claim: "verification-only"` before verifier dispatch. `execution_evidence.command_argv` records the exact command arguments used for the post-fix execution path.
+When a newly-authored verification method is claimed as recurrence prevention, Step 5.7 must read and preserve the Step 4.4.5 `red_green_evidence` object. If the pre-fix failure evidence is absent, wrong-reason, or only reconstructed from memory, downgrade the entry to `red_green_evidence.claim: "verification-only"` before verifier dispatch. `execution_evidence.command_argv` records the exact command arguments used for the post-fix execution path.
 
 ---
 

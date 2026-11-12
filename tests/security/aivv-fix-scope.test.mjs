@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -199,6 +199,32 @@ try {
     'Step 4.4 must persist the plan before the challenge');
   assert.doesNotMatch(decisioning, /in-memory decision ledger/,
     'the decision ledger must not live only in memory');
+
+  // Order (issue #26 item 1): the failing test runs before the plan challenge,
+  // and the challenger is given the test bytes and the red output.
+  const reference = (name) => readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references', name), 'utf8');
+  const redStep = skill.indexOf('### Step 4.4.5: RED-GREEN TEST GATE');
+  const challengeStep = skill.indexOf('### Step 4.5: CHALLENGE');
+  assert.ok(redStep > skill.indexOf('### Step 4.4: MATERIALIZE') && redStep < challengeStep,
+    'the red run must sit between write-intent materialization and the plan challenge');
+  assert.match(skill, /4\.4\.5 RED[^\n]*?→ 4\.5 CHALLENGE[^\n]*?→ 5 EXECUTE/, 'the quick-reference flow must show red before challenge');
+  assert.match(skill, /remediation boundary: no fix is written before Step 5 EXECUTE; the only earlier project write is a failing reproduction test/);
+  const redGate = reference('red-green-gate.md');
+  assert.match(redGate, /Run the test now, before Step 4\.5/);
+  assert.match(redGate, /user decision[\s\S]*?do not write the test early/i,
+    'a pending user decision still comes before any project write');
+  assert.match(redGate, /undo the early test write/i, 'a failing test must not be left behind');
+  const challengeLoop = reference('challenge-loop.md');
+  assert.match(challengeLoop, /`\{red_run_evidence\}`/);
+  assert.match(challengeLoop, /\*\*APPROVE:\*\* proceed to Step 5 EXECUTE/);
+  const challengerPrompt = reference('fix-challenger-prompt-template.md');
+  assert.match(challengerPrompt, /\{red_run_evidence/);
+  assert.match(challengerPrompt, /setup error/, 'the challenger must check the test fails for the right reason');
+  const pluginRoot = path.join(REPO_ROOT, 'plugin');
+  const stale = readdirSync(pluginRoot, { recursive: true })
+    .filter((file) => /\.(md|json|mjs|toml)$/.test(file))
+    .filter((file) => /Step 4\.6/.test(readFileSync(path.join(pluginRoot, file), 'utf8')));
+  assert.deepEqual(stale, [], 'nothing may point at the removed Step 4.6');
 
   const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
   assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);
