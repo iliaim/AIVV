@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.5.2 — keep the session's task list
+
+- `/aivv` and `/aivv-fix` add a fixed set of AIVV progress items to the session's existing task list at the current step instead of replacing it, and never rewrite a list they cannot fully reproduce.
+- When the outermost run ends, AIVV restores the paused step and continues with the remaining steps only after a clean outcome; otherwise it stops and names the next step.
+- Update the Claude Code, Codex, and Hermes adapters with each host's progress-tool behavior.
+
 ## 0.5.1 — experimental Hermes skills discovery
 
 - Add an experimental Hermes skills-only adapter with portable instructions for installing canonical skills from a clone of the public `main` branch; discovery does not imply verified review or remediation support.
