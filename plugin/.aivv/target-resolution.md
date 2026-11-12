@@ -90,6 +90,10 @@ node "$AIVV_ROOT/tools/storage-paths.mjs" read --context "$storage_context_file"
 ```
 
 `list` emits JSON relative paths; `--archive` includes archive descendants.
+An empty result is still `[]`, with a `STORAGE_EMPTY` notice on stderr naming the
+target and the directory searched. Storage is keyed per checkout: records written
+from another worktree or clone are not in this store, so an empty list is not
+evidence that they were lost.
 Use the returned relative path for `read` (including `archive/` when selected).
 Discovery is not proof a later read is still valid: re-read each selected object
 through `read`, which holds the shared target operation lock and rejects pending
