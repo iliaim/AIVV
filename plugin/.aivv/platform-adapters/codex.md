@@ -13,6 +13,13 @@ codex plugin add aivv@aivv
 
 The plugin packages AIVV skills and runtime files. Codex plugin packages do not install the custom read-only reviewer and investigator agent profiles, so cold dispatch also requires `scripts/install-codex.sh` (macOS/Linux) or `scripts/install-codex.ps1` (PowerShell). Codex skips bundled plugin hooks until a user reviews and trusts the current hook definition; review the AIVV hook files before enabling it. Keep results advisory; they are not an independent organizational or compliance audit. See [INSTALL.md](https://github.com/iliaim/AIVV/blob/main/INSTALL.md) for the current setup paths.
 
+## Progress
+
+Use `update_plan` when the session exposes it; it may be disabled. Each call
+sends the whole plan, so follow `.aivv/session-continuity.md`: write a merged
+plan only when every existing step can be reproduced exactly, and otherwise
+give short text updates at phase changes.
+
 ## Native question formatting
 
 A human visual check in Codex desktop on 2026-11-06 confirmed that a native

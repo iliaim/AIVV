@@ -98,28 +98,18 @@ For remediation, follow the ordered phases below and take conditional branches o
 
 ### Before Starting: Track Progress
 
-When a host progress facility is available, register these pending steps and
-update their status as work proceeds:
-1. COLLECT — parse findings
-2. TRIAGE — classify, cluster, prioritize
-3. INVESTIGATE — cold investigator or same-agent fallback
-4. PLAN — present investigation results
-5. EXECUTE — apply approved fixes
-6. VERIFY — re-verify fixes
-7. DOCUMENT — capture lessons learned
+For an actual fix workflow (not help or registry-only early exits),
+**MUST-READ:** [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md)
+before registering progress. It owns the progress items, merging them into the
+session's existing list without replacing it, and handing control back when
+the run ends. Every ending of the outermost run follows its Hand back section,
+including the dry-run halt, an exhausted rework budget, and verification
+failure. Missing progress UI does not indicate unavailable cold-agent dispatch
+or a degraded verification result.
 
-If no compatible progress tool is available, provide concise, meaningful
-user-facing updates at phase changes and continue through all normal steps.
-Progress tracking is informational: its absence MUST NOT skip, weaken, or
-relabel review, fix, safety, or verification gates. Missing progress UI does
-not indicate unavailable cold-agent dispatch or a degraded verification result.
-
-When the host supports task state, mark each task `in_progress` when begun and
-`completed` when done.
-
-<!-- CLAUDE-CODE-SPECIFIC --> On Claude Code, the host facility is `TodoWrite`.
+<!-- CLAUDE-CODE-SPECIFIC --> On Claude Code, use the progress tool named in the Claude Code adapter.
 <!-- Codex-SPECIFIC --> On Codex, use `update_plan` when exposed; otherwise use
-the user-facing phase updates above and continue.
+short user-facing phase updates and continue.
 
 ---
 
@@ -282,6 +272,8 @@ If `dry_run == true`, stop here after investigation results, batch reconciliatio
 
 After this halt, do not materialize `write_intents[]`, enter Step 4.4.5, dispatch the fix-plan challenger, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
 
+Then hand control back per the Hand back section of [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md); a dry run is never a clean outcome for automatic continuation.
+
 ---
 
 ### Step 4.4: MATERIALIZE WRITE INTENTS — inspectable proposed bytes
@@ -393,6 +385,8 @@ After Step 7 completes the fix log and review-log backfill, render the joined re
 2. **Calibration**: Append applicable records to this invocation's per-invocation shard through the shared storage helper; skip calibration writes under `--dry-run`. See [document-and-calibration.md](references/document-and-calibration.md) for record fields and shard rules.
 
 3. **Pattern capture**: If a new prevention mechanism was created, suggest promoting it to project/global guidance. If `/lesson` is available, also suggest `/lesson "Prevention mechanism created for recurring pattern: [description]. Applies to: [scope]." --category technical --severity medium`; otherwise skip silently.
+
+4. **Hand back**: When this run is the outermost AIVV run, close its progress items and hand control back per the Hand back section of [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md).
 
 ---
 

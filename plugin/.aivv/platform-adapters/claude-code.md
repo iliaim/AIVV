@@ -25,7 +25,7 @@ AIVV workflows refer to abstract actions; Claude Code implements them via these 
 | Run a shell command | `Bash` |
 | Search file contents by pattern | `Grep` |
 | Find files by glob | `Glob` |
-| Track task progress during a workflow | `TodoWrite` |
+| Track task progress during a workflow | Whichever progress tool the session exposes: the Task tools (`TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`) create or update one item at a time; `TodoWrite`, where enabled, sends the whole list each call; the desktop app's plan tool sends the whole list, caps its length, and allows one in-progress item. Follow `.aivv/session-continuity.md`. |
 | Spawn a subagent | `Agent` (or `Task` — alias depending on Claude Code version) |
 | Browse the web | `WebFetch`, `WebSearch` |
 | Load a skill in-session | `Skill` |

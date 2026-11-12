@@ -132,7 +132,7 @@ detect signal appears outside the requested scope.
 - Dispatch/prompt: [reviewer-prompt-template.md](references/reviewer-prompt-template.md), [review-dispatch-lifecycle.md](references/review-dispatch-lifecycle.md), [multi-model-dispatch.md](references/multi-model-dispatch.md).
 - Output/persistence: [result-rendering-policy.md](references/result-rendering-policy.md), [setup-hint.md](references/setup-hint.md), [consensus-output-templates.md](references/consensus-output-templates.md), [self-calibration.md](references/self-calibration.md), [review-log-schema.md](references/review-log-schema.md), [viewer-hook.md](references/viewer-hook.md), [auto-chain-handoff.md](references/auto-chain-handoff.md).
 
-<!-- CLAUDE-CODE-SPECIFIC --> Host notes: Claude Code uses `TodoWrite`, `Read`/`Grep`/`Glob`, `Agent`, and
+<!-- CLAUDE-CODE-SPECIFIC --> Host notes: Claude Code uses its exposed progress tool (see the Claude Code adapter), `Read`/`Grep`/`Glob`, `Agent`, and
 `Skill`.
 <!-- Codex-SPECIFIC --> Codex uses `update_plan` when exposed and concise user-facing phase
 updates when it is unavailable, plus shell/`rg`, reviewer TOML, and same-agent
