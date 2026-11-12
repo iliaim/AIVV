@@ -26,7 +26,7 @@ Each `write_intents[]` item has these required fields:
 - `kind`: `generated_patch`, `verbatim_doc_content`, or `process_rule_content`.
 - `content_sha`: lowercase hex SHA-256 for the full proposed content, never a truncated snapshot.
 - `source_step`: `Step 4.4`.
-- `pre_write_assertions`: array, possibly empty until Task 3 detector rules require entries.
+- `pre_write_assertions`: array, possibly empty.
 - `detector_result`: the deterministic detector's result for this intent (`verdict`, `content_shapes`, `detection_confidence`; see the registry below).
 
 Branch-specific production rules:
@@ -118,13 +118,11 @@ For each `write_intents[].pre_write_assertions[i]`:
    - `grep -qF -- "$expected_snippet"` against the extracted range.
    - On non-match → **HALT this Edit; emit warning `pre-write-validate-l-n-citation-mismatch`** with a `pre_write_validator_caught` calibration record. Re-author only when the mismatch is a specific fixable citation defect inside `authorized_scope` and the shared retry budget has room. **Do NOT auto-rewrite** the citation. Rationale (per F006 / alpha IV&V 2026-05-22): the dev.97+ practical-sequence pattern-anchoring is an AUTHOR-TIME discipline, not an orchestrator-time auto-rewrite. Automatic pattern-anchor extraction from an arbitrary snippet is non-trivial and unspecified; silent bad rewrites are harder to detect than the original L<N> drift (and would import the "discipline-fix-surface-becomes-new-violation-surface" meta-pattern documented for dev.91→102). The investigator must author a pattern-anchored correction before any write.
 
-> **Note on dropped 4th sub-check (per F005 / alpha IV&V 2026-05-22, user gate 2026-05-22):** an earlier draft of this plan included a 4th sub-check `count-matches-enumeration` to detect prose count-claims that drift from the enumeration they reference. **It has been removed.** Root-cause reasoning: the drift surface should not exist in the first place. maintainer guidance dev.119+ "Counts are not plan prose" already mandates that count-claims paired with their own enumerations be eliminated at authoring time — when there's no bare count adjacent to an enumeration, there's nothing to drift. Adding a deterministic validator on top of an author-discipline that was supposed to eliminate the surface inverts the intent (treat symptom, not cause). Step 5.4 retains 3 sub-checks; the no-counts-in-prose rule remains an authoring discipline; `validate.sh` Stages 18/19 remain the post-staging safety net for already-shipped legacy/missed cases.
-
 **On all checks PASS:** emit no warnings; proceed to readiness/pre-write approval and then Edit dispatch. Step 5.5 runs only after writes have been applied.
 
 **On HALT:** re-author only when the deterministic failure identifies a concrete fixable defect and the shared retry budget has room. Increment `rework_retry_count` once and append `rework_retry_history` before returning to Step 3. If the budget is exhausted, report the affected finding unresolved with the validator reason; do not fall through to write or ask for another approval.
 
-**Calibration emit:** every Step 5.4 catch writes a `pre_write_validator_caught` calibration record (see Task 17) with `{finding_id, validator_check, would_have_been_n_class}` fields.
+**Calibration emit:** every Step 5.4 catch writes a `pre_write_validator_caught` calibration record with `{finding_id, validator_check, would_have_been_n_class}` fields.
 
 **AC-X1 coverage (per F-M3 Option B resolution):** Step 5.4 = the deterministic catch layer. Step 4.5 keeps its semantic focus (root-cause-vs-symptom, regression risk, hidden side effects). Defense-in-depth: 4.5 catches LLM-judgment-class defects upstream; 5.4 catches syntax/structure-class defects downstream. The verifier in Step 6 remains the post-edit safety net.
 

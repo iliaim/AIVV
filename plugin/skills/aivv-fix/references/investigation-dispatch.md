@@ -92,18 +92,11 @@ Ask: *"Do I know with confidence exactly why this is happening AND exactly what 
 - Any CRITICAL finding (always investigate — the stakes are too high to assume)
 - You're unsure whether similar patterns exist elsewhere in the codebase
 
-**Documentation-gap routing:** `documentation-gap` findings normally dispatch the investigator, regardless of the generic **Skip the investigator** block below. The only exception is the formal [fast-path.md](fast-path.md) route for a low-risk documentation gap whose exact `verbatim_doc_content` is already known and every fast-path eligibility gate passes. Otherwise, the investigator is the cheapest correct path: it discovers unknown content or confirms the mechanical prose via `fix_proposal.verbatim_doc_content`.
+**Documentation-gap routing:** `documentation-gap` findings normally dispatch the investigator. The only exception is the formal [fast-path.md](fast-path.md) route for a low-risk documentation gap whose exact `verbatim_doc_content` is already known and every fast-path eligibility gate passes. Otherwise, the investigator is the cheapest correct path: it discovers unknown content or confirms the mechanical prose via `fix_proposal.verbatim_doc_content`.
 
 **Same-agent fallback for `documentation-gap`:** When `capability_degradations` contains `"investigator_cold_dispatch_unavailable"`, ALL `documentation-gap` findings route directly to Branch E (`CLARIFICATION_NEEDED:empirical_verification_required`) without proceeding to Branch B prose edit. The same-agent investigator role may still run inline and emit `verification_method` for telemetry/calibration, but this does NOT affect routing — Branch E fires regardless of `verification_method` value. Structural independence required by the verifier's evidence grep is absent under same-agent mode.
 
-**Low-risk fast path:** Before applying the generic skip rule below, check [fast-path.md](fast-path.md). When every fast-path eligibility gate passes, emit the structured `investigation_route: "fast_path_inline"` record and continue through Step 4 write-intent and verification gates. This is the preferred route for obvious low-risk defects because it is explicit, auditable, and still preserves safety gates.
-
-**Skip the investigator** (rare — high bar; for cases that do not fit the formal fast path) only when ALL of these are true:
-- The finding is self-contained (single file, single location, clearly stated)
-- The root cause is explicitly visible in the code (e.g., a typo, a missing null check at a specific line)
-- The fix is mechanical and unambiguous (no design judgment required)
-- There is no plausible way similar patterns exist elsewhere
-- Document inline: `Root cause: [exact cause]. Fix: [exact change]. Confidence: high. Investigator skipped: [reason].`
+**Low-risk fast path — the only way to skip the investigator:** check [fast-path.md](fast-path.md). When every fast-path eligibility gate passes, emit the structured `investigation_route: "fast_path_inline"` record and continue through Step 4 write-intent and verification gates. A finding that fails any gate gets the investigator; there is no other skip route.
 
 **When in doubt, spawn the investigator.** The cost of a false skip (missing root cause, missing similar patterns) is higher than the cost of an unnecessary investigation.
 

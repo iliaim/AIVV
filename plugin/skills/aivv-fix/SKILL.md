@@ -249,7 +249,7 @@ Before spawning investigators, ask whether a reversible containment action is av
 
 **MUST-READ:** [fast-path.md](references/fast-path.md) before using the low-risk fast path. **MUST-READ:** [investigation-dispatch.md](references/investigation-dispatch.md) before investigator dispatch or same-agent fallback.
 
-Default assumption: root cause is unknown. Reproduce informal findings when required, run the CRITICAL/MAJOR change-attribution probe, and either dispatch a cold investigator per batch, use the low-risk fast path when every [fast-path.md](references/fast-path.md) eligibility gate passes, or document the rare high-confidence skip inline. Documentation-gap findings normally require investigator routing; the only exception is a fast-path-eligible documentation gap whose exact `verbatim_doc_content` is already known. If cold dispatch is unavailable, record the capability degradation and follow the reference's Branch E fallback rules.
+Default assumption: root cause is unknown. Reproduce informal findings when required, run the CRITICAL/MAJOR change-attribution probe, and either dispatch a cold investigator per batch or use the low-risk fast path when every [fast-path.md](references/fast-path.md) eligibility gate passes; there is no other way to skip the investigator. Documentation-gap findings normally require investigator routing; the only exception is a fast-path-eligible documentation gap whose exact `verbatim_doc_content` is already known. If cold dispatch is unavailable, record the capability degradation and follow the reference's Branch E fallback rules.
 
 Include the immutable `authorized_scope` snapshot in every investigator prompt.
 Investigate and propose fixes only for its selected findings and boundaries; do

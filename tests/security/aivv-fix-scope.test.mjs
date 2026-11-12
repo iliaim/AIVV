@@ -248,6 +248,15 @@ try {
     .filter((file) => /Step 4\.6/.test(readFileSync(path.join(pluginRoot, file), 'utf8')));
   assert.deepEqual(stale, [], 'nothing may point at the removed Step 4.6');
 
+  // The references must give one answer on when the investigator or the verifier may be skipped.
+  const dispatch = reference('investigation-dispatch.md');
+  assert.doesNotMatch(dispatch, /\*\*Skip the investigator\*\*/, 'the fast path is the only investigator skip route');
+  assert.match(dispatch, /there is no other skip route/);
+  assert.doesNotMatch(reference('triage.md'), /investigator skip is permitted/);
+  const fastPath = reference('fast-path.md');
+  assert.doesNotMatch(fastPath, /trivially checked/, 'the fast path may not carry its own verifier exemption');
+  assert.match(fastPath, /decided only by the conditions in \[verifier-dispatch\.md\]/);
+
   const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
   assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);
   assert.match(challengePolicy, /At `rework_retry_count == max_rework_retries`[\s\S]*?do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);

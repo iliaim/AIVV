@@ -51,6 +51,6 @@ Fast-path findings still run:
 4. Step 4.5 CHALLENGE when its normal triggers fire.
 5. Step 5 execution branches.
 6. Step 5.5+ mechanical verification checks.
-7. Step 6 verifier when the change is not trivially checked by the recorded deterministic verification plan.
+7. Step 6 VERIFY, exactly as for any other finding. Whether the verifier is a cold dispatch or a same-agent pass is decided only by the conditions in [verifier-dispatch.md](verifier-dispatch.md); the fast path adds no exemption.
 
 The fast path only skips cold root-cause investigation. It never skips write safety, user decision gates, or verification.
