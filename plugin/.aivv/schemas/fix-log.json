@@ -181,13 +181,14 @@
     "rework_retry_count": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 3,
       "default": 0,
       "description": "Invocation-wide semantic re-authoring and verification retries consumed. One initial attempt is free; each fix-plan re-entry after an evidenced defect consumes one retry."
     },
     "max_rework_retries": {
-      "const": 3,
-      "description": "Single fixed per-invocation cap shared by every semantic fix-plan re-authoring or verification retry, including plan-readiness, challenge, pre-write, stale-intent, class-verdict, investigator-output, duplicate-intent, architecture-check, red-green, and verification gates."
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "description": "The resolved max_rework_retries setting, fixed for the invocation. Soft limit: a rework past it needs beyond_limit_reason on its history entry. Shared by every semantic fix-plan re-authoring or verification retry, including plan-readiness, challenge, pre-write, stale-intent, class-verdict, investigator-output, duplicate-intent, architecture-check, red-green, and verification gates."
     },
     "rework_retry_history": {
       "type": "array",
@@ -197,11 +198,12 @@
         "required": ["retry_number", "gate", "finding_ids", "defect", "evidence"],
         "additionalProperties": false,
         "properties": {
-          "retry_number": {"type": "integer", "minimum": 1, "maximum": 3},
+          "retry_number": {"type": "integer", "minimum": 1},
           "gate": {"enum": ["challenge", "pre-write", "stale-intent", "class-verdict", "verification", "red-green", "investigator-output", "duplicate-intent", "architecture-check", "plan-readiness"]},
           "finding_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
           "defect": {"type": "string", "minLength": 1},
-          "evidence": {"type": "string", "minLength": 1}
+          "evidence": {"type": "string", "minLength": 1},
+          "beyond_limit_reason": {"type": "string", "minLength": 1, "description": "Required when retry_number exceeds max_rework_retries: what new evidence the last rework produced and why one more is expected to converge."}
         }
       }
     },

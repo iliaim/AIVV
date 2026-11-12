@@ -1609,8 +1609,8 @@ function validateAuthorizedScopeAndRetryState(fixLog) {
   if (scopeDefect) return halt("fix-log-authorized-scope-invalid", scopeDefect);
 
   const retryStateDefect =
-    (!Number.isInteger(fixLog.rework_retry_count) || fixLog.rework_retry_count < 0 || fixLog.rework_retry_count > 3) ? "rework_retry_count must be an integer from 0 to 3" :
-    fixLog.max_rework_retries !== 3 ? "max_rework_retries must be 3" :
+    (!Number.isInteger(fixLog.rework_retry_count) || fixLog.rework_retry_count < 0) ? "rework_retry_count must be an integer, 0 or more" :
+    (!Number.isInteger(fixLog.max_rework_retries) || fixLog.max_rework_retries < 1) ? "max_rework_retries must be an integer, 1 or more (the resolved max_rework_retries setting; default 3)" :
     !Array.isArray(fixLog.rework_retry_history) ? "rework_retry_history must be an array (use [] when no retry was consumed)" :
     fixLog.rework_retry_history.length !== fixLog.rework_retry_count ? `rework_retry_history has ${fixLog.rework_retry_history.length} entries but rework_retry_count is ${fixLog.rework_retry_count}; they must match` :
     null;
@@ -1626,6 +1626,9 @@ function validateAuthorizedScopeAndRetryState(fixLog) {
       (!validStringArray(item.finding_ids) || item.finding_ids.length === 0) ? `${at}.finding_ids must be a non-empty array of strings` :
       !nonBlankString(item.defect) ? `${at}.defect must be a non-blank string` :
       !nonBlankString(item.evidence) ? `${at}.evidence must be a non-blank string` :
+      // The limit is soft: a rework past it is the agent's recorded judgement, so the reason must be there.
+      (item.retry_number > fixLog.max_rework_retries && !nonBlankString(item.beyond_limit_reason)) ?
+        `${at}.beyond_limit_reason must say what new evidence the last rework produced and why one more is expected to converge (retry ${item.retry_number} is past max_rework_retries ${fixLog.max_rework_retries})` :
       null;
     if (entryDefect) return halt("fix-log-rework-retry-history-invalid", entryDefect);
   }
@@ -1992,7 +1995,7 @@ export function validateFixLogTransition(fixLog, previousFixLog, { contextFile }
   if (stableJson(previousFixLog.authorized_scope) !== stableJson(fixLog.authorized_scope)) {
     return { status: "halt", reason: "fix-log-authorized-scope-mutated" };
   }
-  for (const field of ["source", "source_review_id", "source_review_relative_path", "source_argument", "target_project", "storage_context", "lifecycle_context"]) {
+  for (const field of ["source", "source_review_id", "source_review_relative_path", "source_argument", "target_project", "storage_context", "lifecycle_context", "max_rework_retries"]) {
     if (stableJson(previousFixLog[field]) !== stableJson(fixLog[field])) {
       return { status: "halt", reason: `fix-log-${field.replaceAll("_", "-")}-mutated` };
     }
@@ -2032,11 +2035,11 @@ export function validateFile(file, options = {}) {
   const verdict = validateFixture(fixture, options);
   if (verdict.status !== "halt") return verdict;
   if (!Number.isInteger(fixture.rework_retry_count) || fixture.rework_retry_count < 0 ||
-      fixture.max_rework_retries !== 3) {
+      !Number.isInteger(fixture.max_rework_retries) || fixture.max_rework_retries < 1) {
     return {
       status: "halt",
       reason: "rework-retry-budget-metadata-missing-or-invalid",
-      detail: "the fixture must carry rework_retry_count (integer, 0 or more) and max_rework_retries: 3",
+      detail: "the fixture must carry rework_retry_count (integer, 0 or more) and max_rework_retries (the resolved setting; default 3)",
       blocked_reason: verdict.reason,
       blocked_detail: verdict.detail,
     };
@@ -2045,6 +2048,7 @@ export function validateFile(file, options = {}) {
     return {
       status: "halt",
       reason: "rework-retry-budget-exhausted",
+      detail: "at the rework limit: rework again only with a recorded beyond_limit_reason; otherwise report the finding unresolved",
       blocked_reason: verdict.reason,
       blocked_detail: verdict.detail,
     };

@@ -168,9 +168,30 @@ try {
   overBudget.rework_retry_count = 4;
   overBudget.rework_retry_history.push(retryEvent(4, 'verification'));
   overBudget.cycle_count = 3;
-  assert.equal(validateFixLogTransition(overBudget, current).reason,
-    'fix-log-rework-retry-state-invalid',
-    're-authoring and verification cannot exceed the shared three-retry cap');
+  // Issue #26 item 2: the limit is a setting and is soft. Past it, one more rework needs a recorded reason.
+  const pastLimit = validateFixLogTransition(overBudget, current);
+  assert.equal(pastLimit.reason, 'fix-log-rework-retry-history-invalid',
+    'a rework past the limit without a recorded reason is refused');
+  assert.match(pastLimit.detail, /rework_retry_history\[3\]\.beyond_limit_reason/);
+  const justified = structuredClone(overBudget);
+  justified.rework_retry_history[3].beyond_limit_reason =
+    'Retry 3 produced a right-reason failing test that isolates the defect to one call site; one more correction is expected to pass it.';
+  assert.deepEqual(validateFixLogTransition(justified, current), { status: 'pass', reason: 'pass' },
+    'past the limit the agent may continue on its recorded judgement');
+  const raisedLimit = structuredClone(overBudget);
+  raisedLimit.max_rework_retries = 5;
+  assert.equal(validateFixLogTransition(raisedLimit, current).reason, 'fix-log-max-rework-retries-mutated',
+    'the limit is read from settings once and cannot be raised mid-run');
+  const configured = { ...baseLog(), max_rework_retries: 1, rework_retry_count: 1, rework_retry_history: [retryEvent(1, 'challenge')] };
+  assert.deepEqual(validateFixLogNewWrite(configured), { status: 'pass', reason: 'pass' }, 'the limit is a setting, not a fixed 3');
+  assert.equal(validateFixLogNewWrite({ ...baseLog(), max_rework_retries: 0 }).reason, 'fix-log-rework-retry-state-invalid');
+  assert.equal(validateFixLogNewWrite({ ...baseLog(), max_rework_retries: undefined }).reason, 'fix-log-rework-retry-state-invalid',
+    'a log without the limit is still refused');
+  const configSchema = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/.aivv/schemas/config.schema.json'), 'utf8'));
+  assert.equal(configSchema.properties.max_rework_retries.default, 3);
+  const fixLogSchema = JSON.parse(readFileSync(path.join(REPO_ROOT, 'plugin/.aivv/schemas/fix-log.json'), 'utf8'));
+  assert.equal(fixLogSchema.properties.max_rework_retries.const, undefined);
+  assert.equal(fixLogSchema.properties.rework_retry_count.maximum, undefined);
 
   // Plan-stage persistence (issue #26 item 9): the fix log exists from Step 4.4,
   // before any change, carrying the write intents and the decision ledger.
@@ -262,7 +283,10 @@ try {
 
   const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
   assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);
-  assert.match(challengePolicy, /At `rework_retry_count == max_rework_retries`[\s\S]*?do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);
+  assert.match(challengePolicy, /At `rework_retry_count == max_rework_retries`[\s\S]*?continue only\s+when another try is clearly justified[\s\S]*?`beyond_limit_reason`[\s\S]*?Without such a reason, do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);
+  assert.match(challengePolicy, /setting `max_rework_retries` \(default 3\)/);
+  assert.match(reference('red-green-gate.md'), /setup repair and does not use a rework only while the fix plan, its write intents, and production code are unchanged/,
+    'a test-setup repair is free only while nothing else moves');
 
   const reviewId = '2026-11-07T12-01-00-a002';
   const reviewRelative = `review-${reviewId}.json`;

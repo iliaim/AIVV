@@ -190,7 +190,7 @@ Required fields:
 - `source` (one of `conversation`, `review_id`, `literal`, `task_file` — names the finding origin)
 
 Every new `/aivv-fix` invocation also carries an immutable `authorized_scope`
-snapshot and one invocation-wide `rework_retry_count` (maximum 3) with an
+snapshot and one invocation-wide `rework_retry_count` (soft limit from the `max_rework_retries` setting, default 3) with an
 append-only retry history. This budget counts semantic fix-plan re-authoring
 and verification re-entry across all gates. Transport/format correction and
 the separately authorized outer review loop retain their own handling.

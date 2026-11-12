@@ -20,7 +20,8 @@ const USAGE = [
   '    write_intents   [intent, ...]             -> write_intents with content_sha filled',
   '    fix_log         {source, target_project, storage_context, authorized_scope, ...}',
   '                                              -> fix_log plan-stage skeleton',
-  '    retry           {history, gate, finding_ids, defect, evidence} -> retry_entry',
+  '    retry           {history, gate, finding_ids, defect, evidence[, beyond_limit_reason]} -> retry_entry',
+  '    fix_log.max_rework_retries defaults to 3; pass the resolved setting to override',
   '    prompts         [{template, values}, ...] -> prompts, each value fenced with a fresh nonce',
   '                    template: fix-challenger | verifier | investigator',
   '                    unfilled lists every {placeholder} left for you to fill',
@@ -84,6 +85,7 @@ function retryEntry(retry) {
     finding_ids: retry.finding_ids,
     defect: retry.defect,
     evidence: retry.evidence,
+    ...(retry.beyond_limit_reason === undefined ? {} : { beyond_limit_reason: retry.beyond_limit_reason }),
   };
 }
 

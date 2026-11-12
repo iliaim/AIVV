@@ -78,7 +78,8 @@ After parsing the challenger's JSON verdict and recording the decision, mark tha
 Do not add a separate double-REJECT escalation prompt. If evidence-backed concerns conflict, include both in the next in-budget investigation. If they remain unresolved at the shared cap, report the evidence and leave the finding unresolved.
 
 **Shared semantic retry budget:** `rework_retry_count` starts at 0 and
-`max_rework_retries` is 3 for the entire `/aivv-fix` invocation. Before every
+`max_rework_retries` is the resolved setting `max_rework_retries` (default 3),
+read once at Step 1.1 and fixed for the entire `/aivv-fix` invocation. Before every
 re-entry that re-authors a fix plan or repeats post-write verification, increment
 the count once and append one `rework_retry_history` entry with the gate, affected
 finding IDs, defect, and evidence. A batch re-entry consumes one retry, regardless
@@ -87,7 +88,11 @@ diagnostics only; they never grant another retry. Transport and invalid-JSON
 retries that do not change the fix proposal are outside this budget. Outer-loop
 review cycles are new invocations and remain governed by the outer-loop contract.
 
-At `rework_retry_count == max_rework_retries`, do not re-investigate, re-author,
+At `rework_retry_count == max_rework_retries`, the limit is soft: continue only
+when another try is clearly justified, by adding `beyond_limit_reason` to the
+new `rework_retry_history` entry — one line saying what new evidence the last
+rework produced and why one more is expected to converge. This is your recorded
+judgement; no approval is asked. Without such a reason, do not re-investigate, re-author,
 or dispatch another verifier for unresolved findings. Report them as unresolved
 with the retry history. Do not ask the user to repeat or widen already-authorized
 scope. Independently approved batches may continue through their existing safety
