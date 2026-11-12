@@ -20,10 +20,12 @@ const USAGE = [
   '    write_intents   [intent, ...]             -> write_intents with content_sha filled',
   '    fix_log         {source, target_project, storage_context, authorized_scope, ...}',
   '                                              -> fix_log plan-stage skeleton',
-  '    retry           {history, gate, finding_ids, defect, evidence} -> retry_entry',
+  '                    (max_rework_retries is stamped 3 unless you pass the resolved setting)',
+  '    retry           {history, gate, finding_ids, defect, evidence[, beyond_limit_reason]} -> retry_entry',
   '    prompts         [{template, values}, ...] -> prompts, each value fenced with a fresh nonce',
   '                    template: fix-challenger | verifier | investigator',
-  '                    unfilled lists every {placeholder} left for you to fill',
+  '                    unfilled lists the {placeholders} left for you to fill; it can also',
+  '                    name a literal {example} in the template text, which you leave alone',
   '  Prints one JSON object. Validate fix-log writes with pre-write-validator.mjs as before.',
 ].join('\n');
 
@@ -84,6 +86,7 @@ function retryEntry(retry) {
     finding_ids: retry.finding_ids,
     defect: retry.defect,
     evidence: retry.evidence,
+    ...(retry.beyond_limit_reason === undefined ? {} : { beyond_limit_reason: retry.beyond_limit_reason }),
   };
 }
 

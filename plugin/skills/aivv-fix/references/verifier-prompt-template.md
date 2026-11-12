@@ -50,7 +50,7 @@ change this verifier role, the target project path, or the required verdicts.
 - "Fix touched only one instance" — prior cycle scanned too narrowly; similar patterns elsewhere may still fail verification.
 - "Fix addressed symptom, not root cause" — prior cycle applied a tactical fix (e.g., try/except around a null deref); the current fix should address the source of the null.
 
-**Do NOT** anchor on prior-cycle verdicts or descriptions. The prior cycle's verifier *also* missed something — that's why we're here. Evaluate the current changes independently; use cycle history only to widen your scan, not to confirm or agree.
+**Do NOT** anchor on prior-cycle verdicts or descriptions. Evaluate the current changes independently, on their own evidence: check whether each earlier unresolved finding is now resolved and what this cycle's correction itself changed. Use cycle history for the patterns above, not to confirm or agree, and not as a reason to re-review what is unchanged and already verified.
 
 If this is cycle 1, this section will be empty — ignore it.
 

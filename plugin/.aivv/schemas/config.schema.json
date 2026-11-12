@@ -625,6 +625,12 @@
       "default": 10,
       "description": "Token-budget circuit-breaker for Step 4.5 CHALLENGE. When N batches have been challenged in a single /aivv-fix invocation, remaining batches proceed to Step 5 without challenge."
     },
+    "max_rework_retries": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "description": "Soft limit on /aivv-fix reworks (fix-plan re-authoring and verification re-entry) in one invocation. At the limit the agent stops and reports unresolved findings unless it records why one more rework is clearly justified."
+    },
     "class_breadth_triage_cap": {
       "type": "integer",
       "minimum": 1,

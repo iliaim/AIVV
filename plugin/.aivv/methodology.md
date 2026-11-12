@@ -250,8 +250,8 @@ Reviewer agents receive this improvement-articulation rule through the operation
 6. **Verify** spawns a scoped reviewer to re-verify fixes.
 7. **Document** captures lessons learned and updates calibration.
 
-Rework gate: one `/aivv-fix` invocation has a shared budget of three semantic
-rework retries across challenge, re-authoring, and verification. At exhaustion,
+Rework gate: one `/aivv-fix` invocation has a shared budget of semantic
+rework retries (the `max_rework_retries` setting, default three; a soft limit, see the `/aivv-fix` challenge-loop reference) across challenge, re-authoring, and verification. At exhaustion,
 stop rework, preserve the authorized scope, and report unresolved findings with
 the evidence and retry history; do not ask to reopen the same work. The count is
 not proof that the architecture itself is defective.
