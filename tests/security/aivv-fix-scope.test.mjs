@@ -186,6 +186,14 @@ try {
   ledgerUpdate.decision_ledger[0].challenge_status = 'approved';
   assert.deepEqual(validateFixLogTransition(ledgerUpdate, planLog), { status: 'pass', reason: 'pass' },
     'recording a later decision is an ordinary update of the same invocation');
+  const redRecorded = structuredClone(ledgerUpdate);
+  redRecorded.decision_ledger[0].red_run = { status: 'failed-right-reason', test_intent_id: 'WI-1', command_argv: ['node', 'src/change.test.js'], exit: 1 };
+  redRecorded.files_created = ['src/change.test.js'];
+  assert.deepEqual(validateFixLogTransition(redRecorded, ledgerUpdate), { status: 'pass', reason: 'pass' },
+    'the red run and its early test write are recorded before any fix change exists');
+  assert.equal(validateFixLogNewWrite({ ...redRecorded, files_created: ['private/change.test.js'] }).reason,
+    'fix-log-write-target-explicitly-excluded',
+    'an early test write is held to the authorized path boundary');
   const strayLedger = structuredClone(planLog);
   strayLedger.decision_ledger.push({ finding_id: 'F999' });
   assert.equal(validateFixLogNewWrite(strayLedger).reason, 'fix-log-finding-outside-authorized-scope',
@@ -211,9 +219,14 @@ try {
   assert.match(skill, /remediation boundary: no fix is written before Step 5 EXECUTE; the only earlier project write is a failing reproduction test/);
   const redGate = reference('red-green-gate.md');
   assert.match(redGate, /Run the test now, before Step 4\.5/);
-  assert.match(redGate, /user decision[\s\S]*?do not write the test early/i,
+  assert.match(redGate, /Write early only when no user decision is pending:[^\n]*policy `auto`, `fix_confidence: "high"`, and no blocker or consequence gate/,
+    'the early test write is an allow-list, not an exception list');
+  assert.match(redGate, /In every other case \(policy `ask` or `skip`[^\n]*do not write the test early/,
     'a pending user decision still comes before any project write');
-  assert.match(redGate, /undo the early test write/i, 'a failing test must not be left behind');
+  assert.match(redGate, /Undo the early test write\*\* whenever the fix for its finding is not applied in this invocation/,
+    'a failing test must not be left behind');
+  assert.match(redGate, /add an early-written test path to `files_created` or `files_modified`/,
+    'an early test write must be visible to recovery');
   const challengeLoop = reference('challenge-loop.md');
   assert.match(challengeLoop, /`\{red_run_evidence\}`/);
   assert.match(challengeLoop, /\*\*APPROVE:\*\* proceed to Step 5 EXECUTE/);

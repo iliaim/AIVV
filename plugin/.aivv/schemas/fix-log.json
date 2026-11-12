@@ -266,18 +266,12 @@
     },
     "decision_ledger": {
       "type": "array",
-      "description": "Per-finding execution decision ledger (skills/aivv-fix/references/execution-decisioning.md), persisted from Step 4.4 so a compaction, stop, or Resume keeps the plan. Records decisions, not applied changes.",
+      "description": "Per-finding execution decision ledger, persisted from Step 4.4 so a compaction, stop, or Resume keeps the plan. Records decisions, not applied changes. Entry fields and their values are defined in skills/aivv-fix/references/execution-decisioning.md.",
       "items": {
         "type": "object",
         "required": ["finding_id"],
         "properties": {
           "finding_id": {"type": "string", "minLength": 1},
-          "category": {"type": "string"},
-          "batch": {"type": "string"},
-          "containment_status": {"enum": ["not-applicable", "available-when-triggered", "applied", "declined"]},
-          "investigation_route": {"enum": ["cold-investigator", "same-agent-fallback", "fast_path_inline"]},
-          "fix_confidence": {"enum": ["high", "medium", "low"]},
-          "write_intent_status": {"enum": ["missing", "fresh", "stale", "unsupported-risky-shape", "unsupported-risky-path", "validated"]},
           "red_run": {
             "type": "object",
             "required": ["status"],
@@ -288,10 +282,7 @@
               "exit": {"type": "integer"},
               "output_excerpt": {"type": "string"}
             }
-          },
-          "challenge_status": {"enum": ["not-triggered", "approved", "revise", "reject", "gate-fused-safe", "budget-skipped-safe", "budget-halted-risky"]},
-          "final_route": {"enum": ["auto-eligible", "decision-queue", "architecture-decision-queue", "skipped-by-policy", "dangerously-auto-approved"]},
-          "final_branch": {"enum": ["A", "B", "C-adr", "C-fallthrough-A", "D", "E", "F"]}
+          }
         }
       }
     },
@@ -409,7 +400,7 @@
     "files_created": {"type": "array", "items": {"type": "string"}},
     "write_boundary_shown": {
       "type": "boolean",
-      "description": "True when the Step 5.0 pre-write boundary was rendered before non-dry-run writes."
+      "description": "True when the Step 1.9 write boundary was rendered before non-dry-run writes."
     },
     "change_readiness": {
       "type": "object",

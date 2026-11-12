@@ -101,7 +101,7 @@ Hard approval rules:
 - `dangerous-override` is valid only when the existing `/aivv-fix --dangerously-auto-apply` confirmation path has already satisfied its fail-closed rules.
 - Non-interactive consequence-gated fixes cannot be upgraded to write-capable execution by readiness. They halt or route to dry-run.
 
-Before any write dispatch, render:
+Before any Step 5 write dispatch, render:
 
 ```text
 [aivv-fix] readiness: high risk; auth + public-api; W10 route: decision queue
@@ -113,7 +113,7 @@ Choice: approve writes | dry-run only | revise plan | stop | defer
 
 `stop` exits without adding a finding disposition. `defer` records a durable `deferred` final disposition with rationale and reopen trigger in `final_dispositions[]`.
 
-**Step 5.0 — Target resolution + pre-write banner (FIRST action in Step 5):**
+**Step 5.0 — Target resolution + pre-write banner (run once, before the first fix-log write at Step 4.4; otherwise the FIRST action in Step 5):**
 
 Before any state mutation, reuse the context bound before maintenance per
 [`.aivv/target-resolution.md`](../../../.aivv/target-resolution.md). Cache its
@@ -363,9 +363,9 @@ For each approved fix (in priority order: CRITICAL first):
    - `changes_summary[].red_green_evidence.pre_fix.command_argv` / `.post_fix.command_argv` — exact tokenized command arguments for the recorded run. `command` remains the human-readable shell form; `command_argv` is the durable command-argument contract Step 5.7 and verifiers read.
    - `changes_summary[].execution_evidence.command_argv` — exact tokenized command arguments for post-fix execution evidence. Present when Step 5.7 executed the verification code locally.
    - `findings_deferred` — list of finding IDs that Branch E (clarification-needed) parked pending user clarification. Empty by default; appended to when the user defers a clarification-needed finding instead of resolving it in-session. On Step 6 / Step 7, these are reported separately from `findings_addressed`. **Branch E writes no `changes_summary` entry** — the fix-kind enum `{code-edit, documentation, design-adr, process-rule, build-script, ci-gate, verification-method}` has 7 values covering Branches A–D and F (F reuses `code-edit`) plus build/CI/verification fix kinds; Branch E's action is "deferral," which goes into this top-level array instead.
-   - `write_intents[]` — the Step 4.4 intents for the current plan, persisted from Step 4.4 onward and replaced whenever intents are discarded or regenerated.
-   - `decision_ledger[]` — the per-finding decision ledger defined in [execution-decisioning.md](execution-decisioning.md), keyed by `finding_id`, persisted from Step 4.4 and updated with each decision. It records decisions, not applied changes.
-   - `fix_plans[]` — optional non-dry-run proposal records keyed by `finding_id`. `status` is one of `proposed | approved | applied | superseded | abandoned`; `applied` means the selected plan reached write dispatch/execution and is not proof that a change landed. Applied-change truth still comes from a matching `changes_summary[]` entry. `dry_run` records whether the plan originated as preview context, but persistent fix logs are only written after the dry-run gate has passed; a standalone `/aivv-fix --dry-run` writes no fix log.
+   - `write_intents[]` — the Step 4.4 intents for the current plan, replaced whenever intents are discarded or regenerated.
+   - `decision_ledger[]` — the per-finding decision ledger defined in [execution-decisioning.md](execution-decisioning.md), keyed by `finding_id`. It records decisions, not applied changes.
+   - `fix_plans[]` — optional non-dry-run proposal records keyed by `finding_id`. From Step 4.4 each entry also carries that finding's integrated investigator result (root cause, `class_signature`/`class_assessment`, `prevention_plan`, `fix_proposal`) so a Resume and every later prompt read it from the log instead of re-investigating. `status` is one of `proposed | approved | applied | superseded | abandoned`; `applied` means the selected plan reached write dispatch/execution and is not proof that a change landed. Applied-change truth still comes from a matching `changes_summary[]` entry. `dry_run` records whether the plan originated as preview context, but persistent fix logs are only written after the dry-run gate has passed; a standalone `/aivv-fix --dry-run` writes no fix log.
    - `verification_cycles[]` — optional post-execution verifier records keyed by `finding_id`. `status` is one of `verified_resolved | verified_unresolved | needs_rework | skipped | error`. Use this for scoped verifier outcomes; do not overload `changes_summary[]` with verifier status.
    - `dangerously_auto_apply` — null/absent for normal runs. When `--dangerously-auto-apply` is explicitly confirmed, set `{confirmed: true, confirmation_source, bypassed_gates, applied_count}` and mirror per-change `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on each affected `changes_summary[]` entry. Step 5's final audit banner reads this object; do not reconstruct the count from git diff.
    - `warnings` — top-level array of orchestrator-side warnings (dispatch fallbacks, schema-mismatch notes, recovery events). Separate from `changes_summary[].root_cause` which documents actual finding root causes — do NOT overload. Warning-object shape: `{"code": "<identifier>", "finding_id": "<F###>"|null, "ts": "<RFC 3339>", ...contextual fields}`. Common codes: `category-fallback` (see [investigator-field-definitions.md](investigator-field-definitions.md) Category section), `stale-skill-cache` (if the Step 8 canary fires in /aivv), `schema-migration` (on-read handling of historical session log paths). Surfaced in Step 7 DOCUMENT if non-empty.
@@ -391,7 +391,7 @@ For each approved fix (in priority order: CRITICAL first):
    When `/aivv-fix` is invoked and `<state_dir>/` contains existing session files:
    1. Find the most recent file by `invoked_at`.
    2. If `status: "in-progress"` and its immutable `authorized_scope` plus retry state validate: present to the user: *"A prior `/aivv-fix` invocation at {invoked_at} did not complete. Files modified: {files_modified}. Options: (a) Resume — continue from the last logged change using the same invocation ID, scope, and retry count; (b) Restart — start fresh, review currently-modified files manually; (c) Discard — mark the prior session as abandoned (`status: "abandoned"`) and start fresh. Which?"*
-      - On "Resume": restore `decision_ledger[]`, `write_intents[]`, and `fix_plans[]` from the log and continue from the first gate the ledger does not show as settled. Re-check each restored intent against the current preimage (stale-intent rule) before relying on it; do not re-investigate a finding whose ledger entry and intents are still valid. The same applies after a context compaction within one invocation.
+      - On "Resume": restore `decision_ledger[]`, `write_intents[]`, and `fix_plans[]` from the log and continue from the first gate the ledger does not show as settled. Re-check each restored intent against the current preimage (stale-intent rule) before relying on it; do not re-investigate a finding whose ledger entry, intents, and `fix_plans[]` investigator result are still valid. On Restart or Discard, first undo any early test write listed in `files_created`/`files_modified` per [red-green-gate.md](red-green-gate.md). The same applies after a context compaction within one invocation.
    3. If `status: "in-progress"` but its scope/retry baseline is missing or invalid, do not offer Resume: report that the old record cannot safely continue and offer only Restart from the original selected findings or Discard. Do not initialize its retry count to zero or infer a broader scope.
    4. If `status: "failed" | "completed"`: no recovery prompt; the file is read only for the scan boundary (see Step 1).
 
