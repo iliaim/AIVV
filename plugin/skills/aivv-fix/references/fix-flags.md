@@ -90,7 +90,7 @@ If any lifecycle selector was extracted, route it before ordinary source parsing
    node "$AIVV_ROOT/tools/incident-lifecycle-route.mjs" --context "$storage_context_file" --target "<target>" --issue "<id>"
    node "$AIVV_ROOT/tools/incident-lifecycle-route.mjs" --context "$storage_context_file" --target "<target>" --github-issue "<url|owner/repo#N>"
    ```
-4. If the helper exits non-zero, halt before Step 2 and surface its JSON `reason`.
+4. If the helper exits non-zero, halt before Step 2 and surface its JSON `reason` and `detail`. State is kept per checkout: `lifecycle-target-missing` or `github-issue-mirror-missing` from a fresh worktree means the record lives in another checkout's store (named in `state_dir`), not that it was lost.
 5. Bind `lifecycle_context = route.lifecycle_context` in session state and carry it unchanged into `session_changes.lifecycle_context` at the first fix-log write (Step 4.4).
 6. Bind `FixSession.source` from `route.source_mode`:
    - `review-sourced` and `finding-sourced` → `FixSession.source = "review_id"` and `source_review_id = route.source_review_id`.
