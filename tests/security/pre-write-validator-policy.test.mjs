@@ -173,6 +173,20 @@ try {
   const absent = cli(validatorCli, ["--fixture", path.join(scratch, "absent.json")]);
   assert.equal(absent.status, 1);
   assert.equal(JSON.parse(absent.stdout).reason, "input-file-unreadable");
+  // A failing fixture keeps its real halt reason on top; the rework limit is a note, not a replacement.
+  const atLimit = path.join(scratch, "at-limit.json");
+  const failing = { write_intents: [{ id: "WI-1", target_file: "../outside.js", proposed_edits: [{ old_string: "a", new_string: "b" }] }] };
+  writeFileSync(atLimit, JSON.stringify({ ...failing, rework_retry_count: 3, max_rework_retries: 3 }));
+  const atLimitVerdict = JSON.parse(cli(validatorCli, ["--fixture", atLimit]).stdout);
+  assert.equal(atLimitVerdict.status, "halt");
+  assert.equal(atLimitVerdict.reason, "unsupported-risky-path", "the actual failure is not hidden behind the limit");
+  assert.match(atLimitVerdict.rework_limit_note, /at or past the rework limit \(3 of 3\)/);
+  writeFileSync(atLimit, JSON.stringify({ ...failing, rework_retry_count: 1, max_rework_retries: 3 }));
+  assert.equal(JSON.parse(cli(validatorCli, ["--fixture", atLimit]).stdout).rework_limit_note, undefined);
+  writeFileSync(atLimit, JSON.stringify(failing));
+  const noMeta = JSON.parse(cli(validatorCli, ["--fixture", atLimit]).stdout);
+  assert.equal(noMeta.reason, "unsupported-risky-path");
+  assert.match(noMeta.rework_limit_note, /rework_retry_count and max_rework_retries/);
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }

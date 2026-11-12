@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { incidentTimestamp } from './incident-state.mjs';
 import { newNonce, wrapUntrusted } from './native-prompt-boundary.mjs';
-import { editFrame, multiEditSha, sha256 } from './pre-write-validator.mjs';
+import { editFrame, intentContent, multiEditSha, sha256 } from './pre-write-validator.mjs';
 
 const REFERENCES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../skills/aivv-fix/references');
 const USAGE = [
@@ -43,12 +43,14 @@ function hashIntent(intent, index) {
   }
   const hashed = { source_step: 'Step 4.4', ...intent };
   if (Array.isArray(intent.proposed_edits) && intent.proposed_edits.length > 0) {
+    if (!intent.proposed_edits.every((edit) => edit && typeof edit === 'object' &&
+        typeof edit.old_string === 'string' && typeof edit.new_string === 'string')) {
+      throw new Refusal('write-intent-invalid', `${label}: every proposed_edits[] entry needs string old_string and new_string`);
+    }
     hashed.proposed_edits = intent.proposed_edits.map((edit) => ({ ...edit, content_sha: sha256(editFrame(edit)) }));
     hashed.content_sha = multiEditSha(intent.proposed_edits);
-  } else if (typeof intent.exact_content_or_patch === 'string') {
-    hashed.content_sha = sha256(intent.exact_content_or_patch);
-  } else if (typeof intent.exact_content === 'string') {
-    hashed.content_sha = sha256(intent.exact_content);
+  } else if (typeof intent.exact_content === 'string' || typeof intent.exact_content_or_patch === 'string') {
+    hashed.content_sha = sha256(intentContent(intent));
   } else {
     throw new Refusal('write-intent-has-no-bytes',
       `${label} needs proposed_edits[] (old_string/new_string) or exact_content_or_patch; a hash cannot be made without the exact bytes`);
@@ -120,7 +122,7 @@ function fillPrompt(request) {
       return token;
     }
     const value = typeof values[key] === 'string' ? values[key] : JSON.stringify(values[key], null, 2);
-    return wrapUntrusted(nonce, key.toUpperCase(), value);
+    return wrapUntrusted(nonce, key.toUpperCase().replaceAll('.', '_'), value);
   });
   return { template: request.template, nonce, prompt, unfilled: [...unfilled] };
 }

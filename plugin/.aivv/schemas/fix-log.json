@@ -96,7 +96,7 @@
       "enum": ["conversation", "review_id", "literal", "task_file"]
     },
     "authorized_scope": {
-      "description": "Immutable objective and finding boundary captured before investigation. The validator binds actionable finding references to finding_ids, allowing only documented -cls<N>, -cls-overflow, and -sib<N> children of selected IDs. Required by current /aivv-fix writers; optional for historical logs.",
+      "description": "Immutable objective and finding boundary captured before investigation. The validator binds actionable finding references to finding_ids, allowing only documented -cls<N>, -cls-overflow, and -sib<N> children of selected IDs. The object is required by current /aivv-fix writers and absent only in historical logs; when present, every field listed in required must be present.",
       "type": "object",
       "required": ["source", "goal", "finding_ids", "included", "excluded", "included_paths", "excluded_paths"],
       "additionalProperties": false,
