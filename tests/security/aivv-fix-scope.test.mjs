@@ -265,6 +265,13 @@ try {
   assert.match(challengeLoop, /\*\*APPROVE:\*\* proceed to Step 5 EXECUTE/);
   const challengerPrompt = reference('fix-challenger-prompt-template.md');
   assert.match(challengerPrompt, /\{red_run_evidence/);
+  // Issue #26: the reviewer does a cold, independent review; later rounds re-check, they do not widen.
+  assert.match(challengerPrompt, /APPROVE is the correct verdict when nothing must-fix is found; finding something is not the goal/);
+  assert.match(challengerPrompt, /this is a re-check, not a new review\. Check only whether each earlier must-fix concern is resolved/);
+  assert.match(challengerPrompt, /Advisory observations never justify another round/);
+  assert.match(challengerPrompt, /Sycophantic approval is a failure mode/);
+  assert.doesNotMatch(challengerPrompt, /Look HARDER|widen the scan, not ratify|Adversarial framing is required|challenge them before/);
+  assert.doesNotMatch(reference('verifier-prompt-template.md'), /also\* missed something|widen your scan/);
   assert.match(challengerPrompt, /setup error/, 'the challenger must check the test fails for the right reason');
   const pluginRoot = path.join(REPO_ROOT, 'plugin');
   const stale = readdirSync(pluginRoot, { recursive: true })
