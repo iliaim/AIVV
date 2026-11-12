@@ -184,7 +184,7 @@ After findings are loaded and before investigation or planning output can imply 
 
 ```text
 [aivv-fix] remediation boundary: no fix is written before Step 5 EXECUTE; the only earlier project write is a failing reproduction test (Step 4.4.5).
-[aivv-fix] proposed writes must first materialize as inspectable write_intents and pass readiness gates.
+[aivv-fix] every write first materializes as an inspectable write_intent; fix writes also pass the readiness gates.
 ```
 
 Earlier steps may perform the state maintenance, preference update, or action-request claim described in their route. Record `write_boundary_shown: true` in the eventual fix log for every non-dry-run invocation. In `--dry-run`, render the same boundary but do not write a fix log, preserving dry-run's no-remediation-write contract.
@@ -288,7 +288,7 @@ After this halt, do not materialize `write_intents[]`, enter Step 4.4.5, dispatc
 
 Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.4.5, Step 4.5, or Step 5 can proceed. The failing-test intent of Step 4.4.5 is materialized here with the fix intents. Missing, opaque, stale, risky, or insufficiently validated intents halt according to the reference.
 
-Then persist the plan: write the `in-progress` fix log to `<state_dir>` with every identity field (target, storage, source, and lifecycle context), `write_intents[]`, `fix_plans[]`, and the `decision_ledger[]`, and update it in the same validated write as each later decision. After a context compaction, a stop, or a Resume, re-read that log instead of rebuilding the plan from memory. See [fix-log-contract.md](references/fix-log-contract.md) for the write and recovery rules.
+Then persist the plan: after the Step 5.0 target reuse and pre-write banner, write the `in-progress` fix log to `<state_dir>` with every identity field (target, storage, source, lifecycle context, and any confirmed `dangerously_auto_apply`), `write_intents[]`, `fix_plans[]`, and the `decision_ledger[]`, and update it in the same validated write as each later decision. After a context compaction, a stop, or a Resume, re-read that log instead of rebuilding the plan from memory. See [fix-log-contract.md](references/fix-log-contract.md) for the write and recovery rules.
 
 ### Step 4.4.5: RED-GREEN TEST GATE — failing test before the plan challenge
 
@@ -304,7 +304,7 @@ After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escala
 
 ### Step 5: EXECUTE — Apply Approved Fixes
 
-Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner, and honor the dry-run halt. Then reuse the fix log persisted at Step 4.4 (initialize it here only when no write intent preceded this step) and apply each approved fix through its evidence-selected branch, recording the applied changes as specified in that branch's reference.
+Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner if Step 4.4 has not already done so, and honor the dry-run halt. Then reuse the fix log persisted at Step 4.4 (initialize it here only when no write intent preceded this step) and apply each approved fix through its evidence-selected branch, recording the applied changes as specified in that branch's reference.
 
 When `lifecycle_context` is present, initialize `session_changes.lifecycle_context` before the first fix-log write, load the lifecycle record for investigator context, and apply only schema-backed write-back fields per the reference (treating `rca_status` not-started/draft as investigation-first). When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply`, tag each dangerous-route `changes_summary` entry, and emit the loud `DANGEROUSLY AUTO-APPLIED <N> fix(es)` audit banner at the end of Step 5 (with `0` if no fix was bypassed). The lifecycle write-back rules + GitHub-sync/validate helpers and the dangerous-audit banner contract are in [execution-branches.md](references/execution-branches.md) — read it before any lifecycle write-back or dangerous-route apply.
 

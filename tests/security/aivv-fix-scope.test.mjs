@@ -13,6 +13,7 @@ import {
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const STORAGE_HELPER = path.join(REPO_ROOT, 'plugin/tools/storage-paths.mjs');
+const validator = path.join(REPO_ROOT, 'plugin/tools/pre-write-validator.mjs');
 // macOS commonly exposes the temp root through /var while realpath resolves /private/var.
 const TEMP_ROOT = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'aivv-fix-scope-')));
 const TARGET = path.join(TEMP_ROOT, 'target');
@@ -219,14 +220,17 @@ try {
   assert.match(skill, /remediation boundary: no fix is written before Step 5 EXECUTE; the only earlier project write is a failing reproduction test/);
   const redGate = reference('red-green-gate.md');
   assert.match(redGate, /Run the test now, before Step 4\.5/);
-  assert.match(redGate, /Write early only when no user decision is pending:[^\n]*policy `auto`, `fix_confidence: "high"`, and no blocker or consequence gate/,
-    'the early test write is an allow-list, not an exception list');
+  assert.match(redGate, /Write early only when no user decision is pending:\*\* readiness for this finding would record `approval_mode: "auto"`/,
+    'the early test write is an allow-list tied to the readiness outcome');
+  assert.match(redGate, /already `dangerously-auto-approved`[^\n]*?not policy-skipped, no architecture approval outstanding/,
+    'the dangerous route does not by itself permit the early write');
   assert.match(redGate, /In every other case \(policy `ask` or `skip`[^\n]*do not write the test early/,
     'a pending user decision still comes before any project write');
   assert.match(redGate, /Undo the early test write\*\* whenever the fix for its finding is not applied in this invocation/,
     'a failing test must not be left behind');
-  assert.match(redGate, /add an early-written test path to `files_created` or `files_modified`/,
-    'an early test write must be visible to recovery');
+  assert.match(redGate, /Before the early write, add the test path to `files_created` or `files_modified`/,
+    'an early test write must be visible to recovery before it happens');
+  assert.match(reference('fix-log-contract.md'), /files created: \{files_created\}/, 'the recovery prompt shows created files');
   const challengeLoop = reference('challenge-loop.md');
   assert.match(challengeLoop, /`\{red_run_evidence\}`/);
   assert.match(challengeLoop, /\*\*APPROVE:\*\* proceed to Step 5 EXECUTE/);
@@ -266,6 +270,26 @@ try {
   assert.deepEqual(validateFixLogTransition(reviewPlanLog, undefined, { contextFile: CONTEXT_FILE }),
     { status: 'pass', reason: 'pass' },
     'a review-sourced run can persist its plan before the first change');
+  // The same sequence through the command an agent runs: --new at Step 4.4, then
+  // --update recording the early test path and the red run at Step 4.4.5.
+  const cliLog = { ...reviewPlanLog, storage_context: { instance_key: context.instance_key, target_project: context.target, policy_target: context.target } };
+  const fixLogCli = (candidate, mode) => {
+    const file = path.join(TEMP_ROOT, 'fix-log-candidate.json');
+    writeFileSync(file, `${JSON.stringify(candidate)}\n`);
+    const result = spawnSync(process.execPath, [validator, '--fix-log', file, '--context', CONTEXT_FILE, mode], { encoding: 'utf8', env });
+    return JSON.parse(result.stdout);
+  };
+  assert.deepEqual(fixLogCli(cliLog, '--new'), { status: 'pass', reason: 'pass' });
+  storeJson(`fix-${cliLog.id}.json`, cliLog);
+  const cliRed = structuredClone(cliLog);
+  cliRed.files_created = ['src/change.test.js'];
+  cliRed.decision_ledger = [{ finding_id: 'F001', red_run: { status: 'failed-right-reason', test_intent_id: 'WI-1' } }];
+  assert.deepEqual(fixLogCli(cliRed, '--update'), { status: 'pass', reason: 'pass' },
+    'a review-sourced run can record its early test write and red run before any fix change');
+  assert.equal(fixLogCli({ ...cliRed, lifecycle_context: { selector_type: 'issue', selector: 'ISS-1', record_kind: 'issue', record_id: 'ISS-1', record_path: 'issues/x.json', source_mode: 'review-sourced' } }, '--update').reason,
+    'fix-log-lifecycle-context-mutated',
+    'identity fields must be in the first write; adding them later is rejected');
+
   assert.equal(validateFixLogNewWrite({ ...reviewPlanLog, status: 'completed' }, { contextFile: CONTEXT_FILE }).reason,
     'fix-log-findings-addressed-invalid',
     'a completed review-sourced log still has to join findings to changes');
@@ -281,7 +305,6 @@ try {
   storeJson(`fix-${linkedFix.id}.json`, linkedFix);
   const backfillCandidate = path.join(TEMP_ROOT, 'review-backfill.json');
   writeFileSync(backfillCandidate, `${JSON.stringify({ ...legacyReview, fix_invocation_id: linkedFix.id })}\n`);
-  const validator = path.join(REPO_ROOT, 'plugin/tools/pre-write-validator.mjs');
   const backfill = spawnSync(process.execPath, [
     validator,
     '--review-log-backfill', backfillCandidate,
