@@ -251,6 +251,20 @@ function canonicalCandidate(candidate) {
   return path.resolve(candidate);
 }
 
+// Follow symlinks so a skill loaded through a linked skills folder (for
+// example `.claude/skills -> ../.agents/skills`) derives its runtime from the
+// installation it physically belongs to, matching how the shell bootstrap's
+// `../..` checks already resolve. Fall back to a lexical path when the
+// directory cannot be canonicalized.
+function canonicalSkillDir(candidate) {
+  if (!candidate) return "";
+  try {
+    return fs.realpathSync(candidate);
+  } catch {
+    return canonicalCandidate(candidate);
+  }
+}
+
 function resolveRuntimeRoot(skillDir) {
   const requestedRoot = process.env.AIVV_ROOT;
   if (requestedRoot) {
@@ -271,7 +285,7 @@ function resolveRuntimeRoot(skillDir) {
     return resolveStandaloneSkillRoot(contractRoot) || contractRoot;
   }
 
-  const skillRoot = canonicalCandidate(skillDir);
+  const skillRoot = canonicalSkillDir(skillDir);
   const standaloneRoot = resolveStandaloneSkillRoot(skillRoot);
   if (standaloneRoot) return standaloneRoot;
   if (isValidRuntimeRoot(skillRoot)) return skillRoot;
