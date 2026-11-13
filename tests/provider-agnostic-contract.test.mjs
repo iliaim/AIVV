@@ -128,6 +128,7 @@ const portableSourcePaths = [
   'plugin/.aivv/prompts/investigator-role.md',
   'plugin/.aivv/prompts/_untrusted-content.md',
   'plugin/.aivv/runtime-contract.md',
+  'plugin/.aivv/session-continuity.md',
   'plugin/skills/methodology/SKILL.md',
   'plugin/skills/aivv/references/multi-model-dispatch.md',
 ];
@@ -347,6 +348,47 @@ try {
   assert.equal(rendered.auth_mode, 'api_key');
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });
+}
+
+// Session continuity: AIVV merges into the session's task list and hands control back.
+const continuity = read('plugin/.aivv/session-continuity.md');
+assert.match(continuity, /Progress tracking is informational/,
+  'progress stays informational so a skipped list never blocks a gate');
+assert.match(continuity, /never skips, delays, weakens, or relabels a review/);
+assert.match(continuity, /keep the wording, status, and order of every item\s+AIVV did not create/,
+  'existing user items must be preserved');
+assert.match(continuity, /write only when\s+every existing item can be reproduced exactly/,
+  'whole-list tools must not overwrite a list that cannot be fully reproduced');
+assert.match(continuity, /Never delete and\s+recreate user items/);
+assert.match(continuity, /A nested run does not pause or restore user items and\s+does not hand back; the outermost run does/,
+  'only the outermost run hands back');
+assert.match(continuity, /Continue only on a clean outcome/,
+  'automatic continuation is gated on a clean outcome');
+assert.match(continuity, /no CRITICAL or MAJOR finding is left unresolved/);
+for (const item of [
+  'AIVV review: prepare scope', 'AIVV review: run reviewers', 'AIVV review: present and record results',
+  'AIVV fix: collect and triage findings', 'AIVV fix: investigate and plan',
+  'AIVV fix: apply approved fixes', 'AIVV fix: verify and document',
+]) {
+  assert.ok(continuity.includes('`' + item + '`'), 'fixed progress item missing: ' + item);
+}
+for (const relativePath of [
+  'plugin/skills/aivv/references/orchestration-workflow.md',
+  'plugin/skills/aivv-fix/SKILL.md',
+]) {
+  const content = read(relativePath);
+  assert.match(content, /\*\*MUST-READ:\*\*\s+\[`\.aivv\/session-continuity\.md`\]/,
+    relativePath + ' must require the shared session-continuity rule before registering progress');
+  assert.match(content, /Hand back section/, relativePath + ' must hand control back at its endings');
+  assert.doesNotMatch(content, /register (?:the following phases|these pending steps)/,
+    relativePath + ' must not register its own replacement phase list');
+}
+const preflightSource = read('plugin/.aivv/runtime-root.mjs');
+for (const [profile, key] of [['aivv', '\n  aivv: ['], ['aivv-fix', '\n  "aivv-fix": [']]) {
+  const start = preflightSource.indexOf(key);
+  assert.ok(start >= 0, profile + ' preflight list not found');
+  const section = preflightSource.slice(start, preflightSource.indexOf('],', start));
+  assert.ok(section.includes('".aivv/session-continuity.md"'), profile + ' preflight must check the session-continuity rule');
 }
 
 console.log('provider-agnostic contract: shared roles, registry, model/auth selection, and dispatch metadata are consistent');

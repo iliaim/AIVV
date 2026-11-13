@@ -3,19 +3,15 @@
 Open only for actual `/aivv` review execution. Contract lookups stay in
 `../SKILL.md`.
 
-<!-- pre-fix evidence: plugin/skills/aivv-fix/SKILL.md:110-122. -->
-## Progress
+## Progress and Hand-Back
 
-When the host provides progress UI, register the following phases and mark each
-`in_progress` when it begins and `completed` when it ends. If Codex does not
-expose `update_plan`, provide concise, meaningful user-facing updates at phase
-changes and continue all thirteen steps. Progress tracking is informational:
-its absence MUST NOT skip, weaken, or relabel review, dispatch, fix, safety, or
-verification steps and is not a `capability_degradations` entry.
+**MUST-READ:** [`.aivv/session-continuity.md`](../../../.aivv/session-continuity.md)
+before registering progress. It owns the progress items, merging them into the
+session's existing list without replacing it, and handing control back when
+the run ends. Every ending of the outermost run follows its Hand back section,
+including a held or cancelled scope question and early halts.
 
-<!-- Codex-SPECIFIC --> When Codex does not expose `update_plan`, use the
-user-facing phase-update fallback above; do not treat missing progress UI as a
-capability degradation.
+Workflow outline:
 
 1. Parse arguments
 2. Setup/eval/maintenance early branch
@@ -247,3 +243,8 @@ Read `auto-chain-handoff.md` only when `/aivv --fix` or config auto-chain is
 requested. Chain via durable `--review-id`, propagate `--target=` and
 `--dry-run`, and run stale-cache canary behavior before relying on fresh install
 state.
+
+## Ending
+
+When this run is the outermost AIVV run, close its progress items and hand
+control back per the Hand back section of `.aivv/session-continuity.md`.

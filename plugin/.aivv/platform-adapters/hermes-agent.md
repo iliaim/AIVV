@@ -42,7 +42,7 @@ Hermes `skill_view` only serves support files inside the selected skill director
 | Search source | `search_files` | Scope searches to the confirmed AIVV root or user-authorized target. |
 | Run Node/Git/Bash helpers | `terminal` | Local backend only until another backend's path/Node access is verified. |
 | Create/edit files | `write_file`, `patch`, `terminal` | Follow AIVV's existing scope, write-intent, pre-write validation, and verification gates. Do not infer that Hermes skill-write approval protects general file or shell writes. |
-| Track progress | `todo_list` | Optional host progress surface; absence does not change AIVV safety gates. |
+| Track progress | `todo_list` | Optional host progress surface; absence does not change AIVV safety gates. Its list semantics are unverified: follow `.aivv/session-continuity.md` and use text updates when the existing list cannot be preserved. |
 | Delegate work | `delegate_task` | The tool exists, but isolation and read-only properties are not established by its presence. Do not use it for AIVV reviewer/investigator dispatch until the capability gate is passed. |
 
 ## Initial capability status
