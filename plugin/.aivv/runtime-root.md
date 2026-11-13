@@ -58,7 +58,9 @@ POSIX entrypoint for that same resolver. It uses this order:
 4. `AIVV_RUNTIME_ROOT_HELPER`, when selected, identifies the resolver to run;
    that resolver selects its own containing AIVV package unless a higher
    priority root override is set.
-5. Otherwise, derive the runtime from the loaded skill directory. A bundled
+5. Otherwise, derive the runtime from the loaded skill directory, after
+   resolving symlinks, so a skill reached through a linked skills folder
+   selects the installation it physically belongs to. A bundled
    plugin resolves to its package root. A standalone skill directory containing
    both `SKILL.md` and `.aivv` is only a bootstrap: select its sibling
    `<codex-root>/aivv-runtime`. If that sibling is missing, keep the bootstrap

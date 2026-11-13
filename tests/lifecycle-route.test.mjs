@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { makeCheckout } from './support/checkout-fixture.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const routeHelper = path.join(repoRoot, 'plugin/tools/incident-lifecycle-route.mjs');
@@ -29,7 +30,7 @@ function route(args) {
 
 try {
   mkdirSync(home, { recursive: true });
-  mkdirSync(checkout, { recursive: true });
+  makeCheckout(checkout);
   const stateDir = JSON.parse(spawnSync(process.execPath, [storageHelper, 'resolve', '--target', checkout], { encoding: 'utf8', env }).stdout).state_dir;
 
   const invalid = route(['--target', checkout, '--github-issue', 'nonsense']);
