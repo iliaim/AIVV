@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { makeCheckout } from './support/checkout-fixture.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const storageHelper = path.join(repoRoot, 'plugin/tools/storage-paths.mjs');
@@ -52,7 +53,7 @@ try {
   // Issue #26 item 4: a lookup that finds no store must say where it looked.
   // State is keyed per checkout, so another worktree or clone has its own store.
   const otherTarget = path.join(temporaryRoot, 'other-checkout');
-  mkdirSync(otherTarget, { recursive: true });
+  makeCheckout(otherTarget);
   const other = JSON.parse(run(['resolve', '--target', otherTarget]));
   const emptyList = spawnSync(process.execPath, [storageHelper, 'list', '--target', otherTarget, '--area', 'state', '--prefix', 'review-'], { encoding: 'utf8', env });
   assert.equal(emptyList.status, 0, emptyList.stderr);
