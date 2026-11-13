@@ -7,9 +7,11 @@
 // same instant at mkdir) is therefore "unreliable", and its identity carries a
 // per-invocation nonce by design (see plugin/.aivv/target-resolution.md). A
 // real checkout has been written to since it was created, so this fixture adds
-// and removes an entry until the change time has moved past the creation time.
+// and removes an entry until the product's own reliability check passes. On
+// platforms where it already passes, the directory is returned untouched.
 import { mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { signatureForStats } from '../../plugin/tools/storage-paths.mjs';
 
 const pause = new Int32Array(new SharedArrayBuffer(4));
 
@@ -18,10 +20,9 @@ export function makeCheckout(dir, { timeoutMs = 5000 } = {}) {
   const deadline = Date.now() + timeoutMs;
   const marker = path.join(dir, '.aivv-fixture-touch');
   for (;;) {
-    const stats = statSync(dir, { bigint: true });
-    if (stats.birthtimeNs > 0n && stats.birthtimeNs !== stats.ctimeNs) return dir;
+    if (signatureForStats(statSync(dir, { bigint: true })).reliable) return dir;
     if (Date.now() > deadline) {
-      throw new Error(`${dir}: this filesystem does not report a creation time distinct from the change time, so storage identity is invocation-bound here by design`);
+      throw new Error(`${dir}: storage identity stayed unreliable on ${process.platform} (no creation time distinct from the change time), so it is invocation-bound here by design`);
     }
     Atomics.wait(pause, 0, 0, 2);
     writeFileSync(marker, '');
