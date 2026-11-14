@@ -20,8 +20,13 @@ show where the run is.
 
 | Run | Items, in order | Workflow steps covered |
 |---|---|---|
-| `/aivv` | `AIVV review: prepare scope`, `AIVV review: run reviewers`, `AIVV review: present and record results` | 1-4, 5, 6-8 |
-| `/aivv-fix` | `AIVV fix: collect and triage findings`, `AIVV fix: investigate and plan`, `AIVV fix: apply approved fixes`, `AIVV fix: verify and document` | 1-2, 3-4, 5, 6-7 |
+| `/aivv` | `AIVV review: prepare scope`, `AIVV review: run reviewers`, `AIVV review: present and record results` | Steps 1-4, 5, 6-8 |
+| `/aivv-fix` | `AIVV fix: collect and triage findings`, `AIVV fix: investigate and plan`, `AIVV fix: apply approved fixes`, `AIVV fix: verify and document` | Steps 1-2, 3-4, 5, 6-7 |
+
+As each phase begins, mark its item in progress; mark it completed when the
+phase ends. Where the host allows only one in-progress item, a nested run's item
+takes that slot and the enclosing run's item returns to in progress when
+control comes back.
 
 If adding these items would exceed the host's item limit, use one item instead
 (`AIVV review: <current phase>` or `AIVV fix: <current phase>`) and update its
@@ -35,7 +40,9 @@ text at each phase. If even one item does not fit, use text updates.
    this run is nested. Reuse its own items if present (set them back to pending
    for a new cycle); otherwise insert them immediately after the enclosing run's
    in-progress AIVV item. A nested run does not pause or restore user items and
-   does not hand back; the outermost run does.
+   does not hand back; the outermost run does. A nested run returns control to
+   its enclosing run at every ending; the enclosing run continues from the step
+   after its handoff and judges the outcome of the whole chain when it hands back.
 3. **Insertion point:** insert AIVV's items immediately before the in-progress
    item; if none is in progress, before the first pending item; otherwise at
    the end.
@@ -59,7 +66,8 @@ text at each phase. If even one item does not fit, use text updates.
 Applies to every ending of the outermost run, with or without a progress list:
 normal completion, dry-run halt, a held or cancelled scope question, an exhausted
 rework budget, a verification failure, an outer-loop stop, an installation or
-stale-cache halt, and a failed skill handoff.
+stale-cache halt, and a failed skill handoff. A nested run skips these steps
+and returns control to its enclosing run (see Nested run above).
 
 1. **Close AIVV's items:** mark completed the items whose phases ran; remove the
    items whose phases did not run. Remove only items AIVV created. Restore the
