@@ -383,6 +383,44 @@ for (const relativePath of [
   assert.doesNotMatch(content, /register (?:the following phases|these pending steps)/,
     relativePath + ' must not register its own replacement phase list');
 }
+// Items move as phases run; the shared rule says so and both pointers name it.
+assert.match(continuity, /mark its item in progress/,
+  'each AIVV item must be marked in progress as its phase begins');
+for (const relativePath of [
+  'plugin/skills/aivv/references/orchestration-workflow.md',
+  'plugin/skills/aivv-fix/SKILL.md',
+]) {
+  assert.match(read(relativePath), /marking each in\s+progress as its phase begins/,
+    relativePath + ' must point to the in-progress marking rule');
+}
+// A nested run returns control so the enclosing run reaches its own hand-back.
+assert.match(continuity, /A nested run returns control to\s+its enclosing run at every ending/,
+  'a nested run must return control to its enclosing run');
+const orchestration = read('plugin/skills/aivv/references/orchestration-workflow.md');
+const autoChain = orchestration.slice(orchestration.indexOf('## Step 8: Auto-Chain'),
+  orchestration.indexOf('## Ending'));
+assert.match(autoChain, /When the `\/aivv-fix` run ends, continue at Ending below/,
+  '/aivv --fix must resume at its Ending after the nested fix run');
+const fixSkill = read('plugin/skills/aivv-fix/SKILL.md');
+const fixHandBack = fixSkill.slice(fixSkill.indexOf('4. **Hand back**'));
+assert.match(fixHandBack.split('\n')[0], /When this run is nested, return control to the enclosing run/,
+  '/aivv-fix must return control to an enclosing /aivv run');
+// Outline entries name the step headings they cover, so numbers cannot collide.
+const outline = orchestration.slice(orchestration.indexOf('Workflow outline'),
+  orchestration.indexOf('## Step 1: Parse Arguments'));
+assert.doesNotMatch(outline, /^\d+\. /m, 'outline must not use list numbers that collide with step numbers');
+const headings = new Set([...orchestration.matchAll(/^## Step ([\d./]+):/gm)].map((m) => m[1]));
+const outlineSteps = [...outline.matchAll(/Steps? ([\d./]+(?:, [\d./]+)*)/g)]
+  .flatMap((m) => m[1].split(', '));
+const phaseLines = outline.split('\n').filter((line) => line.startsWith('- '));
+assert.equal(phaseLines.length, 13, 'outline must keep all thirteen phases');
+for (const line of phaseLines) {
+  assert.match(line, /: Steps? \d/, 'outline phase must name its step heading: ' + line);
+}
+for (const step of outlineSteps) {
+  assert.ok(headings.has(step), 'outline names Step ' + step + ' but no such heading exists');
+}
+assert.match(continuity, /\| Steps 1-4, 5, 6-8 \|/, 'progress table must say it counts workflow steps');
 const preflightSource = read('plugin/.aivv/runtime-root.mjs');
 for (const [profile, key] of [['aivv', '\n  aivv: ['], ['aivv-fix', '\n  "aivv-fix": [']]) {
   const start = preflightSource.indexOf(key);

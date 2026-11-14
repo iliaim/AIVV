@@ -6,26 +6,32 @@ Open only for actual `/aivv` review execution. Contract lookups stay in
 ## Progress and Hand-Back
 
 **MUST-READ:** [`.aivv/session-continuity.md`](../../../.aivv/session-continuity.md)
-before registering progress. It owns the progress items, merging them into the
-session's existing list without replacing it, and handing control back when
-the run ends. Every ending of the outermost run follows its Hand back section,
+before registering progress. It owns the progress items, marking each in
+progress as its phase begins, merging them into the session's existing list
+without replacing it, and handing control back when the run ends.
+Every ending of the outermost run follows its Hand back section,
 including a held or cancelled scope question and early halts.
 
-Workflow outline:
+Workflow outline. Each phase names the step headings below that carry it out;
+step numbers elsewhere, including the progress table in
+`.aivv/session-continuity.md`, refer to these headings:
 
-1. Parse arguments
-2. Setup/eval/maintenance early branch
-3. Extract structured session context
-4. Gather change context
-5. Scope resolution
-6. Lens composition/detection
-7. Construct reviewer prompt
-8. Dispatch reviewers
-9. Present results
-10. Self-calibration
-11. Review log
-12. Optional viewer hook
-13. Optional `/aivv-fix` handoff
+- Parse arguments: Step 1
+- Setup/eval/maintenance early branch: Steps 1.2, 1.95 (maintenance exits in Step 1)
+- Extract structured session context: Step 2
+- Gather change context: Step 3
+- Scope resolution: Step 3.4
+- Lens composition/detection: Steps 1.4, 3.5/3.6
+- Construct reviewer prompt: Step 4
+- Dispatch reviewers: Step 5
+- Present results: Step 6
+- Self-calibration: Step 7
+- Review log: Step 7.5
+- Optional viewer hook: Step 7.6
+- Optional `/aivv-fix` handoff: Step 8
+
+Steps 1.5 (preferences), 1.9 (preamble), and 7.5.5 (cleanup) support these
+phases.
 
 ## Step 1: Parse Arguments
 
@@ -244,7 +250,12 @@ requested. Chain via durable `--review-id`, propagate `--target=` and
 `--dry-run`, and run stale-cache canary behavior before relying on fresh install
 state.
 
+When the `/aivv-fix` run ends, continue at Ending below. That run is nested in
+this one, so it returns control here instead of handing back itself.
+
 ## Ending
 
-When this run is the outermost AIVV run, close its progress items and hand
-control back per the Hand back section of `.aivv/session-continuity.md`.
+When this run is the outermost AIVV run, close its progress items, including
+those of a nested `/aivv-fix` run, and hand control back per the Hand back
+section of `.aivv/session-continuity.md`. When this run is nested, return
+control to the enclosing run instead.
