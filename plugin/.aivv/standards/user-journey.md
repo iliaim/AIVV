@@ -8,7 +8,7 @@
 >
 > **Product-quality grounding:** ISO/IEC 25010:2023 Interaction Capability quality characteristic — specifically the **self-descriptiveness** sub-characteristic (added in the 2023 revision; absent from the 2011 version) and **operability** sub-characteristic. Rules in this file operationalize these sub-characteristics for code-review contexts.
 >
-> **See also:** [.aivv/lenses/user-journey.md](../../lenses/user-journey.md) — lens dispatch and trigger conditions. [.aivv/standards/ux-heuristics/nielsen.md](ux-heuristics/nielsen.md) — HEU-NN1, HEU-NN6. [.aivv/standards/interaction-states/](interaction-states/) — IS-* per-primitive state inventories.
+> **See also:** [.aivv/lenses/user-journey.md](../lenses/user-journey.md) — lens dispatch and trigger conditions. [.aivv/standards/ux-heuristics/nielsen.md](ux-heuristics/nielsen.md) — HEU-NN1, HEU-NN6. [.aivv/standards/interaction-states/](interaction-states/) — IS-* per-primitive state inventories.
 
 ---
 
