@@ -153,8 +153,14 @@ try {
   };
   const repairTarget = makeCheckout(path.join(temp, 'repair-target'));
   const contextFile = path.join(temp, 'context.json');
-  writeFileSync(contextFile, storage(['ensure', '--target', repairTarget]));
   const current = '2026-11-04T10-00-00-dddd';
+  // A resolved context whose store was never created (a first run or dry run) reports no runs.
+  writeFileSync(contextFile, storage(['resolve', '--target', repairTarget]));
+  const noStore = run({ invocation_id: current, prior_repairs: { context: contextFile, files: ['src/a.js'] } }, storageEnv);
+  assert.equal(noStore.status, 0, JSON.stringify(noStore.out));
+  assert.equal(noStore.out.prior_repairs.count, 0);
+  assert.equal(noStore.out.prior_repairs.error, undefined);
+  writeFileSync(contextFile, storage(['ensure', '--target', repairTarget]));
   const fresh = run({ invocation_id: current, prior_repairs: { context: contextFile, files: ['src/a.js'] } }, storageEnv);
   assert.equal(fresh.status, 0, JSON.stringify(fresh.out));
   assert.deepEqual(fresh.out.prior_repairs, { count: 0, runs: [], note: 'No earlier /aivv-fix run on this target changed these files.' });
@@ -172,20 +178,30 @@ try {
   }
   writeFileSync(candidate, '{not json');
   storage(['write', '--context', contextFile, '--area', 'state', '--relative', 'fix-broken.json', '--source', candidate]);
-  const repeat = run({ invocation_id: current, prior_repairs: { context: contextFile, files: ['src/a.js', './tests/a.test.js'] } }, storageEnv);
+  // Planned files may be relative, ./-prefixed, unnormalized, or absolute under the target.
+  const plannedFiles = [path.join(repairTarget, 'src', 'a.js'), './tests//a.test.js'];
+  const repeat = run({ invocation_id: current, prior_repairs: { context: contextFile, files: plannedFiles } }, storageEnv);
   assert.equal(repeat.status, 0, JSON.stringify(repeat.out));
   assert.deepEqual(repeat.out.prior_repairs.runs, [
-    { id: '2026-11-01T10-00-00-aaaa', invoked_at: '2026-11-01T10:00:00.000Z', status: 'completed', files: ['src/a.js'] },
     { id: '2026-11-02T10-00-00-bbbb', invoked_at: '2026-11-02T10:00:00.000Z', status: 'failed', files: ['src/a.js', 'tests/a.test.js'] },
-  ], 'oldest first; this run, unrelated runs and absolute paths outside the plan are handled');
+    { id: '2026-11-01T10-00-00-aaaa', invoked_at: '2026-11-01T10:00:00.000Z', status: 'completed', files: ['src/a.js'] },
+  ], 'newest first; this run and the unrelated run are left out; absolute logged paths match');
   assert.equal(repeat.out.prior_repairs.count, 2);
   assert.deepEqual(repeat.out.prior_repairs.unreadable, ['fix-broken.json']);
-  assert.match(repeat.out.prior_repairs.note, /^2 earlier \/aivv-fix runs on this target changed src\/a\.js, tests\/a\.test\.js\./);
+  assert.match(repeat.out.prior_repairs.note,
+    /^2 earlier \/aivv-fix runs on this target changed src\/a\.js, tests\/a\.test\.js; the latest was 2026-11-02T10-00-00-bbbb \(failed\)\./);
   assert.match(repeat.out.prior_repairs.note, /does not block the fix or count against the rework limit/);
+  // A storage failure is reported inside prior_repairs and does not cost the rest of the request.
+  const broken = run({ invocation_id: current, fix_log: { source: 'conversation', target_project: repairTarget },
+    prior_repairs: { context: path.join(temp, 'missing.json'), files: ['src/a.js'] } }, storageEnv);
+  assert.equal(broken.status, 0, JSON.stringify(broken.out));
+  assert.equal(broken.out.prior_repairs.count, 0);
+  assert.match(broken.out.prior_repairs.error, /missing\.json/);
+  assert.equal(broken.out.fix_log.id, current);
   for (const [request, reason, detail] of [
-    [{ prior_repairs: { files: ['src/a.js'] } }, 'request-invalid', /prior_repairs\.context/],
-    [{ prior_repairs: { context: contextFile, files: [] } }, 'request-invalid', /prior_repairs\.files/],
-    [{ prior_repairs: { context: path.join(temp, 'missing.json'), files: ['src/a.js'] } }, 'storage-context-invalid', /missing\.json/],
+    [{ invocation_id: current, prior_repairs: { files: ['src/a.js'] } }, 'request-invalid', /prior_repairs\.context/],
+    [{ invocation_id: current, prior_repairs: { context: contextFile, files: [] } }, 'request-invalid', /prior_repairs\.files/],
+    [{ prior_repairs: { context: contextFile, files: ['src/a.js'] } }, 'request-invalid', /invocation_id/],
   ]) {
     const refused = run(request, storageEnv);
     assert.equal(refused.status, 1, JSON.stringify(request));
