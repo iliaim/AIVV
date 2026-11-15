@@ -5,12 +5,13 @@
 // It only produces records. pre-write-validator.mjs remains the gate for every write.
 
 import { randomBytes } from 'node:crypto';
-import { readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { incidentTimestamp } from './incident-state.mjs';
 import { newNonce, wrapUntrusted } from './native-prompt-boundary.mjs';
 import { editFrame, intentContent, multiEditSha, sha256 } from './pre-write-validator.mjs';
+import { readStorageContext, withExistingStorageReadLock } from './storage-paths.mjs';
 
 const REFERENCES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../skills/aivv-fix/references');
 const USAGE = [
@@ -26,6 +27,9 @@ const USAGE = [
   '                    template: fix-challenger | verifier | investigator',
   '                    unfilled lists the {placeholders} left for you to fill; it can also',
   '                    name a literal {example} in the template text, which you leave alone',
+  '    prior_repairs   {context, files}          -> prior_repairs: earlier /aivv-fix runs on this',
+  '                    target whose fix logs changed any of files (report only; never a gate)',
+  '                    context: this run\'s storage context file; files: paths this run plans to change',
   '  Prints one JSON object. Validate fix-log writes with pre-write-validator.mjs as before.',
 ].join('\n');
 
@@ -140,6 +144,69 @@ function fillPrompt(request) {
   return { template: request.template, nonce, prompt, unfilled: [...unfilled] };
 }
 
+function relativeToTarget(file, target) {
+  const posix = (value) => String(value).replace(/\\/g, '/');
+  const root = posix(target ?? '').replace(/\/+$/, '');
+  let rel = posix(file);
+  if (root && rel.startsWith(`${root}/`)) rel = rel.slice(root.length + 1);
+  return rel.replace(/^(\.\/)+/, '');
+}
+
+// Earlier /aivv-fix runs on the same target that changed any planned file. Each run's own rework
+// limit resets per invocation, so a loop that starts a fresh run per round cannot see repeated
+// repairs of one area any other way. This only reports; it blocks nothing and changes no budget.
+function priorRepairs(request, currentId) {
+  requireObject(request, 'prior_repairs');
+  if (typeof request.context !== 'string' || request.context === '') {
+    throw new Refusal('request-invalid', "prior_repairs.context must be the path of this run's storage context file");
+  }
+  if (!Array.isArray(request.files) || request.files.length === 0 ||
+      !request.files.every((file) => typeof file === 'string' && file !== '')) {
+    throw new Refusal('request-invalid', 'prior_repairs.files must list the files this run plans to change');
+  }
+  let context;
+  try {
+    context = readStorageContext(request.context);
+  } catch (error) {
+    throw new Refusal('storage-context-invalid', `${request.context}: ${error.message}`);
+  }
+  const planned = new Set(request.files.map((file) => relativeToTarget(file, context.target)));
+  const logs = withExistingStorageReadLock(context, () => {
+    if (!existsSync(context.state_dir)) return [];
+    return readdirSync(context.state_dir).filter((name) => /^fix-.+\.json$/.test(name)).sort().map((name) => {
+      try {
+        return { name, log: JSON.parse(readFileSync(path.join(context.state_dir, name), 'utf8')) };
+      } catch {
+        return { name, log: null };
+      }
+    });
+  }) ?? [];
+  const runs = [];
+  const unreadable = [];
+  for (const { name, log } of logs) {
+    if (!isObject(log)) {
+      unreadable.push(name);
+      continue;
+    }
+    if (log.id === currentId) continue;
+    const touched = [log.files_modified, log.files_created].flatMap((list) => Array.isArray(list) ? list : [])
+      .filter((file) => typeof file === 'string')
+      .map((file) => relativeToTarget(file, typeof log.target_project === 'string' ? log.target_project : context.target));
+    const files = [...new Set(touched.filter((file) => planned.has(file)))].sort();
+    if (files.length > 0) {
+      runs.push({ id: log.id ?? name, invoked_at: log.invoked_at ?? null, status: log.status ?? null, files });
+    }
+  }
+  runs.sort((a, b) => String(a.invoked_at).localeCompare(String(b.invoked_at)));
+  const note = runs.length === 0
+    ? 'No earlier /aivv-fix run on this target changed these files.'
+    : `${runs.length} earlier /aivv-fix run${runs.length === 1 ? '' : 's'} on this target changed ` +
+      `${[...new Set(runs.flatMap((run) => run.files))].sort().join(', ')}. If this fix repairs one of those ` +
+      'changes, reassess the design before patching the same area again. This note does not block the fix ' +
+      'or count against the rework limit.';
+  return { count: runs.length, runs, ...(unreadable.length > 0 ? { unreadable } : {}), note };
+}
+
 function build(request, now = new Date()) {
   requireObject(request, 'the request');
   const out = {
@@ -166,6 +233,7 @@ function build(request, now = new Date()) {
       return fillPrompt(prompt);
     });
   }
+  if (request.prior_repairs !== undefined) out.prior_repairs = priorRepairs(request.prior_repairs, out.invocation_id);
   return out;
 }
 

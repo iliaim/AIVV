@@ -7,15 +7,16 @@ import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import { editFrame, intentContent, multiEditSha, sha256, validateFixLogNewWrite } from '../plugin/tools/pre-write-validator.mjs';
+import { makeCheckout } from './support/checkout-fixture.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const helper = path.join(root, 'plugin/tools/aivv-fix-records.mjs');
 const temp = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'aivv-fix-records-')));
 
-function run(request) {
+function run(request, env = process.env) {
   const file = path.join(temp, 'request.json');
   writeFileSync(file, typeof request === 'string' ? request : JSON.stringify(request));
-  const result = spawnSync(process.execPath, [helper, file], { encoding: 'utf8' });
+  const result = spawnSync(process.execPath, [helper, file], { encoding: 'utf8', env });
   return { status: result.status, stderr: result.stderr, out: result.stdout ? JSON.parse(result.stdout) : null };
 }
 
@@ -134,6 +135,64 @@ try {
   const { reportError } = await import('../plugin/tools/aivv-fix-records.mjs');
   assert.deepEqual(reportError(new TypeError('boom')), { status: 'error', reason: 'unexpected-error', detail: 'boom' });
 
+  // prior_repairs lists earlier runs on the same target that changed a planned file. Report only.
+  const storageHome = path.join(temp, 'home');
+  mkdirSync(storageHome);
+  const storageEnv = {
+    ...process.env,
+    HOME: storageHome,
+    LOCALAPPDATA: path.join(storageHome, 'AppData/Local'),
+    XDG_STATE_HOME: path.join(storageHome, 'state'),
+    XDG_CACHE_HOME: path.join(storageHome, 'cache'),
+  };
+  const storageHelper = path.join(root, 'plugin/tools/storage-paths.mjs');
+  const storage = (args) => {
+    const result = spawnSync(process.execPath, [storageHelper, ...args], { encoding: 'utf8', env: storageEnv });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    return result.stdout;
+  };
+  const repairTarget = makeCheckout(path.join(temp, 'repair-target'));
+  const contextFile = path.join(temp, 'context.json');
+  writeFileSync(contextFile, storage(['ensure', '--target', repairTarget]));
+  const current = '2026-11-04T10-00-00-dddd';
+  const fresh = run({ invocation_id: current, prior_repairs: { context: contextFile, files: ['src/a.js'] } }, storageEnv);
+  assert.equal(fresh.status, 0, JSON.stringify(fresh.out));
+  assert.deepEqual(fresh.out.prior_repairs, { count: 0, runs: [], note: 'No earlier /aivv-fix run on this target changed these files.' });
+  const priorLogs = [
+    { id: '2026-11-02T10-00-00-bbbb', invoked_at: '2026-11-02T10:00:00.000Z', status: 'failed', target_project: repairTarget,
+      files_modified: [path.join(repairTarget, 'src', 'a.js')], files_created: ['tests/a.test.js'] },
+    { id: '2026-11-01T10-00-00-aaaa', invoked_at: '2026-11-01T10:00:00.000Z', status: 'completed', files_modified: ['src/a.js', 'src/b.js'] },
+    { id: '2026-11-03T10-00-00-cccc', invoked_at: '2026-11-03T10:00:00.000Z', status: 'completed', files_modified: ['docs/other.md'] },
+    { id: current, invoked_at: '2026-11-04T10:00:00.000Z', status: 'in-progress', files_modified: ['src/a.js'] },
+  ];
+  const candidate = path.join(temp, 'fix-candidate.json');
+  for (const log of priorLogs) {
+    writeFileSync(candidate, JSON.stringify(log));
+    storage(['write', '--context', contextFile, '--area', 'state', '--relative', `fix-${log.id}.json`, '--source', candidate]);
+  }
+  writeFileSync(candidate, '{not json');
+  storage(['write', '--context', contextFile, '--area', 'state', '--relative', 'fix-broken.json', '--source', candidate]);
+  const repeat = run({ invocation_id: current, prior_repairs: { context: contextFile, files: ['src/a.js', './tests/a.test.js'] } }, storageEnv);
+  assert.equal(repeat.status, 0, JSON.stringify(repeat.out));
+  assert.deepEqual(repeat.out.prior_repairs.runs, [
+    { id: '2026-11-01T10-00-00-aaaa', invoked_at: '2026-11-01T10:00:00.000Z', status: 'completed', files: ['src/a.js'] },
+    { id: '2026-11-02T10-00-00-bbbb', invoked_at: '2026-11-02T10:00:00.000Z', status: 'failed', files: ['src/a.js', 'tests/a.test.js'] },
+  ], 'oldest first; this run, unrelated runs and absolute paths outside the plan are handled');
+  assert.equal(repeat.out.prior_repairs.count, 2);
+  assert.deepEqual(repeat.out.prior_repairs.unreadable, ['fix-broken.json']);
+  assert.match(repeat.out.prior_repairs.note, /^2 earlier \/aivv-fix runs on this target changed src\/a\.js, tests\/a\.test\.js\./);
+  assert.match(repeat.out.prior_repairs.note, /does not block the fix or count against the rework limit/);
+  for (const [request, reason, detail] of [
+    [{ prior_repairs: { files: ['src/a.js'] } }, 'request-invalid', /prior_repairs\.context/],
+    [{ prior_repairs: { context: contextFile, files: [] } }, 'request-invalid', /prior_repairs\.files/],
+    [{ prior_repairs: { context: path.join(temp, 'missing.json'), files: ['src/a.js'] } }, 'storage-context-invalid', /missing\.json/],
+  ]) {
+    const refused = run(request, storageEnv);
+    assert.equal(refused.status, 1, JSON.stringify(request));
+    assert.equal(refused.out.reason, reason);
+    assert.match(refused.out.detail, detail);
+  }
+
   const usage = spawnSync(process.execPath, [helper], { encoding: 'utf8' });
   assert.equal(usage.status, 2);
   assert.match(usage.stderr, /Usage:/);
@@ -141,4 +200,4 @@ try {
   rmSync(temp, { recursive: true, force: true });
 }
 
-process.stdout.write('AIVV fix records: invocation ID, intent hashes, fix-log skeleton, retry entry, and fenced prompts passed\n');
+process.stdout.write('AIVV fix records: invocation ID, intent hashes, fix-log skeleton, retry entry, fenced prompts, and prior repairs passed\n');
