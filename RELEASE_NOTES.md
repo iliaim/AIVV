@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.5.4 — notice repeated repairs
+
+- At Step 4, `/aivv-fix` notes when earlier fix runs on the same project already changed the files it plans to change, newest first, so a loop that starts a fresh run each round can see it is repairing the same area again. The note is report only: it blocks nothing, sets no threshold, and does not count against the rework limit.
+
 ## 0.5.3 — nested hand-back and symlinked installs
 
 - `/aivv --fix` and outer-loop chains now return control from the nested fix run to the run that started it, so the outer run closes its progress items and restores the paused step. Progress items are again marked in progress as each phase begins, and the workflow outline maps each phase to its step numbers.

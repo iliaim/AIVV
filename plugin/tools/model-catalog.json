@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "aivv_version": "0.5.3",
+  "aivv_version": "0.5.4",
   "updated_at": "2026-11-10",
   "providers": {
     "anthropic": {

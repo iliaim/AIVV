@@ -5,12 +5,13 @@
 // It only produces records. pre-write-validator.mjs remains the gate for every write.
 
 import { randomBytes } from 'node:crypto';
-import { readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { incidentTimestamp } from './incident-state.mjs';
 import { newNonce, wrapUntrusted } from './native-prompt-boundary.mjs';
 import { editFrame, intentContent, multiEditSha, sha256 } from './pre-write-validator.mjs';
+import { readStorageContext, withExistingStorageReadLock } from './storage-paths.mjs';
 
 const REFERENCES = path.join(path.dirname(fileURLToPath(import.meta.url)), '../skills/aivv-fix/references');
 const USAGE = [
@@ -26,6 +27,10 @@ const USAGE = [
   '                    template: fix-challenger | verifier | investigator',
   '                    unfilled lists the {placeholders} left for you to fill; it can also',
   '                    name a literal {example} in the template text, which you leave alone',
+  '    prior_repairs   {context, files}          -> prior_repairs: earlier /aivv-fix runs on this',
+  '                    target whose fix logs changed any of files, newest first (report only)',
+  '                    context: this run\'s storage context file; files: paths this run plans to change;',
+  '                    needs invocation_id; a storage failure is returned as prior_repairs.error',
   '  Prints one JSON object. Validate fix-log writes with pre-write-validator.mjs as before.',
 ].join('\n');
 
@@ -140,6 +145,79 @@ function fillPrompt(request) {
   return { template: request.template, nonce, prompt, unfilled: [...unfilled] };
 }
 
+function relativeTo(file, ...roots) {
+  const posix = (value) => String(value).replace(/\\/g, '/');
+  let rel = path.posix.normalize(posix(file));
+  for (const root of roots) {
+    const prefix = path.posix.normalize(posix(root ?? '')).replace(/\/+$/, '');
+    if (prefix && prefix !== '.' && rel.startsWith(`${prefix}/`)) {
+      rel = rel.slice(prefix.length + 1);
+      break;
+    }
+  }
+  return rel.replace(/^(\.\/)+/, '');
+}
+
+// Earlier /aivv-fix runs on the same target that changed any planned file, newest first. Each
+// run's rework limit resets per invocation, so a loop that starts a fresh run per round cannot see
+// repeated repairs of one area any other way. This only reports: it blocks nothing and changes no
+// budget, so a storage failure comes back as `error` instead of failing the rest of the request.
+// It reads the active state folder only; archived logs are left out on purpose.
+function priorRepairs(request, currentId) {
+  requireObject(request, 'prior_repairs');
+  if (typeof request.context !== 'string' || request.context === '') {
+    throw new Refusal('request-invalid', "prior_repairs.context must be the path of this run's storage context file");
+  }
+  if (!Array.isArray(request.files) || request.files.length === 0 ||
+      !request.files.every((file) => typeof file === 'string' && file !== '')) {
+    throw new Refusal('request-invalid', 'prior_repairs.files must list the files this run plans to change');
+  }
+  let context;
+  let logs;
+  try {
+    context = readStorageContext(request.context);
+    logs = withExistingStorageReadLock(context, () => {
+      if (!existsSync(context.state_dir)) return [];
+      return readdirSync(context.state_dir).filter((name) => /^fix-.+\.json$/.test(name)).sort().map((name) => {
+        try {
+          return { name, log: JSON.parse(readFileSync(path.join(context.state_dir, name), 'utf8')) };
+        } catch {
+          return { name, log: null };
+        }
+      });
+    }) ?? [];
+  } catch (error) {
+    return { count: 0, runs: [], error: `${request.context}: ${error.message}` };
+  }
+  const planned = new Set(request.files.map((file) => relativeTo(file, context.target)));
+  const runs = [];
+  const unreadable = [];
+  for (const { name, log } of logs) {
+    if (!isObject(log)) {
+      unreadable.push(name);
+      continue;
+    }
+    if (log.id === currentId) continue;
+    const logTarget = typeof log.target_project === 'string' ? log.target_project : null;
+    const touched = [log.files_modified, log.files_created].flatMap((list) => Array.isArray(list) ? list : [])
+      .filter((file) => typeof file === 'string')
+      .map((file) => relativeTo(file, logTarget, context.target));
+    const files = [...new Set(touched.filter((file) => planned.has(file)))].sort();
+    if (files.length > 0) {
+      runs.push({ id: log.id ?? name, invoked_at: log.invoked_at ?? null, status: log.status ?? null, files });
+    }
+  }
+  runs.sort((a, b) => String(b.invoked_at).localeCompare(String(a.invoked_at)));
+  const latest = runs[0];
+  const note = runs.length === 0
+    ? 'No earlier /aivv-fix run on this target changed these files.'
+    : `${runs.length} earlier /aivv-fix run${runs.length === 1 ? '' : 's'} on this target changed ` +
+      `${[...new Set(runs.flatMap((run) => run.files))].sort().join(', ')}; the latest was ${latest.id}` +
+      `${latest.status ? ` (${latest.status})` : ''}. If this fix repairs one of those changes, reassess the ` +
+      'design before patching the same area again. This note does not block the fix or count against the rework limit.';
+  return { count: runs.length, runs, ...(unreadable.length > 0 ? { unreadable } : {}), note };
+}
+
 function build(request, now = new Date()) {
   requireObject(request, 'the request');
   const out = {
@@ -165,6 +243,12 @@ function build(request, now = new Date()) {
       if (prompt.values !== undefined) requireObject(prompt.values, `prompts[${index}].values`);
       return fillPrompt(prompt);
     });
+  }
+  if (request.prior_repairs !== undefined) {
+    if (typeof request.invocation_id !== 'string' || request.invocation_id === '') {
+      throw new Refusal('request-invalid', "prior_repairs needs this run's invocation_id, so the run does not count itself");
+    }
+    out.prior_repairs = priorRepairs(request.prior_repairs, request.invocation_id);
   }
   return out;
 }
