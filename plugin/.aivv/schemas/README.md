@@ -2,6 +2,8 @@
 
 Machine-parseable contracts for AIVV artifacts. Schemas are versioned via the plugin version; a schema change is a plugin-version change.
 
+The evidence `kind` values used across findings, fixes, and lifecycle records are defined in [`evidence-vocabulary.md`](../evidence-vocabulary.md).
+
 ## Shipped schemas
 
 | Schema | Purpose | Emitted by | Consumed by |

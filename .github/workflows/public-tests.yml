@@ -24,6 +24,16 @@ jobs:
       - name: Verify external state persistence
         run: node tests/storage-persistence.test.mjs
 
+  markdown-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify relative Markdown links resolve
+        run: node tests/markdown-links.test.mjs
+
   read-only-agent-guard:
     runs-on: ubuntu-latest
     steps:
