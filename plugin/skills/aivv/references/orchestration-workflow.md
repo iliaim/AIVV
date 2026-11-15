@@ -12,9 +12,9 @@ without replacing it, and handing control back when the run ends.
 Every ending of the outermost run follows its Hand back section,
 including a held or cancelled scope question and early halts.
 
-Workflow outline. Each phase names the step headings below that carry it out;
-step numbers elsewhere, including the progress table in
-`.aivv/session-continuity.md`, refer to these headings:
+Workflow outline. Each phase names the step headings below that carry it out.
+`/aivv` step numbers elsewhere, including the `/aivv` row of the progress table
+in `.aivv/session-continuity.md`, refer to these headings:
 
 - Parse arguments: Step 1
 - Setup/eval/maintenance early branch: Steps 1.2, 1.95 (maintenance exits in Step 1)

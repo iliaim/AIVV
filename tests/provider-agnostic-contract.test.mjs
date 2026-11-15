@@ -401,6 +401,15 @@ const autoChain = orchestration.slice(orchestration.indexOf('## Step 8: Auto-Cha
   orchestration.indexOf('## Ending'));
 assert.match(autoChain, /When the `\/aivv-fix` run ends, continue at Ending below/,
   '/aivv --fix must resume at its Ending after the nested fix run');
+const ending = orchestration.slice(orchestration.indexOf('## Ending'));
+assert.match(ending, /When this run is nested, return\s+control to the enclosing run instead/,
+  'a nested /aivv run (outer loop) must return control instead of handing back');
+assert.match(continuity, /A nested run skips these steps\s+and returns control to its enclosing run/,
+  'the Hand back section must send nested runs back to their enclosing run');
+assert.match(continuity, /Decide this from how the run started, not from\s+the list/,
+  'nested status must not depend on the progress list being visible');
+assert.match(read('plugin/.aivv/outer-loop.md'), /continues at its own Step 7/,
+  'the outer loop must say where a cycle resumes after the reverse chain');
 const fixSkill = read('plugin/skills/aivv-fix/SKILL.md');
 const fixHandBack = fixSkill.slice(fixSkill.indexOf('4. **Hand back**'));
 assert.match(fixHandBack.split('\n')[0], /When this run is nested, return control to the enclosing run/,
@@ -410,8 +419,8 @@ const outline = orchestration.slice(orchestration.indexOf('Workflow outline'),
   orchestration.indexOf('## Step 1: Parse Arguments'));
 assert.doesNotMatch(outline, /^\d+\. /m, 'outline must not use list numbers that collide with step numbers');
 const headings = new Set([...orchestration.matchAll(/^## Step ([\d./]+):/gm)].map((m) => m[1]));
-const outlineSteps = [...outline.matchAll(/Steps? ([\d./]+(?:, [\d./]+)*)/g)]
-  .flatMap((m) => m[1].split(', '));
+const outlineSteps = [...outline.matchAll(/Steps? ([\d./]+(?: \([^)]*\))?(?:,? (?:and )?[\d./]+(?: \([^)]*\))?)*)/g)]
+  .flatMap((m) => m[1].replace(/ \([^)]*\)/g, '').split(/,? (?:and )?/));
 const phaseLines = outline.split('\n').filter((line) => line.startsWith('- '));
 assert.equal(phaseLines.length, 13, 'outline must keep all thirteen phases');
 for (const line of phaseLines) {

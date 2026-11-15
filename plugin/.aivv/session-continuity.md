@@ -35,9 +35,10 @@ text at each phase. If even one item does not fit, use text updates.
 ## Merge, never replace
 
 1. **No existing list:** create AIVV's items as the whole list.
-2. **Nested run:** if unfinished AIVV items from an enclosing run are already on
-   the list (a `/aivv --fix` chain, or an outer-loop cycle re-entering `/aivv`),
-   this run is nested. Reuse its own items if present (set them back to pending
+2. **Nested run:** a run is nested when an enclosing AIVV run started it:
+   `/aivv` Step 8 (a `/aivv --fix` chain) or `/aivv-fix` Step 6.5 (an outer-loop
+   cycle re-entering `/aivv`). Decide this from how the run started, not from
+   the list, which may be absent or out of view. Reuse its own items if present (set them back to pending
    for a new cycle); otherwise insert them immediately after the enclosing run's
    in-progress AIVV item. A nested run does not pause or restore user items and
    does not hand back; the outermost run does. A nested run returns control to
