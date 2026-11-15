@@ -100,9 +100,10 @@ For remediation, follow the ordered phases below and take conditional branches o
 
 For an actual fix workflow (not help or registry-only early exits),
 **MUST-READ:** [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md)
-before registering progress. It owns the progress items, merging them into the
-session's existing list without replacing it, and handing control back when
-the run ends. Every ending of the outermost run follows its Hand back section,
+before registering progress. It owns the progress items, marking each in
+progress as its phase begins, merging them into the session's existing list
+without replacing it, and handing control back when the run ends.
+Every ending of the outermost run follows its Hand back section,
 including the dry-run halt, an exhausted rework budget, and verification
 failure. Missing progress UI does not indicate unavailable cold-agent dispatch
 or a degraded verification result.
@@ -386,7 +387,7 @@ After Step 7 completes the fix log and review-log backfill, render the joined re
 
 3. **Pattern capture**: If a new prevention mechanism was created, suggest promoting it to project/global guidance. If `/lesson` is available, also suggest `/lesson "Prevention mechanism created for recurring pattern: [description]. Applies to: [scope]." --category technical --severity medium`; otherwise skip silently.
 
-4. **Hand back**: When this run is the outermost AIVV run, close its progress items and hand control back per the Hand back section of [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md).
+4. **Hand back**: When this run is nested, return control to the enclosing run (for `/aivv --fix`, the review continues at its Ending), as at every other ending of a nested run. When this run is the outermost AIVV run, close its progress items, including those of a nested `/aivv` run, and hand control back per the Hand back section of [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md).
 
 ---
 

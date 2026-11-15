@@ -113,6 +113,10 @@ Skill tool:
 
 Where `<new_count>` is the post-increment `outer_cycle_count` written to the state file in Step 6.5 Phase G (i.e., the prior count + 1), and `root_id` is the `root_review_id` from the state file (unchanged throughout the chain). The variable name `<new_count>` matches the SKILL.md Step 6.5 prose; the form `<N+1>` (where N is the PRIOR cycle count before increment) is equivalent but was previously ambiguously documented.
 
+**Return:** the re-entered `/aivv` run is nested. When it ends, control returns
+to this `/aivv-fix` cycle, which continues at its own Step 7. With several
+cycles, each earlier cycle runs Step 7 as the chain unwinds, latest cycle first.
+
 **`--target=<dir>` propagation:** propagate verbatim if set on the originating /aivv-fix invocation.
 **`--dry-run` propagation:** propagate verbatim if set.
 **All other args NOT propagated:** findings for the next cycle come from /aivv's fresh re-review of current code state, not from the prior /aivv-fix invocation's argument string.
