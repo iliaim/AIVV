@@ -223,6 +223,119 @@ try {
   const badLedger = { ...planLog, decision_ledger: { finding_id: 'F001' } };
   assert.equal(validateFixLogNewWrite(badLedger).reason, 'fix-log-decision-ledger-invalid');
 
+  // Issue #26 (Nov 15 report): three independent fixes, each proven by its own check.
+  const findingIds = ['F001', 'F002', 'F003'];
+  const finishedLog = () => ({
+    ...baseLog(),
+    status: 'completed',
+    completed_at: '2026-11-07T13:00:00Z',
+    authorized_scope: { ...scope(), finding_ids: findingIds, included: findingIds },
+    findings_addressed: ['F001', 'F002'],
+    changes_summary: [
+      { finding_id: 'F001', file: 'src/a.js', summary: 'Guard a.' },
+      { finding_id: 'F002', file: 'src/b.js', summary: 'Guard b.' },
+    ],
+    files_modified: ['src/a.js', 'src/b.js'],
+    write_boundary_shown: true,
+    change_readiness: {
+      risk_tier: 'low',
+      affected_surfaces: ['code'],
+      approval_mode: 'user-confirmed',
+      rollback_plan: 'Revert src/a.js and src/b.js.',
+      required_verification: [
+        { id: 'check-a', kind: 'command', command_argv: ['node', 'a.test.js'], required: true },
+        { id: 'check-b', kind: 'command', command_argv: ['node', 'b.test.js'], required: true },
+      ],
+      generated_verification: { present: false, execution_allowed: false, policy: 'inspect-only' },
+      monitoring_plan: 'None needed.',
+      go_no_go: 'go',
+    },
+    objective_evidence: [
+      { id: 'ev-a', finding_id: 'F001', kind: 'test-output', satisfies: ['check-a'], ref: 'node a.test.js', outcome: 'pass' },
+      { id: 'ev-b', finding_id: 'F002', kind: 'test-output', satisfies: ['check-b'], ref: 'node b.test.js', outcome: 'pass' },
+    ],
+    final_dispositions: [
+      { finding_id: 'F001', disposition: 'closed', decided_by: 'aivv-fix-verifier', rationale: 'a.test.js passes.', evidence_refs: ['ev-a'] },
+      { finding_id: 'F002', disposition: 'closed', decided_by: 'aivv-fix-verifier', rationale: 'b.test.js passes.', evidence_refs: ['ev-b'] },
+      { finding_id: 'F003', disposition: 'deferred', decided_by: 'user', rationale: 'Deleting it needs the owner\'s approval.', reopen_trigger: 'The owner approves.' },
+    ],
+  });
+  assert.deepEqual(validateFixLogNewWrite(finishedLog()), { status: 'pass', reason: 'pass' },
+    'each finding carries only its own check; the required checks are proven once for the run');
+  const unproven = finishedLog();
+  unproven.objective_evidence[1].satisfies = [];
+  const unprovenVerdict = validateFixLogNewWrite(unproven);
+  assert.equal(unprovenVerdict.reason, 'fix-log-final-disposition-evidence-missing',
+    'a required check that no evidence proves still halts');
+  assert.match(unprovenVerdict.detail, /"check-b"/, 'the halt names the unproven check');
+  const noOwnEvidence = finishedLog();
+  noOwnEvidence.final_dispositions[1].evidence_refs = ['ev-a'];
+  assert.equal(validateFixLogNewWrite(noOwnEvidence).reason, 'fix-log-final-disposition-evidence-missing',
+    'a closed finding still needs evidence of its own; another finding\'s evidence does not join');
+
+  // Issue #26 (Nov 15 report): a decision made after the run finished can be recorded on its log.
+  const finished = finishedLog();
+  const later = structuredClone(finished);
+  later.objective_evidence.push({ id: 'ev-c', finding_id: 'F003', kind: 'command-output', ref: 'git worktree list', outcome: 'pass', summary: 'The stale worktree is gone.' });
+  later.final_dispositions[2] = {
+    finding_id: 'F003', disposition: 'closed', decided_by: 'owner', rationale: 'Owner approved the deletion; done.',
+    decided_at: '2026-11-15T10:00:00Z', evidence_refs: ['ev-c'], supersedes: structuredClone(finished.final_dispositions[2]),
+  };
+  assert.deepEqual(validateFixLogTransition(later, finished), { status: 'pass', reason: 'pass' },
+    'a deferred finding on a completed log can take the owner\'s later decision');
+  assert.deepEqual(validateFixLogTransition(later, { ...finished, status: 'failed' }).reason, 'fix-log-later-decision-invalid',
+    'the status of the finished log does not change');
+  const failedLater = { ...structuredClone(later), status: 'failed' };
+  assert.deepEqual(validateFixLogTransition(failedLater, { ...finished, status: 'failed' }), { status: 'pass', reason: 'pass' },
+    'a failed log accepts a later decision too');
+  const laterReason = (mutate) => {
+    const candidate = structuredClone(later);
+    mutate(candidate);
+    return validateFixLogTransition(candidate, finished);
+  };
+  assert.equal(laterReason((c) => { delete c.final_dispositions[2].supersedes; }).reason, 'fix-log-later-decision-invalid',
+    'the replaced entry must be kept');
+  assert.equal(laterReason((c) => { c.final_dispositions[2].supersedes.rationale = 'edited'; }).reason, 'fix-log-later-decision-invalid',
+    'the kept entry must be an exact copy');
+  assert.equal(laterReason((c) => { delete c.final_dispositions[2].decided_at; }).reason, 'fix-log-later-decision-invalid');
+  assert.equal(laterReason((c) => { c.final_dispositions[2].evidence_refs = []; }).reason, 'fix-log-final-disposition-evidence-missing',
+    'closing later still needs evidence for that finding');
+  assert.equal(laterReason((c) => {
+    c.final_dispositions[0] = { ...c.final_dispositions[0], disposition: 'closed_with_residual_risk', residual_risk: 'Edge case left.', decided_at: '2026-11-15T10:00:00Z', supersedes: structuredClone(finished.final_dispositions[0]) };
+  }).reason, 'fix-log-later-decision-invalid', 'a closed finding cannot be changed after the run');
+  assert.equal(laterReason((c) => { c.completed_at = '2026-11-15T10:00:00Z'; }).reason, 'fix-log-later-decision-invalid',
+    'nothing outside the dispositions and evidence may change');
+  assert.equal(laterReason((c) => { c.objective_evidence[0].outcome = 'fail'; }).reason, 'fix-log-later-decision-invalid',
+    'recorded evidence cannot be rewritten');
+  assert.equal(laterReason((c) => { c.objective_evidence[2].id = 'ev-a'; c.final_dispositions[2].evidence_refs = ['ev-a']; }).reason,
+    'fix-log-final-disposition-evidence-missing', 'new evidence reusing an earlier id cannot take over that id');
+  assert.equal(laterReason((c) => { c.objective_evidence.push({ ...c.objective_evidence[2], outcome: 'fail' }); }).reason,
+    'fix-log-later-decision-invalid', 'new evidence ids are unique');
+  assert.equal(laterReason((c) => { c.objective_evidence.push({ id: 'ev-x', finding_id: 'F001', kind: 'grep', ref: 'grep x', outcome: 'pass' }); }).reason,
+    'fix-log-later-decision-invalid', 'new evidence belongs to a finding decided in this update');
+  assert.equal(laterReason((c) => { c.final_dispositions.pop(); }).reason, 'fix-log-later-decision-invalid');
+  assert.equal(laterReason((c) => { c.final_dispositions[2].decided_at = '1'; }).reason, 'fix-log-later-decision-invalid',
+    'decided_at is a UTC timestamp');
+  // A run that changed nothing (every finding deferred) skips the general disposition checks,
+  // so the later-decision gate checks the new value itself.
+  const noChanges = finishedLog();
+  for (const field of ['findings_addressed', 'changes_summary', 'files_modified', 'change_readiness']) delete noChanges[field];
+  noChanges.objective_evidence = [];
+  noChanges.final_dispositions = [noChanges.final_dispositions[2]];
+  assert.deepEqual(validateFixLogNewWrite(noChanges), { status: 'pass', reason: 'pass' });
+  const decideOnNoChanges = (fields) => validateFixLogTransition({
+    ...structuredClone(noChanges),
+    final_dispositions: [{ finding_id: 'F003', decided_by: 'owner', rationale: 'Owner decided.', decided_at: '2026-11-15T10:00:00Z',
+      supersedes: structuredClone(noChanges.final_dispositions[0]), ...fields }],
+  }, noChanges);
+  assert.deepEqual(decideOnNoChanges({ disposition: 'accepted_risk' }), { status: 'pass', reason: 'pass' });
+  assert.equal(decideOnNoChanges({ disposition: 'banana' }).reason, 'fix-log-later-decision-invalid',
+    'a later decision uses a known disposition');
+  assert.equal(decideOnNoChanges({ disposition: 'closed' }).reason, 'fix-log-final-disposition-evidence-missing');
+  assert.equal(decideOnNoChanges({ disposition: 'closed_with_residual_risk' }).reason, 'fix-log-final-disposition-residual-risk-missing');
+  assert.equal(validateFixLogTransition({ ...structuredClone(finished), status: 'abandoned' }, { ...finished, status: 'abandoned' }).reason,
+    'fix-log-transition-prior-state-not-in-progress', 'an abandoned log stays closed to updates');
+
   const skill = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/SKILL.md'), 'utf8');
   const decisioning = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/execution-decisioning.md'), 'utf8');
   assert.match(skill, /### Step 4\.4:[\s\S]*?persist[\s\S]*?`write_intents\[\]`[\s\S]*?### Step 4\.5/,
@@ -344,6 +457,14 @@ try {
   assert.equal(fixLogCli({ ...cliRed, lifecycle_context: { selector_type: 'issue', selector: 'ISS-1', record_kind: 'issue', record_id: 'ISS-1', record_path: 'issues/x.json', source_mode: 'review-sourced' } }, '--update').reason,
     'fix-log-lifecycle-context-mutated',
     'identity fields must be in the first write; adding them later is rejected');
+  // A later decision on a stored completed log, through the command an agent runs.
+  const storedFinished = { ...finishedLog(), id: '2026-11-07T12-05-00-a005', storage_context: cliLog.storage_context };
+  storeJson(`fix-${storedFinished.id}.json`, storedFinished);
+  const storedLater = { ...structuredClone(later), id: storedFinished.id, storage_context: cliLog.storage_context };
+  assert.deepEqual(fixLogCli(storedLater, '--update'), { status: 'pass', reason: 'pass' },
+    '--update on a completed log accepts a later decision on its deferred finding');
+  assert.equal(fixLogCli({ ...storedLater, status: 'in-progress' }, '--update').reason, 'fix-log-later-decision-invalid',
+    'a completed log cannot be reopened through --update');
 
   assert.equal(validateFixLogNewWrite({ ...reviewPlanLog, status: 'completed' }, { contextFile: CONTEXT_FILE }).reason,
     'fix-log-findings-addressed-invalid',

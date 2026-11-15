@@ -1408,18 +1408,20 @@ function validateObjectiveEvidence(fixLog) {
     return { status: "halt", reason: "fix-log-objective-evidence-missing" };
   }
   for (const entry of fixLog.objective_evidence) {
-    if (
-      !plainObject(entry) ||
-      !nonBlankString(entry.id) ||
-      !nonBlankString(entry.finding_id) ||
-      !FIX_LOG_OBJECTIVE_EVIDENCE_KIND_ENUM.has(entry.kind) ||
-      !nonBlankString(entry.ref) ||
-      !nonBlankString(entry.outcome)
-    ) {
+    if (!validObjectiveEvidenceEntry(entry)) {
       return { status: "halt", reason: "fix-log-objective-evidence-invalid" };
     }
   }
   return { status: "pass", reason: "pass" };
+}
+
+function validObjectiveEvidenceEntry(entry) {
+  return plainObject(entry) &&
+    nonBlankString(entry.id) &&
+    nonBlankString(entry.finding_id) &&
+    FIX_LOG_OBJECTIVE_EVIDENCE_KIND_ENUM.has(entry.kind) &&
+    nonBlankString(entry.ref) &&
+    nonBlankString(entry.outcome);
 }
 
 function changedFindingIds(fixLog) {
@@ -1435,12 +1437,11 @@ function requiredReadinessEvidenceIds(fixLog) {
     .filter(nonBlankString);
 }
 
-function evidenceSatisfiesRequiredReadiness(joinedEvidence, requiredIds) {
-  if (requiredIds.length === 0) return true;
+function unprovenRequiredReadiness(joinedEvidence, requiredIds) {
   const satisfied = new Set(
     joinedEvidence.flatMap((entry) => Array.isArray(entry.satisfies) ? entry.satisfies : [])
   );
-  return requiredIds.every((id) => satisfied.has(id));
+  return requiredIds.filter((id) => !satisfied.has(id));
 }
 
 function validateFinalDispositions(fixLog) {
@@ -1465,18 +1466,19 @@ function validateFinalDispositions(fixLog) {
       return { status: "halt", reason: "fix-log-final-disposition-coverage-missing" };
     }
   }
-  const requiredEvidenceIds = requiredReadinessEvidenceIds(fixLog);
+  // Each finding closed on evidence needs its own evidence. The required checks are proven
+  // once for the run, by evidence joined to any such finding; a finding does not have to
+  // carry copies of the checks that prove the other findings (issue #26).
+  const runEvidence = [];
   for (const disposition of fixLog.final_dispositions) {
     if (!FIX_LOG_TERMINAL_EVIDENCE_DISPOSITIONS.has(disposition.disposition)) continue;
     const joinedEvidence = objectiveEvidenceForDisposition(fixLog, disposition);
+    runEvidence.push(...joinedEvidence);
     if (disposition.disposition === "false_positive") {
       if (!joinedEvidence.some((entry) => entry.outcome === "refuted")) {
         return { status: "halt", reason: "fix-log-final-disposition-evidence-missing" };
       }
     } else if (joinedEvidence.length === 0) {
-      return { status: "halt", reason: "fix-log-final-disposition-evidence-missing" };
-    }
-    if (!evidenceSatisfiesRequiredReadiness(joinedEvidence, requiredEvidenceIds)) {
       return { status: "halt", reason: "fix-log-final-disposition-evidence-missing" };
     }
     if (disposition.disposition === "closed_with_residual_risk") {
@@ -1486,6 +1488,13 @@ function validateFinalDispositions(fixLog) {
       if (!nonBlankString(disposition.decided_by)) {
         return { status: "halt", reason: "fix-log-final-disposition-approver-missing" };
       }
+    }
+  }
+  if (runEvidence.length > 0) {
+    const unproven = unprovenRequiredReadiness(runEvidence, requiredReadinessEvidenceIds(fixLog));
+    if (unproven.length > 0) {
+      return halt("fix-log-final-disposition-evidence-missing",
+        `no objective_evidence entry joined to a closed or false_positive finding lists ${unproven.map((id) => JSON.stringify(id)).join(", ")} in "satisfies"; each required check in change_readiness.required_verification must be proven once for the run`);
     }
   }
   return { status: "pass", reason: "pass" };
@@ -1970,6 +1979,91 @@ export function validateFixLogNewWrite(fixLog, { contextFile } = {}) {
   return { status: "pass", reason: "pass" };
 }
 
+// A finished (completed or failed) fix log accepts one kind of update: recording a later
+// decision on a finding the run left waiting (deferred or needs_evidence), such as an owner
+// approval given days later. Everything else in the log stays as it was. The changed entry
+// keeps the entry it replaces in `supersedes`, so the history is not lost (issue #26).
+const LATER_DECISION_OPEN_DISPOSITIONS = new Set(["deferred", "needs_evidence"]);
+const LATER_DECISION_FIELDS = new Set(["final_dispositions", "objective_evidence"]);
+const LATER_DECISION_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+
+function validateLaterDecision(fixLog, previousFixLog) {
+  if (fixLog.status !== previousFixLog.status) {
+    return halt("fix-log-later-decision-invalid",
+      `status must stay ${JSON.stringify(previousFixLog.status)}; a finished fix log only records later decisions on its deferred or needs_evidence findings`);
+  }
+  const fields = new Set([...Object.keys(previousFixLog), ...Object.keys(fixLog)]);
+  for (const field of fields) {
+    if (LATER_DECISION_FIELDS.has(field)) continue;
+    if (stableJson(previousFixLog[field]) !== stableJson(fixLog[field])) {
+      return halt("fix-log-later-decision-invalid",
+        `${field} changed; on a finished fix log only final_dispositions and objective_evidence may change`);
+    }
+  }
+  const priorEvidence = Array.isArray(previousFixLog.objective_evidence) ? previousFixLog.objective_evidence : [];
+  const nextEvidence = Array.isArray(fixLog.objective_evidence) ? fixLog.objective_evidence : [];
+  if (nextEvidence.length < priorEvidence.length ||
+      priorEvidence.some((entry, index) => stableJson(entry) !== stableJson(nextEvidence[index]))) {
+    return halt("fix-log-later-decision-invalid", "objective_evidence entries already recorded must stay unchanged and in order; add new entries after them");
+  }
+  const priorDispositions = Array.isArray(previousFixLog.final_dispositions) ? previousFixLog.final_dispositions : [];
+  const nextDispositions = Array.isArray(fixLog.final_dispositions) ? fixLog.final_dispositions : [];
+  if (nextDispositions.length !== priorDispositions.length) {
+    return halt("fix-log-later-decision-invalid", "final_dispositions must keep the same entries in the same order; change an entry in place");
+  }
+  const decidedFindings = new Set();
+  for (const [index, prior] of priorDispositions.entries()) {
+    const next = nextDispositions[index];
+    if (stableJson(prior) === stableJson(next)) continue;
+    const at = `final_dispositions[${index}]`;
+    if (!plainObject(prior) || !LATER_DECISION_OPEN_DISPOSITIONS.has(prior.disposition)) {
+      return halt("fix-log-later-decision-invalid",
+        `${at} was ${JSON.stringify(prior?.disposition)}; only a deferred or needs_evidence finding can take a later decision`);
+    }
+    if (!plainObject(next) || next.finding_id !== prior.finding_id || next.disposition === prior.disposition ||
+        !FIX_LOG_FINAL_DISPOSITION_ENUM.has(next.disposition)) {
+      return halt("fix-log-later-decision-invalid",
+        `${at} must keep finding_id ${JSON.stringify(prior.finding_id)} and record a different disposition, one of ${[...FIX_LOG_FINAL_DISPOSITION_ENUM].join(", ")}`);
+    }
+    if (stableJson(next.supersedes) !== stableJson(prior)) {
+      return halt("fix-log-later-decision-invalid", `${at}.supersedes must be an exact copy of the entry it replaces`);
+    }
+    if (!nonBlankString(next.decided_by) || !nonBlankString(next.rationale) ||
+        !LATER_DECISION_TIMESTAMP_RE.test(next.decided_at ?? "") || Number.isNaN(Date.parse(next.decided_at))) {
+      return halt("fix-log-later-decision-invalid", `${at} needs decided_by, rationale and decided_at (a UTC timestamp such as 2026-11-15T10:00:00Z) for the later decision`);
+    }
+    if (next.disposition === "closed_with_residual_risk" && !nonBlankString(next.residual_risk)) {
+      return halt("fix-log-final-disposition-residual-risk-missing", `${at} is closed_with_residual_risk and needs residual_risk`);
+    }
+    if (FIX_LOG_TERMINAL_EVIDENCE_DISPOSITIONS.has(next.disposition)) {
+      const joined = objectiveEvidenceForDisposition(fixLog, next);
+      const proven = next.disposition === "false_positive"
+        ? joined.some((entry) => entry.outcome === "refuted")
+        : joined.length > 0;
+      if (!proven) {
+        return halt("fix-log-final-disposition-evidence-missing",
+          `${at} is ${next.disposition}; its evidence_refs must name objective_evidence for finding ${JSON.stringify(next.finding_id)}`);
+      }
+    }
+    decidedFindings.add(next.finding_id);
+  }
+  const evidenceIds = new Set(priorEvidence.map((entry) => entry?.id));
+  for (const [offset, entry] of nextEvidence.slice(priorEvidence.length).entries()) {
+    const at = `objective_evidence[${priorEvidence.length + offset}]`;
+    if (!validObjectiveEvidenceEntry(entry)) {
+      return halt("fix-log-objective-evidence-invalid", `${at} needs id, finding_id, kind, ref and outcome`);
+    }
+    if (evidenceIds.has(entry.id)) {
+      return halt("fix-log-later-decision-invalid", `${at}.id ${JSON.stringify(entry.id)} is already used; give new evidence a new id`);
+    }
+    evidenceIds.add(entry.id);
+    if (!decidedFindings.has(entry.finding_id)) {
+      return halt("fix-log-later-decision-invalid", `${at} is for finding ${JSON.stringify(entry.finding_id)}, which has no later decision in this update`);
+    }
+  }
+  return { status: "pass", reason: "pass" };
+}
+
 export function validateFixLogTransition(fixLog, previousFixLog, { contextFile } = {}) {
   const candidateVerdict = validateFixLogNewWrite(fixLog, { contextFile });
   if (candidateVerdict.status === "halt") return candidateVerdict;
@@ -1994,6 +2088,9 @@ export function validateFixLogTransition(fixLog, previousFixLog, { contextFile }
     previousFixLog.warnings.some((warning) => plainObject(warning) && warning.code === "reaped-stale") &&
     fixLog.status === "in-progress" &&
     !candidateWarnings.some((warning) => plainObject(warning) && warning.code === "reaped-stale");
+  if (previousFixLog.status === "completed" || previousFixLog.status === "failed") {
+    return validateLaterDecision(fixLog, previousFixLog);
+  }
   if (previousFixLog.status !== "in-progress" && !reapedResume) {
     return { status: "halt", reason: "fix-log-transition-prior-state-not-in-progress" };
   }
