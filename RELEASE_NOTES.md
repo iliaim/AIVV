@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.5.3 — nested hand-back and symlinked installs
+
+- `/aivv --fix` and outer-loop chains now return control from the nested fix run to the run that started it, so the outer run closes its progress items and restores the paused step. Progress items are again marked in progress as each phase begins, and the workflow outline maps each phase to its step numbers.
+- Resolve symlinks in the loaded skill directory before locating the runtime, so a copy linked into a project's skills folder uses its own runtime instead of a separate, possibly older, Codex install.
+- Make the cross-process storage tests use a reliable checkout fixture so they pass on Linux CI.
+
 ## 0.5.2 — keep the session's task list
 
 - `/aivv` and `/aivv-fix` add a fixed set of AIVV progress items to the session's existing task list at the current step instead of replacing it, and never rewrite a list they cannot fully reproduce.
