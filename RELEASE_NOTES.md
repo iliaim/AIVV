@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.5.5 — later decisions and run-wide checks
+
+- A completed or failed fix log can now record a decision made after the run on a finding it left `deferred` or `needs_evidence`, such as an owner approval days later. The entry is changed in place and keeps a copy of what it replaces; nothing else in the log can change.
+- Each finding closed on evidence still needs its own evidence, but the run's required checks are proven once for the run. A finding no longer has to carry copies of the checks that prove the other findings. A halt now names the check that no evidence proves.
+
 ## 0.5.4 — notice repeated repairs
 
 - At Step 4, `/aivv-fix` notes when earlier fix runs on the same project already changed the files it plans to change, newest first, so a loop that starts a fresh run each round can see it is repairing the same area again. The note is report only: it blocks nothing, sets no threshold, and does not count against the rework limit.
