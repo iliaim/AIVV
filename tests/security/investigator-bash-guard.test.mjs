@@ -23,6 +23,8 @@ for (const command of [
   "cat 'file name.txt'",
   "grep -n 'token' README.md",
   "ls -R .",
+  "grep --exclude=generated.txt -n token README.md",
+  "grep --ignore-case token README.md",
 ]) {
   const result = run("aivv:investigator", command);
   assert.equal(result.status, 0, `expected investigator command to pass: ${command}`);
@@ -57,6 +59,18 @@ for (const command of [
   "grep -R secret .",
   "grep -r secret .",
   "grep --dereference-recursive secret .",
+  "grep -d recurse secret .",
+  "grep -drecurse secret .",
+  "grep --directories=recurse secret .",
+  "grep --dir=recurse secret .",
+  "grep -S -r secret .",
+  "grep --recur secret .",
+  "grep --deref secret .",
+  "grep --exclude-fr=list.txt secret README.md",
+  "grep --fi=patterns.txt README.md",
+  "ls --deref .",
+  "wc --files0-from=list.txt",
+  "wc --files0=list.txt",
   "grep -f patterns.txt README.md",
   "ls -L .",
   "ls -RL .",

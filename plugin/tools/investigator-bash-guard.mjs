@@ -68,9 +68,21 @@ function isAllowed(tokens, policy) {
       return false;
     }
     const options = args.slice(0, args.indexOf("--") < 0 ? args.length : args.indexOf("--"));
-    if (executable === "grep" && options.some((arg) => arg === "--file" || arg.startsWith("--file=") || arg === "--exclude-from" || arg.startsWith("--exclude-from=") || (/^-[^-]/.test(arg) && arg.slice(1).includes("f")))) return false;
-    if (executable === "grep" && options.some((arg) => arg === "--recursive" || arg === "--dereference-recursive" || (/^-[^-]/.test(arg) && /[rR]/.test(arg.slice(1))))) return false;
-    if (executable === "ls" && options.some((arg) => arg === "--dereference" || (/^-[^-]/.test(arg) && arg.slice(1).includes("L")))) return false;
+    // Deny options that read paths from a file or recurse/follow symlinks, since
+    // those paths escape the per-token workspace check. Short options may be
+    // clustered (-rn, -drecurse); GNU long options accept unambiguous prefixes
+    // (--recur, --dir=recurse), so match any prefix of a denied name.
+    const denied = {
+      grep: { short: /[fdrRS]/, long: ["file", "exclude-from", "recursive", "dereference-recursive", "directories"], exact: ["exclude"] },
+      ls: { short: /L/, long: ["dereference"], exact: [] },
+      wc: { short: null, long: ["files0-from"], exact: [] },
+    }[executable];
+    if (denied && options.some((arg) => {
+      if (/^-[^-]/.test(arg)) return denied.short !== null && denied.short.test(arg.slice(1));
+      if (!arg.startsWith("--") || arg === "--") return false;
+      const name = arg.slice(2).split("=")[0];
+      return name !== "" && !denied.exact.includes(name) && denied.long.some((option) => option.startsWith(name));
+    })) return false;
     return true;
   }
 
