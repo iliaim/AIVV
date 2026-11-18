@@ -295,7 +295,7 @@ jq -s '
 
 ## Multi-lens evaluation protocol
 
-Use this protocol when you want to evaluate whether multi-lens dispatch (`--lens=a,b`) produces findings that homogeneous same-lens dispatch (`--lens=a`) does not. Its central question — *does methodological diversity at dispatch time produce real epistemic gain, or is it prompt ornamentation?* — is answered by accumulating at least three such evaluations, then writing an ADR off the empirical record.
+Use this manual protocol when you want to evaluate whether multi-lens dispatch (`--lens=a,b`) produces findings that homogeneous same-lens dispatch (`--lens=a`) does not. Its central question — *does methodological diversity at dispatch time produce real epistemic gain, or is it prompt ornamentation?* — needs several evaluations to answer, not one.
 
 ### Step 1 — Run the A/B pair
 
@@ -326,7 +326,7 @@ comm -12 \
   <(jq -r '.findings[].fingerprint' "$BASELINE" | sort -u) \
   <(jq -r '.findings[].fingerprint' "$TREATMENT" | sort -u)
 
-# Treatment-only catches (multi-lens caught, baseline missed) — KEY DATA for the spike
+# Treatment-only catches (multi-lens caught, baseline missed) — the key data
 comm -23 \
   <(jq -r '.findings[].fingerprint' "$TREATMENT" | sort -u) \
   <(jq -r '.findings[].fingerprint' "$BASELINE" | sort -u)
@@ -375,28 +375,26 @@ Log each classified outcome using the `false_positive` / `true_positive` kinds. 
 - For `cross-lens-convergence` findings: write one record to **each** lens in the `findings[].lens` array — content is identical across copies EXCEPT the `lens` field, which carries the lens of the file each copy is written into (so `code.jsonl` carries `lens: "code"`, `sec.jsonl` carries `lens: "sec"`). The cross-lens identity is preserved by the duplication itself (the same finding fingerprint appearing in multiple per-lens corpora IS the cross-lens signal); the per-file `lens` field stays consistent with the file path so existing per-lens FP/TP-rate one-liners that filter inside a single corpus continue to work without re-filtering by the `lens` field.
 - For `intra-lens-convergence` findings (K×M case): write one record to `<calibration_dir>/<finding-lens>/<id>.jsonl` — routing identical to `lens-domain-catch` (single lens, no duplication). The epistemic signal that all M reviewers within the block agreed is recorded via the `agreement` field, NOT via duplication (duplication is reserved for the cross-lens identity). Eligible for `dual_<X>` / `n_way_<X>` calibration-kind selection in homogeneous-block sense — M reviewers with the same lens converging IS the same-lens N-reviewer agreement epistemic shape that the calibration-kind selection note below describes.
 
-**Calibration kind selection:** **for cross-lens-convergence findings**, use the bare `false_positive` / `true_positive` kinds, NOT the `dual_<X>` / `n_way_<X>` family. The `dual_<X>` / `n_way_<X>` kinds are reserved for **same-lens N-reviewer agreement** (the homogeneous-case epistemic signal — N reviewers with the same lens agreeing; this includes the intra-lens-convergence K×M case per the prior bullet's routing rule). Cross-lens-convergence is semantically distinct (independent methodological frames converged); the cross-lens signal is preserved by the per-lens corpus separation (a cross-lens-convergence finding appearing in BOTH `code.jsonl` and `sec.jsonl` IS the cross-lens signal, machine-readable from the corpus structure). Conflating cross-lens findings with same-lens-N-reviewer findings under a shared `dual_<X>` kind would remove the deliberate machine-distinguishability between same-lens unanimity and cross-lens convergence. <!-- DEFERRED-RETIRE-WHEN: subtask 3d ADR analysis confirms whether per-lens corpus separation is sufficient or whether explicit cross-lens calibration kinds are needed for downstream consumers. -->
+**Calibration kind selection:** **for cross-lens-convergence findings**, use the bare `false_positive` / `true_positive` kinds, NOT the `dual_<X>` / `n_way_<X>` family. The `dual_<X>` / `n_way_<X>` kinds are reserved for **same-lens N-reviewer agreement** (the homogeneous-case epistemic signal — N reviewers with the same lens agreeing; this includes the intra-lens-convergence K×M case per the prior bullet's routing rule). Cross-lens-convergence is semantically distinct (independent methodological frames converged); the cross-lens signal is preserved by the per-lens corpus separation (a cross-lens-convergence finding appearing in BOTH `code.jsonl` and `sec.jsonl` IS the cross-lens signal, machine-readable from the corpus structure). Conflating cross-lens findings with same-lens-N-reviewer findings under a shared `dual_<X>` kind would remove the deliberate machine-distinguishability between same-lens unanimity and cross-lens convergence.
 
 **Note on orchestrator-side `review_meta` write:** AIVV's `/aivv` Step 7 dual-writes `review_meta` denominator records to ALL contributing lenses' corpora when a multi-lens dispatch fires, so no single lens's denominator is skewed. FP/TP outcome records remain orchestrator-routed to the first lens with a `lens_assignment` annotation. This protocol's Step 4 hand-routing is the canonical per-lens FP/TP routing convention; the orchestrator's first-lens routing for those records is a known limitation.
 
 ### Step 5 — Repeat until at least three evaluations
 
-The ADR write-up requires at least three real-diff evaluations to make a credible case. Each evaluation is:
+One evaluation is anecdotal; at least three real-diff evaluations are needed to make a credible case. Each evaluation is:
 - 1 baseline run + 1 treatment run + classified treatment-only catches.
 
 After at least three evaluations:
 - Compute per-lens TP/FP rates from the accumulated calibration corpus (use the existing `FP rate estimate` and `TP rate estimate` one-liners above, filtered per lens).
 - Read across the per-lens results to answer: did multi-lens lenses produce categorically different catches, or did they re-discover what the homogeneous baseline already found?
 
-### Step 6 — Write the ADR
+### Step 6 — Interpret the results
 
-Three possible outcomes (pre-committed — outputs feed an ADR decision, not a production release):
+Three possible outcomes:
 
-1. **Lens-first wins** — treatment produces TP findings the baseline missed, and these findings have lens-attributable patterns (e.g., the security-lens consistently catches injection bugs the code-lens misses). Write ADR formalizing lens-first scaling.
-2. **Lens-first loses** — treatment-only catches are all FPs, or all re-discoveries dressed in lens-specific language. Write ADR documenting the negative result; siblings-first stays.
-3. **Lens-first needs consensus extension** — treatment produces real TP findings, but the consensus-synthesis layer cannot coherently combine cross-lens findings into a useful report. Flag as a prerequisite; postpone production lens-first until consensus extension ships.
-
-The ADR consumes this protocol's accumulated evidence. The protocol itself can then be retired (or kept as a reusable harness for future spikes targeting other forms of methodological diversity).
+1. **Multi-lens adds value** — treatment produces TP findings the baseline missed, and these findings have lens-attributable patterns (e.g., the security-lens consistently catches injection bugs the code-lens misses).
+2. **Multi-lens adds cost, not coverage** — treatment-only catches are all FPs, or all re-discoveries dressed in lens-specific language; homogeneous dispatch is the better choice for that lens pairing.
+3. **Multi-lens needs better consensus** — treatment produces real TP findings, but the consensus-synthesis layer cannot coherently combine cross-lens findings into a useful report.
 
 ## When to inspect
 
