@@ -280,7 +280,7 @@ When a predecessor review is linked, Step 6 must carry each predecessor finding'
 
 **Fires ONLY after Step 6 produces a verify-PASS result with no regressions.** This step checks whether the outer-loop should continue, has converged cleanly, or has hit a termination condition.
 
-Read the canonical [outer-loop contract](../../.aivv/outer-loop.md) before evaluating its preconditions, state, canary, termination, or reverse-chain behavior. The outer loop runs only after verification passes without regressions; the contract owns its algorithm and version-failure handling.
+Read the canonical [outer-loop contract](../../.aivv/outer-loop.md) before evaluating its preconditions, state, termination, or reverse-chain behavior. The outer loop runs only after verification passes without regressions; the contract owns its algorithm and capability-unavailable handling.
 
 ---
 

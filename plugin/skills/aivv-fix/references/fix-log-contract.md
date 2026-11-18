@@ -78,12 +78,12 @@ For every applied non-dry-run fix, buffer `change_readiness` into the initialize
   "risk_tier": "medium",
   "affected_surfaces": ["code", "public-api"],
   "approval_mode": "user-confirmed",
-  "rollback_plan": "Revert README.md and rerun bash tools/validate.sh",
+  "rollback_plan": "Revert README.md and rerun npm test",
   "required_verification": [
     {
       "id": "evreq-F001-validate",
       "kind": "command",
-      "command_argv": ["bash", "tools/validate.sh"],
+      "command_argv": ["npm", "test"],
       "required": true
     }
   ],
@@ -245,12 +245,12 @@ For each approved fix (in priority order: CRITICAL first):
        "risk_tier": "medium",
        "affected_surfaces": ["code"],
        "approval_mode": "user-confirmed",
-       "rollback_plan": "Revert src/api/routes.py and rerun bash tools/validate.sh",
+       "rollback_plan": "Revert src/api/routes.py and rerun npm test",
        "required_verification": [
          {
            "id": "evreq-F001-validate",
            "kind": "command",
-           "command_argv": ["bash", "tools/validate.sh"],
+           "command_argv": ["npm", "test"],
            "required": true
          }
        ],
@@ -268,7 +268,7 @@ For each approved fix (in priority order: CRITICAL first):
          "finding_id": "F001",
          "kind": "command-output",
          "satisfies": ["evreq-F001-validate"],
-         "ref": "bash tools/validate.sh",
+         "ref": "npm test",
          "outcome": "pass",
          "summary": "Validation completed successfully."
        }
@@ -292,7 +292,7 @@ For each approved fix (in priority order: CRITICAL first):
          "selected_approach": "A1",
          "summary": "Add validate_input() guard before /search handles user input.",
          "expected_files": ["src/api/routes.py"],
-         "verification_path": "bash tools/validate.sh",
+         "verification_path": "npm test",
          "alternatives_considered": [
            {
              "approach_id": "A2",
@@ -320,7 +320,7 @@ For each approved fix (in priority order: CRITICAL first):
          "finding_id": "F001",
          "status": "verified_resolved",
          "verifier": "scoped-verifier",
-         "evidence": "bash tools/validate.sh passed",
+         "evidence": "npm test passed",
          "remaining_next_action": null
        }
      ],

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aivv.dev/schemas/calibration.json",
   "title": "AIVV Calibration Record",
-  "description": "Machine-parseable envelope for a single calibration record. As of per-invocation sharding contract () a lens's records are sharded one JSONL file per invocation at `.aivv/calibration/<lens>/<invocation-id>.jsonl`; the legacy shared `.aivv/calibration/<lens>.jsonl` remains readable and readers union both. This schema validates ONE record (one JSONL line); a shard file is a sequence of such lines validated line-by-line, NOT a single JSON document (a bare `ajv validate` against a whole shard file will not work — validate each line). Append-only JSON Lines — one record per line. The prose-source-of-truth for human readers is `.aivv/calibration/README.md`; this JSON Schema is the machine-readable contract emitted by `/aivv` Step 7 and `/aivv-fix` Step 7 and consumed by `/aivv-calibrate` (dev.31+). Schema graduation: dev.32 (trigger: `/aivv-calibrate` shipped in dev.31, satisfying the README's prior 'deferred to v0.2 when read-side analytics ship' precondition). Universally-required base fields: `lens`, `kind`, `ts`. Kind-specific required fields are enforced via the `oneOf` discriminator. Convergence-kind suffix tolerance per dev.31 policy: kinds prefixed `dual_<true|false>_positive` or `n_way_<true|false>_positive(_agreement)` admit an optional trailing `_<context>` suffix opaque to the schema. Citation evidence per dev.18 reviewer-grounding methodology may be carried in two forms: the typed `grounded_by` array (preferred, dev.31+) or as legacy free-form `grounded_by:{<source_type>:<source_ref>}` substrings inside any string field (accepted during the migration window). Severity values are case-insensitive — both UPPER (`CRITICAL`) and lower (`critical`) appear in extant corpora; both are accepted without normalization.",
+  "description": "Machine-parseable envelope for a single calibration record. Under the per-invocation sharding contract, a lens's records are sharded one JSONL file per invocation at `.aivv/calibration/<lens>/<invocation-id>.jsonl`; the legacy shared `.aivv/calibration/<lens>.jsonl` remains readable and readers union both. This schema validates ONE record (one JSONL line); a shard file is a sequence of such lines validated line-by-line, NOT a single JSON document (a bare `ajv validate` against a whole shard file will not work — validate each line). Append-only JSON Lines — one record per line. The prose-source-of-truth for human readers is `.aivv/calibration/README.md`; this JSON Schema is the machine-readable contract emitted by `/aivv` Step 7 and `/aivv-fix` Step 7 and consumed by `/aivv-calibrate`. Universally-required base fields: `lens`, `kind`, `ts`. Kind-specific required fields are enforced via the `oneOf` discriminator. Convergence-kind suffix tolerance: kinds prefixed `dual_<true|false>_positive` or `n_way_<true|false>_positive(_agreement)` admit an optional trailing `_<context>` suffix opaque to the schema. Citation evidence per the reviewer-grounding methodology may be carried in two forms: the typed `grounded_by` array (preferred) or as legacy free-form `grounded_by:{<source_type>:<source_ref>}` substrings inside any string field (accepted during the migration window). Severity values are case-insensitive — both UPPER (`CRITICAL`) and lower (`critical`) appear in extant corpora; both are accepted without normalization.",
   "type": "object",
   "required": ["lens", "kind", "ts"],
   "additionalProperties": true,
@@ -10,11 +10,11 @@
     "lens": {
       "type": "string",
       "enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
-      "description": "Review lens. Shipped: general (broad goal-fit, evidence, design, and risk review), code (legacy finding default, dev.1+), sec + visual (dev.22+), ux + polish (dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (user-journey lens; dev.121). Forward-look planned: perf, a11y (Tier 2/3+). Enum mirrors finding.json envelope's lens enum; calibration corpora group by lens directory (e.g., .aivv/calibration/general/<invocation-id>.jsonl shards, plus any legacy .aivv/calibration/general.jsonl)."
+      "description": "Review lens. Shipped: general (broad goal-fit, evidence, design, and risk review), code (legacy finding default), sec + visual, ux + polish, compliance (WCAG AAA + ARIA APG full + legal-risk), i18n (translation discipline + CLDR + Intl.* + RTL), user-journey (user-journey lens). Forward-look planned: perf, a11y. Enum mirrors finding.json envelope's lens enum; calibration corpora group by lens directory (e.g., .aivv/calibration/general/<invocation-id>.jsonl shards, plus any legacy .aivv/calibration/general.jsonl)."
     },
     "kind": {
       "type": "string",
-      "description": "Calibration category. Bare canonical forms: false_positive, dual_false_positive, n_way_false_positive, true_positive, dual_true_positive, n_way_true_positive_agreement, false_negative, bad_fix, auto_deferred_at_cap, review_meta, fix_introduced_bug, challenger_caught_issue, challenger_false_positive, recurring_class_missed, challenge_budget_exhausted, pre_write_validator_caught, pre_write_validator_false_positive, manual_bypass_approved, pre_write_unsupported_shape. Convergence kinds may carry an operator-extended `_<context>` suffix (e.g., `dual_true_positive_on_orchestrator_defaults`) — readers MUST treat any kind whose prefix matches a canonical convergence form as the canonical kind. HISTORICAL: `auto_deferred_at_cap` is no longer emitted — its producer (the `/aivv-fix` Step 4 cap-disposition rule, dev.110) was removed at dev.157 when the narrative-drift surfacers it keyed on (`validate.sh` Stages 15/17/18/19/20) were deleted at dev.155; the kind + its `oneOf` branch are retained for read-compat of existing calibration records.",
+      "description": "Calibration category. Bare canonical forms: false_positive, dual_false_positive, n_way_false_positive, true_positive, dual_true_positive, n_way_true_positive_agreement, false_negative, bad_fix, auto_deferred_at_cap, review_meta, fix_introduced_bug, challenger_caught_issue, challenger_false_positive, recurring_class_missed, challenge_budget_exhausted, pre_write_validator_caught, pre_write_validator_false_positive, manual_bypass_approved, pre_write_unsupported_shape. Convergence kinds may carry an operator-extended `_<context>` suffix (e.g., `dual_true_positive_on_orchestrator_defaults`) — readers MUST treat any kind whose prefix matches a canonical convergence form as the canonical kind. HISTORICAL: `auto_deferred_at_cap` is no longer emitted — its producer (a former `/aivv-fix` Step 4 cap-disposition rule) was removed along with the narrative-drift checks it keyed on; the kind + its `oneOf` branch are retained for read-compat of existing calibration records.",
       "pattern": "^(false_positive|dual_false_positive(_.+)?|n_way_false_positive(_.+)?|true_positive|dual_true_positive(_.+)?|n_way_true_positive_agreement(_.+)?|false_negative|bad_fix|auto_deferred_at_cap|review_meta|fix_introduced_bug|challenger_caught_issue|challenger_false_positive|recurring_class_missed|challenge_budget_exhausted|pre_write_validator_caught|pre_write_validator_false_positive|manual_bypass_approved|pre_write_unsupported_shape)$"
     },
     "ts": {
@@ -29,7 +29,7 @@
     "severity": {
       "type": "string",
       "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH", "critical", "major", "minor", "polish"],
-      "description": "Severity as flagged by the reviewer. Case-insensitive accepted (extant corpora carry both UPPER and lower forms). POLISH (dev.41+) is an orthogonal value-add tier — not on the defect axis CRITICAL/MAJOR/MINOR; see .aivv/methodology.md Severity model. Present on FP-family and TP-family kinds."
+      "description": "Severity as flagged by the reviewer. Case-insensitive accepted (extant corpora carry both UPPER and lower forms). POLISH is an orthogonal value-add tier — not on the defect axis CRITICAL/MAJOR/MINOR; see skills/methodology/references/severity-confidence.md. Present on FP-family and TP-family kinds."
     },
     "impact_tier": {
       "type": "string",
@@ -79,7 +79,7 @@
     },
     "root_cause_of_bad_fix": {
       "type": "string",
-      "description": "Why the fix went wrong. Free-form (per dev.29 calibration README guidance). Example values observed so far: `prerequisite-not-met`, `other`. Required on `bad_fix` records. Promotion to formal enum gated on N≥3 distinct empirical values per Operating Principle 1."
+      "description": "Why the fix went wrong. Free-form (per calibration README guidance). Example values observed so far: `prerequisite-not-met`, `other`. Required on `bad_fix` records. Promotion to formal enum gated on N≥3 distinct empirical values per Operating Principle 1."
     },
     "findings_produced": {
       "type": "integer",
@@ -190,7 +190,7 @@
     "validator_check": {
       "type": "string",
       "enum": ["jq-parses", "schema-coherence", "line-cite-valid", "shell-syntax-valid"],
-      "description": "Which Step 5.4 sub-check caught the defect. Required on `pre_write_validator_caught` records. (The proposed 4th kind `count-matches-enumeration` was dropped per 2026-05-22 user gate — count-vs-enumeration drift is addressed by eliminating bare-count-in-prose at authoring time per maintainer guidance dev.119+, not by deterministic validation.)"
+      "description": "Which Step 5.4 sub-check caught the defect. Required on `pre_write_validator_caught` records. (There is deliberately no `count-matches-enumeration` sub-check — count-vs-enumeration drift is addressed by eliminating bare-count-in-prose at authoring time, not by deterministic validation.)"
     },
     "would_have_been_n_class": {
       "type": "string",
@@ -274,7 +274,7 @@
       "required": ["kind", "bug", "category"]
     },
     {
-      "title": "bad_fix — regression introduced by /aivv-fix (dev.29+)",
+      "title": "bad_fix — regression introduced by /aivv-fix",
       "description": "A fix proposed and executed by `/aivv-fix` later found to have introduced a regression. Distinct from FP (fix wasn't needed) and FN (fix didn't catch a real bug).",
       "properties": {
         "kind": {
@@ -284,8 +284,8 @@
       "required": ["kind", "fix_regression", "root_cause_of_bad_fix"]
     },
     {
-      "title": "auto_deferred_at_cap — Phase 1 cap-residual auto-disposition (dev.110+, AIVV-self only)",
-      "description": "Records a cycle-3 cap-residual finding auto-classified by the /aivv-fix Step 4 three-gate auto-disposition rule: severity ∈ {MINOR, POLISH}, grounded_by exclusively cites validate.sh Stage 15-19, target-project marker-file check returns AIVV-self. Per-cycle ephemeral — does NOT populate wont-fix-registry; the same finding may re-surface and be auto-deferred again.",
+      "title": "auto_deferred_at_cap — Phase 1 cap-residual auto-disposition (legacy; no longer emitted)",
+      "description": "Records a cycle-3 cap-residual finding auto-classified by the /aivv-fix Step 4 three-gate auto-disposition rule: severity ∈ {MINOR, POLISH}, grounded_by exclusively cites AIVV's own validation stages (legacy), target-project marker-file check returns AIVV-self. Per-cycle ephemeral — does NOT populate wont-fix-registry; the same finding may re-surface and be auto-deferred again.",
       "properties": {
         "kind": {"const": "auto_deferred_at_cap"},
         "grounded_by": {"minItems": 1}
@@ -293,7 +293,7 @@
       "required": ["kind", "finding", "severity", "grounded_by"]
     },
     {
-      "title": "review_meta — per-review-session metadata (dev.31+)",
+      "title": "review_meta — per-review-session metadata",
       "description": "One record per `/aivv` invocation regardless of finding count. Provides the `findings_produced` denominator for the 'findings per review' trend. Excluded from FP/TP-rate denominators.",
       "properties": {
         "kind": {
@@ -347,7 +347,7 @@
       "required": ["kind", "invocation_id", "max_challenges", "batches_skipped"]
     },
     {
-      "title": "pre_write_validator_caught — Step 5.4 PRE-WRITE-VALIDATE deterministically caught a defect (dev.124+)",
+      "title": "pre_write_validator_caught — Step 5.4 PRE-WRITE-VALIDATE deterministically caught a defect",
       "properties": {"kind": {"const": "pre_write_validator_caught"}},
       "required": ["lens", "kind", "ts", "finding_id", "validator_check", "would_have_been_n_class"]
     },

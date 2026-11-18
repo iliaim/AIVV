@@ -579,7 +579,7 @@
           "fix_confidence": {
             "type": "string",
             "enum": ["high", "medium", "low"],
-            "description": "Per-finding fix confidence score computed in Step 4 (9-predicate demotion algorithm). Recorded here for post-cycle calibration analysis. Optional — absent on fix-logs written before dev.126."
+            "description": "Per-finding fix confidence score computed in Step 4 (9-predicate demotion algorithm). Recorded here for post-cycle calibration analysis. Optional — absent on older fix-logs."
           },
           "fix_confidence_at_plan": {
             "type": "string",

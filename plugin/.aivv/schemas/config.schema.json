@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "AIVV User Preferences (Golden Additive Schema)",
-  "description": "Golden additive schema for .aivv/config.json (project) and ~/.aivv/config.json (user). This is the current authoring target for all config keys. Legacy config.vN.schema.json files remain compatibility artifacts, but new additive keys are added here without claiming a new config.vN counter. Unknown keys are allowed for forward compatibility and surfaced by validate.sh unknown-key lint.",
+  "description": "Golden additive schema for .aivv/config.json (project) and ~/.aivv/config.json (user). This is the single schema for all config keys. Unknown keys are allowed for forward compatibility.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
@@ -214,7 +214,7 @@
         "off"
       ],
       "default": "ask",
-      "description": "Smart lens detection (dev.154). Default/wizard ask reports optional ceiling candidates without adding them or blocking the requested review; manual-provenance ask requests a choice when interactive. smart adds relevant lenses within scope and announces the final method; off retains detect/report behavior. See review-shape-resolution.md for the mode contract."
+      "description": "Smart lens detection. Default/wizard ask reports optional ceiling candidates without adding them or blocking the requested review; manual-provenance ask requests a choice when interactive. smart adds relevant lenses within scope and announces the final method; off retains detect/report behavior. See review-shape-resolution.md for the mode contract."
     },
     "severity_model": {
       "type": "string",

@@ -31,8 +31,8 @@ The `domain` field identifies which review lens this finding belongs to. It is *
 | `visual` | Visual/UI/a11y review findings (`/aivv --lens=visual`; static review baseline plus optional B3 runtime evidence emit/ingest) |
 | `ux` | UX heuristic-walkthrough + microcopy + interaction-state findings (`/aivv --lens=ux`) |
 | `polish` | Improvement-articulation / value-add suggestions (`/aivv --lens=polish`); subject to the Improvement-articulation gate per `.aivv/methodology.md` |
-| `perf` | Performance findings (planned future lens — Tier 2/3) |
-| `a11y` | Pure-a11y findings, distinct from `visual` lens's UI-a11y coverage (planned future lens — Tier 2/3) |
+| `perf` | Performance findings (planned future lens) |
+| `a11y` | Pure-a11y findings, distinct from `visual` lens's UI-a11y coverage (planned future lens) |
 
 Mirrors `.aivv/schemas/finding.json` envelope `lens` enum. The forward-look entries (`perf`, `a11y`) are accepted today so findings written by adventurous early-adopter setups remain compatible when those lenses graduate to shipped status; the orchestrator does not currently dispatch reviewers with those lens names.
 
@@ -154,7 +154,7 @@ The self-contained branch of the mandatory class verdict. When the investigator 
 - `justification` (string, required-when-present): why the bug does not generalize.
 - `searched_pattern_negative` (string, required-when-present): the grep-pattern the investigator claims returns zero other matches. This is not trust-checked by prose alone: the Step 5 pre-loop executes the pattern using the same scan machinery as `class_signature`. Zero matches means self-contained verified; one or more matches means the claim is falsified and the matched locations are auto-routed into the variant scan/triage instead of accepting the opt-out. Residual boundary: execution cannot confirm the pattern semantically characterizes the bug, so a deliberately irrelevant pattern can still return zero and pass; that is the same investigator-trust boundary as the original classification.
 
-All three sub-fields are required when `class_assessment` is present. There is no machine JSON Schema for investigator output; this doc is the contract. Completeness is enforced by the `validate.sh` class-verdict stage and the Step 5 pre-loop fail-closed gate, not by ajv.
+All three sub-fields are required when `class_assessment` is present. There is no machine JSON Schema for investigator output; this doc is the contract. Completeness is enforced by the Step 5 pre-loop fail-closed class-verdict gate, not by ajv.
 
 Intended as the alternative to `class_signature`: a finding normally emits one branch or the other, and the gate scoped to `category in {code-bug, design-flaw}` requires at least one. If a finding defensively emits both, `class_signature` wins: the orchestrator runs the variant scan and ignores the self-contained assessment. This is the safe-by-default resolution because the two signals contradict each other, and skipping the scan would silently miss class breadth. Exempt categories may still opt in by emitting `class_signature`.
 
@@ -334,7 +334,7 @@ When `verification_method` is emitted in nested-object form (rather than as a ba
     "command_args": {
       "type": "array",
       "items": {"type": "string"},
-      "description": "Optional advisory argv strings for Step 5.7 execution. When non-empty, becomes argv[1:] verbatim. When absent/empty, default to argv[1] = <target_project>. Nested-object form (NOT dotted-key) per dev.123 IV&V N1 cycle-2 corrective."
+      "description": "Optional advisory argv strings for Step 5.7 execution. When non-empty, becomes argv[1:] verbatim. When absent/empty, default to argv[1] = <target_project>. Nested-object form (NOT dotted-key)."
     }
   }
 }

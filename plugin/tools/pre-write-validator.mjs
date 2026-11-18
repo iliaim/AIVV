@@ -927,7 +927,7 @@ function validateAssurancePlan(reviewLog) {
 // Structured audit blocks below are optional for historical logs, but when present they
 // must match .aivv/schemas/review-log.json — a shape the durable schema allows and this
 // gate skipped is a schema-invalid log written to durable state (). Absence stays
-// valid; only malformed presence halts. tools/validate.sh Stage 47 backstops drift here.
+// valid; only malformed presence halts.
 
 function optionalNonBlankString(value) {
   return value === undefined || nonBlankString(value);
