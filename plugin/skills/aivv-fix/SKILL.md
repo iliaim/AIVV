@@ -306,7 +306,7 @@ When `lifecycle_context` is present, initialize `session_changes.lifecycle_conte
 
 ### Step 5.4: PRE-WRITE-VALIDATE — deterministic embedded-content checks
 
-Run deterministic checks for every approved write intent with required or missing detector assertions before the host write primitive. `jq-parses`, `schema-coherence`, and `line-cite-valid` failures halt and re-route for re-authoring only when the shared invocation-wide rework budget has room; otherwise report the finding unresolved and do not write it. Never bypass required assertions without an explicit valid user approval record.
+Immediately before the host write primitive, run the pre-write validator for every approved write intent with required or missing detector assertions, per [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md). Assertion halts re-route for re-authoring only when the shared rework budget has room; otherwise report the finding unresolved and do not write it. Never bypass required assertions without an explicit valid user approval record.
 
 ### Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)
 

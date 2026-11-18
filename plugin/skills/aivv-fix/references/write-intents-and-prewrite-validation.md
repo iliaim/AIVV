@@ -85,40 +85,9 @@ Readiness consumes the materialized write intents from this reference. If `revis
 
 **Trigger:** every approved Step 4.4 `write_intents[]` entry whose `pre_write_assertions` is non-empty, or whose detector-required assertions are missing. Runs BEFORE the Edit/Write/apply host write primitive in Step 5 Branch A/B/C-fallthrough/D.
 
-**Default-ON.** No opt-in gate. Step 5.4 does NOT execute external code (only `jq`, `grep`, simple bash) and produces zero runtime side effects beyond the orchestrator process.
+**Default-ON.** No opt-in gate. Step 5.4 runs only the shipped validator; it executes no project code.
 
-**Per-assertion algorithm:**
-
-For each `write_intents[].pre_write_assertions[i]`:
-
-1. **`jq-parses` (kind):**
-   - Extract the `block_id`-th fenced ```json or ```jsonschema block from `verbatim_doc_content`.
-   - Run `printf '%s' "<extracted_block>" | jq empty 2>&1`.
-   - On non-zero exit → HALT this Edit; emit warning `pre-write-validate-jq-empty-failed-block<N>` and a `pre_write_validator_caught` calibration record. Re-author only when the output identifies a specific fixable content defect, the correction is inside `authorized_scope`, and the shared retry budget has room. Would have caught dev.123 N1 — `"verification_method.command_args": {...}` parses as syntactically valid JSON but `jq` empty does NOT flag the dotted-key class. **Therefore `jq-parses` MUST be paired with `schema-coherence` (next sub-check) — `jq-parses` alone is insufficient.**
-
-2. **`schema-coherence` (kind):**
-   - Read `args.parent_schema_path` (a `.aivv/schemas/*.json` path).
-   - Walk `args.expected_nest_path` (a dotted path: e.g., `properties.changes_summary.items.properties`).
-   - Confirm the new property name in the proposed block is a SINGLE key under the parent path, NOT a dotted string (catches the N1 defect class).
-   - Implementation:
-     ```bash
-     # Pseudo-shell; orchestrator implements in Bash+jq:
-     parent_keys=$(jq -r "$expected_nest_path | keys[]" "$parent_schema_path")
-     proposed_keys=$(printf '%s' "$extracted_block" | jq -r 'keys[]')
-     for key in $proposed_keys; do
-       if [[ "$key" == *.* ]]; then
-         echo "schema-coherence FAIL: proposed key '$key' contains dotted string (invalid JSON Schema nesting)" >&2
-         exit 1
-       fi
-     done
-     ```
-   - On failure → HALT + re-route per `jq-parses` failure path.
-
-3. **`line-cite-valid` (kind):**
-   - Read `args.file` and `args.cite_form` (e.g., `L428` or `L428-L432`).
-   - Extract the cited line range from current `args.file` state.
-   - `grep -qF -- "$expected_snippet"` against the extracted range.
-   - On non-match → **HALT this Edit; emit warning `pre-write-validate-l-n-citation-mismatch`** with a `pre_write_validator_caught` calibration record. Re-author only when the mismatch is a specific fixable citation defect inside `authorized_scope` and the shared retry budget has room. **Do NOT auto-rewrite** the citation. Rationale (per F006 / alpha IV&V 2026-05-22): the dev.97+ practical-sequence pattern-anchoring is an AUTHOR-TIME discipline, not an orchestrator-time auto-rewrite. Automatic pattern-anchor extraction from an arbitrary snippet is non-trivial and unspecified; silent bad rewrites are harder to detect than the original L<N> drift (and would import the "discipline-fix-surface-becomes-new-violation-surface" meta-pattern documented for dev.91→102). The investigator must author a pattern-anchored correction before any write.
+**Run the validator:** immediately before each host write, run `node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fixture <write-intent-batch.json> --context "$storage_context_file"` with the fixture described under "Detector and assertion registry" above. It executes every required assertion (`jq-parses`, `schema-coherence`, `line-cite-valid`, `shell-syntax-valid`) and reports one JSON verdict; a halt names its `reason`. On a halt, follow "On HALT" below. Never auto-rewrite a citation that fails `line-cite-valid`; the investigator must author a pattern-anchored correction before any write.
 
 **On all checks PASS:** emit no warnings; proceed to readiness/pre-write approval and then Edit dispatch. Step 5.5 runs only after writes have been applied.
 
