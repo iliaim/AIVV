@@ -252,16 +252,13 @@ Before investigator dispatch, compute `architectural_remediation_assessment` and
 
 **Field propagation (required — load-bearing for Step 5 dispatch):** Before presenting the structured summary, for every approved finding, carry the **`category`** value set in Step 2a (inherited from the envelope schema for Signal 0 findings; inferred for Signal 1-4) onto the approved-finding record. Step 5 Branch dispatch reads this field and falls back to Branch A (`code-bug`) on missing-or-unknown with a warning logged to `session_changes`. Undefined-on-read is never acceptable for a dispatch key.
 
-Collect investigator JSON, mark consumed handles, close them before Step 3 re-entry, and render the structured **Investigation Results** summary. Reconcile batches after investigators declare `files_to_modify`.
+Collect investigator JSON, mark consumed handles, close them before Step 3 re-entry, and render the structured **Investigation Results** summary. Reconcile batches after investigators declare `files_to_modify`. The summary template, batch reconciliation, architectural remediation lane, Gate 1/2/3, and the `fix_confidence` ladder are defined in [apply-policy-and-gates.md](references/apply-policy-and-gates.md).
 
 **Earlier repairs (report only):** once the planned files are known, run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin) with `{"invocation_id": "<this run>", "prior_repairs": {"context": "$storage_context_file", "files": [<planned files>]}}`. When `prior_repairs.count` is above zero, show its `note` in the Investigation Results summary; the full run list stays in the JSON. Each run's rework limit starts fresh, so this note is how a loop that starts a new `/aivv-fix` per round sees the same area being repaired again; weigh whether the root cause is the design rather than another patch. The note never blocks, demotes `fix_confidence`, or counts against the rework limit. It is not by itself the `bounded same-area recurrence` signal of the architecture check and is separate from `predecessor_finding_match`. If the helper answers with an error, or `prior_repairs.error` is set, say so in one line and continue.
 
-Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](references/finding-collection.md). Then apply Gate 1/2/3; Gate 1 challenges root cause and Step 4.5 later challenges the fix plan.
+Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](references/finding-collection.md). Then apply Gate 1/2/3 (Gate 1 challenges the root cause; Step 4.5 later challenges the fix plan) and compute `fix_confidence`, which Step 4.5 consumes.
 
 **Auto-proceed precheck:** do not move any finding to Step 5 yet. Record each finding's blockers now; its final route (Auto-eligible, Decision queue, Architecture decision queue, or Skipped by policy) is settled only after Steps 4.4–4.5, by the definitions in [apply-policy-and-gates.md](references/apply-policy-and-gates.md).
-#### `fix_confidence` computation (per approved finding, computed here — consumed by Step 4.5)
-
-After Gate 1/2/3 resolves and before evaluating the Step 4.5 trigger, compute `fix_confidence` per approved finding via the one-way demotion ladder (`high → medium → low`, floor at `low`), then persist it on every `session_changes.changes_summary[]` entry and in the `review_meta` calibration record.
 
 ---
 
@@ -282,7 +279,7 @@ Then hand control back per the Hand back section of [`.aivv/session-continuity.m
 
 ### Step 4.4: MATERIALIZE WRITE INTENTS — inspectable proposed bytes
 
-Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.4.5, Step 4.5, or Step 5 can proceed. The failing-test intent of Step 4.4.5 is materialized here with the fix intents. Missing, opaque, stale, risky, or insufficiently validated intents halt according to the reference.
+Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.4.5, Step 4.5, or Step 5 can proceed. The failing-test intent of Step 4.4.5 is materialized here with the fix intents. Missing, opaque, stale, risky, or insufficiently validated intents halt as specified in [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md).
 
 Then persist the plan: after the Step 5.0 target reuse and pre-write banner, write the `in-progress` fix log to `<state_dir>` with every identity field (target, storage, source, lifecycle context), any confirmed `dangerously_auto_apply`, `write_intents[]`, `fix_plans[]`, and the `decision_ledger[]`, and update it in the same validated write as each later decision. After a context compaction, a stop, or a Resume, re-read that log instead of rebuilding the plan from memory. See [fix-log-contract.md](references/fix-log-contract.md) for the write and recovery rules.
 
@@ -294,13 +291,13 @@ For every approved finding where a test can be written (`code-bug`, `design-flaw
 
 ### Step 4.5: CHALLENGE — Independent Fix-Plan Review
 
-After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), after Step 4.4 has materialized `write_intents[]`, and after the Step 4.4.5 red run, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews the immutable `authorized_scope`, proposed fixes, escaped `write_intents[]` snapshots (including the failing test), and the red-run output BEFORE the fix is written — when revision is cheap. A revision requires a specific evidence-backed defect and a concrete correction inside `authorized_scope`; uncertainty alone is advisory. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5.
+After Step 4's auto-proceed precheck records blockers (and any Gate 1/2/3 escalations complete), after Step 4.4 has materialized `write_intents[]`, and after the Step 4.4.5 red run, evaluate whether to spawn an independent fix-plan challenger BEFORE executing fixes. The challenger reviews the immutable `authorized_scope`, proposed fixes, escaped `write_intents[]` snapshots (including the failing test), and the red-run output BEFORE the fix is written — when revision is cheap. A revision requires a specific evidence-backed defect and a concrete correction inside `authorized_scope`; uncertainty alone is advisory. Only after Step 4.5 returns APPROVE or is legitimately skipped may the W10 decision queue classify a finding as Auto-eligible for Step 5. Trigger, dispatch, and verdict handling are in [challenge-loop.md](references/challenge-loop.md); the prompt is [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md).
 
 ---
 
 ### Step 5: EXECUTE — Apply Approved Fixes
 
-Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner if Step 4.4 has not already done so, and honor the dry-run halt. Then reuse the fix log persisted at Step 4.4 (initialize it here only when no write intent preceded this step) and apply each approved fix through its evidence-selected branch, recording the applied changes as specified in that branch's reference.
+Reuse the target/storage context bound before maintenance, cache `target_project` in `session_changes`, emit the pre-write banner if Step 4.4 has not already done so, and honor the dry-run halt. Then reuse the fix log persisted at Step 4.4 (initialize it here only when no write intent preceded this step). Before the first fix branch, run the Change Readiness Gate, the class-verdict gate with its variant scan and class-sibling triage ([class-sibling-triage-template.md](references/class-sibling-triage-template.md)), and the `scope_search_seed` pre-loop, all specified in [fix-log-contract.md](references/fix-log-contract.md). Then apply each approved fix through its evidence-selected branch in [execution-branches.md](references/execution-branches.md), recording the applied changes as that branch specifies.
 
 When `lifecycle_context` is present, initialize `session_changes.lifecycle_context` before the first fix-log write, load the lifecycle record for investigator context, and apply only schema-backed write-back fields per the reference (treating `rca_status` not-started/draft as investigation-first). When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply` if Step 4.4 has not already recorded it, tag each dangerous-route `changes_summary` entry, and emit the loud `DANGEROUSLY AUTO-APPLIED <N> fix(es)` audit banner at the end of Step 5 (with `0` if no fix was bypassed). The lifecycle write-back rules + GitHub-sync/validate helpers and the dangerous-audit banner contract are in [execution-branches.md](references/execution-branches.md) — read it before any lifecycle write-back or dangerous-route apply.
 
@@ -310,13 +307,15 @@ Immediately before the host write primitive, run the pre-write validator for eve
 
 ### Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)
 
+Steps 5.5–5.7 are specified in [mechanical-verification-checks.md](references/mechanical-verification-checks.md).
+
 Run the fix-bundle coherence pass after per-finding fixes and before verifier dispatch. Warnings are advisory but must be logged into the fix log for verifier input.
 
 ---
 
 ### Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions
 
-Check `authorized_scope`, retry history, `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields exactly as the reference specifies. Halt on corrupted scope or retry state; otherwise append warnings and continue to verifier dispatch.
+Check `authorized_scope`, retry history, `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields as specified in [mechanical-verification-checks.md](references/mechanical-verification-checks.md). Halt on corrupted scope or retry state; otherwise append warnings and continue to verifier dispatch.
 
 ---
 
