@@ -73,9 +73,7 @@ For homogeneous runs, include:
 ```
 
 For multi-lens runs, change title to
-`AIVV {N}-Way Multi-Lens Review - Consensus Analysis`, add
-`Info: Tier 2B spike active (lenses: <lens1>, <lens2>, ...). Each reviewer applied a different methodological frame.`,
-show reviewer lens in the table, and include `Cross-Lens Convergence`,
+`AIVV {N}-Way Multi-Lens Review - Consensus Analysis`, show reviewer lens in the table, and include `Cross-Lens Convergence`,
 `Multi-Lens Convergence`, and `Lens-<L> Domain Catches` sections. Recommendation:
 weigh cross-lens convergence highest; treat lens-domain catches as HIGH within
 domain; absence of cross-lens convergence is not failure.

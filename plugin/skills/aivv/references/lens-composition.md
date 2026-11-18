@@ -22,13 +22,3 @@ Error text:
 
 `--lens-replicate` is explicit by design; do not auto-distribute surplus
 reviewers across lenses.
-
-## Spike Banner
-
-When `K>=2` or `M>=2`, emit before dispatch:
-
-```text
-ℹ Tier 2B multi-lens spike active (lenses=<lens1>,<lens2>,..., M=<M>). Per the Tier 2B framing, this dispatch is evidence-gathering - outputs feed a future ADR decision. Treat findings as experimental until the spike concludes.
-```
-
-No confirmation prompt; the flags are explicit consent.
