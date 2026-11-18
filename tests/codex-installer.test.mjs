@@ -53,7 +53,9 @@ function createRunners() {
     });
   }
 
-  const powerShell = available('pwsh') ? 'pwsh' : available('powershell.exe', ['-NoProfile', '-Command', '$PSVersionTable.PSVersion.Major']) ? 'powershell.exe' : null;
+  // The PowerShell installer is for Windows users; the windows-latest CI job covers it.
+  // Elsewhere pwsh adds ~45s per run for no extra coverage.
+  const powerShell = process.platform !== 'win32' ? null : available('pwsh') ? 'pwsh' : available('powershell.exe', ['-NoProfile', '-Command', '$PSVersionTable.PSVersion.Major']) ? 'powershell.exe' : null;
   if (powerShell) {
     runners.push({
       name: 'powershell',
