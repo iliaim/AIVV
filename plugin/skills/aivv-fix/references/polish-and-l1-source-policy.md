@@ -25,7 +25,7 @@ The L1-source refusal guard fires regardless of `apply_polish_mode` value when t
 
 #### L1-source detection logic (load-bearing for `--apply-all-polish` refusal guard and `severity_threshold` forced-override)
 
-This subsection is the **canonical home** for the L1-source detection regex. If updating the regex, also update the documentation copy at `skills/aivv/SKILL.md` Step 6 "Severity-threshold filter" subsection — it inlines the regex as a copy-with-sync-note for orchestrator hot-path use. Author-side specs and plans may also reference the regex; re-run a workspace-wide grep for the WCAG/FTC/DSA pattern to find any drift before shipping.
+This subsection is the **canonical home** for the L1-source detection regex.
 
 A finding qualifies as **L1-source** if either condition holds:
 
@@ -39,6 +39,6 @@ A finding qualifies as **L1-source** if either condition holds:
 Implementation:
 - The orchestrator scans each finding's text content with the pinned regex above before applying any batch flag.
 - For `--apply-all-polish`: if ≥1 POLISH finding qualifies as L1-source and the cited authority is applicable or applicability is undeclared, refuse batch-apply with a per-finding line: `<rule_id>: L1-source finding (<matched-citation>) is applicable or undeclared-context; manual review required.` If declared `project_context` makes a legal statute inapplicable, do not refuse batch-apply by bare citation alone.
-- For `severity_threshold` filter (Step 6 output rendering): L1-source findings ARE FORCED-SHOWN regardless of threshold setting (CRITICAL+L1, MAJOR+L1, MINOR+L1, POLISH+L1 all rendered). See `skills/aivv/SKILL.md` Step 6 "Severity-threshold filter" subsection for the consumer of this rule (shipped dev.39 T15).
+- For `severity_threshold` filter (Step 6 output rendering): L1-source findings ARE FORCED-SHOWN regardless of threshold setting (CRITICAL+L1, MAJOR+L1, MINOR+L1, POLISH+L1 all rendered). The `/aivv` consumer of this rule is "Severity Threshold And Forced Show" in [result-rendering-policy.md](../../aivv/references/result-rendering-policy.md).
 
 Free-text keyword matching (e.g., "legal" alone) is too imprecise and not used; the regex above is authoritative.

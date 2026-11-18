@@ -1,6 +1,8 @@
 # Step 1 COLLECT — conversation signal scan, fingerprinting, and de-duplication
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 1 COLLECT. The inline skeleton keeps the source selector and the source-parsing subsections for `--review-id`, task ID, and literal text; this reference is the canonical home for the conversation Signal 0–4 scan, the severity inference model, the wont-fix registry pre-filter, and the de-duplication rules. The canonical fingerprint formula lives in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md) `compute_fingerprint(location, description)` and "Canonical Fingerprint Formula".
+Detail relocated from `skills/aivv-fix/SKILL.md` Step 1 COLLECT. This reference is the canonical home for the conversation Signal 0–4 scan, the severity inference model, the wont-fix registry pre-filter, and the de-duplication rules. The canonical fingerprint formula lives in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md) `compute_fingerprint(location, description)` and "Canonical Fingerprint Formula".
+
+**Task ID** (`[A-Z]+-\d{4}-\d{4}`, `FixSession.source = "task_file"`) — an optional external integration: findings come from the task file's `review_tracking.open_issues`, located by the project's own task-file convention; resolved items are written back per Task integration in [execution-branches.md](execution-branches.md).
 
 **No argument (or blank)** — Extract from current session by scanning signal types in priority order. `FixSession.source = "conversation"`.
 

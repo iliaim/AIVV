@@ -13,9 +13,9 @@ Read from `skills/aivv-fix/SKILL.md` before executing Branch A/B/C/D/E/F fixes. 
 - Branch F improvement (behaviour-preserving betterment)
 - Prevention and task integration
 
-_The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 (the root-cause verification preamble) lives there; items 2–4 below extend it._
+For each approved fix, in priority order (CRITICAL first), after the session-change tracking in [fix-log-contract.md](fix-log-contract.md):
 
-2. **Apply the strategic fix — dispatch by finding category**: Review each approved finding's `category` field from Step 2a (the user-facing triage column is labeled "Type" for readability; the machine field is `category` per `.aivv/schemas/finding.json`) and route to the appropriate branch below. The "verify root cause" check applies to ALL branches — a fix that addresses symptom-not-cause is not acceptable regardless of category.
+1. **Apply the strategic fix — dispatch by finding category**: Review each approved finding's `category` field from Step 2a (the user-facing triage column is labeled "Type" for readability; the machine field is `category` per `.aivv/schemas/finding.json`) and route to the appropriate branch below. The "verify root cause" check applies to ALL branches — a fix that addresses symptom-not-cause is not acceptable regardless of category.
 
    **Root-cause verification (applies to every branch):**
    - State the root cause explicitly: *"The root cause is X. This fix eliminates X by doing Y."*
@@ -93,7 +93,7 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
    - Improvement edits use the same Step 4.4 `write_intents[]` materialization, detector, Step 4.5 inert snapshot, and Step 5.4 pre-write validation contract as Branch A.
    - **Log each change** to `session_changes.changes_summary` with `category: "improvement"` and `type: "code-edit"`.
 
-3. **Execute the prevention decision**: If `prevention_plan.mechanism == "none-new"`, create no prevention artifact; record its bounded `rationale` and evidence in the fix log, then continue to task integration. The minimum defect-reproducing regression test required by Step 4.4.5 is verification evidence and may still be written even when prevention is `none-new`; it is not a prevention artifact. For any additional or generalized prevention mechanism, first verify the investigator supplied a valid `eligibility_basis` and concrete `eligibility_evidence` establishing confirmed recurrence, systemic failure class, high-impact safety/security exposure, or failure of an existing control. Missing evidence routes back to Step 4.5 as an unjustified-complexity revision; do not write the artifact. When eligible, implement the proposed prevention. Path conventions are project- and host-dependent — first check the project's existing convention via its `maintainer guidance`/`AGENTS.md`/contributing doc; otherwise use the closest match below:
+2. **Execute the prevention decision**: If `prevention_plan.mechanism == "none-new"`, create no prevention artifact; record its bounded `rationale` and evidence in the fix log, then continue to task integration. The minimum defect-reproducing regression test required by Step 4.4.5 is verification evidence and may still be written even when prevention is `none-new`; it is not a prevention artifact. For any additional or generalized prevention mechanism, first verify the investigator supplied a valid `eligibility_basis` and concrete `eligibility_evidence` establishing confirmed recurrence, systemic failure class, high-impact safety/security exposure, or failure of an existing control. Missing evidence routes back to Step 4.5 as an unjustified-complexity revision; do not write the artifact. When eligible, implement the proposed prevention. Path conventions are project- and host-dependent — first check the project's existing convention via its `maintainer guidance`/`AGENTS.md`/contributing doc; otherwise use the closest match below:
    - `hook` → host's hook directory (`.claude/hooks/` on Claude Code projects; equivalent on other hosts) or project-level git hook (`.husky/`, `.git/hooks/`)
    - `validator` → `scripts/validators/`, `tools/`, or equivalent project-script directory
    - `test` → project's test directory (`tests/`, `test/`, `spec/`, language-conventional)
@@ -103,7 +103,7 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
 
 Preserve the existing convention if one is found; do NOT impose `.claude/` paths on projects that don't already use them.
 
-4. **Task integration**: If source was a task file (`/aivv-fix TASK-XXXX`):
+3. **Task integration**: If source was a task file (`/aivv-fix TASK-XXXX`):
    - Update `review_tracking.resolved_issues` with structured entries:
      ```
      "F001 [CRITICAL]: SQL injection — Root cause: missing input validation guardrail. Fixed: added validate_input() decorator to all API endpoints. Prevention: pre-commit hook checks for raw request.json usage."
