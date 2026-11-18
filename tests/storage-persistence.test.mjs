@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { makeCheckout } from './support/checkout-fixture.mjs';
+import { readStorageContext, resolveStorage } from '../plugin/tools/storage-paths.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const storageHelper = path.join(repoRoot, 'plugin/tools/storage-paths.mjs');
@@ -18,7 +19,7 @@ const candidate = path.join(temporaryRoot, 'review-candidate.json');
 const observed = path.join(temporaryRoot, 'observed.json');
 
 mkdirSync(home, { recursive: true });
-mkdirSync(target, { recursive: true });
+makeCheckout(target);
 const env = {
   ...process.env,
   HOME: home,
@@ -67,6 +68,30 @@ try {
   assert.equal(missingRead.status, 1);
   assert.ok(missingRead.stderr.includes('STORAGE_NOT_FOUND') && missingRead.stderr.includes(path.join(context.state_dir, 'review-absent.json')),
     'a missing file error must name the path that was read');
+
+  // A volume lookup that times out on a busy host must not silently bind a
+  // different (invocation-only) store; it is a retryable STORAGE_BUSY instead.
+  const volumeLookup = (error) => ({ target, home, identityPlatform: 'darwin', nativeCommand: () => { throw error; } });
+  assert.throws(() => resolveStorage(volumeLookup(Object.assign(new Error('spawnSync diskutil ETIMEDOUT'), { code: 'ETIMEDOUT' }))),
+    (error) => error.code === 'STORAGE_BUSY', 'a timed-out volume lookup is retryable, not a weaker identity');
+  const unavailable = resolveStorage(volumeLookup(new Error('invalid volume UUID')));
+  assert.equal(unavailable.identity.reliable, false, 'a volume that cannot be identified still degrades to an invocation-bound identity');
+
+  // On Linux a directory created and never changed reports birth time == change
+  // time, so its identity is unreliable and bound to one invocation by design. Its
+  // context must still round-trip, also after the target changes; a context resolved
+  // as reliable must refuse a target that later reads as unreliable.
+  const identityContext = path.join(temporaryRoot, 'identity-context.json');
+  const linux = (ctimeNs) => ({ home, env, platform: 'linux', identityPlatform: 'linux',
+    stat: () => ({ dev: 1n, ino: 2n, birthtimeNs: 5n, ctimeNs }) });
+  const invocationBound = resolveStorage({ target, ...linux(5n) });
+  assert.equal(invocationBound.identity.reliable, false);
+  writeFileSync(identityContext, JSON.stringify(invocationBound));
+  assert.equal(readStorageContext(identityContext, linux(5n)).instance_key, invocationBound.instance_key);
+  assert.equal(readStorageContext(identityContext, linux(6n)).instance_key, invocationBound.instance_key,
+    'a later change to the target does not orphan an invocation-bound context');
+  writeFileSync(identityContext, JSON.stringify(resolveStorage({ target, ...linux(6n) })));
+  assert.throws(() => readStorageContext(identityContext, linux(5n)), (error) => error.code === 'STORAGE_IDENTITY_MISMATCH');
 
   if (process.platform !== 'win32') {
     assert.equal(statSync(storedPath).mode & 0o777, 0o600, 'state records must be private files');

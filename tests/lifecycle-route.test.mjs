@@ -12,6 +12,7 @@ import { makeCheckout } from './support/checkout-fixture.mjs';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const routeHelper = path.join(repoRoot, 'plugin/tools/incident-lifecycle-route.mjs');
 const storageHelper = path.join(repoRoot, 'plugin/tools/storage-paths.mjs');
+const githubSyncHelper = path.join(repoRoot, 'plugin/tools/incident-github-sync.mjs');
 const temporaryRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'aivv-lifecycle-route-')));
 const home = path.join(temporaryRoot, 'home');
 const checkout = path.join(temporaryRoot, 'checkout');
@@ -50,8 +51,19 @@ try {
   assert.equal(incident.json.reason, 'lifecycle-target-missing');
   assert.equal(incident.json.state_dir, stateDir);
   assert.match(incident.json.detail, /per checkout/);
+
+  // GitHub sync never guesses the destination repository: without --repo it would
+  // otherwise have fallen back to the plugin checkout's own origin remote.
+  for (const command of ['plan', 'apply']) {
+    for (const repoArgs of [[], ['--repo'], ['--repo', 'not-a-repo']]) {
+      const sync = spawnSync(process.execPath, [githubSyncHelper, command, '--issue', path.join(temporaryRoot, 'missing.json'), ...repoArgs, '--confirm'],
+        { encoding: 'utf8', env: { ...env, AIVV_GH_BIN: path.join(temporaryRoot, 'no-gh') }, cwd: checkout });
+      assert.equal(sync.status, 64, `${command} ${repoArgs.join(' ')} is a usage error`);
+      assert.equal(JSON.parse(sync.stdout).reason, 'missing-or-invalid-repo');
+    }
+  }
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
 }
 
-console.log('lifecycle route: missing state and malformed GitHub selectors are reported with where and why');
+console.log('lifecycle route: missing state and malformed GitHub selectors are reported with where and why; GitHub sync requires --repo');

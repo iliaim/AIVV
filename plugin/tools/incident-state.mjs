@@ -172,7 +172,7 @@ function daysInMonth(year, month) {
   return 31;
 }
 
-function isStrictRfc3339DateTime(value) {
+export function isStrictRfc3339DateTime(value) {
   const match = RFC3339_DATE_TIME_RE.exec(value);
   if (!match) return false;
 

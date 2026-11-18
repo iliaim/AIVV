@@ -54,6 +54,7 @@ const PREFLIGHT_FILES = {
     "tools/native-prompt-boundary.mjs",
     "tools/dispatch.mjs",
     "tools/runtime-evidence.mjs",
+    "tools/incident-state.mjs",
     "tools/provider-trust.mjs",
     "tools/provider-registry.mjs",
     "tools/model-selection.mjs",

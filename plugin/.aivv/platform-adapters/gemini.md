@@ -27,7 +27,7 @@ For shared authentication settings, see [Configuration keys](../configuration.md
 | Capability | Status | Notes |
 |---|---|---|
 | `can_spawn_cold_agents` | Available via dispatch.mjs subprocess | Provider subprocesses are not host cold agents; host dispatch isolation is owned by the active host adapter. |
-| `can_structured_output` | Available — API: `responseSchema`; CLI: instructed-JSON + retry | CLI path: ~97% with 2-iteration retry |
+| `can_structured_output` | Available — API: `responseMimeType: application/json` + validation; CLI: instructed-JSON + retry | CLI path: ~97% with 2-iteration retry |
 | `can_parallel_dispatch` | Available — run N dispatch.mjs subprocesses | Practical max 3 (provider quota) |
 | `can_enforce_readonly` | Enforced — dispatch.mjs is a pure HTTP/subprocess client | Provider path has no host tools; host read-only enforcement remains a host-adapter capability. |
 
@@ -50,21 +50,9 @@ The packed AIVV review prompt is sent on stdin; the JSON-only response instructi
 
 ## Structured output — API path
 
-Use `generation_config.responseSchema` + `responseMimeType: "application/json"`:
+The request sets only `generationConfig.responseMimeType: "application/json"`; no `responseSchema` is sent. That yields JSON text, not schema conformance; the prompt carries the output contract and `dispatch.mjs` validates the parsed object.
 
-```json
-{
-  "generation_config": {
-    "responseMimeType": "application/json",
-    "responseSchema": { "...findings schema..." }
-  },
-  "contents": [{ "parts": [{ "text": "..." }] }]
-}
-```
-
-**Note:** property order in `responseSchema` should match the prompt's property order for most-reliable output.
-
-**Response extraction:** `candidates[0].content.parts[0].text` — with `responseMimeType: application/json`, this is always valid JSON.
+**Response extraction:** `candidates[0].content.parts[0].text`, parsed as JSON.
 
 ## Structured output — CLI path
 

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { makeCheckout } from '../support/checkout-fixture.mjs';
 import {
   validateFixture,
   validateFixLogNewWrite,
@@ -99,6 +100,9 @@ try {
     XDG_STATE_HOME: env.XDG_STATE_HOME,
     XDG_CACHE_HOME: env.XDG_CACHE_HOME,
   });
+  // A plain mkdir can leave the target's storage identity unreliable on Linux
+  // (birth time equal to change time), which makes it invocation-bound.
+  makeCheckout(TARGET);
   mkdirSync(path.join(TARGET, 'src'), { recursive: true });
   mkdirSync(path.join(TARGET, 'private'), { recursive: true });
   mkdirSync(HOME, { recursive: true });
@@ -106,7 +110,7 @@ try {
   writeFileSync(CONTEXT_FILE, `${JSON.stringify(context)}\n`);
 
   const newRunProposal = validateFixture(fixture(), { contextFile: CONTEXT_FILE, proposalOnly: true });
-  assert.equal(newRunProposal.status, 'pass');
+  assert.equal(newRunProposal.status, 'pass', JSON.stringify(newRunProposal));
   assert.equal(newRunProposal.proposal_only, true);
   assert.equal(newRunProposal.write_authorized, false,
     'a proposal-only pass must not be confused with a write authorization');

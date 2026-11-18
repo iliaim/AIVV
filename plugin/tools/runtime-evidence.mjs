@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { isStrictRfc3339DateTime } from "./incident-state.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTCOME_ENUM = new Set(["confirmed", "refuted", "skipped", "error"]);
@@ -13,7 +15,6 @@ const RENDERED_DOM_RE = /\b(rendered[- ]?dom|runtime|browser|viewport|computed s
 const CONTRAST_RE = /\b(contrast|color|foreground|background|computed style)\b/i;
 const OVERLAP_RE = /\b(overlap|collision|clipping|clipped|viewport|bounding box|layout)\b/i;
 const SCOPE_TOKEN_RE = /\b(scope|token|theme token|css variable|custom property|cascade|propagation)\b/i;
-const RFC3339_DATE_TIME_RE = /^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?([Zz]|[+-]\d{2}:\d{2})$/;
 
 function usage() {
   return `Usage:
@@ -55,9 +56,14 @@ export function loadJson(file) {
 
 export function writeJsonAtomic(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
-  fs.writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`);
-  fs.renameSync(tmp, file);
+  const tmp = path.join(path.dirname(file), `.${path.basename(file)}.${crypto.randomUUID()}.tmp`);
+  try {
+    fs.writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600, flag: "wx" });
+    fs.renameSync(tmp, file);
+  } catch (error) {
+    fs.rmSync(tmp, { force: true });
+    throw error;
+  }
 }
 
 function toAbsolute(file) {
@@ -476,37 +482,6 @@ function ingest(args) {
   }
   writeJsonAtomic(reviewPath, nextReview);
   console.log(JSON.stringify({ status: "ingested", counts, orphan_results: warningsToAppend.length }, null, 2));
-}
-
-function isLeapYear(year) {
-  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-}
-
-function daysInMonth(year, month) {
-  if (month === 2) return isLeapYear(year) ? 29 : 28;
-  if ([4, 6, 9, 11].includes(month)) return 30;
-  return 31;
-}
-
-function isStrictRfc3339DateTime(value) {
-  const match = RFC3339_DATE_TIME_RE.exec(value);
-  if (!match) return false;
-  const [, yearText, monthText, dayText, hourText, minuteText, secondText, offsetText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-  const second = Number(secondText);
-  if (month < 1 || month > 12) return false;
-  if (day < 1 || day > daysInMonth(year, month)) return false;
-  if (hour > 23 || minute > 59 || second > 59) return false;
-  if (!/^[Zz]$/.test(offsetText)) {
-    const offsetHour = Number(offsetText.slice(1, 3));
-    const offsetMinute = Number(offsetText.slice(4, 6));
-    if (offsetHour > 23 || offsetMinute > 59) return false;
-  }
-  return true;
 }
 
 export function validateRuntimeEvidenceObject(obj, review, finding) {

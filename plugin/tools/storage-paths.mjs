@@ -28,6 +28,9 @@ export function signatureForStats(stats, platform = process.platform) {
   return { dev: value('dev'), ino: value('ino'), birthtime_ns: reliable ? birth : '0', reliable };
 }
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// diskutil queues behind diskarbitrationd, so concurrent lookups on a busy host
+// take several seconds each. The timeout only guards against a wedged daemon.
+const VOLUME_LOOKUP_TIMEOUT_MS = 30000;
 function observeIdentity(target, gitDir, options = {}, version) {
   const platform = options.identityPlatform ?? process.platform;
   const stat = options.stat ?? (p => fs.statSync(p, { bigint: true }));
@@ -42,7 +45,7 @@ function observeIdentity(target, gitDir, options = {}, version) {
     try {
       for (const p of paths) {
         const run = (executable, args, input) => command(executable, args, {
-          encoding: 'utf8', timeout: 3000, maxBuffer: 1024 * 1024,
+          encoding: 'utf8', timeout: VOLUME_LOOKUP_TIMEOUT_MS, maxBuffer: 1024 * 1024,
           stdio: ['pipe', 'pipe', 'pipe'], ...(input === undefined ? {} : { input }),
         });
         const lines = String(run('/bin/df', ['-P', p])).trim().split(/\r?\n/);
@@ -57,7 +60,11 @@ function observeIdentity(target, gitDir, options = {}, version) {
         const value = before.get(p);
         signatures.set(p, { volume_uuid: volumes.get(device), ino: value.ino, birthtime_ns: value.birthtime_ns, reliable: value.reliable });
       }
-    } catch {
+    } catch (error) {
+      // A slow lookup says the host is busy, not that the volume is untrustworthy.
+      // Downgrading here would silently bind a different, invocation-only store
+      // (or report a reliable context as no longer trustworthy), so ask for a retry.
+      if (error?.code === 'ETIMEDOUT') fail('STORAGE_BUSY', 'volume identity lookup timed out; retry when the host is less busy');
       reliable = false;
     }
     // A volume lookup is not an atomic filesystem observation. Refuse replacement
@@ -220,16 +227,6 @@ export function validateStorage(context, options = {}) {
     if (JSON.stringify(existing.identity) !== JSON.stringify(context.identity) || existing.instance_key !== context.instance_key) fail('STORAGE_IDENTITY_MISMATCH', 'target metadata differs from resolved filesystem instance');
   }
   return context;
-}
-export function contextForStateDirectory(stateDir) {
-  const absolute = path.resolve(stateDir);
-  const metadata = path.join(path.dirname(absolute), 'target.json');
-  let saved;
-  try { saved = JSON.parse(fs.readFileSync(metadata, 'utf8')); }
-  catch { fail('STORAGE_STATE_DIR_UNBOUND', 'selected state directory has no current target binding'); }
-  const context = resolveStorage({ target: saved.identity?.target });
-  if (path.resolve(context.state_dir) !== absolute) fail('STORAGE_STATE_DIR_UNBOUND', 'selected state directory is not canonical for the observed target instance');
-  return validateStorage(context);
 }
 export function ensureReportCache(context) {
   if (context.cache_root.startsWith(`${context.root}${path.sep}`)) validateContainedPath(context.cache_root, context.root);

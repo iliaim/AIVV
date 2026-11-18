@@ -135,6 +135,7 @@ fi
 
 if [ -n "$LIFECYCLE_STATE_DIR" ]; then
   lifecycle_tmp="$(mktemp -d "${TMPDIR:-/tmp}/aivv-view-lifecycle.XXXXXX")"
+  trap 'rm -rf "$lifecycle_tmp"' EXIT
   lifecycle_incident_jsonl="$lifecycle_tmp/incidents.jsonl"
   lifecycle_problem_jsonl="$lifecycle_tmp/problems.jsonl"
   lifecycle_issue_jsonl="$lifecycle_tmp/issues.jsonl"

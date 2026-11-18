@@ -45,8 +45,7 @@ set, otherwise `$HOME/.codex` on POSIX; on PowerShell use `$env:CODEX_HOME`
 when set, otherwise `$HOME/.codex`. Project-scoped installs continue to use
 `<target>/.codex`.
 
-The resolver has one owner, `runtime-root.mjs`; `runtime-root.sh` is only a
-POSIX entrypoint for that same resolver. It uses this order:
+The resolver has one owner, `runtime-root.mjs`. It uses this order:
 
 1. An explicit `AIVV_ROOT` is a development/debugging override and selects
    that path even when incomplete, so preflight can report its missing files.
