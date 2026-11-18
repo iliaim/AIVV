@@ -158,7 +158,7 @@ The equivalent in-app slash-command form (`/plugin marketplace add`, `/plugin in
 
 **Verified install outcome (shipped version = whatever `.claude-plugin/marketplace.json` currently declares):**
 - Plugin surfaces as `aivv@aivv` at the declared version with scope `user`.
-- Skills surface as `aivv:aivv`, `aivv:aivv-fix`, `aivv:methodology`. (The `aivv:aivv` form is because plugin name and `/aivv` skill name both happen to be `aivv` — user-facing slash command is still `/aivv`. `aivv:investigation-methodology` was removed in dev.9 — its 5-phase protocol is now inlined directly in the `aivv:investigator` agent body.)
+- Skills surface as `aivv:aivv`, `aivv:aivv-fix`, `aivv:methodology`. (The `aivv:aivv` form is because plugin name and `/aivv` skill name both happen to be `aivv` — user-facing slash command is still `/aivv`.)
 - Agents `aivv:reviewer` and `aivv:investigator` resolve as `subagent_type:` targets in a fresh subprocess.
 
 ---
