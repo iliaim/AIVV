@@ -2,21 +2,23 @@
 
 Curated checklist of UI/UX pattern violations that an IV&V reviewer can catch by reading code alone — no runtime, no rendered output. Each rule cites an authoritative source (NN/g, GOV.UK, WCAG, MDN, Smashing, Baymard, web.dev, Inclusive Components). Out of scope: design aesthetics ("use blue, not green"), design-system choices (Tailwind vs. Material), and rendered-output concerns (cross-browser visual regression, real touch-target size on physical devices, animation timing). Those belong to Tier 2 visual/runtime verification; a flag-list appears at the bottom of this README.
 
-## Rule index (46 code-reviewable rules)
+## Files
 
-| File | Rules | Section |
-|---|---|---|
-| [forms.md](forms.md) | UX-001..007 | Form UX |
-| [state-handling.md](state-handling.md) | UX-008..011 | State handling (loading / empty / error) |
-| [feedback-confirmation.md](feedback-confirmation.md) | UX-012..014 | Feedback & confirmation (destructive actions, toasts, modals) |
-| [navigation.md](navigation.md) | UX-015..017 | Navigation (active state, skip links, link-vs-button) |
-| [responsive-touch.md](responsive-touch.md) | UX-018..019 | Responsive & touch (viewport, hit area) |
-| [ux-microcopy.md](ux-microcopy.md) | UX-020..021 | UX-lens microcopy (the full `MC-*` catalog is in [`microcopy/`](../microcopy/README.md)) |
-| [data-performance.md](data-performance.md) | UX-022..026 | Data UX & performance-UX (URL state, LCP, alt text, infinite scroll, responsive tables) |
-| [progressive-enhancement.md](progressive-enhancement.md) | UX-027..029 | Progressive enhancement (form action, forward-looking errors, silent retry) |
-| [checkout-payment.md](checkout-payment.md) | UX-030..036 | Checkout & payment (dev.81 = T22 phase 1; Baymard checkout-usability + web.dev forms + NN/g error-messages anchored; 8-rule initial ship trimmed to 7 by post-ship IV&V corrective) |
-| [tables-pagination.md](tables-pagination.md) | UX-037..041 | Data tables & pagination (dev.82 = T22 phase 2; ARIA APG Grid + W3C Table pattern + MDN aria-sort + GOV.UK pagination anchored) |
-| [search-filter-status.md](search-filter-status.md) | UX-042..046 | Search inputs, filter grouping & status messages (dev.83 = T22 phase 3; MDN `<search>` + WCAG 4.1.3 Status Messages + ARIA APG checkbox-mixed + MDN `<fieldset>`/`<legend>` + W3C WAI forms-grouping anchored) |
+For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --family ui-ux`.
+
+| File | Section |
+|---|---|
+| [forms.md](forms.md) | Form UX |
+| [state-handling.md](state-handling.md) | State handling (loading / empty / error) |
+| [feedback-confirmation.md](feedback-confirmation.md) | Feedback & confirmation (destructive actions, toasts, modals) |
+| [navigation.md](navigation.md) | Navigation (active state, skip links, link-vs-button) |
+| [responsive-touch.md](responsive-touch.md) | Responsive & touch (viewport, hit area) |
+| [ux-microcopy.md](ux-microcopy.md) | UX-lens microcopy (the full `MC-*` catalog is in [`microcopy/`](../microcopy/README.md)) |
+| [data-performance.md](data-performance.md) | Data UX & performance-UX (URL state, LCP, alt text, infinite scroll, responsive tables) |
+| [progressive-enhancement.md](progressive-enhancement.md) | Progressive enhancement (form action, forward-looking errors, silent retry) |
+| [checkout-payment.md](checkout-payment.md) | Checkout & payment (dev.81 = T22 phase 1; Baymard checkout-usability + web.dev forms + NN/g error-messages anchored; 8-rule initial ship trimmed to 7 by post-ship IV&V corrective) |
+| [tables-pagination.md](tables-pagination.md) | Data tables & pagination (dev.82 = T22 phase 2; ARIA APG Grid + W3C Table pattern + MDN aria-sort + GOV.UK pagination anchored) |
+| [search-filter-status.md](search-filter-status.md) | Search inputs, filter grouping & status messages (dev.83 = T22 phase 3; MDN `<search>` + WCAG 4.1.3 Status Messages + ARIA APG checkbox-mixed + MDN `<fieldset>`/`<legend>` + W3C WAI forms-grouping anchored) |
 
 ### Content-extension coverage (dev.81 / T22 phase 1; post-corrective state)
 

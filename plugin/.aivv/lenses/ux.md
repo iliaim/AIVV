@@ -101,10 +101,10 @@ The `ux` lens audits *the surface a user encounters*, assuming the user is alrea
 
 ## Standards to consult
 
-- [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-001..046 existing form/nav/error/loading/checkout/tables/pagination/search/filter/status patterns (the static-code subset of `ux` lens scope; UX-030..036 added dev.81 = T22 phase 1 = checkout & payment, 7 rules; UX-037..041 added dev.82 = T22 phase 2 = data tables & pagination, 5 rules; UX-042..046 added dev.83 = T22 phase 3 = search inputs, filter grouping & status messages, 5 rules)
-- [.aivv/standards/microcopy/README.md](../standards/microcopy/README.md) — MC-001..038 — UX-writing rule catalog with authoritative-source citations
-- [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) — HEU-NN1..NN10 (Nielsen) + HEU-SCH1..SCH8 (Schneiderman) + HEU-LUX-<slug> (Laws of UX, lawsofux.com-anchored) + HEU-COG-<slug> (cognitive biases, primary HCI/psychology literature) rule catalog with authoritative-source citations
-- [.aivv/standards/interaction-states/README.md](../standards/interaction-states/README.md) — IS-001..030 per-primitive state inventories with authoritative-source citations
+- [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* form/nav/error/loading/checkout/tables/pagination/search/filter/status patterns (the static-code subset of `ux` lens scope; UX-030..036 added dev.81 = T22 phase 1 = checkout & payment, 7 rules; UX-037..041 added dev.82 = T22 phase 2 = data tables & pagination, 5 rules; UX-042..046 added dev.83 = T22 phase 3 = search inputs, filter grouping & status messages, 5 rules)
+- [.aivv/standards/microcopy/README.md](../standards/microcopy/README.md) — MC-* UX-writing rule catalog with authoritative-source citations
+- [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) — HEU-* rule catalog (Nielsen, Schneiderman, Laws of UX, cognitive biases) with authoritative-source citations
+- [.aivv/standards/interaction-states/README.md](../standards/interaction-states/README.md) — IS-* per-primitive state inventories with authoritative-source citations
 - [.aivv/standards/dark-patterns/README.md](../standards/dark-patterns/README.md) — DP-* manipulative-UX detection (DP-LEGAL-* in `legal.md`): pricing / subscription / consent / urgency / scarcity / social-proof / gamification / accessibility-trap / dark-PR; the **DP-LEGAL-*** subset carries L1 source-class (FTC / EU DSA / GDPR citations), forced-shows regardless of `severity_threshold`, and uses the context-gated hard legal floor
 - [.aivv/methodology.md](../methodology.md) — universal review phases (still apply; this lens is additive)
 

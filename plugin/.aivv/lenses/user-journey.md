@@ -98,7 +98,7 @@ The reviewer reads Session Activity FIRST per the universal Information Hierarch
 
 ## Standards to consult
 
-- [.aivv/standards/user-journey.md](../standards/user-journey.md) — UJ-AC-01a/01b, UJ-DISC-01..04, UJ-ACT-01..03, UJ-TFS-01..02
+- [.aivv/standards/user-journey.md](../standards/user-journey.md) — UJ-AC-*, UJ-DISC-*, UJ-ACT-*, UJ-TFS-*
 - [.aivv/standards/ux-heuristics/nielsen.md](../standards/ux-heuristics/nielsen.md) — HEU-NN1 (UJ-ACT-*), HEU-NN6 (UJ-DISC-*)
 - [.aivv/standards/interaction-states/](../standards/interaction-states/) — IS-* per-primitive state inventories (complement UJ-ACT-* for state-change evidence)
 

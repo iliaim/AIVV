@@ -16,17 +16,7 @@ The audience for this document is the AIVV reviewer agent applying the `visual` 
 - `VD-MOTION-NN` — durations, easing, reduced-motion, GPU-only props, animation hygiene — see [motion.md](motion.md)
 - `VD-LAYOUT-NN` — container queries, intrinsic sizing, aspect-ratio, gap, mobile-first, logical properties — see [layout.md](layout.md)
 
-## Rule index (73 rules)
-
-| File | Range | Count |
-|---|---|---|
-| [typography.md](typography.md) | `VD-TYPE-01` … `VD-TYPE-12` | 12 |
-| [spacing.md](spacing.md) | `VD-SPACE-01` … `VD-SPACE-10` | 10 |
-| [color.md](color.md) | `VD-COLOR-01` … `VD-COLOR-14` | 14 |
-| [iconography.md](iconography.md) | `VD-ICON-01` … `VD-ICON-08` | 8 |
-| [motion.md](motion.md) | `VD-MOTION-01` … `VD-MOTION-12` | 12 |
-| [layout.md](layout.md) | `VD-LAYOUT-01` … `VD-LAYOUT-17` | 17 |
-| **Total** | | **73** |
+For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --family visual-design`.
 
 ## Out-of-static-review scope
 

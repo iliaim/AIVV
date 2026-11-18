@@ -24,20 +24,7 @@ The audience for this document is the AIVV reviewer agent applying the `visual`,
 - `DP-PR-NN` — dark-PR (greenwashing, AI-washing, false CSR claims in product copy) — see [pr-washing.md](pr-washing.md)
 - `DP-LEGAL-NN` — legal-risk subset with FTC / EU-DSA / GDPR direct citations (forced-shown; context-gated legal floor) — see [legal.md](legal.md)
 
-## Rule index (93 rules)
-
-| File | Range | Count |
-|---|---|---|
-| [pricing.md](pricing.md) | `DP-PRICE-01` … `DP-PRICE-12` | 12 |
-| [subscription.md](subscription.md) | `DP-SUB-01` … `DP-SUB-10` | 10 |
-| [consent-privacy.md](consent-privacy.md) | `DP-CONSENT-01` … `DP-CONSENT-12` | 12 |
-| [urgency-scarcity.md](urgency-scarcity.md) | `DP-URGENCY-01..08` + `DP-SCARCITY-01..06` | 14 |
-| [social-proof.md](social-proof.md) | `DP-SOCIAL-01` … `DP-SOCIAL-08` | 8 |
-| [gamification.md](gamification.md) | `DP-GAME-01` … `DP-GAME-10` | 10 |
-| [accessibility-trap.md](accessibility-trap.md) | `DP-A11Y-01` … `DP-A11Y-06` | 6 |
-| [pr-washing.md](pr-washing.md) | `DP-PR-01` … `DP-PR-08` | 8 |
-| [legal.md](legal.md) | `DP-LEGAL-01` … `DP-LEGAL-13` | 13 |
-| **Total** | | **93** |
+For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --family dark-patterns`.
 
 ## Out-of-static-review scope
 

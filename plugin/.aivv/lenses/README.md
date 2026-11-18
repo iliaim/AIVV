@@ -43,7 +43,7 @@ runtime_driver: none | optional | required
 | `code` | [code.md](code.md) | none | Specialist static code review; includes CQ-* and AS-* standards routing |
 | `sec` | [sec.md](sec.md) | none | Static security review — OWASP-style code-level concerns |
 | `visual` | [visual.md](visual.md) | optional (B3 externalized Playwright probe emit/ingest; host browser adapters gated) | Static UI/a11y review (WCAG 2.1/2.2 AA baseline); optional runtime evidence (RTV-* rules) via `--runtime` |
-| `ux` | [ux.md](ux.md) | none | UX patterns — form/navigation/error/loading-states (UX-001..046, dev.43+) |
+| `ux` | [ux.md](ux.md) | none | UX patterns — form/navigation/error/loading-states (dev.43+) |
 | `polish` | [polish.md](polish.md) | none | Visual-design aesthetic — typography/spacing/color/iconography/motion/layout (VD-* + heuristic L4 source-class, dev.43+) |
 | `compliance` | [compliance.md](compliance.md) | none | Regulatory + accessibility-conformance + legal-risk — WCAG 2.1 AAA realistic subset + full ARIA APG + FTC/GDPR/CCPA/COPPA/ADA/Section 508/EU EAA (COMP-* rules, dev.105+) |
 | `i18n` | [i18n.md](i18n.md) | none | Internationalization — translation-function discipline + CLDR pluralization + locale-aware Intl.* + RTL safety + bidi (I18N-* rules, dev.105+) |

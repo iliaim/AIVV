@@ -11,20 +11,10 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 **Rule-ID conventions**:
 - `HEU-NN1` … `HEU-NN10` — Nielsen's 10 usability heuristics (NN/g 1994, refined 2024) — see [nielsen.md](nielsen.md)
 - `HEU-SCH1` … `HEU-SCH8` — Schneiderman's 8 Golden Rules (1987, 6th ed. 2016) — see [schneiderman.md](schneiderman.md)
-- `HEU-LUX-<slug>` — Laws of UX (Yablonski, 2020 + lawsofux.com), restricted to entries on lawsofux.com's published index — see [laws-of-ux/](laws-of-ux/README.md) (6 by-domain files)
+- `HEU-LUX-<slug>` — Laws of UX (Yablonski, 2020 + lawsofux.com), restricted to entries on lawsofux.com's published index — see [laws-of-ux/](laws-of-ux/README.md)
 - `HEU-COG-<slug>` — Cognitive-bias rules sourced from primary HCI/psychology literature (not on lawsofux.com); separated from `HEU-LUX-` to keep the LUX prefix's source-anchor unambiguous — see [cognitive-biases.md](cognitive-biases.md)
 
-## Rule index (51 rules)
-
-| File | Range | Count |
-|---|---|---|
-| [nielsen.md](nielsen.md) | `HEU-NN1` … `HEU-NN10` | 10 |
-| [schneiderman.md](schneiderman.md) | `HEU-SCH1` … `HEU-SCH8` | 8 |
-| [laws-of-ux/](laws-of-ux/README.md) | `HEU-LUX-doherty` … `HEU-LUX-working-memory` | 28 |
-| [cognitive-biases.md](cognitive-biases.md) | `HEU-COG-curiosity-gap` … `HEU-COG-novelty` | 5 |
-| **Total** | | **51** |
-
-**Quick rule-ID lookup** (alphabetic by ID; HEU-LUX-* entries annotated with their dev.69-nested sub-subfile): `HEU-LUX-aesthetic-usability` (laws-of-ux/engagement-attention), `HEU-LUX-chunking` (laws-of-ux/memory-cognition), `HEU-LUX-cognitive-load` (laws-of-ux/memory-cognition), `HEU-LUX-common-region` (laws-of-ux/gestalt-grouping), `HEU-COG-confirmation-bias` (cognitive-biases), `HEU-COG-curiosity-gap` (cognitive-biases), `HEU-COG-default-effect` (cognitive-biases), `HEU-LUX-doherty` (laws-of-ux/timing-perception), `HEU-COG-feedback-loop` (cognitive-biases), `HEU-LUX-fitts` (laws-of-ux/timing-perception), `HEU-LUX-flow` (laws-of-ux/engagement-attention), `HEU-LUX-goal-gradient` (laws-of-ux/engagement-attention), `HEU-LUX-hicks` (laws-of-ux/decision-choice), `HEU-LUX-jakob` (laws-of-ux/mental-models), `HEU-LUX-mental-model` (laws-of-ux/mental-models), `HEU-LUX-millers` (laws-of-ux/memory-cognition), `HEU-NN1` … `HEU-NN10` (nielsen), `HEU-COG-novelty` (cognitive-biases), `HEU-LUX-occams-razor` (laws-of-ux/decision-choice), `HEU-LUX-paradox-active-user` (laws-of-ux/mental-models), `HEU-LUX-pareto` (laws-of-ux/decision-choice), `HEU-LUX-parkinson` (laws-of-ux/timing-perception), `HEU-LUX-peak-end` (laws-of-ux/memory-cognition), `HEU-LUX-postel` (laws-of-ux/mental-models), `HEU-LUX-pragnanz` (laws-of-ux/gestalt-grouping), `HEU-LUX-prox` (laws-of-ux/gestalt-grouping), `HEU-LUX-selective-attention` (laws-of-ux/engagement-attention), `HEU-LUX-serial-position` (laws-of-ux/memory-cognition), `HEU-LUX-similarity` (laws-of-ux/gestalt-grouping), `HEU-LUX-tesler` (laws-of-ux/decision-choice), `HEU-LUX-uniform-connectedness` (laws-of-ux/gestalt-grouping), `HEU-LUX-von-restorff` (laws-of-ux/gestalt-grouping), `HEU-LUX-working-memory` (laws-of-ux/memory-cognition), `HEU-LUX-zeigarnik` (laws-of-ux/memory-cognition), `HEU-SCH1` … `HEU-SCH8` (schneiderman).
+For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --family ux-heuristics`.
 
 ## Calibration
 

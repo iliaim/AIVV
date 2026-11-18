@@ -1,16 +1,16 @@
 # Internationalization (i18n) — standards catalog index
 
-Part of [.aivv/standards/](../README.md). The i18n catalog covers locale-aware code patterns grouped by topical sub-domain. Each subfile carries a contiguous rule-ID range under the `I18N-*` namespace.
+Part of [.aivv/standards/](../README.md). The i18n catalog covers locale-aware code patterns grouped by topical sub-domain. Each subfile carries one `I18N-*` sub-prefix.
 
 **Status:** shipped in dev.104 (Wave 2 phase 2 — T44 from master spec). 30 rules across 3 by-domain subfiles (10 STR + 10 FMT + 10 RTL). Authored subdir-native per dev.103 precedent (compliance/ subdir).
 
 ## Subdomains
 
-| Subfile | Rule-ID range | Rules | Focus |
-|---|---|---|---|
-| [`strings.md`](strings.md) | `I18N-STR-01..10` | 10 | Hardcoded English strings, translation-function discipline, pluralization, gender/grammatical agreement, message-key conventions |
-| [`formatters.md`](formatters.md) | `I18N-FMT-01..10` | 10 | Date/time/number/currency/relative-time formatters — locale-naïve `toLocaleString()` calls, hardcoded `MM/DD/YYYY`, `$`-prefix currency, locale-naïve Intl API construction |
-| [`rtl-bidi.md`](rtl-bidi.md) | `I18N-RTL-01..10` | 10 | RTL safety, bidi text handling, directional CSS (margin-inline vs margin-left), `dir="rtl"` propagation, mixed-direction text rendering, BiDi-isolating Unicode controls |
+| Subfile | Prefix | Focus |
+|---|---|---|
+| [`strings.md`](strings.md) | `I18N-STR-*` | Hardcoded English strings, translation-function discipline, pluralization, gender/grammatical agreement, message-key conventions |
+| [`formatters.md`](formatters.md) | `I18N-FMT-*` | Date/time/number/currency/relative-time formatters — locale-naïve `toLocaleString()` calls, hardcoded `MM/DD/YYYY`, `$`-prefix currency, locale-naïve Intl API construction |
+| [`rtl-bidi.md`](rtl-bidi.md) | `I18N-RTL-*` | RTL safety, bidi text handling, directional CSS (margin-inline vs margin-left), `dir="rtl"` propagation, mixed-direction text rendering, BiDi-isolating Unicode controls |
 
 ## Severity discipline
 
@@ -36,7 +36,7 @@ Per maintainer guidance operating principle 9 + dev.80+ per-rule WebFetch-verifi
 
 ## Scope-relationship to `accessibility/`
 
-A11Y catalog (A11Y-001..074) already covers:
+The A11Y catalog already covers:
 - A11Y-001 `<html>` element must have a `lang` attribute (WCAG 3.1.1 baseline)
 - A11Y-002 Document must have a non-empty, descriptive `<title>`
 - A11Y-003 Language change within content needs `lang` attribute (WCAG 3.1.2 baseline)

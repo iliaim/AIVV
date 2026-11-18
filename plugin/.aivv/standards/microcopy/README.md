@@ -6,19 +6,21 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 
 **Scope:** rendered UI copy only — button labels, field labels, error/empty/loading prose, dialog text, toast/notification body, page metadata visible to users. Out of scope: contributor-facing prose (commit messages, code comments, internal docs), generated machine output (logs, debug strings), trademarked names and product nouns where the project's brand guidelines override these defaults.
 
-## Rule index (38 code-reviewable rules)
+## Files
 
-| File | Rules | Section |
-|---|---|---|
-| [voice-tone.md](voice-tone.md) | MC-001..005 | Voice & Tone |
-| [buttons-ctas.md](buttons-ctas.md) | MC-006..010 | Buttons & CTAs |
-| [labels-fields.md](labels-fields.md) | MC-011..015 | Labels & Field Names |
-| [errors.md](errors.md) | MC-016..021 | Error Messages |
-| [empty-states.md](empty-states.md) | MC-022..025 | Empty States |
-| [confirmations.md](confirmations.md) | MC-026..029 | Confirmations & Destructive Actions |
-| [loading-progress.md](loading-progress.md) | MC-030..032 | Loading & Progress |
-| [notifications.md](notifications.md) | MC-033..035 | Notifications & Toasts |
-| [punctuation.md](punctuation.md) | MC-036..038 | Capitalization & Punctuation |
+For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --family microcopy`.
+
+| File | Section |
+|---|---|
+| [voice-tone.md](voice-tone.md) | Voice & Tone |
+| [buttons-ctas.md](buttons-ctas.md) | Buttons & CTAs |
+| [labels-fields.md](labels-fields.md) | Labels & Field Names |
+| [errors.md](errors.md) | Error Messages |
+| [empty-states.md](empty-states.md) | Empty States |
+| [confirmations.md](confirmations.md) | Confirmations & Destructive Actions |
+| [loading-progress.md](loading-progress.md) | Loading & Progress |
+| [notifications.md](notifications.md) | Notifications & Toasts |
+| [punctuation.md](punctuation.md) | Capitalization & Punctuation |
 
 ## Cross-references and lens routing
 
