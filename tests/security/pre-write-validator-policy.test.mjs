@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  assertionExecutionVerdict,
   bypassVerdict,
   detectorVerdict,
   editFrame,
   multiEditSha,
   requiredAssertions,
   sha256,
+  shellSyntaxVerdict,
   staleVerdict,
   validateFixLogNewWrite,
   validateFixture,
@@ -147,6 +149,36 @@ assert.equal(noPathsVerdict.reason, "fix-log-authorized-scope-invalid");
 assert.match(noPathsVerdict.detail, /authorized_scope\.included_paths/);
 const wrongStatus = validateFixLogNewWrite({ ...fixLog(), status: "done" });
 assert.match(wrongStatus.detail, /in-progress/);
+
+// A syntax checker that runs out of time under host load halts with its own retryable
+// reason; it is neither a pass nor reported as invalid syntax. Stand-in checkers that
+// never finish are put first on PATH, and a short limit keeps the test fast.
+const slowBin = mkdtempSync(path.join(os.tmpdir(), "aivv-slow-checker-"));
+const originalPath = process.env.PATH;
+try {
+  for (const name of ["bash", "jq"]) {
+    writeFileSync(path.join(slowBin, name), "#!/bin/sh\nexec sleep 10\n");
+    chmodSync(path.join(slowBin, name), 0o755);
+  }
+  process.env.PATH = `${slowBin}${path.delimiter}${originalPath}`;
+  const shellTimeout = shellSyntaxVerdict(
+    { write_intents: [{ id: "WI-1", content_shape: "shell", language: "bash", pre_write_assertions: ["shell-syntax-valid"], exact_content: "echo ok\n" }] },
+    { checkerTimeoutMs: 200 });
+  assert.equal(shellTimeout.status, "halt", "a checker timeout never passes");
+  assert.equal(shellTimeout.reason, "shell-checker-timeout", "a checker timeout is not reported as invalid syntax");
+  assert.match(shellTimeout.detail, /200 ms.*rerun the validator/);
+  const jqTimeout = assertionExecutionVerdict(
+    { write_intents: [{ id: "WI-1", pre_write_assertions: [{ kind: "jq-parses", args: { block_id: 1 } }], exact_content: '```json\n{"ok": true}\n```' }] },
+    { checkerTimeoutMs: 200 });
+  assert.equal(jqTimeout.status, "halt", "a jq timeout never passes");
+  assert.equal(jqTimeout.reason, "pre-write-validate-jq-checker-timeout", "a jq timeout is not reported as invalid JSON");
+  assert.match(jqTimeout.detail, /200 ms/);
+} finally {
+  process.env.PATH = originalPath;
+  rmSync(slowBin, { recursive: true, force: true });
+}
+assert.equal(shellSyntaxVerdict({ write_intents: [{ id: "WI-1", content_shape: "shell", language: "bash", exact_content: "if then\n" }] }).reason,
+  "shell-syntax-invalid", "real syntax errors keep their own reason");
 
 const toolsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../plugin/tools");
 const validatorCli = path.join(toolsDir, "pre-write-validator.mjs");

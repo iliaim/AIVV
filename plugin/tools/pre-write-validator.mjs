@@ -368,6 +368,19 @@ export function bypassVerdict(fixture) {
   return { status: "pass", reason: "pass" };
 }
 
+// Syntax checkers run under a time limit so a hung checker cannot stall the gate. A
+// timeout under host load says nothing about the content, so it halts with its own
+// retryable reason instead of being reported as invalid syntax (never as a pass).
+const CHECKER_TIMEOUT_MS = 30000;
+
+function checkerTimedOut(error) {
+  return error?.code === "ETIMEDOUT";
+}
+
+function checkerTimeoutHalt(reason, timeoutMs) {
+  return halt(reason, `the syntax checker did not finish within ${timeoutMs} ms, so the content was not checked; rerun the validator when the host is less busy`);
+}
+
 function checkerFor(language) {
   if (language === "bash") return commandExists("bash") ? ["bash", ["-n"]] : null;
   if (language === "zsh") return commandExists("zsh") ? ["zsh", ["-n"]] : null;
@@ -389,7 +402,7 @@ function commandExists(command) {
   }
 }
 
-export function shellSyntaxVerdict(fixture) {
+export function shellSyntaxVerdict(fixture, { checkerTimeoutMs = CHECKER_TIMEOUT_MS } = {}) {
   if (!requiredAssertions(fixture).has("shell-syntax-valid")) return { status: "pass", reason: "pass" };
   const candidates = (fixture.write_intents?.length ? fixture.write_intents : [fixture])
     .filter((intent) => intent.content_shape === "shell" || intent.language || /```(?:bash|sh|zsh|shell)\b/i.test(intentContent(intent) || fixture.exact_content || ""));
@@ -405,8 +418,9 @@ export function shellSyntaxVerdict(fixture) {
     const file = path.join(dir, `check.${language}`);
     try {
       fs.writeFileSync(file, stripShellFence(content), "utf8");
-      execFileSync(checker[0], [...checker[1], file], { stdio: "ignore", timeout: 5000 });
-    } catch {
+      execFileSync(checker[0], [...checker[1], file], { stdio: "ignore", timeout: checkerTimeoutMs });
+    } catch (error) {
+      if (checkerTimedOut(error)) return checkerTimeoutHalt("shell-checker-timeout", checkerTimeoutMs);
       return { status: "halt", reason: language === "sh" ? "shell-syntax-invalid-posix" : "shell-syntax-invalid" };
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
@@ -445,19 +459,22 @@ function jsonBlocks(fixture, intent) {
   return blocks.length ? blocks : [text].filter((candidate) => /^\s*[{[]/.test(candidate));
 }
 
-function parseJsonBlock(fixture, assertion) {
+function parseJsonBlock(fixture, assertion, checkerTimeoutMs) {
   const blocks = jsonBlocks(fixture, assertion.intent);
   const blockId = Number(assertion.args?.block_id ?? assertion.block_id ?? 1);
   const block = blocks[Math.max(0, blockId - 1)];
   if (!block) return { ok: false, reason: "pre-write-validate-json-block-missing" };
   try {
     if (commandExists("jq")) {
-      execFileSync("jq", ["empty"], { input: block, stdio: ["pipe", "ignore", "ignore"], timeout: 5000 });
+      execFileSync("jq", ["empty"], { input: block, stdio: ["pipe", "ignore", "ignore"], timeout: checkerTimeoutMs });
     } else {
       JSON.parse(block);
     }
     return { ok: true, value: JSON.parse(block) };
-  } catch {
+  } catch (error) {
+    if (checkerTimedOut(error)) {
+      return { ok: false, ...checkerTimeoutHalt("pre-write-validate-jq-checker-timeout", checkerTimeoutMs) };
+    }
     return { ok: false, reason: "pre-write-validate-jq-empty-failed" };
   }
 }
@@ -500,16 +517,16 @@ function hasDottedKey(object) {
   return Object.entries(object).some(([key, value]) => key.includes(".") || hasDottedKey(value));
 }
 
-export function assertionExecutionVerdict(fixture) {
+export function assertionExecutionVerdict(fixture, { checkerTimeoutMs = CHECKER_TIMEOUT_MS } = {}) {
   for (const assertion of assertionRecords(fixture)) {
     if (assertion.kind === "jq-parses") {
-      const parsed = parseJsonBlock(fixture, assertion);
-      if (!parsed.ok) return { status: "halt", reason: parsed.reason };
+      const parsed = parseJsonBlock(fixture, assertion, checkerTimeoutMs);
+      if (!parsed.ok) return halt(parsed.reason, parsed.detail);
     }
     if (assertion.kind === "schema-coherence") {
       if (fixture.schema_coherence_case) return { status: "halt", reason: "schema-coherence-failed" };
-      const parsed = parseJsonBlock(fixture, assertion);
-      if (!parsed.ok) return { status: "halt", reason: parsed.reason };
+      const parsed = parseJsonBlock(fixture, assertion, checkerTimeoutMs);
+      if (!parsed.ok) return halt(parsed.reason, parsed.detail);
       const proposed = parsed.value;
       if (hasDottedKey(proposed)) return { status: "halt", reason: "schema-coherence-failed" };
       if ([...logicalPaths(proposed).values()].some((count) => count > 1)) return { status: "halt", reason: "schema-coherence-failed" };
