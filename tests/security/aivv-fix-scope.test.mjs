@@ -10,6 +10,7 @@ import {
   validateFixture,
   validateFixLogNewWrite,
   validateFixLogTransition,
+  multiEditSha,
 } from '../../plugin/tools/pre-write-validator.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -143,6 +144,42 @@ try {
   assert.deepEqual(validateFixture(fixture(), { contextFile: CONTEXT_FILE }),
     { status: 'pass', reason: 'pass' },
     'a write fixture passes only when its scope matches the persisted invocation snapshot');
+
+  // Through the CLI, a write batch must also carry every required Step 4.4
+  // intent field; content_sha in particular is what the staleness check binds.
+  const cliFixture = path.join(TEMP_ROOT, 'cli-fixture.json');
+  const runCli = (value, extra = []) => {
+    writeFileSync(cliFixture, JSON.stringify(value));
+    const result = spawnSync(process.execPath, [validator, '--fixture', cliFixture, '--context', CONTEXT_FILE, ...extra], { encoding: 'utf8', env });
+    return { status: result.status, verdict: JSON.parse(result.stdout) };
+  };
+  const completeFixture = () => {
+    const value = fixture();
+    Object.assign(value.write_intents[0], {
+      operation: 'edit',
+      source_step: 'Step 4.4',
+      pre_write_assertions: [],
+      content_sha: multiEditSha(value.write_intents[0].proposed_edits),
+    });
+    return value;
+  };
+  assert.deepEqual(runCli(completeFixture()), { status: 0, verdict: { status: 'pass', reason: 'pass' } },
+    'a complete write batch passes the CLI gate');
+  assert.equal(runCli(completeFixture(), ['--proposal-only']).verdict.proposal_only, true,
+    'the CLI keeps the proposal-only marker on a pass');
+  for (const field of ['content_sha', 'source_step', 'operation', 'pre_write_assertions', 'finding_id']) {
+    const missing = completeFixture();
+    delete missing.write_intents[0][field];
+    const { status, verdict } = runCli(missing);
+    assert.equal(status, 1, `a write intent without ${field} must halt`);
+    assert.equal(verdict.reason, 'write-intent-required-field-missing', `${field}: ${JSON.stringify(verdict)}`);
+    assert.match(verdict.detail, new RegExp(field));
+  }
+  const noBytes = completeFixture();
+  Object.assign(noBytes.write_intents[0], { branch: 'B', kind: 'verbatim_doc_content' });
+  delete noBytes.write_intents[0].proposed_edits;
+  assert.equal(runCli(noBytes).verdict.reason, 'no-pre-write-inspectable-intent',
+    'an intent with no proposed bytes cannot bind content_sha and must halt');
 
   const narrowedBoundary = fixture('private/change.js');
   narrowedBoundary.authorized_scope.excluded_paths = [];

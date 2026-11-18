@@ -248,6 +248,30 @@ try {
   const linked = cli(path.join(linkedTools, "pre-write-validator.mjs"), ["--fixture", malformed]);
   assert.equal(linked.status, 1, "a symlinked validator path must not exit 0 without a verdict");
   assert.equal(JSON.parse(linked.stdout).reason, "input-json-invalid");
+  // The CLI gate fails closed on anything that is not a real /aivv-fix write batch.
+  const shapeFile = path.join(scratch, "shape.json");
+  const completeIntent = {
+    id: "WI-1", finding_id: "F001", branch: "A", target_file: "src/change.js", operation: "edit",
+    kind: "generated_patch", source_step: "Step 4.4", pre_write_assertions: [],
+    proposed_edits: [{ old_string: "old", new_string: "new" }],
+    content_sha: multiEditSha([{ old_string: "old", new_string: "new" }]),
+  };
+  for (const [input, reason] of [
+    ["{}", "no-pre-write-inspectable-intent"],
+    ["[]", "fixture-not-object"],
+    ["null", "fixture-not-object"],
+    ['"text"', "fixture-not-object"],
+    [JSON.stringify({ command: "aivv-fix", write_intents: [] }), "no-pre-write-inspectable-intent"],
+    [JSON.stringify({ command: "aivv-fix", write_intents: {} }), "no-pre-write-inspectable-intent"],
+    [JSON.stringify({ command: "aivv-fix", write_intents: ["WI-1"] }), "no-pre-write-inspectable-intent"],
+    [JSON.stringify({ write_intents: [completeIntent] }), "fixture-command-not-aivv-fix"],
+    [JSON.stringify({ command: "aivv-review", write_intents: [completeIntent] }), "fixture-command-not-aivv-fix"],
+  ]) {
+    writeFileSync(shapeFile, input);
+    const result = cli(validatorCli, ["--fixture", shapeFile]);
+    assert.equal(result.status, 1, `--fixture ${input} must halt`);
+    assert.equal(JSON.parse(result.stdout).reason, reason, `--fixture ${input}`);
+  }
   const absent = cli(validatorCli, ["--fixture", path.join(scratch, "absent.json")]);
   assert.equal(absent.status, 1);
   assert.equal(JSON.parse(absent.stdout).reason, "input-file-unreadable");
