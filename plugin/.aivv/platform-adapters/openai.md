@@ -24,7 +24,7 @@ For shared authentication settings, see [Configuration keys](../configuration.md
 | Capability | Status | Notes |
 |---|---|---|
 | `can_spawn_cold_agents` | Available via dispatch.mjs subprocess | Provider subprocesses are not host cold agents; host dispatch isolation is owned by the active host adapter. |
-| `can_structured_output` | Available — API: `json_schema strict`; CLI: instructed-JSON + retry | CLI path: ~97% with 2-iteration retry |
+| `can_structured_output` | Available — API: `json_object` mode + validation; CLI: instructed-JSON + retry | CLI path: ~97% with 2-iteration retry |
 | `can_parallel_dispatch` | Available — run N dispatch.mjs subprocesses | |
 | `can_enforce_readonly` | Enforced — dispatch.mjs is a pure HTTP/subprocess client | Provider path has no host tools; host read-only enforcement remains a host-adapter capability. |
 
@@ -47,24 +47,9 @@ JSON output is obtained via **instructed-JSON** (same pattern as Gemini CLI path
 
 ## Structured output — API path
 
-Use `response_format: {type: "json_schema", json_schema: {name: "findings", strict: true, schema: {...}}}`:
+The request sets `response_format: {"type": "json_object"}`. That guarantees syntactically valid JSON, not conformance to the findings schema; the prompt carries the output contract and `dispatch.mjs` validates the parsed object.
 
-```json
-{
-  "model": "<model-id>",
-  "response_format": {
-    "type": "json_schema",
-    "json_schema": {
-      "name": "findings_response",
-      "strict": true,
-      "schema": { "...findings schema..." }
-    }
-  },
-  "messages": [{ "role": "user", "content": "..." }]
-}
-```
-
-**Response extraction:** `choices[0].message.content` — always valid JSON when `response_format.type === "json_schema"`.
+**Response extraction:** `choices[0].message.content`, parsed as JSON.
 
 ## Structured output — CLI path
 
@@ -72,7 +57,7 @@ The JSON-mode instruction and the parse, extract, and retry logic are identical 
 
 ## API-key fallback
 
-When the `codex` CLI is unavailable or fails, `dispatch.mjs` falls back to `OPENAI_API_KEY`; it does not read `~/.codex/config.json`. (dispatch.mjs:1759-1774)
+When the `codex` CLI is unavailable or fails, `dispatch.mjs` falls back to `OPENAI_API_KEY`; it does not read `~/.codex/config.json`. 
 
 ## Error handling (API path)
 

@@ -13,7 +13,7 @@
 | Priority | Method | Setup | Notes |
 |---|---|---|---|
 | 1 | **`claude` CLI subprocess** | Already logged in via Claude Code | Uses `claude --print --tools "" --no-session-persistence --system-prompt <schema-instruction>`. **NOT used inside Claude Code sessions** (CLAUDECODE=1) — use the Agent tool path instead (see Multi-model provider dispatch in `claude-code.md`). |
-| 2 | **`ANTHROPIC_API_KEY` env var** | `export ANTHROPIC_API_KEY=sk-ant-...` (get at [console.anthropic.com](https://console.anthropic.com/)) | REST API with `tool_use` forcing. |
+| 2 | **`ANTHROPIC_API_KEY` env var** | `export ANTHROPIC_API_KEY=sk-ant-...` (get at [console.anthropic.com](https://console.anthropic.com/)) | REST Messages API; the prompt instructs the JSON output contract. |
 
 **No auth found:** exits with code 3 and prints guidance.
 
@@ -26,7 +26,7 @@ For shared authentication settings, see [Configuration keys](../configuration.md
 | Capability | Status | Notes |
 |---|---|---|
 | `can_spawn_cold_agents` | Available via dispatch.mjs subprocess | Provider subprocesses are not host cold agents; host dispatch isolation is owned by the active host adapter. |
-| `can_structured_output` | Available — CLI: `--system-prompt` schema instruction + extraction; API: `tool_use` forcing | `--json-schema` is NOT used: empirically found to suppress stdout when combined with `--print --output-format text` |
+| `can_structured_output` | Available — CLI: `--system-prompt` schema instruction + extraction; API: prompt-instructed JSON, parsed and validated | `--json-schema` is NOT used: empirically found to suppress stdout when combined with `--print --output-format text` |
 | `can_parallel_dispatch` | Available — run N dispatch.mjs subprocesses | Practical max 3 |
 | `can_enforce_readonly` | Enforced — `--tools ""` in CLI path; pure HTTP client in API path | Provider path has no host tools; host read-only enforcement remains a host-adapter capability. |
 
@@ -51,7 +51,7 @@ printf '%s' "$prompt" | claude \
 - `--output-format text` — raw text output; dispatch.mjs extracts JSON and validates it
 - `cwd` is set to `$HOME` (not the project directory) — speculative probe to prevent maintainer guidance auto-discovery in the spawned subprocess. Applies only on Codex/other non-CC hosts (dead code on Claude Code, where the CLAUDECODE guard fires in callAnthropic() before callAnthropicCLI is called). The hypothesis (maintainer guidance override causes wrong schema) is unverified on Codex.
 
-**Schema adherence:** the `--system-prompt` path uses instruction-based schema adherence (best-effort), NOT structural enforcement. The model is instructed to return the correct JSON schema but is not structurally bound to it. Consequence: on rare occasions the model may return a differently-keyed JSON object (e.g. `{"review":{...}}`); dispatch.mjs detects this via schema-mismatch validation and falls back to the API key path (`ANTHROPIC_API_KEY`) if available. This is in contrast to the API path (`tool_use` forcing) which provides structural enforcement.
+**Schema adherence:** the `--system-prompt` path uses instruction-based schema adherence (best-effort), NOT structural enforcement. The model is instructed to return the correct JSON schema but is not structurally bound to it. Consequence: on rare occasions the model may return a differently-keyed JSON object (e.g. `{"review":{...}}`); dispatch.mjs detects this via schema-mismatch validation and falls back to the API key path (`ANTHROPIC_API_KEY`) if available.
 
 **Output parsing:** strip any ` ```json...``` ` fences, locate first `{` to last `}`, parse JSON, validate that `findings` array is present. If JSON parses but has wrong schema (e.g. `{"review":{...}}`), emit a descriptive error listing actual top-level keys.
 
@@ -63,18 +63,9 @@ printf '%s' "$prompt" | claude \
 
 ## Structured output — API path
 
-Uses `tool_use` forcing:
+The request sends only `model`, `max_tokens`, and the prompt as a user message; there is no tool forcing or schema parameter. The prompt carries the JSON output contract.
 
-```json
-{
-  "model": "<model-id>",
-  "tools": [{"name": "submit_findings", "input_schema": {...}}],
-  "tool_choice": {"type": "any"},
-  "messages": [{"role": "user", "content": "..."}]
-}
-```
-
-**Response extraction:** `content[].find(b => b.type === 'tool_use').input` — the tool input IS the schema-bound JSON.
+**Response extraction:** the first `text` content block is parsed with `JSON.parse` and then validated like every other provider response. Adherence is instruction-based, not structurally enforced.
 
 ## Error handling (API path)
 
