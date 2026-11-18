@@ -1,6 +1,7 @@
 ---
 name: aivv
 description: "Use for general AIVV advisory review of session work, documents, research, plans, designs, decisions, or code; optionally choose reviewers or lenses, target a project, or hand findings to /aivv-fix."
+argument-hint: "[<file>|<idea>|N] [--reviewers=N] [--lens=<list>] [--plan <file>] [--fix] [--dry-run] [--target=<dir>] [--help]"
 ---
 
 # AIVV Orchestration

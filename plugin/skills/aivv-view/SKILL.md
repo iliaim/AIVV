@@ -1,6 +1,7 @@
 ---
 name: aivv-view
 description: "Use to inspect AIVV review and fix history, render or export reports, browse findings across reviews, or create an opt-in local remediation handoff with --inbox."
+argument-hint: "[<review-id>] [--html [-o <file>] [--open]] [--browser] [--list] [--json] [--summary] [--tui] [--inbox]"
 ---
 
 # AIVV View
