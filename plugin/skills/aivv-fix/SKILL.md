@@ -258,7 +258,7 @@ Collect investigator JSON, mark consumed handles, close them before Step 3 re-en
 
 Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](references/finding-collection.md). Then apply Gate 1/2/3; Gate 1 challenges root cause and Step 4.5 later challenges the fix plan.
 
-**Auto-proceed precheck:** do not move any finding to Step 5 yet. Auto-apply is allowed only after `fix_confidence` is high, policy is `auto`, write-intent readiness passes, CHALLENGE and consequence gates clear, and no blocker remains. Route trade-offs, architecture/shared-interface changes, medium/low confidence, conflicts, and high-blast-radius action-driving findings to the decision queue, evidence-backed targeted re-investigation only when the shared retry budget has room, or skip/escalate handling.
+**Auto-proceed precheck:** do not move any finding to Step 5 yet. Record each finding's blockers now; its final route (Auto-eligible, Decision queue, Architecture decision queue, or Skipped by policy) is settled only after Steps 4.4–4.5, by the definitions in [apply-policy-and-gates.md](references/apply-policy-and-gates.md).
 #### `fix_confidence` computation (per approved finding, computed here — consumed by Step 4.5)
 
 After Gate 1/2/3 resolves and before evaluating the Step 4.5 trigger, compute `fix_confidence` per approved finding via the one-way demotion ladder (`high → medium → low`, floor at `low`), then persist it on every `session_changes.changes_summary[]` entry and in the `review_meta` calibration record.
