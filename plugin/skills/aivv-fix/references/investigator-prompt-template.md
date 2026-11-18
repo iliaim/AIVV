@@ -124,18 +124,17 @@ If none of the above precisely fits, apply whichever is closest and note the ada
 **`{target_project}`**
 
 > ⚠ **All file operations MUST use this absolute path as the base.**
-> Do NOT use bare relative paths (`find src/`, `grep src/`, `ls src/`).
 > Your inherited shell CWD may NOT be the target project — it could be a
 > stale git worktree pinned to a different commit, so a relative path can
 > silently resolve against the wrong tree and make you investigate stale
-> content: a wrong root cause, or missed similar-pattern occurrences. Always
-> anchor on the absolute path above:
+> content: a wrong root cause, or missed similar-pattern occurrences. Search
+> and read with absolute paths under the path above. On Claude Code use the
+> Read, Grep and Glob tools: the Bash guard confines shell paths to the
+> inherited CWD, so the shell cannot reach the target when the two differ.
 >
-> - ✓ `find {target_project}/src -name "*.ts"`
-> - ✓ `grep -rn "pattern" {target_project}/src/`
-> - ✗ `find src -name "*.ts"`   ← resolves to the wrong directory in a worktree
->
-> When in doubt, `cd {target_project}` before any file operation.
+> - ✓ Grep `pattern` in `{target_project}/src`
+> - ✓ Glob `**/*.ts` in `{target_project}/src`
+> - ✗ `grep pattern src/x.ts`   ← resolves against the inherited CWD, not the target
 
 ## Handoff Files
 

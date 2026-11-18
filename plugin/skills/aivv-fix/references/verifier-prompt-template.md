@@ -84,22 +84,20 @@ When reporting on each finding, use one of three resolution states:
 **`{target_project}`**
 
 > ⚠ **All file operations MUST use this absolute path as the base.**
-> Do NOT use bare relative paths (`grep src/`, `find src/`, `ls src/`), and do
-> NOT grep `<cited_file>` / `<written_doc_file>` / a modified-file path as a
-> bare relative path — every path in the "Files to Read", "Documentation-Gap",
-> and "ADDITIONAL VERIFICATION" sections is recorded **relative to the target
-> project**. Your inherited shell CWD may NOT be the target project — it could
-> be a stale git worktree pinned to a different commit, so a relative path can
-> silently resolve against the wrong tree and make you verify the fix against
-> stale content: a false `RESOLVED` (the real tree still has the defect) or a
-> false `NOT RESOLVED` (the stale tree lacks the applied fix). Always anchor on
-> the absolute path above:
+> Every path in the "Files to Read", "Documentation-Gap", and "ADDITIONAL
+> VERIFICATION" sections is recorded **relative to the target project**. Your
+> inherited shell CWD may NOT be the target project — it could be a stale git
+> worktree pinned to a different commit, so a relative path can silently
+> resolve against the wrong tree and make you verify the fix against stale
+> content: a false `RESOLVED` (the real tree still has the defect) or a false
+> `NOT RESOLVED` (the stale tree lacks the applied fix). Search and read with
+> absolute paths under the path above. On Claude Code use the Read, Grep and
+> Glob tools: the Bash guard allows only read-only `git` in the inherited CWD.
+> Where this prompt writes `grep -F "<text>" <path>`, run a literal
+> (fixed-string) search for that text in `{target_project}/<path>`.
 >
-> - ✓ `grep -F "<verification_evidence>" {target_project}/<cited_file>`
-> - ✓ `grep -rn "pattern" {target_project}/src/`
-> - ✗ `grep -F "<verification_evidence>" <cited_file>`   ← resolves against the wrong tree in a worktree
->
-> When in doubt, `cd {target_project}` before any file operation.
+> - ✓ Grep `<verification_evidence>` (literal) in `{target_project}/<cited_file>`
+> - ✗ Grep `<verification_evidence>` in `<cited_file>`   ← resolves against the inherited CWD, not the target
 
 ## Handoff Files
 

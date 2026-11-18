@@ -121,7 +121,7 @@ Set `recommended_next_step` as an action route, not as another severity label:
 
 Do not set `fix-now` merely because severity is MAJOR. A MAJOR with uncertain root cause should be `investigate-first`; a POLISH/improvement should usually be `defer-with-rationale` unless it is a trivial quick win and project policy clearly allows improvement fixes. An invasive improvement is always `defer-with-rationale` and never auto-applied.
 
-Legacy-minimal envelopes remain accepted only for backward compatibility. Provider-backed structured output may emit modern fields only after the provider schema self-test in `tools/test-dispatch.sh` (an author-side ritual in the AIVV source repo; not shipped with the plugin) passes.
+Legacy-minimal envelopes remain accepted only for backward compatibility.
 
 Example (typed form):
 

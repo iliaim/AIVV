@@ -1,7 +1,8 @@
 # Eval Harness (`--eval`)
 
 Maintainer-only early-exit branch for reviewer-quality regression checks against
-author-private `.dev/eval/` corpora. Installed plugin builds may lack the corpus.
+author-private `.dev/eval/` corpora. The corpus is not in the public repository or
+the installed plugin, so without it `--eval` halts with the no-corpus message below.
 
 ## Activation
 
