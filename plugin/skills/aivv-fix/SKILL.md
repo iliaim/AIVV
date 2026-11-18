@@ -105,6 +105,8 @@ Earlier steps may perform only the state maintenance, preference update, or acti
 
 ### Step 3: INVESTIGATE — Root Cause Analysis
 
+First, for a finding sourced from `[user-reported]`, `[deferred]`, or `[agent-noted]`, or with `lens: sec`, run [reproducibility-gate.md](references/reproducibility-gate.md), whichever path follows.
+
 **MUST-READ:** [fast-path.md](references/fast-path.md) before the fast path (the only investigator skip) and [investigation-dispatch.md](references/investigation-dispatch.md) before investigator dispatch or same-agent fallback.
 
 ### Step 4: PLAN — Present Investigation Results

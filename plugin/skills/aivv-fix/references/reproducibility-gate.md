@@ -1,6 +1,6 @@
 # Reproducibility Gate
 
-Read before investigator dispatch (Step 3) when a finding is sourced from `[user-reported]`, `[deferred]`, or `[agent-noted]`, or has `lens: sec`. Signal 0/1 findings outside the security lens skip this file.
+Read in Step 3, before the fast path or investigator dispatch, when a finding is sourced from `[user-reported]`, `[deferred]`, or `[agent-noted]`, or has `lens: sec`. Signal 0/1 findings outside the security lens skip this file.
 
 ## Contents
 

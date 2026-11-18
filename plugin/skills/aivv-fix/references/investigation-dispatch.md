@@ -16,6 +16,8 @@ Read from `skills/aivv-fix/SKILL.md` before investigator dispatch or same-agent 
 
 ## Step 3: INVESTIGATE — Root Cause Analysis
 
+When `lifecycle_context` is present, load the lifecycle record per [lifecycle-route.md](lifecycle-route.md#lifecycle-write-back-rules) before dispatch.
+
 **Default assumption: root cause is unknown.** Confidence in a plausible explanation is not a reason to skip the investigator.
 
 ### Reproducibility gate
@@ -137,10 +139,10 @@ Wait for all investigators (and any inline analyses) to complete before proceedi
 
 Build every investigator, fix-challenger, and verifier prompt with the shipped helper instead of reading the prompt template. Write `{"prompts": [{"template": "<investigator|fix-challenger|verifier>", "values": {...}}]}` to a private temp file and run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin). Key `values` by placeholder name from the step's fill list: the investigator list above, the challenger list in [challenge-loop.md](challenge-loop.md), the verifier list in [verifier-dispatch.md](verifier-dispatch.md).
 
-- The helper returns the template body with every supplied value fenced under one fresh nonce (never derived from prompt or project content), plus `unfilled` (placeholders still open) and `loop_sections` (per-entry sections and their placeholders). Supply every listed value in one call; for any value still in `unfilled`, add it and call again.
+- The helper returns the template body with every supplied value fenced under one fresh nonce (never derived from prompt or project content), plus `unfilled` (placeholders still open) and `loop_sections` (per-entry sections and their placeholders). Supply every listed value in one call; for any value still in `unfilled`, add it and call again, except placeholders a fill list says to fill by hand.
 - A loop section with more than one entry is yours to expand: repeat it once per entry and wrap each added value with `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD`, using the helper's returned `nonce` and a stable uppercase field name. Lines opening with `{For each …}`, `{/…}`, or another capitalised directive are instructions to you: replace them with the content they describe, or drop the section where they say to omit it.
 - Do not hand-type the fence tags, reuse an unwrapped copy, or place instructions or schema inside a fence. Use the nonce only for this prompt.
-- Open a `*-prompt-template.md` file only when `unfilled` names a placeholder whose meaning neither the fill list nor its annotation in the returned prompt gives.
+- Open a `*-prompt-template.md` file only when `unfilled` names a placeholder whose meaning neither the fill list nor its annotation in the returned prompt gives, or, for the verifier, to append the `ADDITIONAL VERIFICATION` text after its closing fence when [verifier-dispatch.md](verifier-dispatch.md) says to.
 - Send the returned prompt with its `## Working Directory` block (and, for the challenger, its `## OUTPUT FORMAT OVERRIDE` block) intact.
 
 ### Subagent handles
