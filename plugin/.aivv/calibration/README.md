@@ -6,8 +6,6 @@ consumer runtime destination. Resolve and save the invocation context using
 `../target-resolution.md`; `<calibration_dir>` and `<state_dir>` below refer to
 that context. Legacy project corpora remain read-only/importable history.
 
-Contributor guidance for field-evidence submissions is in [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Layout — per-invocation shards (canonical, per-invocation sharding contract)
 
 Calibration is **sharded one JSONL file per invocation per lens**:
