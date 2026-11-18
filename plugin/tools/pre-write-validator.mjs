@@ -2300,6 +2300,17 @@ function main(argv) {
   return verdict.status === "pass" ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// Compare real paths: Node resolves symlinks in import.meta.url but not in
+// process.argv[1]. A plain comparison made a run through a symlinked AIVV_ROOT
+// print no verdict and exit 0, which a caller reading the exit code takes as a pass.
+function invokedAsScript() {
+  try {
+    return fs.realpathSync(process.argv[1] ?? "") === fs.realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (invokedAsScript()) {
   process.exit(main(process.argv.slice(2)));
 }

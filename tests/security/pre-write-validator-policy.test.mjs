@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -241,6 +241,13 @@ try {
     assert.ok(verdict.detail.includes(malformed));
     assert.doesNotMatch(result.stderr, /SyntaxError|at .*\.mjs/, "no stack trace");
   }
+  // Run through a symlinked tools directory (a linked AIVV_ROOT), the CLI still
+  // reports its verdict and exit code instead of exiting 0 with no output.
+  const linkedTools = path.join(scratch, "linked-tools");
+  symlinkSync(toolsDir, linkedTools, "dir");
+  const linked = cli(path.join(linkedTools, "pre-write-validator.mjs"), ["--fixture", malformed]);
+  assert.equal(linked.status, 1, "a symlinked validator path must not exit 0 without a verdict");
+  assert.equal(JSON.parse(linked.stdout).reason, "input-json-invalid");
   const absent = cli(validatorCli, ["--fixture", path.join(scratch, "absent.json")]);
   assert.equal(absent.status, 1);
   assert.equal(JSON.parse(absent.stdout).reason, "input-file-unreadable");
