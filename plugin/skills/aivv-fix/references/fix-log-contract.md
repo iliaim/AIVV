@@ -67,7 +67,7 @@ the storage helper, checks that its `id` matches `source_review_id`, and checks
 that every selected root finding exists in the source review. Keep the source
 ID and relative path immutable through the fix invocation.
 
-**Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents and any Step 4.5 challenge; but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
+**Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents, the Step 5 pre-loops below, and any Step 4.5 challenge (including one a pre-loop demotion re-triggers); but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
 
 Trivial fixes still record readiness. They normally use `risk_tier: "low"` and `approval_mode: "auto"` only when W10 classifies them as auto-eligible and no consequence gate applies.
 

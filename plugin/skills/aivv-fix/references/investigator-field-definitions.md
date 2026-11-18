@@ -365,7 +365,7 @@ The orchestrator routes based on `confidence_gap_shape`:
 
 Canonical producer semantics live in [write-intents-and-prewrite-validation.md](write-intents-and-prewrite-validation.md). The schema-shaped excerpt below exists only as an investigator prompt aid; when this summary conflicts with the canonical producer-write contract, the canonical file wins and this summary must be updated in the same change.
 
-`write_intents[]` is required on `fix_proposal` for every Branch A/B/C-localized/D fix that can write to disk. It materializes the exact proposed bytes before Step 4.5 challenger dispatch, Step 5.4 deterministic validation, or any host write primitive. `fix_proposal.description` remains a human-readable approach summary and is never a substitute for exact proposed write content.
+`write_intents[]` is required on `fix_proposal` for every Branch `A`/`B`/`C-fallthrough-A`/`D` fix that can write to disk. It materializes the exact proposed bytes before Step 4.5 challenger dispatch, Step 5.4 deterministic validation, or any host write primitive. `fix_proposal.description` remains a human-readable approach summary and is never a substitute for exact proposed write content.
 
 Required fields: `id`, `finding_id`, `branch`, `target_file`, `operation`, `kind`, `content_sha`, `source_step`, and `pre_write_assertions`. Branch A generated-patch intents also require exact ordered `proposed_edits[]` entries (`old_string`, `new_string`, `content_sha`). Detector results live under `detector_result` with `verdict`, `content_shapes`, `detection_confidence`, required/missing assertions, risky spans, and optional host-user `bypass_approval`.
 
