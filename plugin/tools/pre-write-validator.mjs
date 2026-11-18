@@ -361,6 +361,14 @@ export function bypassVerdict(fixture) {
     ) {
       return { status: "halt", reason: "model-authored-bypass-rejected" };
     }
+    // A dated approval stops authorizing once it lapses; an unparseable date is
+    // treated as lapsed. A free-text expires_condition cannot be checked here.
+    if (approval.expires_at) {
+      const expiry = typeof approval.expires_at === "string" ? Date.parse(approval.expires_at) : NaN;
+      if (!Number.isFinite(expiry) || expiry <= Date.now()) {
+        return halt("bypass-approval-expired", `bypass_approval.expires_at is ${JSON.stringify(approval.expires_at)}; it must be a future date-time`);
+      }
+    }
     if (!approval.content_sha || approval.content_sha !== intent.content_sha) {
       return { status: "halt", reason: "bypass-content-sha-mismatch" };
     }

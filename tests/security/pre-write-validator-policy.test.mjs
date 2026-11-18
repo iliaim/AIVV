@@ -123,6 +123,24 @@ regeneratedBypass.write_intents[0].detector_result = {
 assert.equal(bypassVerdict(regeneratedBypass).reason, "bypass-invalidated-after-regeneration",
   "regenerated intents still invalidate prior approvals");
 
+// A dated bypass approval authorizes nothing once it has lapsed.
+const datedBypass = (expires_at) => {
+  const fixture = structuredClone(regeneratedBypass);
+  delete fixture.intent_regenerated;
+  fixture.write_intents[0].detector_result.bypass_approval.expires_at = expires_at;
+  return fixture;
+};
+assert.deepEqual(bypassVerdict(datedBypass(new Date(Date.now() + 3600000).toISOString())), { status: "pass", reason: "pass" },
+  "an unexpired bypass approval still applies");
+for (const expiresAt of ["2000-01-01T00:00:00Z", new Date(Date.now() - 1000).toISOString(), "not-a-date", 4102444800000]) {
+  assert.equal(bypassVerdict(datedBypass(expiresAt)).reason, "bypass-approval-expired",
+    `an expired or unparseable expires_at (${expiresAt}) must halt`);
+}
+const conditionBypass = datedBypass(undefined);
+conditionBypass.write_intents[0].detector_result.bypass_approval.expires_condition = "until this fix session ends";
+assert.deepEqual(bypassVerdict(conditionBypass), { status: "pass", reason: "pass" },
+  "a free-text expires_condition is left to the existing checks");
+
 // Issue #26 items 5 and 6: a halt names the field and the allowed values, and the
 // command-line tools answer --help and reject unreadable input without a stack trace.
 const fixLog = () => ({
