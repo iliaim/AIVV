@@ -11,7 +11,7 @@ Read from `skills/aivv-fix/SKILL.md` before investigator dispatch or same-agent 
 
 ### Step 3: INVESTIGATE — Root Cause Analysis
 
-**Default assumption: root cause is unknown.** Every finding that still needs a fix gets an investigator unless it passes the low-risk fast path below, the only skip route. A finding the reproducibility gate closes first (`already-correct`, or `unreachable-static` → `wont-fix`) needs no investigation. Confidence in a plausible explanation is not a reason to skip.
+**Default assumption: root cause is unknown.** Confidence in a plausible explanation is not a reason to skip the investigator.
 
 #### Reproducibility gate
 
@@ -60,11 +60,11 @@ Ask: *"Do I know with confidence exactly why this is happening AND exactly what 
 - Any CRITICAL finding (always investigate — the stakes are too high to assume)
 - You're unsure whether similar patterns exist elsewhere in the codebase
 
-**Documentation-gap routing:** `documentation-gap` findings normally dispatch the investigator. The only exception is the formal [fast-path.md](fast-path.md) route for a low-risk documentation gap whose exact `verbatim_doc_content` is already known and every fast-path eligibility gate passes. Otherwise, the investigator is the cheapest correct path: it discovers unknown content or confirms the mechanical prose via `fix_proposal.verbatim_doc_content`.
+**Documentation-gap routing:** `documentation-gap` findings normally dispatch the investigator, the cheapest correct path: it discovers unknown content or confirms the mechanical prose via `fix_proposal.verbatim_doc_content`. The fast path applies only when that exact content is already known.
 
 **Same-agent fallback for `documentation-gap`:** When `capability_degradations` contains `"investigator_cold_dispatch_unavailable"`, ALL `documentation-gap` findings route directly to Branch E (`CLARIFICATION_NEEDED:empirical_verification_required`) without proceeding to Branch B prose edit. The same-agent investigator role may still run inline and emit `verification_method` for telemetry/calibration, but this does NOT affect routing — Branch E fires regardless of `verification_method` value. Structural independence required by the verifier's evidence grep is absent under same-agent mode.
 
-**Low-risk fast path — the only way to skip the investigator:** check [fast-path.md](fast-path.md). When every fast-path eligibility gate passes, emit the structured `investigation_route: "fast_path_inline"` record and continue through Step 4 write-intent and verification gates. A finding that still needs a fix and fails any gate gets the investigator; there is no other skip route.
+**Low-risk fast path — the only way to skip the investigator:** see [fast-path.md](fast-path.md), which owns its eligibility gates and the `investigation_route: "fast_path_inline"` record.
 
 **When in doubt, spawn the investigator.** The cost of a false skip (missing root cause, missing similar patterns) is higher than the cost of an unnecessary investigation.
 
@@ -95,8 +95,8 @@ Before spawning investigators, run pre-spawn cleanup and track each handle per [
 - `{source_log_absolute_path_or_none}` → the absolute path of the source review log or fix log, or `none`.
 - `{investigator_field_definitions_absolute_path}` → the absolute path of this skill's `references/investigator-field-definitions.md`.
 - `{introduced_by_context}` → JSON-serialized `introduced_by` object from the change-attribution probe above, or the literal string `"(not available)"` when the file is untracked, deleted/renamed at HEAD, or the finding is MINOR/POLISH (the probe skips non-CRITICAL/MAJOR findings). Passed to each CRITICAL/MAJOR finding's investigator as the `## Change Attribution` section in the prompt.
-- `{plugin_root_absolute_path}` → the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start (see `SKILL.md` "Runtime pin and preflight"); do not re-resolve it. The investigator reads its role file from this root, never from the target project.
-- `{target_project}` → the session target project absolute path. Use the canonical target/storage context bound before maintenance; do not infer a provisional target from findings. **Worktree-CWD note:** the investigator independently searches files to discover root causes and similar patterns, and inherits the orchestrator's shell CWD — which may be a stale git worktree at a different commit than the target. The template's `## Working Directory` block anchors all file operations on this absolute path — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint), so the investigator searches the real target tree rather than the inherited CWD.
+- `{plugin_root_absolute_path}` → `$AIVV_ROOT`. The investigator reads its role file from this root, never from the target project.
+- `{target_project}` → the session target project absolute path from the canonical target/storage context bound before maintenance; do not infer a provisional target from findings.
 
 **Spawning rules** (host-neutral; each host's specific dispatch syntax in `<!-- CLAUDE-CODE-SPECIFIC -->` aside below):
 - Independent batches (no shared context): dispatch cold investigators in parallel via the host's subagent facility.

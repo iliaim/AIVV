@@ -42,7 +42,7 @@ Flow: 1 COLLECT findings → 2 TRIAGE batches → 2.5 CONTAIN critical blast rad
 
 ## Common Mistakes
 
-Do not rely on `git diff` in Steps 5/6, skip same-file batching, or auto-proceed on architectural changes. Preserve the immutable authorized scope in every re-dispatch. Every fix-plan re-authoring and verification re-entry draws on one invocation-wide rework budget, defined in [challenge-loop.md](references/challenge-loop.md). At exhaustion, report unresolved findings and stop without reopening scope or asking for another approval.
+Never rely on `git diff` or `git log` to learn what this run changed: the persisted fix log (`session_changes`) is the source of truth, and other agents may commit in parallel. Do not skip same-file batching, or auto-proceed on architectural changes. Preserve the immutable authorized scope in every re-dispatch. Every fix-plan re-authoring and verification re-entry draws on one invocation-wide rework budget, defined in [challenge-loop.md](references/challenge-loop.md). At exhaustion, report unresolved findings and stop without reopening scope or asking for another approval.
 
 ## Reference Loading
 
