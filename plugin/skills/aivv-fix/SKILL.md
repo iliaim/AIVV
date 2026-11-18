@@ -31,7 +31,7 @@ unexpanded, stop with `AIVV_INSTALLATION_INCOMPLETE`.
 
 If `can_spawn_cold_agents` is unavailable on the active host, investigation falls back to **same-agent investigation** with a `capability_degradations` entry — investigator role prompt is consulted, but findings derive from the same agent that produced the finding context (apply extra rigor against confirmation bias).
 
-**Codex dispatch preflight + lifecycle pre-spawn cleanup:** <!-- Codex-SPECIFIC --> Before any same-agent fallback or native fix-phase subagent spawn, run the Codex dispatch preflight (a missing visible `spawn_agent` is not by itself a capability failure — confirm TOML under `<codex-home>/agents/` or project `.codex/agents/` and `tool_search` for the dispatch surface before declaring it unavailable) and the best-effort lifecycle pre-spawn cleanup of AIVV-owned handles. **MUST-READ:** [investigation-dispatch.md](references/investigation-dispatch.md) before the Codex preflight or pre-spawn cleanup — the discovery sequence, the `codex-subagent-delegation-blocked` halt, and the AIVV-owned-handle cleanup scope are fixed contracts.
+**Codex dispatch preflight + lifecycle pre-spawn cleanup:** <!-- Codex-SPECIFIC --> Before any same-agent fallback or native fix-phase subagent spawn, run the Codex dispatch preflight (a missing visible `spawn_agent` is not by itself a capability failure — confirm TOML under `<codex-home>/agents/` or project `.codex/agents/` and `tool_search` for the dispatch surface before declaring it unavailable) and the best-effort lifecycle pre-spawn cleanup of AIVV-owned handles. **MUST-READ:** [investigation-dispatch.md](references/investigation-dispatch.md) before the Codex preflight or pre-spawn cleanup.
 
 ## When to Use
 
@@ -90,7 +90,7 @@ and retry count; a new run gets a fresh ID. Keep that ID and retry counter
 through every re-entry. Step 4.4 reuses the bound ID when it first persists the
 fix log. Help and registry-only early exits do not create a fix invocation.
 
-**Read before resolving the target project:** [`.aivv/target-resolution.md`](../../.aivv/target-resolution.md). Bind and cache storage context before maintenance, collection, or dispatch, using the pinned `tools/storage-paths.mjs resolve` helper; all generated state uses external `<state_dir>` and calibration uses `<calibration_dir>`. `session_changes.target_project` is the immutable base for finding file references. Policy lookup remains separate and retains original provenance. Finding ancestors never choose the fresh storage target. Do not improvise precedence, write local `.aivv/state/` migration markers, or re-resolve after cwd changes.
+**Read before resolving the target project:** [`.aivv/target-resolution.md`](../../.aivv/target-resolution.md). Bind and cache storage context before maintenance, collection, or dispatch, using the pinned `tools/storage-paths.mjs resolve` helper; all generated state uses external `<state_dir>` and calibration uses `<calibration_dir>`. `session_changes.target_project` is the immutable base for finding file references. Policy lookup remains separate and retains original provenance. Finding ancestors never choose the fresh storage target. Do not write local `.aivv/state/` migration markers or re-resolve after cwd changes.
 
 ## Instructions
 
@@ -128,9 +128,9 @@ legacy originals remain untouched. Selected missing/corrupt/newer artifacts
 keep their route errors; unrelated history warns. Dry-run only inspects state:
 it never initializes, imports, reaps, or writes it.
 **Route-first cost rule:** execute Step 1 in this order: minimal `--target` pre-parse → preamble → full flag parse → source-route classification (`review_id`/`resume`/`resolve`, lifecycle selector, task ID, literal, or conversation) → load only that route's collector/resolver. Do not load conversation Signal 0-4 rules for a successful `--review-id` route, lifecycle helpers without a lifecycle selector, or task-file extraction details for literal/conversation routes. Safety gates still run in normal order once findings exist.
-**Flag extraction first.** Before source parsing, parse and strip flags from the argument string per the reference (the flag catalog covers `--dry-run`, `--target=`, `--review-id=`, `--resume`, `--resolve`, `--incident`/`--problem`/`--issue`/`--github-issue`, `--list-wont-fix`, `--forget-wont-fix=`, `--outer-cycle=`, `--root-review-id=`, `--apply-all-polish`, and `--dangerously-auto-apply`). If `--dry-run` is present, stop at Step 4.3 after investigation planning output; do not load write-intent, challenger, execution, verifier, or calibration references unless the user starts a non-dry-run invocation.
+**Flag extraction first.** Parse and strip flags per **MUST-READ:** [fix-flags.md](references/fix-flags.md). With `--dry-run`, stop at Step 4.3.
 
-**MUST-READ:** [fix-flags.md](references/fix-flags.md) before extracting any Step 1 flag, invoking the `--list-wont-fix`/`--forget-wont-fix` early-exit handlers, or routing a lifecycle selector. The per-flag parsing rules, the two registry-handler exit codes, and the lifecycle-selector route precedence are fixed contracts. Do not improvise flag names, strip-order, or the confirmation-phrase semantics for `--dangerously-auto-apply`.
+**Early-exit registry handlers + lifecycle-selector routing** (also per [fix-flags.md](references/fix-flags.md)): when `--list-wont-fix` or `--forget-wont-fix=<identifier>` was extracted, run the matching read-only/write registry handler and return (skip Steps 1.1–7). When a lifecycle selector (`--incident`/`--problem`/`--issue`/`--github-issue`) was extracted, use the `AIVV_ROOT` pinned and preflighted at invocation start, then run `"$AIVV_ROOT/tools/incident-lifecycle-route.mjs"` before ordinary source parsing and bind `lifecycle_context` + `FixSession.source` from the route result.
 
 #### POLISH-application behavior and L1-source detection
 
@@ -150,17 +150,11 @@ Resolve the durable review log before Step 1 source parsing. Missing, corrupt, t
 
 ### Step 1.1: Resolve `/aivv-fix` Preferences
 
-After flag extraction and any successful `--review-id` resolution, resolve user/project preferences once for the fix invocation (the `/aivv-fix` counterpart to `/aivv` Step 1.5; load-bearing for `apply_polish_mode`, `fix_apply_policy`, `shared_interface_patterns`, `max_challenges_per_invocation`, `max_rework_retries`, `enable_step_57_execution`, `outer_loop_*`, and `post_review_html_*`). Pick the resolution target per the reference's target chain (`--target` > review-log `target_project` > finding-path common-ancestor/git/cwd), reuse the shared resolution algorithm in [`.aivv/configuration.md`](../../.aivv/configuration.md) (CLI > project > user > schema defaults, validated against `.aivv/schemas/config.schema.json`), then bind the `/aivv-fix`-specific key catalog + emit the one-time `auto_apply_v1` notice. On a malformed/unreadable config, preserve its original location and warn/fall through per the reference — do not fail the fix workflow over an optional preference file.
-
-**MUST-READ:** [fix-preferences.md](references/fix-preferences.md) before binding any `/aivv-fix`-specific preference key or emitting the `auto_apply_v1` notice. The preference-resolution target chain, the per-category `fix_apply_policy` values, the legacy `apply_polish_mode` mapping, the `--apply-all-polish`/`--dangerously-auto-apply` precedence, the malformed-config handling, and the `auto_apply_v1` marker-write contract are fixed contracts. Do not improvise key names, precedence, or the marker write.
-
-**Early-exit registry handlers + lifecycle-selector routing:** when `--list-wont-fix` or `--forget-wont-fix=<identifier>` was extracted, run the matching read-only/write registry handler and return (skip Steps 1.1–7). When a lifecycle selector (`--incident`/`--problem`/`--issue`/`--github-issue`) was extracted, use the `AIVV_ROOT` pinned and preflighted at invocation start, then run `"$AIVV_ROOT/tools/incident-lifecycle-route.mjs"` before ordinary source parsing and bind `lifecycle_context` + `FixSession.source` from the route result.
-
-**MUST-READ:** [fix-flags.md](references/fix-flags.md) before invoking either registry handler or routing a lifecycle selector — the handler exit codes, the fingerprint-resolution rule, the route-helper invocation, and the "lifecycle routing MUST NOT create `FixSession.source = incident/problem/issue/github_issue`" invariant are fixed contracts.
+After flag extraction and any successful `--review-id` resolution, resolve preferences once for the invocation per **MUST-READ:** [fix-preferences.md](references/fix-preferences.md), which reuses the shared algorithm in [`.aivv/configuration.md`](../../.aivv/configuration.md) and binds the fix-only keys and the one-time `auto_apply_v1` notice.
 
 Remaining argument (post-flag-extraction) determines the source. Set `FixSession.source`: `conversation` for blank/no-argument session scan, `review_id` for `--review-id=<id>` or an accepted `--action-request=<uuid>` (handled in Step 1.04/1.05 without conversation fallback), `task_file` for `[A-Z]+-\d{4}-\d{4}` task ID, or `literal` for quoted text/other string. Record it in the fix log per `.aivv/runtime-contract.md`.
 
-**MUST-READ:** [finding-collection.md](references/finding-collection.md) before scanning conversation signals, computing fingerprints, or de-duplicating. It is the canonical home for the **Signal 0–4** scan (machine-readable JSONL sidecar → prose review → user-reported → deferred → agent-noted), the `severity_model`-gated severity inference (`legacy_4pass` vs `impact_likelihood`, blast-radius pass, tone pass), the **wont-fix registry pre-filter** and Step 4 wont-fix accept path that both use `.aivv/runtime-contract.md` `compute_fingerprint(location, description)`, and the structural/description/contradiction/severity-on-merge **de-duplication** rules. Do not improvise signal priority, severity inference, the runtime-contract fingerprint formula, or dedup thresholds.
+**MUST-READ:** [finding-collection.md](references/finding-collection.md) before scanning conversation signals, computing fingerprints, applying the wont-fix pre-filter, or de-duplicating.
 
 For conversation/literal/task-file collection, tag each finding with its source label, apply wont-fix pre-filtering, de-duplicate, assign stable `F001` IDs, and continue to Step 1.9. Review-id findings come only from the durable review log.
 
@@ -192,16 +186,7 @@ inside this recorded boundary. Carry the snapshot unchanged into every
 investigator, challenger, verifier, and re-entry prompt, and check every
 proposed file against it before approval or write.
 
-Encode explicit file or directory boundaries in the snapshot's canonical,
-target-relative `included_paths` and `excluded_paths` arrays, in addition to the
-human-readable `included` and `excluded` summaries. Leave `included_paths` empty
-when the request imposes no narrower path inclusion; when non-empty, every
-write target must match one listed path or a descendant. Every path in
-`excluded_paths` blocks that path and descendants. Do not infer path limits from
-finding locations alone. The fix-log validator checks write intents, planned
-files, recorded changes, and modified/created file lists against these arrays.
-If a stated path limit cannot be represented safely, do not write outside it;
-report the affected finding unresolved.
+Encode explicit file or directory boundaries in the snapshot's `included_paths` and `excluded_paths` arrays as specified in [fix-log-contract.md](references/fix-log-contract.md); the fix-log validator enforces them. Do not infer path limits from finding locations alone. If a stated path limit cannot be represented safely, do not write outside it; report the affected finding unresolved.
 
 Alternatives may change implementation while remaining inside this scope. An
 alternative that changes
@@ -216,7 +201,7 @@ snapshot in every new fix log.
 
 Classify each finding (2a) by **Severity**, **Disposition** (`recommended_next_step` or the legacy severity fallback), **Type**/`category` (the Step 5 dispatch key — `code-bug` | `design-flaw` | `process-violation` | `documentation-gap` | `clarification-needed` | `improvement`), and internal **Investigation Mode** (`skip-permitted | standard | instrumentation-first | containment-first`). Then smart-batch (2b) by the location/subsystem/category/causal/context heuristics under the batch-independence rule, and present the provisional triage summary (2c) for auto-proceed-or-pause. Step 2c batches are **provisional** — Step 4 reconciles them after investigators declare `files_to_modify`.
 
-**MUST-READ:** [triage.md](references/triage.md) before classifying findings, computing batches, or rendering the triage summary. The classification dimensions, the `complexity`→`investigation_mode` migration, the dispatch-semantics note, the batch-independence + mandatory->5 rule, and the triage-table columns are fixed contracts. Do not improvise the classification or the batching heuristics.
+**MUST-READ:** [triage.md](references/triage.md) before classifying findings, computing batches, or rendering the triage summary.
 **MUST-READ:** [execution-decisioning.md](references/execution-decisioning.md) before converting triage output into containment, investigation, decision-queue, or Branch A-F execution routes.
 
 ---
@@ -230,7 +215,7 @@ the severity fallback (`CRITICAL` remains containment-eligible).
 
 Before spawning investigators, ask whether a reversible containment action is available right now — a temporary symptom-level measure to limit ongoing damage while the root cause is investigated, NOT the fix. If the user applies one, log it in `session_changes` and still proceed to Step 3 for all batches.
 
-**MUST-READ:** [containment.md](references/containment.md) when this step applies. It is the canonical home for the containment examples (least- to most-disruptive), disruptive-action disclosure, and the right-now/when-triggered protocol. Do not improvise the protocol or skip the disruption-cost disclosure.
+**MUST-READ:** [containment.md](references/containment.md) when this step applies.
 
 **Skip when:** batch contains no `fix-now` / `investigate-first` findings with active blast radius, or only contains legacy findings below the CRITICAL fallback threshold.
 
@@ -285,7 +270,7 @@ Then persist the plan: after the Step 5.0 target reuse and pre-write banner, wri
 
 ### Step 4.4.5: RED-GREEN TEST GATE — failing test before the plan challenge
 
-For every approved finding where a test can be written (`code-bug`, `design-flaw` with testable behavior): run the failing test now, before Step 4.5, and confirm it fails for the right reason (red). A test that needs new bytes on disk is written here only under the early-write rule in [red-green-gate.md](references/red-green-gate.md) step 3 (no user decision pending is necessary, not sufficient); it is the only project write allowed before Step 5, it is recorded in the fix log, and it is undone if the fix is not applied. Otherwise the test stays an intent and the red run happens in Step 5 after approval. Record the red result in the decision ledger. Step 5 applies the fix, re-runs the test (green), and logs `red_green_evidence` on the `changes_summary` entry. See [red-green-gate.md](references/red-green-gate.md).
+Run each testable finding's failing test now and confirm it fails for the right reason; write test bytes early only under [red-green-gate.md](references/red-green-gate.md) step 3. Step 5 re-runs it green.
 
 ---
 
@@ -357,7 +342,7 @@ Read the canonical [outer-loop contract](../../.aivv/outer-loop.md) before evalu
 
 ### Step 7: DOCUMENT — Capture Lessons Learned
 
-After all findings are resolved (or escalated):
+After all findings are resolved (or escalated), run Step 7.0 and then items 1–4 in order.
 
 **Step 7.0: Final Subagent cleanup:** Before returning the final resolution summary, run one final best-effort cleanup over any AIVV-owned handles from this invocation whose outputs are consumed and not yet closed. Persist cleanup warnings in the fix log `warnings` array when possible and surface them in the Step 7 summary. If cleanup fails after output was already consumed, preserve the resolved verifier/challenger/investigator decision and report only the cleanup warning.
 
@@ -379,13 +364,10 @@ After all findings are resolved (or escalated):
 
 The **Finding** column is sourced from `session_changes.changes_summary[].finding_id` → originating finding's `summary` field. When source is `"review_id"`, look up `FixSession.review_log.findings[id == finding_id].summary`. When source is `"task_file"`, use the issue description from the task file's `open_issues` entry for that finding ID. When source is `"conversation"` or `"literal"`, use the finding's `summary` as collected in Step 1. If summary is unavailable for a finding, use the finding ID as a fallback. Keep values short — **Finding** and **Root Cause** at ≤60 chars each, other columns at ≤80 chars — truncate with `…` if longer. Finding and Root Cause occupy different abstraction levels (observed symptom vs causal explanation) and should not duplicate each other.
 
-**Predecessor backfill on fix-log → review-log:** when `/aivv-fix` is chained from a `/aivv` review (source == "review_id"), back-fill the originating review log's `fix_invocation_id` with the current fix-log's `id`, persist `source_review_id` as the canonical join key, and validate the candidate fix log with the AIVV-rooted `"$AIVV_ROOT/tools/pre-write-validator.mjs"` command defined in [document-and-calibration.md](references/document-and-calibration.md) before the durable write.
-
-**Step 7.8: Optional post-fix HTML viewer hook**
-
-After Step 7 completes the fix log and review-log backfill, render the joined review/fix HTML report only when the conditions in [viewer-hook.md](references/viewer-hook.md) match. Viewer behavior is post-state-write and non-blocking; it is not a substitute for verification.
-
-2. **Calibration**: Append applicable records to this invocation's per-invocation shard through the shared storage helper; skip calibration writes under `--dry-run`. See [document-and-calibration.md](references/document-and-calibration.md) for record fields and shard rules.
+2. **Records**, in this order:
+   - **Predecessor backfill on fix-log → review-log:** when `/aivv-fix` is chained from a `/aivv` review (source == "review_id"), back-fill the originating review log's `fix_invocation_id` with the current fix-log's `id`, persist `source_review_id` as the canonical join key, and validate the candidate fix log with the AIVV-rooted `"$AIVV_ROOT/tools/pre-write-validator.mjs"` command defined in [document-and-calibration.md](references/document-and-calibration.md) before the durable write.
+   - **Calibration:** Append applicable records to this invocation's per-invocation shard through the shared storage helper; skip calibration writes under `--dry-run`. See [document-and-calibration.md](references/document-and-calibration.md) for record fields and shard rules.
+   - **Step 7.8: Optional post-fix HTML viewer hook:** once the fix log and review-log backfill are complete, render the joined review/fix HTML report only when the conditions in [viewer-hook.md](references/viewer-hook.md) match. Viewer behavior is post-state-write and non-blocking; it is not a substitute for verification.
 
 3. **Pattern capture**: If a new prevention mechanism was created, suggest promoting it to project/global guidance. If `/lesson` is available, also suggest `/lesson "Prevention mechanism created for recurring pattern: [description]. Applies to: [scope]." --category technical --severity medium`; otherwise skip silently.
 
