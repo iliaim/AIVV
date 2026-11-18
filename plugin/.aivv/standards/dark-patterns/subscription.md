@@ -5,8 +5,8 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 ### DP-SUB-01: Hard-to-find cancel
 
 **Severity**: MAJOR
-**Rationale**: "Roach motel" pattern — easy to sign up, hard to cancel. Subscription cancellation must be at least as easy as signup (FTC "click to cancel" rule applies).
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: "Roach motel" pattern — easy to sign up, hard to cancel. Subscription cancellation must be at least as easy as signup (ROSCA's "simple mechanisms" requirement and state automatic-renewal laws; the 2024 FTC "click to cancel" rule was vacated in July 2025 — see DP-LEGAL-01).
+**Source**: ROSCA, 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act
 
 **The rule**: cancellation entry point reachable from the same surface as signup (account page, settings) in N≤2 clicks. Defer-to DP-LEGAL-01 for the compliance variant.
 
@@ -60,8 +60,8 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 ### DP-SUB-04: Cancellation requires phone / chat / email
 
 **Severity**: MAJOR
-**Rationale**: Channel-asymmetric cancellation (online signup but phone-only cancel) is explicitly prohibited by the FTC negative-option rule for many subscription types.
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: Channel-asymmetric cancellation (online signup but phone-only cancel) is a frequent FTC enforcement target under ROSCA and is prohibited by state automatic-renewal laws such as California's for online sign-ups.
+**Source**: ROSCA, 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act
 
 **The rule**: cancellation available in the same channel as signup. Defer-to DP-LEGAL-02 for the compliance variant.
 

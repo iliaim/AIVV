@@ -50,7 +50,7 @@ Every lens carries Focus, Trigger patterns, Standards to consult, and Graceful d
 | `visual` | [visual.md](visual.md) | optional (B3 externalized Playwright probe emit/ingest; host browser adapters gated) | Static UI/a11y review (WCAG 2.1/2.2 AA baseline); optional runtime evidence (RTV-* rules) via `--runtime` |
 | `ux` | [ux.md](ux.md) | none | UX patterns — form/navigation/error/loading-states |
 | `polish` | [polish.md](polish.md) | none | Visual-design aesthetic — typography/spacing/color/iconography/motion/layout (VD-* + heuristic L4 source-class) |
-| `compliance` | [compliance.md](compliance.md) | none | Regulatory + accessibility-conformance + legal-risk — WCAG 2.1 AAA realistic subset + full ARIA APG + FTC/GDPR/CCPA/COPPA/ADA/Section 508/EU EAA (COMP-* rules) |
+| `compliance` | [compliance.md](compliance.md) | none | Regulatory + accessibility-conformance + legal-risk — WCAG 2.2 AAA realistic subset + full ARIA APG + FTC/GDPR/CCPA/COPPA/ADA/Section 508/EU EAA (COMP-* rules) |
 | `i18n` | [i18n.md](i18n.md) | none | Internationalization — translation-function discipline + CLDR pluralization + locale-aware Intl.* + RTL safety + bidi (I18N-* rules) |
 | `user-journey` | [user-journey.md](user-journey.md) | optional (B3 runtime evidence artifacts) | Zero-knowledge cognitive walkthrough — AC-framing, discoverability, activation-feedback, time-to-first-success (UJ-* rules) |
 

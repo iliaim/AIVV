@@ -138,8 +138,8 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 ### DP-PRICE-08: Trial-to-paid price obscured
 
 **Severity**: MAJOR
-**Rationale**: "Start 30-day free trial" without prominently disclosing the post-trial recurring price is a classic pricing dark pattern. FTC negative-option rule applies.
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: "Start 30-day free trial" without prominently disclosing the post-trial recurring price is a classic pricing dark pattern. ROSCA requires clear disclosure of material terms before charging.
+**Source**: ROSCA, 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act
 
 **The rule**: trial CTAs disclose the post-trial price (amount + cadence) at the same visual prominence as the trial offer. Defer-to DP-LEGAL-04 for the compliance variant.
 

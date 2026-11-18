@@ -1182,7 +1182,7 @@
     },
     {
       "rule_id": "DP-LEGAL-01",
-      "title": "FTC Negative Option Rule — easy cancellation",
+      "title": "US easy-cancellation obligation (ROSCA / FTC Act §5 / state auto-renewal laws)",
       "file": ".aivv/standards/dark-patterns/legal.md",
       "line": 7,
       "family": "dark-patterns"

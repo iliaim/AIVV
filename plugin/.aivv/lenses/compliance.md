@@ -1,6 +1,6 @@
 ---
 name: compliance
-description: Regulatory + accessibility-conformance + legal-risk review lens — WCAG 2.1 AAA realistic subset, full ARIA APG widget conformance, FTC + GDPR + CCPA/CPRA + COPPA + ADA + Section 508 + EU EAA legal-risk subset
+description: Regulatory + accessibility-conformance + legal-risk review lens — WCAG 2.2 AAA realistic subset, full ARIA APG widget conformance, FTC + GDPR + CCPA/CPRA + COPPA + ADA + Section 508 + EU EAA legal-risk subset
 calibration_lens: compliance
 applies_to: source code touching WCAG-AAA-relevant surfaces, ARIA-widget implementations, legal-risk surfaces (cookie consent, account deletion, age verification, marketing copy, opt-out flows, payment forms)
 detect_paths: "**/*consent*, **/*cookie*, **/*gdpr*, **/*ccpa*, **/*privacy*, **/*terms*, **/*tracking*, **/*analytics*, **/*.tsx, **/*.jsx, **/*.vue, **/*.svelte, **/*.html"
@@ -16,7 +16,7 @@ runtime_driver: none
 
 Apply these review concerns **in addition to** the universal Phase 2 VERIFY rules. The compliance lens extends code review with regulatory, accessibility-conformance, and legal-risk concerns code-observable without running the app.
 
-### WCAG 2.1 AAA realistic subset (see `.aivv/standards/compliance/wcag-aaa.md`)
+### WCAG 2.2 AAA realistic subset (see `.aivv/standards/compliance/wcag-aaa.md`)
 
 AAA conformance is opt-in beyond AA-baseline (which is covered by the `visual` lens via `accessibility/`). The COMP-WCAG-AAA-* rules surface code-observable AAA criteria most commonly project-targeted:
 
@@ -108,7 +108,7 @@ Runtime axe-core evidence remains deterministic when available: preserve RTV-AXE
 These patterns produce findings that must be rendered. Apply the hard-statute CRITICAL/DISPOSITION floor when `project_context` makes the cited authority applicable, or when context is undeclared and the code pattern plausibly falls inside that authority. If declared context makes the authority inapplicable, render a context note / POLISH or lower-priority DISPOSITION instead of the legal floor:
 
 - Cookie consent that pre-checks marketing/analytics options
-- Subscription cancellation flow with materially more steps than the signup flow (FTC Negative Option Rule + dark-pattern DP-LEGAL-01 also fires)
+- Subscription cancellation flow with materially more steps than the signup flow (ROSCA / state automatic-renewal laws; dark-pattern DP-LEGAL-01 also fires)
 - Hardcoded "13+" age-gate without subsequent age verification on service collecting child PII
 - Account deletion UX requiring email-to-support OR multi-step phone-call confirmation
 - Marketing copy with `<a href="...amazon.com/...?tag=...">` affiliate link without `rel="sponsored"` AND without disclosure within the same content view

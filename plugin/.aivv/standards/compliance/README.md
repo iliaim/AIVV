@@ -6,7 +6,7 @@ Part of [.aivv/standards/](../README.md). The compliance catalog covers regulato
 
 | Subfile | Prefix | Focus |
 |---|---|---|
-| [`wcag-aaa.md`](wcag-aaa.md) | `COMP-WCAG-AAA-*` | WCAG 2.1 Level AAA realistic subset (NOT duplicating AAA SCs already in `accessibility/` like 2.3.3 / 2.4.13 / 2.5.5 / 3.3.9) |
+| [`wcag-aaa.md`](wcag-aaa.md) | `COMP-WCAG-AAA-*` | WCAG 2.2 Level AAA realistic subset (NOT duplicating AAA SCs already in `accessibility/` like 2.3.3 / 2.4.13 / 2.5.5 / 3.3.9) |
 | [`aria-apg-full.md`](aria-apg-full.md) | `COMP-APG-*` | Full ARIA APG widget conformance (NOT duplicating APG patterns already in `accessibility/aria/apg-widgets.md` at minimum-conformance level; extends to additional widgets + enhanced-conformance) |
 | [`legal-risk.md`](legal-risk.md) | `COMP-LEGAL-*` | FTC + EU DSA + GDPR + ADA + Section 508 + EU EAA legal-risk rules (companion to `dark-patterns/legal.md` DP-LEGAL-* subset on disclosure/transparency/data-subject-rights axis; rule-ID prefix `COMP-LEGAL-` triggers L1-source forced-show per `skills/aivv-fix/references/polish-and-l1-source-policy.md` canonical detection logic) |
 

@@ -47,7 +47,8 @@ These route to `visual-verification-triggers/` triggers and `runtime-visual.md` 
 |---|---|---|
 | deceptive.design | https://www.deceptive.design/ + /types + /cases | Harry Brignull's canonical taxonomy; cited across all DP-* sub-domains |
 | FTC Business Guidance | https://www.ftc.gov/business-guidance/advertising-marketing | DP-PRICE-*, DP-SOCIAL-*, DP-PR-*, DP-LEGAL-* |
-| FTC Negative Option Rule | https://www.ftc.gov/legal-library/browse/rules/negative-option-rule | DP-SUB-* + DP-LEGAL-01/02/04 |
+| ROSCA (15 U.S.C. §§8401-8405) | https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act | DP-SUB-01/04, DP-PRICE-08, DP-LEGAL-01/02/04 |
+| FTC Negative Option Rule (2024 amendments vacated July 2025) | https://www.ftc.gov/legal-library/browse/rules/negative-option-rule | DP-SUB-08, DP-PRICE-09, DP-LEGAL-01 status |
 | FTC Endorsement Guides | https://www.ftc.gov/business-guidance/advertising-marketing/endorsements-influencers-reviews | DP-SOCIAL-* + DP-LEGAL-10 |
 | FTC Green Guides | https://www.ftc.gov/business-guidance/advertising-marketing/environmental-marketing | DP-PR-01, DP-LEGAL-11 |
 | FTC Health Claims | https://www.ftc.gov/business-guidance/advertising-marketing/health-claims | DP-LEGAL-12 |

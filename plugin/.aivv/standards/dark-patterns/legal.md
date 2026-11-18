@@ -4,11 +4,11 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 
 These rules carry **L1 source class** — direct citation to FTC enforcement, EU DSA Article 25, or GDPR articles. They are forced-shown by the L1 detection regex in `/aivv` Step 6 output regardless of `severity_threshold` configuration. Apply the CRITICAL/DISPOSITION floor when Project Context makes the cited authority applicable, or when applicability is undeclared and the pattern plausibly falls inside that authority; declared-inapplicable context renders as a context note / POLISH or lower-priority DISPOSITION rather than borrowing the hard legal floor.
 
-### DP-LEGAL-01: FTC Negative Option Rule — easy cancellation
+### DP-LEGAL-01: US easy-cancellation obligation (ROSCA / FTC Act §5 / state auto-renewal laws)
 
 **Severity**: CRITICAL
-**Rationale**: The FTC Negative Option Rule (under "Click to Cancel" enforcement) requires cancellation be at least as easy as signup. Violations carry monetary penalties.
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: US law requires a simple way to stop recurring charges, and the FTC and state enforcers treat cancellation that is harder than sign-up as unlawful; several state automatic-renewal laws require online cancellation for online sign-ups. ROSCA violations carry civil penalties. Status note: the FTC's 2024 "Click-to-Cancel" amendments to the Negative Option Rule were vacated by the US Court of Appeals for the Eighth Circuit on 8 July 2025 (*Custom Communications, Inc. v. FTC*, No. 24-3137) before they took effect; the FTC opened a new rulemaking (ANPRM, March 2026). The easy-cancellation obligation currently rests on ROSCA (15 U.S.C. §8403, "simple mechanisms" to stop recurring charges), FTC Act §5 enforcement, and state automatic-renewal laws (e.g., California's, which requires online cancellation for online sign-ups). Check current status with counsel.
+**Source**: Restore Online Shoppers' Confidence Act (ROSCA), 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act; FTC Negative Option Rule page (rulemaking status) — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
 
 **The rule**: subscription cancellation must be available in the same channel and with at least the same ease as signup. (Compliance variant of DP-SUB-01.)
 
@@ -28,10 +28,10 @@ These rules carry **L1 source class** — direct citation to FTC enforcement, EU
 ### DP-LEGAL-02: FTC Channel-Asymmetric Cancellation
 
 **Severity**: CRITICAL
-**Rationale**: FTC enforcement has specifically targeted services that require phone-cancellation after online-signup. Direct enforcement risk.
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: FTC enforcement (under ROSCA and FTC Act §5) has specifically targeted services that require phone-cancellation after online-signup, and state automatic-renewal laws such as California's require online cancellation for online sign-ups. Direct enforcement risk. The 2024 federal Click-to-Cancel rule that would have mandated same-channel cancellation was vacated in July 2025 (see DP-LEGAL-01).
+**Source**: ROSCA, 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act
 
-**The rule**: in-channel cancellation is mandatory for all subscription types under FTC jurisdiction. (Compliance variant of DP-SUB-04.)
+**The rule**: offer cancellation in the same channel as sign-up; treat channel-asymmetric cancellation as high legal risk under ROSCA and state automatic-renewal laws. (Compliance variant of DP-SUB-04.)
 
 **Code patterns to flag**:
 - Cancel-account UI that opens a `tel:` link
@@ -66,8 +66,8 @@ These rules carry **L1 source class** — direct citation to FTC enforcement, EU
 ### DP-LEGAL-04: FTC Trial-to-Paid Disclosure
 
 **Severity**: CRITICAL
-**Rationale**: The FTC has enforced specific disclosure requirements for free-trial-to-paid conversions, particularly under the Negative Option Rule.
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: The FTC has enforced disclosure requirements for free-trial-to-paid conversions, principally under ROSCA (clear disclosure of material terms and express informed consent before charging) and FTC Act §5; state automatic-renewal laws add their own disclosure and reminder rules.
+**Source**: ROSCA, 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act
 
 **The rule**: trial-to-paid conversion requires clear, conspicuous, advance disclosure (post-trial price + cadence) at point of sale AND pre-conversion reminder.
 
