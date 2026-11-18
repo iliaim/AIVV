@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { makeCheckout } from './support/checkout-fixture.mjs';
+import { resolveStorage } from '../plugin/tools/storage-paths.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const storageHelper = path.join(repoRoot, 'plugin/tools/storage-paths.mjs');
@@ -67,6 +68,14 @@ try {
   assert.equal(missingRead.status, 1);
   assert.ok(missingRead.stderr.includes('STORAGE_NOT_FOUND') && missingRead.stderr.includes(path.join(context.state_dir, 'review-absent.json')),
     'a missing file error must name the path that was read');
+
+  // A volume lookup that times out on a busy host must not silently bind a
+  // different (invocation-only) store; it is a retryable STORAGE_BUSY instead.
+  const volumeLookup = (error) => ({ target, home, identityPlatform: 'darwin', nativeCommand: () => { throw error; } });
+  assert.throws(() => resolveStorage(volumeLookup(Object.assign(new Error('spawnSync diskutil ETIMEDOUT'), { code: 'ETIMEDOUT' }))),
+    (error) => error.code === 'STORAGE_BUSY', 'a timed-out volume lookup is retryable, not a weaker identity');
+  const unavailable = resolveStorage(volumeLookup(new Error('invalid volume UUID')));
+  assert.equal(unavailable.identity.reliable, false, 'a volume that cannot be identified still degrades to an invocation-bound identity');
 
   if (process.platform !== 'win32') {
     assert.equal(statSync(storedPath).mode & 0o777, 0o600, 'state records must be private files');
