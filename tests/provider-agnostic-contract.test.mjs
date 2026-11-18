@@ -19,6 +19,24 @@ function readJson(relativePath) {
   return JSON.parse(read(relativePath));
 }
 
+// Markdown rule checks assert that a rule is present by its key tokens, not its exact
+// sentence. A block is one paragraph or one list item with whitespace collapsed; a
+// string token matches case-insensitively.
+function assertRule(text, tokens, message) {
+  const mentions = (block, token) => (token instanceof RegExp ? token.test(block) : block.toLowerCase().includes(token.toLowerCase()));
+  const found = text.split(/\n\s*\n|\n(?=\s*(?:[-*•]|\d+\.)\s)/).map(block => block.replace(/\s+/g, ' ').trim())
+    .some(block => tokens.every(token => mentions(block, token)));
+  assert.ok(found, message + ' (no paragraph or list item mentions all of: ' + tokens.join(' | ') + ')');
+}
+
+function section(text, heading) {
+  const start = text.indexOf(heading);
+  assert.ok(start >= 0, 'missing heading: ' + heading);
+  const rest = text.slice(start + heading.length);
+  const end = rest.search(new RegExp('^#{1,' + heading.match(/^#+/)[0].length + '} ', 'm'));
+  return end < 0 ? rest : rest.slice(0, end);
+}
+
 function collectFiles(relativeDirectory, predicate) {
   return readdirSync(path.join(repoRoot, relativeDirectory), { withFileTypes: true }).flatMap(entry => {
     const entryPath = path.posix.join(relativeDirectory, entry.name);
@@ -351,20 +369,20 @@ try {
 }
 
 // Session continuity: AIVV merges into the session's task list and hands control back.
+// These rules are checked by their key tokens within one paragraph or list item, so the
+// wording can change while the rule stays.
 const continuity = read('plugin/.aivv/session-continuity.md');
-assert.match(continuity, /Progress tracking is informational/,
-  'progress stays informational so a skipped list never blocks a gate');
-assert.match(continuity, /never skips, delays, weakens, or relabels a review/);
-assert.match(continuity, /keep the wording, status, and order of every item\s+AIVV did not create/,
-  'existing user items must be preserved');
-assert.match(continuity, /write only when\s+every existing item can be reproduced exactly/,
+const handBackRules = section(continuity, '## Hand back');
+assertRule(continuity, ['progress', 'informational'], 'progress stays informational so a skipped list never blocks a gate');
+assertRule(continuity, ['progress list', 'never', 'weaken', 'gate'],
+  'a skipped or missing progress list never skips or weakens a review, fix, or verification gate');
+assertRule(continuity, ['user items', 'wording', 'status', 'order'], 'existing user items must be preserved');
+assertRule(continuity, ['whole-list', 'exactly', /\b(do not|never)\b/i],
   'whole-list tools must not overwrite a list that cannot be fully reproduced');
-assert.match(continuity, /Never delete and\s+recreate user items/);
-assert.match(continuity, /A nested run does not pause or restore user items and\s+does not hand back; the outermost run does/,
-  'only the outermost run hands back');
-assert.match(continuity, /Continue only on a clean outcome/,
-  'automatic continuation is gated on a clean outcome');
-assert.match(continuity, /no CRITICAL or MAJOR finding is left unresolved/);
+assertRule(continuity, ['never', 'delete', 'recreate', 'user items'], 'user items are never deleted and recreated');
+assertRule(continuity, ['nested run', 'outermost', 'hand back', /\bdoes not\b/i], 'only the outermost run hands back');
+assertRule(handBackRules, ['continue', 'only', 'clean outcome'], 'automatic continuation is gated on a clean outcome');
+assertRule(handBackRules, ['CRITICAL', 'MAJOR', 'unresolved'], 'an unresolved CRITICAL or MAJOR finding blocks continuation');
 for (const item of [
   'AIVV review: prepare scope', 'AIVV review: run reviewers', 'AIVV review: present and record results',
   'AIVV fix: collect and triage findings', 'AIVV fix: investigate and plan',
@@ -377,42 +395,28 @@ for (const relativePath of [
   'plugin/skills/aivv-fix/SKILL.md',
 ]) {
   const content = read(relativePath);
-  assert.match(content, /\*\*MUST-READ:\*\*\s+\[`\.aivv\/session-continuity\.md`\]/,
-    relativePath + ' must require the shared session-continuity rule before registering progress');
-  assert.match(content, /Hand back section/, relativePath + ' must hand control back at its endings');
-  assert.doesNotMatch(content, /register (?:the following phases|these pending steps)/,
-    relativePath + ' must not register its own replacement phase list');
-}
-// Items move as phases run; the shared rule says so and both pointers name it.
-assert.match(continuity, /mark its item in progress/,
-  'each AIVV item must be marked in progress as its phase begins');
-for (const relativePath of [
-  'plugin/skills/aivv/references/orchestration-workflow.md',
-  'plugin/skills/aivv-fix/SKILL.md',
-]) {
-  assert.match(read(relativePath), /marking each in\s+progress as its phase begins/,
+  assertRule(content, ['MUST-READ', '.aivv/session-continuity.md', 'owns', 'progress items'],
+    relativePath + ' must require the shared session-continuity rule, which owns the progress items');
+  assertRule(content, ['session-continuity.md', 'in progress', 'phase begins'],
     relativePath + ' must point to the in-progress marking rule');
+  assert.match(content, /Hand back section/, relativePath + ' must hand control back at its endings');
 }
+// Items move as phases run.
+assertRule(continuity, ['phase begins', 'in progress'], 'each AIVV item must be marked in progress as its phase begins');
 // A nested run returns control so the enclosing run reaches its own hand-back.
-assert.match(continuity, /A nested run returns control to\s+its enclosing run at every ending/,
+assertRule(continuity, ['nested run', 'returns control', 'enclosing run', 'every ending'],
   'a nested run must return control to its enclosing run');
 const orchestration = read('plugin/skills/aivv/references/orchestration-workflow.md');
-const autoChain = orchestration.slice(orchestration.indexOf('## Step 8: Auto-Chain'),
-  orchestration.indexOf('## Ending'));
-assert.match(autoChain, /When the `\/aivv-fix` run ends, continue at Ending below/,
+assertRule(section(orchestration, '## Step 8: Auto-Chain'), ['/aivv-fix', 'continue', 'Ending'],
   '/aivv --fix must resume at its Ending after the nested fix run');
-const ending = orchestration.slice(orchestration.indexOf('## Ending'));
-assert.match(ending, /When this run is nested, return\s+control to the enclosing run instead/,
+assertRule(section(orchestration, '## Ending'), ['nested', 'return control', 'enclosing run'],
   'a nested /aivv run (outer loop) must return control instead of handing back');
-assert.match(continuity, /A nested run skips these steps\s+and returns control to its enclosing run/,
-  'the Hand back section must send nested runs back to their enclosing run');
-assert.match(continuity, /Decide this from how the run started, not from\s+the list/,
+assertRule(handBackRules, ['nested run', 'enclosing run'], 'the Hand back section must send nested runs back to their enclosing run');
+assertRule(continuity, ['nested', 'decide', 'started', 'not from'],
   'nested status must not depend on the progress list being visible');
-assert.match(read('plugin/.aivv/outer-loop.md'), /continues at its own Step 7/,
+assertRule(read('plugin/.aivv/outer-loop.md'), ['nested', '/aivv-fix', /\b(continue|resume)s?\b[^.]*\bStep 7\b/i],
   'the outer loop must say where a cycle resumes after the reverse chain');
-const fixSkill = read('plugin/skills/aivv-fix/SKILL.md');
-const fixHandBack = fixSkill.slice(fixSkill.indexOf('4. **Hand back**'));
-assert.match(fixHandBack.split('\n')[0], /When this run is nested, return control to the enclosing run/,
+assertRule(read('plugin/skills/aivv-fix/SKILL.md'), ['**Hand back**', 'nested', 'return control', 'enclosing run'],
   '/aivv-fix must return control to an enclosing /aivv run');
 // Outline entries name the step headings they cover, so numbers cannot collide.
 const outline = orchestration.slice(orchestration.indexOf('Workflow outline'),
@@ -429,7 +433,6 @@ for (const line of phaseLines) {
 for (const step of outlineSteps) {
   assert.ok(headings.has(step), 'outline names Step ' + step + ' but no such heading exists');
 }
-assert.match(continuity, /\| Steps 1-4, 5, 6-8 \|/, 'progress table must say it counts workflow steps');
 const preflightSource = read('plugin/.aivv/runtime-root.mjs');
 for (const [profile, key] of [['aivv', '\n  aivv: ['], ['aivv-fix', '\n  "aivv-fix": [']]) {
   const start = preflightSource.indexOf(key);

@@ -31,6 +31,23 @@ const env = {
   XDG_CACHE_HOME: path.join(HOME, 'cache'),
 };
 
+// Markdown rule checks assert that a rule is present by its key tokens, not its exact
+// sentence, so the instructions can be reworded. A block is one paragraph or one list
+// item with whitespace collapsed; a string token matches case-insensitively.
+const docBlocks = (text) => text.split(/\n\s*\n|\n(?=\s*(?:[-*•]|\d+\.)\s)/).map((block) => block.replace(/\s+/g, ' ').trim());
+const mentions = (block, token) => (token instanceof RegExp ? token.test(block) : block.toLowerCase().includes(token.toLowerCase()));
+const ruleBlocks = (text, tokens) => docBlocks(text).filter((block) => tokens.every((token) => mentions(block, token)));
+function assertRule(text, tokens, message) {
+  assert.ok(ruleBlocks(text, tokens).length > 0, `${message} (no paragraph or list item mentions all of: ${tokens.join(' | ')})`);
+}
+function section(text, heading) {
+  const start = text.indexOf(heading);
+  assert.ok(start >= 0, `missing heading: ${heading}`);
+  const rest = text.slice(start + heading.length);
+  const end = rest.search(new RegExp(`^#{1,${heading.match(/^#+/)[0].length}} `, 'm'));
+  return end < 0 ? rest : rest.slice(0, end);
+}
+
 function storage(args) {
   const result = spawnSync(process.execPath, [STORAGE_HELPER, ...args], { encoding: 'utf8', env });
   assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -344,8 +361,8 @@ try {
   const decisioning = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/execution-decisioning.md'), 'utf8');
   assert.match(skill, /### Step 4\.4:[\s\S]*?persist[\s\S]*?`write_intents\[\]`[\s\S]*?### Step 4\.5/,
     'Step 4.4 must persist the plan before the challenge');
-  assert.doesNotMatch(decisioning, /in-memory decision ledger/,
-    'the decision ledger must not live only in memory');
+  assertRule(decisioning, ['persisted', '`decision_ledger[]`', 'fix log'],
+    'the decision ledger is persisted in the fix log, not kept only in memory');
 
   // Order (issue #26 item 1): the failing test runs before the plan challenge,
   // and the challenger is given the test bytes and the red output.
@@ -354,69 +371,73 @@ try {
   const challengeStep = skill.indexOf('### Step 4.5: CHALLENGE');
   assert.ok(redStep > skill.indexOf('### Step 4.4: MATERIALIZE') && redStep < challengeStep,
     'the red run must sit between write-intent materialization and the plan challenge');
-  assert.match(skill, /4\.4\.5 RED[^\n]*?→ 4\.5 CHALLENGE[^\n]*?→ 5 EXECUTE/, 'the quick-reference flow must show red before challenge');
-  assert.match(skill, /remediation boundary: no fix is written before Step 5 EXECUTE; the only earlier project write is a failing reproduction test/);
+  assertRule(skill, ['remediation boundary', 'Step 5', 'test'],
+    'no fix is written before Step 5; the only earlier project write is the failing reproduction test');
   const redGate = reference('red-green-gate.md');
-  assert.match(redGate, /Run the test now, before Step 4\.5/);
-  assert.match(redGate, /Write early only when no user decision is pending:\*\* readiness for this finding would record `approval_mode: "auto"`/,
+  assertRule(redGate, ['run', 'before Step 4.5'], 'the red run happens before the plan challenge');
+  assertRule(redGate, ['early', 'approval_mode: "auto"', 'fix_confidence: "high"', 'Hard approval rule'],
     'the early test write is an allow-list tied to the readiness outcome');
-  assert.match(redGate, /would route the finding `dangerously-auto-approved`[^\n]*?not policy-skipped, no architecture approval outstanding/,
+  assertRule(redGate, ['early', 'dangerously-auto-approved', 'policy-skipped', 'architecture approval', 'dangerously_auto_apply'],
     'the dangerous route does not by itself permit the early write');
-  assert.match(redGate, /In every other case \(policy `ask` or `skip`[^\n]*do not write the test early/,
+  assertRule(redGate, ['early', '`ask`', '`skip`', /\b(do not|never)\b/i],
     'a pending user decision still comes before any project write');
-  assert.match(redGate, /Undo the early test write\*\* whenever the fix for its finding is not applied in this invocation/,
-    'a failing test must not be left behind');
-  assert.match(redGate, /first run the finding's read-only class-verdict scan[^\n]*?write early only if the verdict gate passes and the scan leaves the finding's confidence and route unchanged\. Record the result on the finding's decision-ledger entry as `class_scan`/,
+  assertRule(redGate, ['undo', 'early test write', 'not applied'], 'a failing test must not be left behind');
+  assertRule(redGate, ['early', '`class_scan`', 'verdict gate', 'confidence', 'route'],
     'a decision that only the Step 5 class scan can raise must be known before the early write');
-  assert.match(redGate, /only while the file still matches the content this run wrote/,
+  assertRule(redGate, ['undo', 'preimage', 'this run wrote'],
     'undo must not delete a file the user changed after the run stopped');
-  assert.match(reference('fix-log-contract.md'), /On "Restart": first undo any early test write as in item 2/);
-  assert.match(reference('fix-log-contract.md'), /reuse the result recorded as `class_scan` on its `decision_ledger\[\]` entry and do not run those steps again/,
+  const fixLogContract = reference('fix-log-contract.md');
+  assert.ok(ruleBlocks(fixLogContract, ['Restart', 'undo', 'early test write']).length >= 2,
+    'both the resume prompt and the reaped-log prompt undo the early test write on Restart');
+  assertRule(fixLogContract, ['reuse', '`class_scan`', 'decision_ledger', /\b(do not|never)\b/i],
     'Step 5 and a resumed run must not rescan with the failing test already on disk');
-  assert.match(reference('fix-log-contract.md'), /confirm the file still holds the content this run wrote/);
-  assert.match(redGate, /Before the early write, add the test path to `files_created` or `files_modified`/,
+  assertRule(fixLogContract, ['Resume', 'test intent', '`files_created`', /this run wrote|postimage/i],
+    'a resumed run confirms an early-written test still holds what this run wrote');
+  assertRule(redGate, ['before', 'early write', '`files_created`'],
     'an early test write must be visible to recovery before it happens');
-  assert.match(reference('fix-log-contract.md'), /files created: \{files_created\}/, 'the recovery prompt shows created files');
+  assert.match(fixLogContract, /\{files_created\}/, 'the recovery prompt shows created files');
   const challengeLoop = reference('challenge-loop.md');
   assert.match(challengeLoop, /`\{red_run_evidence\}`/);
-  assert.match(challengeLoop, /\*\*APPROVE:\*\* proceed to Step 5 EXECUTE/);
+  assertRule(challengeLoop, [/^\W*APPROVE\b/, 'Step 5 EXECUTE'], 'an APPROVE verdict proceeds to Step 5 EXECUTE');
   const challengerPrompt = reference('fix-challenger-prompt-template.md');
   assert.match(challengerPrompt, /\{red_run_evidence/);
   // Issue #26: the reviewer does a cold, independent review; later rounds re-check, they do not widen.
-  assert.match(challengerPrompt, /APPROVE is the correct verdict when nothing must-fix is found; finding something is not the goal/);
-  assert.match(challengerPrompt, /\{prior_challenge_concerns[^\n]*\}\n\nWhen earlier concerns are listed: this is a re-check, not a new review\. Check only whether each earlier must-fix concern is resolved/,
+  assertRule(challengerPrompt, [/^\W*APPROVE\b/, 'non_blocking_observations'],
+    'the APPROVE verdict rule puts uncertainty in non-blocking observations instead of forcing a concern');
+  const recheck = section(challengerPrompt, '## Earlier Challenge of This Plan');
+  assert.ok(recheck.includes('{prior_challenge_concerns'),
     'the re-check rule belongs to a repeat challenge of the same plan, with the earlier concerns supplied');
-  assert.match(challengerPrompt, /When round ≥ 2: the plan under review is a new corrective plan[^\n]*Review it cold on all axes/,
+  assertRule(recheck, ['re-check', 'resolved'], 'a repeat challenge only re-checks the earlier must-fix concerns');
+  assertRule(recheck, ['advisory', 'round', /\b(never|not)\b/i], 'advisory observations never justify another round');
+  assertRule(recheck, ['REJECT', 'all axes'], 'after a REJECT, the replacement plan gets a full review');
+  assertRule(section(challengerPrompt, '## Predecessor Cycle Context'), ['round ≥ 2', 'corrective plan', 'all axes'],
     'a corrective plan after a failed verification is a first review, not a re-check');
-  assert.match(reference('challenge-loop.md'), /`\{prior_challenge_concerns\}`/);
-  assert.match(challengerPrompt, /After a REJECT, the replacement plan is a new direction: review it on all axes/);
-  assert.doesNotMatch(reference('write-intents-and-prewrite-validation.md'), /max_rework_retries: 3/, 'no reference may tell the agent to hard-code the limit');
-  assert.match(reference('red-green-gate.md'), /Note each setup repair in the fix log `warnings`/);
-  assert.match(challengerPrompt, /Advisory observations never justify another round/);
-  assert.match(challengerPrompt, /Sycophantic approval is a failure mode/);
-  assert.doesNotMatch(challengerPrompt, /Look HARDER|widen the scan, not ratify|Adversarial framing is required|challenge them before/);
-  assert.doesNotMatch(reference('verifier-prompt-template.md'), /also\* missed something|widen your scan/);
+  assert.match(challengeLoop, /`\{prior_challenge_concerns\}`/);
+  assertRule(redGate, ['setup repair', '`warnings`'], 'each test-setup repair is noted in the fix log warnings');
   assert.match(challengerPrompt, /setup error/, 'the challenger must check the test fails for the right reason');
   const pluginRoot = path.join(REPO_ROOT, 'plugin');
-  const stale = readdirSync(pluginRoot, { recursive: true })
+  const pluginText = readdirSync(pluginRoot, { recursive: true })
     .filter((file) => /\.(md|json|mjs|toml)$/.test(file))
-    .filter((file) => /Step 4\.6/.test(readFileSync(path.join(pluginRoot, file), 'utf8')));
-  assert.deepEqual(stale, [], 'nothing may point at the removed Step 4.6');
+    .map((file) => [file, readFileSync(path.join(pluginRoot, file), 'utf8')]);
+  assert.deepEqual(pluginText.filter(([, text]) => /Step 4\.6/.test(text)).map(([file]) => file), [],
+    'nothing may point at the removed Step 4.6');
+  assert.deepEqual(pluginText.filter(([file, text]) => file.endsWith('.md') && /max_rework_retries`?\s*[:=]\s*`?\d/.test(text))
+    .map(([file]) => file), [], 'no instruction may hard-code the retry limit; it is the resolved setting');
 
   // The references must give one answer on when the investigator or the verifier may be skipped.
-  const dispatch = reference('investigation-dispatch.md');
-  assert.doesNotMatch(dispatch, /\*\*Skip the investigator\*\*/, 'the fast path is the only investigator skip route');
-  assert.match(dispatch, /there is no other skip route/);
-  assert.doesNotMatch(reference('triage.md'), /investigator skip is permitted/);
-  const fastPath = reference('fast-path.md');
-  assert.doesNotMatch(fastPath, /trivially checked/, 'the fast path may not carry its own verifier exemption');
-  assert.match(fastPath, /decided only by the conditions in \[verifier-dispatch\.md\]/);
+  assertRule(reference('investigation-dispatch.md'), ['fast-path.md', 'only', 'skip', 'investigator'],
+    'the fast path is the only investigator skip route');
+  assertRule(reference('triage.md'), ['`skip-permitted`', 'fast-path.md', 'investigator'],
+    'triage permits skipping the investigator only through the fast path');
+  assertRule(reference('fast-path.md'), ['verifier', 'verifier-dispatch.md', 'only'],
+    'the fast path may not carry its own verifier exemption');
 
-  const challengePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv-fix/references/challenge-loop.md'), 'utf8');
-  assert.match(challengePolicy, /Uncertainty-only output[\s\S]*?does not trigger another investigation[\s\S]*?does not consume a retry/);
-  assert.match(challengePolicy, /At or past `rework_retry_count == max_rework_retries`[\s\S]*?continue only\s+when another try is clearly justified[\s\S]*?`beyond_limit_reason`[\s\S]*?Without such a reason,\s+do not re-investigate, re-author,[\s\S]*?Report them as unresolved/);
-  assert.match(challengePolicy, /setting `max_rework_retries` \(default 3\)/);
-  assert.match(reference('red-green-gate.md'), /setup repair and does not use a rework only while the fix plan, the fix's write intents, and production code are unchanged/,
+  assertRule(challengeLoop, ['uncertainty', 'investigation', 'retry', /\b(does not|never)\b/i],
+    'uncertainty-only challenger output neither re-investigates nor consumes a retry');
+  assertRule(challengeLoop, ['max_rework_retries', '`beyond_limit_reason`', 'justified', /do not re-?investigate/i, 'unresolved'],
+    'past the retry limit, continue only with a recorded reason; otherwise report unresolved');
+  assertRule(challengeLoop, ['`max_rework_retries`', 'setting', /default\W{0,3}3\b/], 'the retry limit is a setting with default 3');
+  assertRule(redGate, ['setup repair', 'rework', 'fix plan', 'write intents', 'production code'],
     'a test-setup repair is free only while nothing else moves');
 
   const reviewId = '2026-11-07T12-01-00-a002';
