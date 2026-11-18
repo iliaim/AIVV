@@ -28,19 +28,8 @@ workspace SHA fields.
 
 ## Step 6.0b Setup Hint
 
-MUST-READ for hint emission: [setup-hint.md](setup-hint.md). The hint runs
-before Case A/B findings. Skip automatically for early-exit commands and voided
-reviews because they never reach Step 6.
-
-Trigger when `~/.aivv/config.json` exists and `_setup_hint_shown_at` is absent
-or null. Emit:
-
-```text
-Tip: AIVV is using defaults ({resolved_default_reviewers} reviewer{plural-s}, {resolved_lens_summary}, {resolved_severity_threshold}-and-above severity). Configure with /aivv --setup (4-5 questions) — this hint won't appear again
-```
-
-Then write `_setup_hint_shown_at` to user config. On write failure, warn and
-continue.
+Emit the setup hint per [setup-hint.md](setup-hint.md), which owns its
+conditions, microcopy, marker write, and Step 6 ordering.
 
 ## Step 6.0c Trust Card
 
@@ -78,20 +67,7 @@ lookup per the consensus template; otherwise use max-severity fallback.
 
 ## Step 6.1 Walkthrough Hint
 
-Read [setup-hint.md](setup-hint.md) for exact marker semantics. Emit after the
-entire Case A/B findings block when all are true:
-
-1. At least one displayed DEFECT-tier finding.
-2. `review_mode` is not `same_agent_review`.
-3. `_walkthrough_hints_shown.first_findings_rendered` is absent or null.
-
-Emit:
-
-```text
-Tip: /aivv-fix investigates and applies targeted remediation for these findings. /aivv --reviewers=N --fix requests auto-chain; consequential findings may still show a Decision Checkpoint, and non-interactive runs may route to dry-run only - this hint won't appear again
-```
-
-Then persist the marker timestamp if possible.
+Emit the walkthrough hint per [setup-hint.md](setup-hint.md).
 
 ## Significance Hint
 
