@@ -96,6 +96,35 @@ try {
   assert.ok(verifier.unfilled.includes('execution_evidence.stdout_excerpt'), 'dotted placeholders are reported');
   assert.ok(run({ prompts: [{ template: 'investigator', values: {} }] }).out.prompts[0].prompt.length > 1000);
 
+  // Literal brace examples are not placeholders; an annotated placeholder with nested braces is one placeholder.
+  assert.ok(!verifier.unfilled.includes('build'), 'a brace group inside a {For each ...} directive is not a placeholder');
+  const investigator = run({ prompts: [{ template: 'investigator', values: {} }] }).out.prompts[0];
+  for (const literal of ['block_id', 'temporal_target', 'language']) {
+    assert.ok(!investigator.unfilled.includes(literal), `${literal}: a value-shape example in a code span is not a placeholder`);
+  }
+  assert.ok(investigator.prompt.includes('`{block_id: <N>}`'), 'literal examples stay in the prompt unchanged');
+  // Every brace group the old scan saw is still reported, except exactly these literal examples; a template
+  // edit that hides a real placeholder this way must fail here rather than reach a prompt unfilled.
+  const oldScan = (text) => new Set([...text.matchAll(/\{([a-z][a-z0-9_.]*)[^{}\n]*\}/g)].map((match) => match[1]));
+  const literals = { 'fix-challenger': ['pros'], verifier: ['build'], investigator: ['block_id', 'temporal_target', 'language'] };
+  for (const [template, expected] of Object.entries(literals)) {
+    const result = run({ prompts: [{ template, values: {} }] }).out.prompts[0];
+    const hidden = [...oldScan(result.prompt)].filter((key) => !result.unfilled.includes(key)).sort();
+    assert.deepEqual(hidden, [...expected].sort(), `${template}: only the known literal examples go unreported`);
+  }
+  assert.ok(!prompt.unfilled.includes('pros'), 'a brace group nested in a placeholder annotation is not a placeholder');
+  assert.ok(prompt.unfilled.includes('alternative_approaches'), 'a placeholder whose annotation nests braces is reported');
+  const filled = run({ prompts: [{ template: 'fix-challenger', values: { alternative_approaches: '[]' } }] }).out.prompts[0];
+  assert.ok(!filled.unfilled.includes('alternative_approaches') && !filled.prompt.includes('{alternative_approaches'),
+    'a placeholder whose annotation nests braces is filled by its name');
+
+  // Per-entry loop sections are named with their placeholders; the helper does not expand them.
+  const [findingLoop] = prompt.loop_sections;
+  assert.equal(findingLoop.marker, 'For each finding in the batch');
+  assert.ok(findingLoop.fields.includes('summary') && findingLoop.fields.includes('alternative_approaches'));
+  assert.ok(!findingLoop.fields.includes('write_intents'), 'a placeholder after the section is not in it');
+  assert.ok(verifier.loop_sections.some((section) => section.fields.includes('execution_evidence.stdout_excerpt')));
+
   // Refusals name the cause.
   const noBytes = run({ write_intents: [{ id: 'WI-9', finding_id: 'F001' }] });
   assert.equal(noBytes.status, 1);
@@ -103,6 +132,11 @@ try {
   assert.match(noBytes.out.detail, /WI-9/);
   assert.equal(run({ prompts: [{ template: '../../secret', values: {} }] }).out.reason, 'prompt-template-unknown');
   assert.equal(run('{not json').out.reason, 'request-json-invalid');
+  // Found in a live run: a context file path passed as storage_context was accepted, then halted the validator.
+  const pathContext = run({ fix_log: { source: 'conversation', storage_context: '/state/context.json' } });
+  assert.equal(pathContext.status, 1);
+  assert.equal(pathContext.out.reason, 'request-invalid');
+  assert.match(pathContext.out.detail, /instance_key, target_project, policy_target/);
   // Reported from a downstream sync: these two crashed with an uncaught TypeError.
   const dotted = run({ prompts: [{ template: 'verifier', values: { 'execution_evidence.stdout_excerpt': '0' } }] });
   assert.equal(dotted.status, 0, dotted.stderr);

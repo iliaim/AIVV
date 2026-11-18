@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.6.1 — owner decisions from issue #26
+
+- A failing reproduction test written in the project's existing test framework is not "generated verification", so it no longer blocks the early red run before the plan challenge. New check scripts, CI and build gates, and hooks still need approval.
+- For one test-backed bug fix (one non-test file, plan challenger approved the exact bytes, failing-then-passing test, no hard-approval category), the after-fix check may be a same-agent pass instead of a fresh agent. The plan challenger is unchanged.
+- The Gate 1 second-opinion investigator gives an independent assessment: it disagrees only by naming another cause with evidence, and an unsupported disagreement no longer stops the run.
+- On a re-check, the fix-plan challenger is told its earlier per-finding verdict, and a repaired test intent is re-hashed and re-checked before it is written.
+- The records helper no longer reports literal brace examples as placeholders, can fill a placeholder whose description contains braces, lists per-entry loop sections under `loop_sections`, and refuses a `storage_context` that is a file path instead of the identity object.
+- The preflight step says where `runtime-root.mjs` lives (the installation's `.aivv/`), after two live runs looked under `tools/` first.
+
 ## 0.6.0 — safer gates, simpler skills
 
 Changes that can affect existing setups:

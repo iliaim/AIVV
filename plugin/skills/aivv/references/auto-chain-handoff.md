@@ -88,7 +88,7 @@ version check.
 
 ## Fix Safety Gates Still Apply
 
-`--fix` does not bypass `/aivv-fix` gates: adversarial investigator,
+`--fix` does not bypass `/aivv-fix` gates: second-opinion investigator,
 low-confidence handling, high-blast-radius pauses, trade-off pauses, wont-fix
 acceptance, and `--dry-run` plan-only behavior all remain active.
 

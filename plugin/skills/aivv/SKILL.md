@@ -87,7 +87,9 @@ runtime-evidence flags, and multi-model provider overrides.
   project's working directory is not the skill root.
 - Before any actual review reads state, extracts context, asks a scope question,
   or dispatches a reviewer, run the selected runtime's
-  `runtime-root.mjs --preflight aivv [skill-directory]` once. Export its result
+  `node <path>/.aivv/runtime-root.mjs --preflight aivv [skill-directory]` once
+  (`.aivv/` is at the plugin root, two levels above this skill's directory; a
+  standalone skill copy carries its own `.aivv/`). Export its result
   as `AIVV_ROOT` and use that same root for every helper and procedure in this
   invocation. If it reports `AIVV_INSTALLATION_INCOMPLETE`, surface that single
   diagnostic and stop; do not fall back to another installation or retry the

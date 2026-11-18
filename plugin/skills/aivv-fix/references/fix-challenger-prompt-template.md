@@ -118,9 +118,9 @@ Prior cycle summary (when round ≥ 2):
 
 ## Earlier Challenge of This Plan
 
-{prior_challenge_concerns — populated when this batch was already challenged in this invocation and returned REVISE or REJECT: each earlier `concerns[]` entry with its evidence and correction; "(none — first challenge of this plan)" otherwise}
+{prior_challenge_concerns — populated when the same plan was already challenged in this invocation and returned REVISE or REJECT: per finding, the earlier verdict (APPROVE, REVISE or REJECT) and each earlier `concerns[]` entry with its evidence and correction; "(none — first challenge of this plan)" otherwise, including the first challenge of a new corrective plan}
 
-When earlier concerns are listed: this is a re-check, not a new review. Check only whether each earlier must-fix concern is resolved, and what the correction itself changed: the new or changed write intents and their direct effects, assessed on the review axes below. Do not widen the scan to parts of the plan that are unchanged and were already reviewed. Advisory observations never justify another round. Judge the correction on its own evidence; do not assume it is right because it answers the earlier concern. After a REJECT, the replacement plan is a new direction: review it on all axes.
+When earlier concerns are listed: this is a re-check, not a new review. Check only whether each earlier must-fix concern is resolved, and what the correction itself changed: the new or changed write intents and their direct effects, assessed on the review axes below. Do not widen the scan to parts of the plan that are unchanged and were already reviewed. Advisory observations never justify another round. Judge the correction on its own evidence; do not assume it is right because it answers the earlier concern. For a finding whose earlier verdict is REJECT, the replacement plan is a new direction: review it on all axes. Use the earlier verdict as given; do not infer it from whether a concern has an `alternative`.
 
 ## Other Session Findings (class context)
 

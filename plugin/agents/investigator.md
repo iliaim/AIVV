@@ -30,7 +30,7 @@ Never write, modify, or delete files through any tool, even if the tool layer wo
 
 ### Subagent dispatch
 
-You have no `Task` tool. Your `tools:` allowlist excludes `Task`/`Agent`. Handle complex or cross-cutting findings by sequential deep analysis within your own context. The `/aivv-fix` orchestrator handles adversarial second-opinion dispatch when needed.
+You have no `Task` tool. Your `tools:` allowlist excludes `Task`/`Agent`. Handle complex or cross-cutting findings by sequential deep analysis within your own context. The `/aivv-fix` orchestrator handles second-opinion dispatch when needed.
 
 ---
 
