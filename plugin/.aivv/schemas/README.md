@@ -66,11 +66,11 @@ while IFS= read -r line; do
 done < findings.jsonl
 ```
 
-`ajv-cli` is not a hard dependency — `validate.sh` does not validate sidecar content against the schema (no runtime sidecars exist yet to validate). Once `/aivv-fix` Step 1 parses sidecars, it can validate on read.
+`ajv-cli` is optional and not a dependency; AIVV's own tools validate the fields they rely on.
 
 ## Config Schema
 
-`config.schema.json` is the golden additive config schema. It is the current source of truth for defaults, valid key names, and user-facing config writes. Legacy `config.v2.schema.json` through `config.v6.schema.json` remain shipped compatibility artifacts for historical readers and historical fixtures; new additive config keys are added to the golden schema without creating a new `config.v<N>.schema.json` file.
+`config.schema.json` is the golden additive config schema. It is the current source of truth for defaults, valid key names, and user-facing config writes. New config keys are added to this schema; there are no per-version config schema files.
 
 `schema_version` remains accepted as compatibility/minimum-reader metadata. The current writer stamps `schema_version: 6`; additive key additions do not bump that value. Bump it only for a genuine breaking config-format change.
 
