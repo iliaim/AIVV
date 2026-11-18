@@ -5,7 +5,7 @@ Canonical home for the `/aivv-fix` Step 2 classification (severity / disposition
 #### 2a. Classify each finding
 
 For each finding, determine:
-- **Severity**: CRITICAL > MAJOR > MINOR (from source, or inferred)
+- **Severity**: CRITICAL > MAJOR > MINOR, or POLISH for non-defect improvements (from source, or inferred)
 - **Disposition**: read `recommended_next_step` when present; otherwise derive a legacy fallback from severity (`CRITICAL`/`MAJOR` → `fix-now`, `MINOR` → `defer-with-rationale`, `POLISH` → `document`). DISPOSITION is the action gate; severity is the intrinsic impact signal.
 - **Type**: `code-bug` | `design-flaw` | `process-violation` | `documentation-gap` | `clarification-needed` | `improvement`. *(Internal attribute name: `category`, matching the envelope schema [`.aivv/schemas/finding.json`](../../../.aivv/schemas/finding.json). The user-facing triage column stays "Type" for readability; the field name on every machine-readable record — envelope, approved-finding, session-log entries — is `category`. Step 5 dispatches on this field. `improvement` marks a behaviour-preserving betterment — clarity, complexity reduction, redundancy removal, ergonomics — rather than a defect; it dispatches to Branch F.)*
 - **Investigation Mode**: `skip-permitted | standard | instrumentation-first | containment-first`

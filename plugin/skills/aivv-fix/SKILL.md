@@ -279,7 +279,7 @@ Then hand control back per the Hand back section of [`.aivv/session-continuity.m
 
 ### Step 4.4: MATERIALIZE WRITE INTENTS — inspectable proposed bytes
 
-Every write-capable Branch A/B/C-localized/D fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.4.5, Step 4.5, or Step 5 can proceed. The failing-test intent of Step 4.4.5 is materialized here with the fix intents. Missing, opaque, stale, risky, or insufficiently validated intents halt as specified in [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md).
+Every write-capable Branch `A`/`B`/`C-fallthrough-A`/`D` fix must materialize inspectable `write_intents[]` with exact proposed bytes, stable hashes, detector results, and required assertions before Step 4.4.5, Step 4.5, or Step 5 can proceed. The failing-test intent of Step 4.4.5 is materialized here with the fix intents. Missing, opaque, stale, risky, or insufficiently validated intents halt as specified in [write-intents-and-prewrite-validation.md](references/write-intents-and-prewrite-validation.md).
 
 Then persist the plan: after the Step 5.0 target reuse and pre-write banner, write the `in-progress` fix log to `<state_dir>` with every identity field (target, storage, source, lifecycle context), any confirmed `dangerously_auto_apply`, `write_intents[]`, `fix_plans[]`, and the `decision_ledger[]`, and update it in the same validated write as each later decision. After a context compaction, a stop, or a Resume, re-read that log instead of rebuilding the plan from memory. See [fix-log-contract.md](references/fix-log-contract.md) for the write and recovery rules.
 
