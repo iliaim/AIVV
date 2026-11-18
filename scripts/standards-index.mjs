@@ -35,7 +35,7 @@ export function buildIndex() {
 
 export const serialize = (index) => `${JSON.stringify(index, null, 2)}\n`;
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   const mode = process.argv[2] ?? 'check';
   const expected = serialize(buildIndex());
   if (mode === 'write') {

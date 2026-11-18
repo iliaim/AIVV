@@ -153,6 +153,6 @@ export async function main(argv, options = {}) {
     if(command==='list') process.stdout.write(`${JSON.stringify(rows.sort((a,b)=>String(b.invoked_at??'').localeCompare(String(a.invoked_at??''))))}\n`);
   } else throw new Error(`unknown viewer storage operation ${command}`);
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   main(process.argv.slice(2)).catch(error => { process.stderr.write(`aivv view: ${error.message}\n`); process.exitCode = 65; });
 }

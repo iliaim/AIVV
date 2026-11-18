@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   getProvider,
@@ -71,7 +71,7 @@ export function resolveModelSelection({
   return { provider: providerId, model: provider.models.recommended, model_source: 'model-catalog', warnings };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   if (process.argv[2] !== '--build-request-settings') {
     process.stderr.write('usage: node model-selection.mjs --build-request-settings < resolved-config.json\n');
     process.exit(2);

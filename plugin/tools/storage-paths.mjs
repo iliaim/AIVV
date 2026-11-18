@@ -379,6 +379,6 @@ async function main(argv) {
     })); process.exitCode = code;
   } else fail('STORAGE_USAGE', 'unknown command or missing lock child command');
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   main(process.argv.slice(2)).catch(error => { console.error(error.message); process.exitCode = 1; });
 }

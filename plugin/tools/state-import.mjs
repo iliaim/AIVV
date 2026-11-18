@@ -357,4 +357,4 @@ async function main(argv) {
   const result = command === 'preview' ? previewImport({ context, source: args.source }) : await importState({ context, source: args.source, preview: args.preview ? readJson(args.preview) : null, choices: args.choices ? readJson(args.choices) : {} });
   console.log(JSON.stringify(result, null, 2));
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exitCode = 1; });
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) main(process.argv.slice(2)).catch((error) => { console.error(error.message); process.exitCode = 1; });
