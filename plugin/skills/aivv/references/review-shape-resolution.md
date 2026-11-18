@@ -2,8 +2,9 @@
 
 Canonical runtime procedure for turning `/aivv` arguments, preferences, scope
 resolution, and smart-lens detection into the final reviewer count and
-`reviewer_lens_assignments`. Referenced from [`SKILL.md`](../SKILL.md) Steps
-1.4, 3.4, 3.5, and 3.6.
+`reviewer_lens_assignments`. Referenced from
+[`orchestration-workflow.md`](orchestration-workflow.md) Steps 1.4, 3.4, and
+3.5/3.6.
 
 Read this file before resolving or recomputing review shape: reviewer count,
 `lenses_list`, `--lens-replicate`, full-audit wrappers (`--full-ui-ux`,
@@ -32,7 +33,7 @@ resolution, smart-lens detection, or high-risk floor reporting.
 4. Extract session context and gather available paths / plan / file / idea
    material. Resolve the requested material boundary per
    `scope-confirmation.md`.
-5. After `final_scope` is resolved, compute/recompute the Step 2.5
+5. After `final_scope` is resolved, compute/recompute the Step 2
    `lens_ceiling` and run Step 3.5 detection only against that scope. Resolve
    Step 3.6 mode and candidate additions using Detection Mode below.
 6. Apply the adaptive-confidence floor: when reviewer count is not pinned by
@@ -85,7 +86,7 @@ Step 3.5 combines four inputs:
 
 - existing `lenses_list` from explicit/default shape;
 - deterministic floor matches from lens frontmatter `detect_paths`;
-- Step 2.5 ceiling matches admitted by Step 3.6 mode;
+- Step 2 ceiling matches admitted by Step 3.6 mode;
 - `sec` / `compliance` high-risk floor matches from `high_risk_paths`.
 
 When Git is available, path matching uses `git diff --name-only HEAD --

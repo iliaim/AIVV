@@ -108,8 +108,8 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `scope_confirmation_mode` | announce/ask policy per `scope-confirmation.md` Section 5 | Step 3.4 |
 | `_provenance` | wizard/manual/default source tracking | default_lens_replicate binding gate |
 | `_setup_hint_shown_at` | setup-hint suppression timestamp | Step 6 hint |
-| `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 6 and `/aivv-fix` notices |
-| `multi_model_enabled` | Case D master switch | Step 5.0.5 |
+| `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 1.9 first-run notices, Step 6, and `/aivv-fix` notices |
+| `multi_model_enabled` | Case D master switch | Step 5 |
 | `reviewer_provider_priority` | provider ordering and fallback walk | multi-model-dispatch.md |
 | `model_policy`, `model_overrides`, `provider_auth_modes` | runtime model/auth selection keyed by provider ID | multi-model-dispatch.md |
 | `multi_model_fallback_strategy` | ask/subagents/none slot fallback | multi-model-dispatch.md |

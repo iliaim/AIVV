@@ -113,7 +113,7 @@ The helper reports:
 
 - [.aivv/calibration/README.md](../../.aivv/calibration/README.md) — schema
   and jq one-liners mirrored by the helper.
-- [skills/aivv/SKILL.md](../aivv/SKILL.md) Step 7 — write side of the
-  calibration corpus.
+- [skills/aivv/references/self-calibration.md](../aivv/references/self-calibration.md)
+  — write side of the calibration corpus.
 - [skills/aivv-fix/SKILL.md](../aivv-fix/SKILL.md) Target Project Resolution —
   resolver semantics mirrored by the helper.
