@@ -19,6 +19,7 @@ After all fixes applied:
    - Read `authorized_scope` from that same fix log and copy it unchanged into the verifier prompt; do not reconstruct or widen it from current context.
    - For each file in `files_modified` and `files_created`: read the current file content
    - Compile the original findings as a verification checklist
+   - If the session change log is incomplete, warn the user that verification may miss changes not logged in `session_changes`, and suggest manual review of all files touched during the session.
 
 2. **Dispatch a scoped verifier**: Before spawning a verifier, run pre-spawn cleanup; track, mark consumed, and close each verifier handle per [Subagent handles](investigation-dispatch.md#subagent-handles). Then launch a cold reviewer subagent with a prompt built per [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts) with template `verifier`, filled from the session change log:
 

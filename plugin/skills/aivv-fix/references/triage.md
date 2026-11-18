@@ -2,6 +2,14 @@
 
 Canonical home for the `/aivv-fix` Step 2 classification (severity / disposition / category / investigation-mode), the smart-batching heuristics, and the triage-summary surface. Do not improvise the classification dimensions, the batch-independence rule, or the triage-table columns. Cross-step routing from this triage output is centralized in [execution-decisioning.md](execution-decisioning.md).
 
+#### Before triage: `authorized_scope` snapshot
+
+Before triage, create one immutable `authorized_scope` snapshot from the source request: the user's goal, selected finding IDs and locations, included boundaries, and explicit exclusions. For `--review-id`, derive it from the selected review's scope and only the findings selected for this fix; for a conversation, literal, or task-file route, from that source and the parsed findings. Record a project-wide boundary only when the request authorizes remediation across the target project; keep narrower files, topics, or exclusions explicit. A discovered sibling is actionable only inside this boundary. Persist the snapshot in every new fix log.
+
+Encode explicit file or directory boundaries in the snapshot's `included_paths` and `excluded_paths` as specified in [fix-log-contract.md](fix-log-contract.md); the fix-log validator enforces them. Do not infer path limits from finding locations alone. If a stated path limit cannot be represented safely, do not write outside it; report the affected finding unresolved.
+
+Alternatives may change implementation while staying inside this scope. An alternative that changes the goal or crosses an excluded boundary is a proposed scope change: do not adopt it or ask to reopen scope in this invocation; report the finding unresolved. A new top-level user request is a new invocation.
+
 #### 2a. Classify each finding
 
 For each finding, determine:

@@ -4,6 +4,18 @@ Canonical home for the investigation-results presentation template, the architec
 
 Cross-step ordering is owned by [execution-decisioning.md](execution-decisioning.md). This file owns the route definitions below and the `--dangerously-auto-apply` bypass list; other references point here instead of restating them.
 
+## Step 4 order
+
+**Field propagation (required — load-bearing for Step 5 dispatch):** Before presenting the structured summary, for every approved finding, carry the **`category`** value set in Step 2a (inherited from the envelope schema for Signal 0 findings; inferred for Signal 1-4) onto the approved-finding record. Step 5 Branch dispatch reads this field and falls back to Branch A (`code-bug`) on missing-or-unknown with a warning logged to `session_changes`. Undefined-on-read is never acceptable for a dispatch key.
+
+Collect investigator JSON and render the structured **Investigation Results** summary below. Reconcile batches after investigators declare `files_to_modify`.
+
+**Earlier repairs (report only):** once the planned files are known, run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin) with `{"invocation_id": "<this run>", "prior_repairs": {"context": "$storage_context_file", "files": [<planned files>]}}`. When `prior_repairs.count` is above zero, show its `note` in the Investigation Results summary; the full run list stays in the JSON. Each run's rework limit starts fresh, so this note is how a loop that starts a new `/aivv-fix` per round sees the same area being repaired again; weigh whether the root cause is the design rather than another patch. The note never blocks, demotes `fix_confidence`, or counts against the rework limit. It is not by itself the `bounded same-area recurrence` signal of the architecture check and is separate from `predecessor_finding_match`. If the helper answers with an error, or `prior_repairs.error` is set, say so in one line and continue.
+
+Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](finding-collection.md). Then apply Gate 1/2/3 (Gate 1 challenges the root cause; Step 4.5 later challenges the fix plan) and compute `fix_confidence`, which Step 4.5 consumes.
+
+**Auto-proceed precheck:** do not move any finding to Step 5 yet. Record each finding's blockers now; its final route (Auto-eligible, Decision queue, Architecture decision queue, Skipped by policy, or Dangerously-auto-approved) is settled only after Steps 4.4–4.5, by the definitions below.
+
 ## Investigation-results presentation
 
 Investigator handles (including second opinions) are marked consumed and closed per [Subagent handles](investigation-dispatch.md#subagent-handles).

@@ -160,3 +160,8 @@ This is the Step 4 `wont-fix` verdict handler — the write counterpart to the p
 
     Writes are append-style (preserve prior entries). Do NOT deduplicate on write — if the user accepts wont-fix twice for the same finding, both entries are kept for audit history.
 - **If overridden**: user decision is ephemeral (this session only); do NOT write to registry. Finding proceeds to Step 5.
+
+## No findings
+
+**Validation**: If no findings can be parsed from any source, inform the user:
+> No findings detected. Scanned for: machine-readable findings sidecar (JSONL block), formal /aivv prose output, user-reported bugs, deferred issues, and agent observations. Run `/aivv` (or `/aivv --reviewers=2` for higher-confidence dual review), provide a task ID with open issues, or paste specific findings.

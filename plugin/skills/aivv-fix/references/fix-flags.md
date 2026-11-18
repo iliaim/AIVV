@@ -2,6 +2,32 @@
 
 Canonical home for the `/aivv-fix` Step 1 flag-parsing rules. Do not improvise flag names. The wont-fix registry early-exit handlers are in [wont-fix-registry-handlers.md](wont-fix-registry-handlers.md) and lifecycle-selector routing is in [lifecycle-route.md](lifecycle-route.md); read each only when its flag was extracted.
 
+## Usage
+
+```
+/aivv-fix                              # current-session /aivv findings
+/aivv-fix TASK-2026-0123               # task open_issues
+/aivv-fix "CRITICAL: SQL injection..." # literal finding
+/aivv-fix --dry-run                    # Steps 1-4 only
+/aivv-fix --target=/path/project       # force state target
+/aivv-fix --resume <review-id>         # review + optional decisions file
+/aivv-fix --resolve <review-id>        # require decisions handoff
+/aivv-fix --action-request=<uuid> --target=/path/project  # claim a local selected-findings batch
+/aivv-fix --dangerously-auto-apply     # confirmed per-run bypass
+/aivv-fix --list-wont-fix              # read-only registry
+/aivv-fix --forget-wont-fix=<key>      # remove registry entry (with --dry-run: preview only)
+```
+
+## Step 1 order and source routing
+
+Before source parsing, minimally parse `--dry-run`, `--target=<dir>`, and route selectors that make state required (`--review-id`, `--resume`, `--resolve`, outer-loop and registry selectors). Bind the shared context before maintenance ([`.aivv/state-maintenance.md`](../../../.aivv/state-maintenance.md) owns the preamble).
+
+**Invocation ID:** For an actual fix workflow, allocate one invocation ID immediately after preflight and the Step 1.0 recovery decision, but before source parsing or investigation. A valid Resume choice reuses the prior log's invocation ID, scope, and retry count; a new run gets a fresh ID. Keep that ID and retry counter through every re-entry. Step 4.4 reuses the bound ID when it first persists the fix log. Help and registry-only early exits do not create a fix invocation.
+
+**Route-first cost rule:** execute Step 1 in this order: minimal `--target` pre-parse → preamble → full flag parse → source-route classification (`review_id`/`resume`/`resolve`, lifecycle selector, task ID, literal, or conversation) → load only that route's collector/resolver. Do not load conversation Signal 0-4 rules for a successful `--review-id` route, lifecycle helpers without a lifecycle selector, or task-file extraction details for literal/conversation routes. Safety gates still run in normal order once findings exist.
+
+Remaining argument (post-flag-extraction) determines the source. Set `FixSession.source`: `conversation` for blank/no-argument session scan, `review_id` for `--review-id=<id>` or an accepted `--action-request=<uuid>` (handled in Step 1.04/1.05 without conversation fallback), `task_file` for `[A-Z]+-\d{4}-\d{4}` task ID, or `literal` for quoted text/other string. Record it in the fix log per [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md).
+
 ## Flag extraction
 
 **Flag extraction first.** Before source parsing, scan the argument string for flags:

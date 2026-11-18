@@ -29,6 +29,8 @@ The pass is **advisory** (warning-level, never blocking). When Step 6 VERIFY dis
 
 ### Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions
 
+Check `authorized_scope`, retry history, `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields. Halt on corrupted scope or retry state; otherwise append warnings and continue to verifier dispatch.
+
 After Step 5.5 (coherence pass advisory warnings) and before Step 6 (verifier dispatch), run these orchestrator-side mechanical assertions against the session log. No LLM reasoning required — these are structural checks.
 
 ```
@@ -80,6 +82,8 @@ This catches a fix on one surface that leaves the same wrong string on a sibling
 ---
 
 ### Step 5.7: ORCHESTRATOR EXECUTION — Run New Verification Code
+
+When a newly-authored verification method is claimed as recurrence prevention, Step 5.7 must read and preserve the Step 4.4.5 `red_green_evidence` object. If the pre-fix failure evidence is absent, wrong-reason, or only reconstructed from memory, downgrade the entry to `red_green_evidence.claim: "verification-only"` before verifier dispatch. `execution_evidence.command_argv` records the exact command arguments used for the post-fix execution path.
 
 After Step 5.6 hygiene pass, execute any verification scripts the fix bundle authored. This runs BEFORE Step 6 verifier dispatch so the verifier receives concrete execution evidence rather than having to infer from script inspection alone.
 

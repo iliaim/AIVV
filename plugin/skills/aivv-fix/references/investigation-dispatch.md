@@ -79,6 +79,19 @@ Before investigator dispatch, compute `architectural_remediation_assessment` for
 
 The investigator must prove or disprove each reason with file/grep evidence.
 
+#### Host adapter mapping
+
+Shared operations are the same as `/aivv`: see the Host notes paragraph at the end of the [`/aivv` skill](../../aivv/SKILL.md), the Adapter Operations table in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md), and the per-host adapters in [`.aivv/platform-adapters/`](../../../.aivv/platform-adapters/). Additional `/aivv-fix`-specific operations:
+
+<!-- CLAUDE-CODE-SPECIFIC: the table below names Claude Code tool surfaces (Agent / subagent_type) explicitly; Codex column maps to Codex equivalents. -->
+
+| Adapter operation | Claude Code | Codex |
+|---|---|---|
+| Spawn cold investigator subagent | `Agent` tool with `subagent_type: aivv:investigator` | Subagent dispatch using TOML at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml` |
+| Spawn cold verifier subagent | `Agent` tool with `subagent_type: aivv:reviewer` (Step 6) | Subagent dispatch using `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` |
+| Apply edits | `Edit`/`Write` tools | `apply_patch` |
+| Prevention paths | `.claude/hooks/`, `.claude/patterns/`, `.claude/rules/`, or project equivalents | Project-equivalent hook/pattern/rule directories (no `.claude/` assumption); see project conventions |
+
 #### Spawning rules (for batches that require investigation)
 
 Build the prompt carefully — the investigator has NO conversation history.
@@ -112,6 +125,8 @@ On Claude Code: dispatch via the `Agent` tool with `subagent_type: aivv:investig
 On Codex: dispatch a subagent declared at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml`; multiple subagents run in parallel under `agents.max_threads`. The TOML's `developer_instructions` already contains the portable role. If the callable dispatch surface is not initially visible, perform the [Codex dispatch preflight](codex-dispatch-preflight.md) before falling back.
 
 Wait for all investigators (and any inline analyses) to complete before proceeding.
+
+**Investigator errors:** on invalid JSON, retry once with a clarified prompt. On a timeout (max-turns exhausted on the host), use partial results if available and flag the analysis incomplete.
 
 #### Building subagent prompts
 

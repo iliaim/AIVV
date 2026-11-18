@@ -1,6 +1,26 @@
 # Step 7 DOCUMENT — predecessor backfill and calibration write-specs
 
-Canonical home for the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence) and the calibration JSONL append-record field specs.
+Canonical home for the Step 7 resolution summary, the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence), the calibration JSONL append-record field specs, and pattern capture.
+
+## Resolution summary
+
+Present this final summary:
+
+```
+## Resolution Summary
+
+| ID | Severity | Finding | Status | Root Cause | Fix Applied | Prevention Added |
+|----|----------|---------|--------|-----------|-------------|-----------------|
+| F001 | CRITICAL | <symptom <=60 chars> | Resolved | <cause <=60 chars> | <fix <=80 chars> | <prevention <=80 chars> |
+
+**Cycles**: {N} resolve-verify cycles
+**Total fixes**: {N} files modified
+**Prevention mechanisms added**: {N}
+**Codebase-wide similar patterns fixed**: {N} additional instances
+**Cleanup warnings**: {N or "none"} — include any final Subagent cleanup warnings that were persisted to `warnings`
+```
+
+The **Finding** column is sourced from `session_changes.changes_summary[].finding_id` → originating finding's `summary` field. When source is `"review_id"`, look up `FixSession.review_log.findings[id == finding_id].summary`. When source is `"task_file"`, use the issue description from the task file's `open_issues` entry for that finding ID. When source is `"conversation"` or `"literal"`, use the finding's `summary` as collected in Step 1. If summary is unavailable for a finding, use the finding ID as a fallback. Keep values short — **Finding** and **Root Cause** at ≤60 chars each, other columns at ≤80 chars — truncate with `…` if longer. Finding and Root Cause occupy different abstraction levels (observed symptom vs causal explanation) and should not duplicate each other.
 
 ## Predecessor backfill on fix-log → review-log
 
@@ -135,3 +155,7 @@ When writing the `review_meta` calibration record (per the de-dup contract), inc
  "findings_produced": N, "reviewers": 2, "review_id": "...",
  "fix_confidence_distribution": {"high": N1, "medium": N2, "low": N3}}
 ```
+
+## Pattern capture
+
+If a new prevention mechanism was created, suggest promoting it to project/global guidance. If `/lesson` is available, also suggest `/lesson "Prevention mechanism created for recurring pattern: [description]. Applies to: [scope]." --category technical --severity medium`; otherwise skip silently.
