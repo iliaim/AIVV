@@ -91,7 +91,7 @@ Evidence for project-specific review outcomes belongs in that project's calibrat
 
 ## Finding Severities
 
-- **CRITICAL**: catastrophic or severe harm that is reachable under real-world conditions. Examples: credible data loss/corruption, auth/authz bypass, financial loss, exploitable security break, sustained availability loss, or equivalent irreversible harm.
+- **CRITICAL**: catastrophic or severe harm that is reachable under real-world conditions, or an implementation that contradicts an explicit session decision. Examples: credible data loss/corruption, auth/authz bypass, financial loss, exploitable security break, sustained availability loss, or equivalent irreversible harm.
 - **MAJOR**: serious defect with meaningful user, data, security, compliance, operational, or maintainability impact, but below the catastrophic/severe top tier after likelihood and exposure are considered.
 - **MINOR**: real defect with limited, recoverable, or narrow impact. The issue is observable or contract-relevant, but its harm is localized, low-frequency, or otherwise bounded.
 - **POLISH**: improvement opportunity / better alternative / way to make things more polished. NOT a defect tier — value-add suggestion. Reviewer must articulate why this would improve the UX/code; if reviewer cannot articulate the improvement, drop the finding rather than emit POLISH.

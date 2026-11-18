@@ -60,7 +60,7 @@ Software findings retain their configured compatibility behavior.
 | **major** | Significant functional, performance, or architectural issue, OR key session goal left unaddressed | Should fix |
 | **minor** | Concrete, reachable, bounded defect or contract breach with limited impact. A no-harm code smell, suboptimal pattern, or maintainability preference belongs on the POLISH track and must pass its gates. | Fix at convenience |
 | **polish** | Improvement opportunity / value-add suggestion — NOT a defect (orthogonal to critical/major/minor). Reviewer must pass both the Improvement-articulation and Proportional-remediation gates above; otherwise DROP the finding. | Advisory; invasive improvements defer with rationale, while smaller improvements follow explicit project/user opt-in policy |
-| **info** | Observation, question, praise, or knowledge sharing | No action needed |
+| **info** | Observation, question, praise, or knowledge sharing. Info is prose-only; never emit it as a finding in the sidecar. | No action needed |
 
 ### Confidence (how sure are you?)
 
