@@ -28,7 +28,7 @@
 
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync, unlinkSync, mkdtempSync, rmdirSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, unlinkSync, mkdtempSync, rmdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +37,15 @@ import { assertProviderAdapterParity, providerIds, validateProviderCatalog } fro
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const AIVV_ROOT = dirname(SCRIPT_DIR);
+
+// Run the CLI only when executed directly, so tests can import helpers without reading
+// stdin or dispatching. Compare real paths: Node resolves symlinks in import.meta.url but
+// not in process.argv[1], and a symlinked install must still run.
+function invokedAsScript() {
+  try { return realpathSync(process.argv[1] ?? '') === realpathSync(fileURLToPath(import.meta.url)); }
+  catch (_) { return false; }
+}
+const IS_CLI = invokedAsScript();
 
 // ── Node version guard ─────────────────────────────────────────────────────
 // Require Node 22+, the version CI tests. Node 20 reached EOL 2026-04-30.
@@ -92,7 +101,7 @@ function splitListArg(value) {
   return value.split(',').map(item => item.trim()).filter(Boolean);
 }
 
-const args = parseArgs(process.argv.slice(2));
+const args = parseArgs(IS_CLI ? process.argv.slice(2) : []);
 const PROVIDER_PROMPT_MAX_BYTES = Number.parseInt(process.env.AIVV_PROVIDER_PROMPT_MAX_BYTES || '0', 10);
 
 // Post-parse arg validation: guard against NaN from missing-value args (e.g., --timeout with no value)
@@ -130,8 +139,10 @@ function cleanup(signal) {
   for (const ctrl of activeControllers) { try { ctrl.abort(); } catch (_) {} }
   process.exit(signal === 'SIGINT' ? 130 : 143);
 }
-process.on('SIGINT', () => cleanup('SIGINT'));
-process.on('SIGTERM', () => cleanup('SIGTERM'));
+if (IS_CLI) {
+  process.on('SIGINT', () => cleanup('SIGINT'));
+  process.on('SIGTERM', () => cleanup('SIGTERM'));
+}
 
 // ── Stdin reader ──────────────────────────────────────────────────────────
 function readStdin() {
@@ -474,7 +485,7 @@ async function makeLogEntry(fields) {
 //      is the failure class the depth counter cannot recover from. This
 //      strategy fails if there is postamble text containing '}' after the
 //      JSON object, but that is rare and depth counting would also fail there.
-function extractJSONFromOutput(output) {
+export function extractJSONFromOutput(output) {
   const text = output.replace(/```(?:json)?\n?([\s\S]*?)\n?```/g, '$1').trim();
 
   // Strategy 1: direct parse (no preamble)
@@ -1409,7 +1420,9 @@ async function main() {
   });
 }
 
-main().catch(err => {
-  process.stderr.write('[AIVV] Unhandled error: ' + providerDiagnostic(err.message) + '\n');
-  process.exit(9);
-});
+if (IS_CLI) {
+  main().catch(err => {
+    process.stderr.write('[AIVV] Unhandled error: ' + providerDiagnostic(err.message) + '\n');
+    process.exit(9);
+  });
+}

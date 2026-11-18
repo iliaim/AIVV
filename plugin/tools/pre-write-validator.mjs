@@ -368,6 +368,19 @@ export function bypassVerdict(fixture) {
   return { status: "pass", reason: "pass" };
 }
 
+// Syntax checkers run under a time limit so a hung checker cannot stall the gate. A
+// timeout under host load says nothing about the content, so it halts with its own
+// retryable reason instead of being reported as invalid syntax (never as a pass).
+const CHECKER_TIMEOUT_MS = 30000;
+
+function checkerTimedOut(error) {
+  return error?.code === "ETIMEDOUT";
+}
+
+function checkerTimeoutHalt(reason, timeoutMs) {
+  return halt(reason, `the syntax checker did not finish within ${timeoutMs} ms, so the content was not checked; rerun the validator when the host is less busy`);
+}
+
 function checkerFor(language) {
   if (language === "bash") return commandExists("bash") ? ["bash", ["-n"]] : null;
   if (language === "zsh") return commandExists("zsh") ? ["zsh", ["-n"]] : null;
@@ -389,7 +402,7 @@ function commandExists(command) {
   }
 }
 
-export function shellSyntaxVerdict(fixture) {
+export function shellSyntaxVerdict(fixture, { checkerTimeoutMs = CHECKER_TIMEOUT_MS } = {}) {
   if (!requiredAssertions(fixture).has("shell-syntax-valid")) return { status: "pass", reason: "pass" };
   const candidates = (fixture.write_intents?.length ? fixture.write_intents : [fixture])
     .filter((intent) => intent.content_shape === "shell" || intent.language || /```(?:bash|sh|zsh|shell)\b/i.test(intentContent(intent) || fixture.exact_content || ""));
@@ -405,8 +418,9 @@ export function shellSyntaxVerdict(fixture) {
     const file = path.join(dir, `check.${language}`);
     try {
       fs.writeFileSync(file, stripShellFence(content), "utf8");
-      execFileSync(checker[0], [...checker[1], file], { stdio: "ignore", timeout: 5000 });
-    } catch {
+      execFileSync(checker[0], [...checker[1], file], { stdio: "ignore", timeout: checkerTimeoutMs });
+    } catch (error) {
+      if (checkerTimedOut(error)) return checkerTimeoutHalt("shell-checker-timeout", checkerTimeoutMs);
       return { status: "halt", reason: language === "sh" ? "shell-syntax-invalid-posix" : "shell-syntax-invalid" };
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
@@ -445,19 +459,22 @@ function jsonBlocks(fixture, intent) {
   return blocks.length ? blocks : [text].filter((candidate) => /^\s*[{[]/.test(candidate));
 }
 
-function parseJsonBlock(fixture, assertion) {
+function parseJsonBlock(fixture, assertion, checkerTimeoutMs) {
   const blocks = jsonBlocks(fixture, assertion.intent);
   const blockId = Number(assertion.args?.block_id ?? assertion.block_id ?? 1);
   const block = blocks[Math.max(0, blockId - 1)];
   if (!block) return { ok: false, reason: "pre-write-validate-json-block-missing" };
   try {
     if (commandExists("jq")) {
-      execFileSync("jq", ["empty"], { input: block, stdio: ["pipe", "ignore", "ignore"], timeout: 5000 });
+      execFileSync("jq", ["empty"], { input: block, stdio: ["pipe", "ignore", "ignore"], timeout: checkerTimeoutMs });
     } else {
       JSON.parse(block);
     }
     return { ok: true, value: JSON.parse(block) };
-  } catch {
+  } catch (error) {
+    if (checkerTimedOut(error)) {
+      return { ok: false, ...checkerTimeoutHalt("pre-write-validate-jq-checker-timeout", checkerTimeoutMs) };
+    }
     return { ok: false, reason: "pre-write-validate-jq-empty-failed" };
   }
 }
@@ -500,16 +517,32 @@ function hasDottedKey(object) {
   return Object.entries(object).some(([key, value]) => key.includes(".") || hasDottedKey(value));
 }
 
-export function assertionExecutionVerdict(fixture) {
+// Assertion args name project files relative to target_project, as target_file does.
+// Resolving them against the process cwd would read whichever copy sits beside the
+// orchestrator (another worktree, the plugin dir) and could pass the wrong file.
+// Relative paths must stay inside target_project; without one there is no other base.
+function assertionReadPath(fixture, file, field) {
+  if (typeof file !== "string" || file.includes("\0")) {
+    return { verdict: halt("unsupported-risky-path", `${field} must be a file path string`) };
+  }
+  if (path.isAbsolute(file) || fixture.target_project === undefined) return { path: file };
+  const verdict = targetPathVerdict(file, fixture.target_project);
+  if (verdict.status === "halt") {
+    return { verdict: halt(verdict.reason, `${field} ${JSON.stringify(file)} must be relative to target_project and stay inside it`) };
+  }
+  return { path: path.resolve(fs.realpathSync(fixture.target_project), file) };
+}
+
+export function assertionExecutionVerdict(fixture, { checkerTimeoutMs = CHECKER_TIMEOUT_MS } = {}) {
   for (const assertion of assertionRecords(fixture)) {
     if (assertion.kind === "jq-parses") {
-      const parsed = parseJsonBlock(fixture, assertion);
-      if (!parsed.ok) return { status: "halt", reason: parsed.reason };
+      const parsed = parseJsonBlock(fixture, assertion, checkerTimeoutMs);
+      if (!parsed.ok) return halt(parsed.reason, parsed.detail);
     }
     if (assertion.kind === "schema-coherence") {
       if (fixture.schema_coherence_case) return { status: "halt", reason: "schema-coherence-failed" };
-      const parsed = parseJsonBlock(fixture, assertion);
-      if (!parsed.ok) return { status: "halt", reason: parsed.reason };
+      const parsed = parseJsonBlock(fixture, assertion, checkerTimeoutMs);
+      if (!parsed.ok) return halt(parsed.reason, parsed.detail);
       const proposed = parsed.value;
       if (hasDottedKey(proposed)) return { status: "halt", reason: "schema-coherence-failed" };
       if ([...logicalPaths(proposed).values()].some((count) => count > 1)) return { status: "halt", reason: "schema-coherence-failed" };
@@ -522,16 +555,26 @@ export function assertionExecutionVerdict(fixture) {
       const parentPath = assertion.args?.parent_schema_path;
       const expectedPath = assertion.args?.expected_nest_path;
       if (parentPath && expectedPath) {
-        const parent = JSON.parse(fs.readFileSync(parentPath, "utf8"));
+        const resolved = assertionReadPath(fixture, parentPath, "parent_schema_path");
+        if (resolved.verdict) return resolved.verdict;
+        let parent;
+        try {
+          parent = JSON.parse(fs.readFileSync(resolved.path, "utf8"));
+        } catch {
+          return halt("schema-coherence-failed", `parent_schema_path ${JSON.stringify(parentPath)} is not a readable JSON file`);
+        }
         if (!getPath(parent, expectedPath)) return { status: "halt", reason: "schema-coherence-failed" };
       }
     }
     if (assertion.kind === "line-cite-valid") {
       const args = assertion.args ?? assertion;
       if (!args.temporal_target) return { status: "halt", reason: "missing-temporal-target" };
-      const file = args.file;
       const expected = args.expected_snippet;
-      if (!file || !expected || !fs.existsSync(file)) return { status: "halt", reason: "pre-write-validate-l-n-citation-mismatch" };
+      if (!args.file || !expected) return { status: "halt", reason: "pre-write-validate-l-n-citation-mismatch" };
+      const resolved = assertionReadPath(fixture, args.file, "file");
+      if (resolved.verdict) return resolved.verdict;
+      const file = resolved.path;
+      if (!fs.existsSync(file)) return { status: "halt", reason: "pre-write-validate-l-n-citation-mismatch" };
       const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
       const cite = args.cite_form?.match(/^L(\d+)(?:-L(\d+))?$/);
       const range = cite ? lines.slice(Number(cite[1]) - 1, Number(cite[2] ?? cite[1])) : lines;
@@ -926,7 +969,7 @@ function validateAssurancePlan(reviewLog) {
 
 // Structured audit blocks below are optional for historical logs, but when present they
 // must match .aivv/schemas/review-log.json — a shape the durable schema allows and this
-// gate skipped is a schema-invalid log written to durable state (). Absence stays
+// gate skipped is a schema-invalid log written to durable state. Absence stays
 // valid; only malformed presence halts.
 
 function optionalNonBlankString(value) {
@@ -2257,6 +2300,17 @@ function main(argv) {
   return verdict.status === "pass" ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// Compare real paths: Node resolves symlinks in import.meta.url but not in
+// process.argv[1]. A plain comparison made a run through a symlinked AIVV_ROOT
+// print no verdict and exit 0, which a caller reading the exit code takes as a pass.
+function invokedAsScript() {
+  try {
+    return fs.realpathSync(process.argv[1] ?? "") === fs.realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (invokedAsScript()) {
   process.exit(main(process.argv.slice(2)));
 }

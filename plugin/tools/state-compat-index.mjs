@@ -2,6 +2,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import process from "node:process";
 
 import { withExistingStorageReadLock, readStorageContext, resolveStorage, ensureStorage, validateContainedPath, withStorageLock } from "./storage-paths.mjs";
@@ -468,6 +469,6 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   main();
 }

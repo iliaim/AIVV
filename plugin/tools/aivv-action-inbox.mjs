@@ -8,7 +8,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { resolveStorage, readStorageContext, withExistingStorageReadLock, withStorageLock, validateContainedPath, ensurePrivateDirectory } from "./storage-paths.mjs";
 import { isImportPathVisible, assertNoPendingImports } from "./state-import.mjs";
 
@@ -395,7 +395,7 @@ export async function main(argv = process.argv.slice(2), storageOptions = {}) {
   else fail("ACTION_INBOX_USAGE", `unknown command ${args.command}`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   main().catch((error) => {
     process.stderr.write(`${error.message}\n`);
     process.exit(error.exitCode ?? 1);

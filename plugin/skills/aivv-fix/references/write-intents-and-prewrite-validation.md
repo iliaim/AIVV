@@ -91,9 +91,9 @@ Readiness consumes the materialized write intents from this reference. If `revis
 
 **On all checks PASS:** emit no warnings; proceed to readiness/pre-write approval and then Edit dispatch. Step 5.5 runs only after writes have been applied.
 
-**On HALT:** re-author only when the deterministic failure identifies a concrete fixable defect and the shared retry budget has room. Increment `rework_retry_count` once and append `rework_retry_history` before returning to Step 3. If the budget is exhausted, report the affected finding unresolved with the validator reason; do not fall through to write or ask for another approval.
+**On HALT:** re-author only when the deterministic failure identifies a concrete fixable defect and the shared retry budget has room. Increment `rework_retry_count` once and append `rework_retry_history` before returning to Step 3. If the budget is exhausted, report the affected finding unresolved with the validator reason; do not fall through to write or ask for another approval. A `*-checker-timeout` halt means the checker never ran to completion, not that the content is wrong: rerun Step 5.4 without re-authoring and without spending the retry budget; if it times out again, report the finding unresolved.
 
-**Calibration emit:** every Step 5.4 catch writes a `pre_write_validator_caught` calibration record with `{finding_id, validator_check, would_have_been_n_class}` fields.
+**Calibration emit:** every Step 5.4 catch (not a checker timeout) writes a `pre_write_validator_caught` calibration record with `{finding_id, validator_check, would_have_been_n_class}` fields.
 
 **Layering:** Step 5.4 is the deterministic catch layer for syntax/structure defects. Step 4.5 keeps its semantic focus (root-cause-vs-symptom, regression risk, hidden side effects). The verifier in Step 6 remains the post-edit safety net.
 

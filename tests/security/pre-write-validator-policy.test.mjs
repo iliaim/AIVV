@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  assertionExecutionVerdict,
   bypassVerdict,
   detectorVerdict,
   editFrame,
   multiEditSha,
   requiredAssertions,
   sha256,
+  shellSyntaxVerdict,
   staleVerdict,
   validateFixLogNewWrite,
   validateFixture,
@@ -148,6 +150,75 @@ assert.match(noPathsVerdict.detail, /authorized_scope\.included_paths/);
 const wrongStatus = validateFixLogNewWrite({ ...fixLog(), status: "done" });
 assert.match(wrongStatus.detail, /in-progress/);
 
+// A syntax checker that runs out of time under host load halts with its own retryable
+// reason; it is neither a pass nor reported as invalid syntax. Stand-in checkers that
+// never finish are put first on PATH, and a short limit keeps the test fast.
+const slowBin = mkdtempSync(path.join(os.tmpdir(), "aivv-slow-checker-"));
+const originalPath = process.env.PATH;
+try {
+  for (const name of ["bash", "jq"]) {
+    writeFileSync(path.join(slowBin, name), "#!/bin/sh\nexec sleep 10\n");
+    chmodSync(path.join(slowBin, name), 0o755);
+  }
+  process.env.PATH = `${slowBin}${path.delimiter}${originalPath}`;
+  const shellTimeout = shellSyntaxVerdict(
+    { write_intents: [{ id: "WI-1", content_shape: "shell", language: "bash", pre_write_assertions: ["shell-syntax-valid"], exact_content: "echo ok\n" }] },
+    { checkerTimeoutMs: 200 });
+  assert.equal(shellTimeout.status, "halt", "a checker timeout never passes");
+  assert.equal(shellTimeout.reason, "shell-checker-timeout", "a checker timeout is not reported as invalid syntax");
+  assert.match(shellTimeout.detail, /200 ms.*rerun the validator/);
+  const jqTimeout = assertionExecutionVerdict(
+    { write_intents: [{ id: "WI-1", pre_write_assertions: [{ kind: "jq-parses", args: { block_id: 1 } }], exact_content: '```json\n{"ok": true}\n```' }] },
+    { checkerTimeoutMs: 200 });
+  assert.equal(jqTimeout.status, "halt", "a jq timeout never passes");
+  assert.equal(jqTimeout.reason, "pre-write-validate-jq-checker-timeout", "a jq timeout is not reported as invalid JSON");
+  assert.match(jqTimeout.detail, /200 ms/);
+} finally {
+  process.env.PATH = originalPath;
+  rmSync(slowBin, { recursive: true, force: true });
+}
+assert.equal(shellSyntaxVerdict({ write_intents: [{ id: "WI-1", content_shape: "shell", language: "bash", exact_content: "if then\n" }] }).reason,
+  "shell-syntax-invalid", "real syntax errors keep their own reason");
+
+// Assertion file args resolve against target_project, not the process cwd: a stale copy
+// of the same relative path beside the orchestrator must not decide the verdict.
+const citeRoot = mkdtempSync(path.join(os.tmpdir(), "aivv-cite-base-"));
+const originalCwd = process.cwd();
+try {
+  const project = path.join(citeRoot, "project");
+  const decoy = path.join(citeRoot, "decoy");
+  for (const dir of [project, decoy]) mkdirSync(path.join(dir, "docs"), { recursive: true });
+  writeFileSync(path.join(project, "docs/notes.md"), "current text\n");
+  writeFileSync(path.join(decoy, "docs/notes.md"), "stale text\n");
+  writeFileSync(path.join(project, "docs/schema.json"), JSON.stringify({ properties: { current: { type: "object" } } }));
+  writeFileSync(path.join(decoy, "docs/schema.json"), JSON.stringify({ properties: { stale: { type: "object" } } }));
+  writeFileSync(path.join(citeRoot, "outside.md"), "current text\n");
+  const cite = (file, expected_snippet) => assertionExecutionVerdict({
+    target_project: project,
+    write_intents: [{ id: "WI-1", pre_write_assertions: [{ kind: "line-cite-valid", args: { temporal_target: "pre_write", cite_form: "L1", file, expected_snippet } }] }],
+  });
+  const nest = (parent_schema_path, expected_nest_path) => assertionExecutionVerdict({
+    target_project: project,
+    write_intents: [{ id: "WI-1", exact_content: '```json\n{"properties":{}}\n```', pre_write_assertions: [{ kind: "schema-coherence", args: { block_id: 1, parent_schema_path, expected_nest_path } }] }],
+  });
+  process.chdir(decoy);
+  assert.equal(cite("docs/notes.md", "current text").status, "pass", "the target project's copy is the one cited");
+  assert.equal(cite("docs/notes.md", "stale text").reason, "pre-write-validate-l-n-citation-mismatch",
+    "a matching copy beside the process cwd does not pass the citation");
+  assert.equal(nest("docs/schema.json", "properties.current").status, "pass");
+  assert.equal(nest("docs/schema.json", "properties.stale").reason, "schema-coherence-failed",
+    "the parent schema is read from the target project, not the process cwd");
+  const escaped = cite("../outside.md", "current text");
+  assert.equal(escaped.reason, "unsupported-risky-path", "a relative path cannot leave the target project");
+  assert.match(escaped.detail, /file "\.\.\/outside\.md" must be relative to target_project/);
+  assert.equal(nest("../decoy/docs/schema.json", "properties.stale").reason, "unsupported-risky-path");
+  assert.equal(nest("docs/absent.json", "properties.current").reason, "schema-coherence-failed",
+    "an unreadable parent schema halts instead of throwing");
+} finally {
+  process.chdir(originalCwd);
+  rmSync(citeRoot, { recursive: true, force: true });
+}
+
 const toolsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../plugin/tools");
 const validatorCli = path.join(toolsDir, "pre-write-validator.mjs");
 const cli = (tool, args) => spawnSync(process.execPath, [tool, ...args], { encoding: "utf8" });
@@ -170,6 +241,13 @@ try {
     assert.ok(verdict.detail.includes(malformed));
     assert.doesNotMatch(result.stderr, /SyntaxError|at .*\.mjs/, "no stack trace");
   }
+  // Run through a symlinked tools directory (a linked AIVV_ROOT), the CLI still
+  // reports its verdict and exit code instead of exiting 0 with no output.
+  const linkedTools = path.join(scratch, "linked-tools");
+  symlinkSync(toolsDir, linkedTools, "dir");
+  const linked = cli(path.join(linkedTools, "pre-write-validator.mjs"), ["--fixture", malformed]);
+  assert.equal(linked.status, 1, "a symlinked validator path must not exit 0 without a verdict");
+  assert.equal(JSON.parse(linked.stdout).reason, "input-json-invalid");
   const absent = cli(validatorCli, ["--fixture", path.join(scratch, "absent.json")]);
   assert.equal(absent.status, 1);
   assert.equal(JSON.parse(absent.stdout).reason, "input-file-unreadable");
