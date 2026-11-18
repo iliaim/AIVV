@@ -103,6 +103,15 @@ try {
     assert.ok(!investigator.unfilled.includes(literal), `${literal}: a value-shape example in a code span is not a placeholder`);
   }
   assert.ok(investigator.prompt.includes('`{block_id: <N>}`'), 'literal examples stay in the prompt unchanged');
+  // Every brace group the old scan saw is still reported, except exactly these literal examples; a template
+  // edit that hides a real placeholder this way must fail here rather than reach a prompt unfilled.
+  const oldScan = (text) => new Set([...text.matchAll(/\{([a-z][a-z0-9_.]*)[^{}\n]*\}/g)].map((match) => match[1]));
+  const literals = { 'fix-challenger': ['pros'], verifier: ['build'], investigator: ['block_id', 'temporal_target', 'language'] };
+  for (const [template, expected] of Object.entries(literals)) {
+    const result = run({ prompts: [{ template, values: {} }] }).out.prompts[0];
+    const hidden = [...oldScan(result.prompt)].filter((key) => !result.unfilled.includes(key)).sort();
+    assert.deepEqual(hidden, [...expected].sort(), `${template}: only the known literal examples go unreported`);
+  }
   assert.ok(!prompt.unfilled.includes('pros'), 'a brace group nested in a placeholder annotation is not a placeholder');
   assert.ok(prompt.unfilled.includes('alternative_approaches'), 'a placeholder whose annotation nests braces is reported');
   const filled = run({ prompts: [{ template: 'fix-challenger', values: { alternative_approaches: '[]' } }] }).out.prompts[0];

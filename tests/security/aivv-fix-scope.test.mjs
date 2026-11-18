@@ -456,12 +456,14 @@ try {
   // Issue #26 owner decisions, 2026-11-18.
   assertRule(reference('fix-log-contract.md'), ['reproduction test', 'not generated verification', '`generated_verification.present`'],
     'a failing reproduction test is not generated verification');
-  assertRule(reference('verifier-dispatch.md'), ['test-backed', 'APPROVE', '`content_sha`', '"prevention"', 'Hard approval rule'],
+  assertRule(reference('verifier-dispatch.md'), ['test-backed', 'one non-test file', 'APPROVE', '`content_sha`', '"prevention"', 'Hard approval rule'],
     'a one-file test-backed fix with an approved plan may use a same-agent after-fix check');
   const gates = reference('apply-policy-and-gates.md');
   assertRule(gates, ['second `aivv:investigator`', 'Disagree only by naming', 'evidence', 'agree'],
     'the second-opinion investigator disagrees only with a named alternative and evidence');
   assertRule(gates, ['without both', 'does not stop the run'], 'an unsupported disagreement does not stop the run');
+  assertRule(gates, ['`authors_new_verification_code`', 'reproduction test', 'never matches'],
+    'a reproduction test does not demote confidence as new verification code');
   assert.match(challengerPrompt, /setup error/, 'the challenger must check the test fails for the right reason');
   const pluginRoot = path.join(REPO_ROOT, 'plugin');
   const pluginText = readdirSync(pluginRoot, { recursive: true })
