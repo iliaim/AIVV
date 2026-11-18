@@ -56,7 +56,7 @@ programs.
 
 ## Multi-model provider dispatch (Case D — `multi_model_enabled: true`)
 
-When `multi_model_enabled: true`, `/aivv` Case D dispatches three providers in parallel. On Claude Code, the Anthropic slot uses the **Agent tool** instead of a `dispatch.mjs` subprocess. This is a platform-specific adaptation — on Codex/other hosts, all three providers use `dispatch.mjs`.
+When `multi_model_enabled: true`, `/aivv` Case D dispatches three providers in parallel. On Claude Code, the Anthropic slot uses the **Agent tool** instead of a `dispatch.mjs` subprocess. This is a platform-specific adaptation — on Codex/other hosts, all three providers go through `aivv-prompt-bundle.mjs`, which packs the prompt and calls `dispatch.mjs`.
 
 **Why Agent tool for Anthropic on Claude Code:**
 Spawning `claude --print` as a Node.js subprocess from within an active Claude Code session is unreliable. The subprocess inherits `CLAUDECODE=1` and `CLAUDE_CODE_SESSION_ID` and can interact pathologically with the parent session (manifesting as ~285s hangs or wrong-schema output). The Agent tool bypasses this by using Claude Code's native in-process subagent dispatch — the same path Cases A/B/C already use successfully.
@@ -70,7 +70,7 @@ prompt: {cold reviewer prompt from SKILL.md Step 4}
 The agent response text is parsed as reviewer findings (not NDJSON). See SKILL.md Case D 5.D.4–5.D.5 for the full dispatch and result-parsing instructions.
 
 **Gemini + OpenAI on Claude Code:**
-Use the `AIVV_ROOT` pinned and preflighted at the current AIVV invocation's start, then use `"$AIVV_ROOT/tools/dispatch.mjs"` via Bash background jobs, same as other hosts. No session conflict — Google CLI subprocesses (`agy` or legacy `gemini`) and `codex` are unrelated binaries.
+Use the `AIVV_ROOT` pinned and preflighted at the current AIVV invocation's start, then run `node "$AIVV_ROOT/tools/aivv-prompt-bundle.mjs"` (which packs the prompt and calls `dispatch.mjs`) via Bash background jobs, as in [multi-model-dispatch.md](../../skills/aivv/references/multi-model-dispatch.md). No session conflict — Google CLI subprocesses (`agy` or legacy `gemini`) and `codex` are unrelated binaries.
 
 **Probe behavior on Claude Code:**
 `dispatch.mjs --probe --provider anthropic --provider-egress-consent` exits 0 with a "native Agent tool path available" message when `CLAUDECODE=1`. This correctly signals availability without triggering the CLI-subprocess path. A machine-parseable JSON line is also written to stderr: `{"aivv_capability":"anthropic","dispatch_path":"agent-tool","reason":"claude-code-session-detected"}`.

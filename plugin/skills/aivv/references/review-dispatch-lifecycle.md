@@ -150,7 +150,7 @@ only and must repeat the degradation banner in Step 6 output.
 - Reviewers do not own scope, evidence packet construction, degradation
   classification, or final synthesis.
 - Native prompts do not duplicate full methodology; provider Case D gets the
-  portable prompt pack from `dispatch.mjs`.
+  portable prompt pack from `aivv-prompt-bundle.mjs`.
 - Reviewer subagents are read-only by contract; workspace snapshot guards catch
   weak host enforcement.
 - Immediate targeted follow-up is the only valid reason to keep a completed

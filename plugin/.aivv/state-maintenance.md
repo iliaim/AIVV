@@ -55,8 +55,7 @@ original and later observations remain historical input under the same rules.
 Inspect active/archived external records through the shared `list`/`read`
 commands in `target-resolution.md`, never a raw glob/host read that could expose
 incomplete imported copies. Inspect explicit legacy candidates as historical input.
-`tools/state-schema-gate.mjs` is the deterministic non-mutating harness. The
-supported state schema maximum is **2**, separate from config schema version 6.
+The supported state schema maximum is **2**, separate from config schema version 6.
 Missing state `schema_version` means 1; numeric values <=2 are not newer.
 Config files use a separate golden config schema and currently stamp `schema_version: 6`; config schema version does not affect this state gate.
 Historical incompatible state must not block fresh `/aivv` or `/aivv-fix` invocations that do not read it.
