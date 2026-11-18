@@ -20,6 +20,7 @@ const USAGE = [
   '    invocation_id   reuse this run\'s ID (omit to get a new one)',
   '    write_intents   [intent, ...]             -> write_intents with content_sha filled',
   '    fix_log         {source, target_project, storage_context, authorized_scope, ...}',
+  '                    (storage_context is {instance_key, target_project, policy_target})',
   '                                              -> fix_log plan-stage skeleton',
   '                    (max_rework_retries is stamped 3 unless you pass the resolved setting)',
   '    retry           {history, gate, finding_ids, defect, evidence[, beyond_limit_reason]} -> retry_entry',
@@ -283,7 +284,13 @@ function build(request, now = new Date()) {
     if (!Array.isArray(request.write_intents)) throw new Refusal('write-intent-invalid', 'write_intents must be an array');
     out.write_intents = request.write_intents.map(hashIntent);
   }
-  if (request.fix_log !== undefined) requireObject(request.fix_log, 'fix_log');
+  if (request.fix_log !== undefined) {
+    requireObject(request.fix_log, 'fix_log');
+    const storage = request.fix_log.storage_context;
+    if (storage !== undefined && !(isObject(storage) && ['instance_key', 'target_project', 'policy_target'].every((key) => typeof storage[key] === 'string'))) {
+      throw new Refusal('request-invalid', 'fix_log.storage_context must be the object {instance_key, target_project, policy_target}, not the storage context file path');
+    }
+  }
   if (request.fix_log !== undefined) out.fix_log = fixLogSkeleton(request.fix_log, out.invocation_id, now, out.write_intents);
   if (request.retry !== undefined) {
     requireObject(request.retry, 'retry');

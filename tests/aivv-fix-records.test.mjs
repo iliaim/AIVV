@@ -123,6 +123,11 @@ try {
   assert.match(noBytes.out.detail, /WI-9/);
   assert.equal(run({ prompts: [{ template: '../../secret', values: {} }] }).out.reason, 'prompt-template-unknown');
   assert.equal(run('{not json').out.reason, 'request-json-invalid');
+  // Found in a live run: a context file path passed as storage_context was accepted, then halted the validator.
+  const pathContext = run({ fix_log: { source: 'conversation', storage_context: '/state/context.json' } });
+  assert.equal(pathContext.status, 1);
+  assert.equal(pathContext.out.reason, 'request-invalid');
+  assert.match(pathContext.out.detail, /instance_key, target_project, policy_target/);
   // Reported from a downstream sync: these two crashed with an uncaught TypeError.
   const dotted = run({ prompts: [{ template: 'verifier', values: { 'execution_evidence.stdout_excerpt': '0' } }] });
   assert.equal(dotted.status, 0, dotted.stderr);
