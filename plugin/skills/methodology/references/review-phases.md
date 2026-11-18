@@ -241,8 +241,7 @@ through the two dimensions but emit NO finding (silence-of-findings on clean dif
 
 **Severity + auto-fix.** Direction findings are **capped at MAJOR** ("won't meet the stated goal"
 → up to MAJOR; "a better alternative exists" → POLISH) and are **NEVER CRITICAL**. They are
-**never auto-applied** by `/aivv-fix` (matches the AS-* "separate effort" precedent). Invasive
-improvements route to `defer-with-rationale`.
+**never auto-applied** by `/aivv-fix`. Invasive improvements route to `defer-with-rationale`.
 
 #### Intent capture (infer-and-state)
 
@@ -256,12 +255,6 @@ improvements route to `defer-with-rationale`.
    *suppresses* findings). For a **low-confidence** inferred goal, this same line's "correct me if
    wrong" framing IS the challenge — no separate confirmation step. On a **user-stated** goal that
    produced no findings, render NOTHING (the assumed-goal line is for inferred goals only).
-
-(Author rationale, NOT reviewer-facing prose — keep in the plan/D6 only: the inline framing
-deliberately does NOT route through the generic low-confidence→CHALLENGE step, which is reachable
-only under `severity_model: impact_likelihood`, not the shipped `legacy_4pass` default — see D6/A3.
-Reviewers have no visibility into the resolved `severity_model`, so this rationale stays out of the
-methodology prose.)
 4. **Undocumented intent** surfaces as a one-line INFO note at ALL tiers (the "state your goal"
    nudge is tier-independent); only the negative-space consequence-analysis DEPTH scales to
    finding-status at `thorough`+.
