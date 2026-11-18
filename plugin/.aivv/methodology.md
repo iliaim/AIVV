@@ -225,20 +225,7 @@ borrowing the applicable-statute floor.
 
 ### Reviewer-prompt language for the Improvement-articulation pass
 
-Reviewer agents receive this improvement-articulation rule through the operational methodology source (`skills/methodology/SKILL.md`, installed as `aivv:methodology` on Claude Code and `aivv-methodology` on Codex). This shipped methodology reference records the same rule for distribution and auditability. Apply the block below verbatim during Phase 2 VERIFY whenever considering a finding that does not clearly impact users at current real-world inputs:
-
-> When you flag a finding that does NOT clearly impact users at the current real-world inputs (text lengths, viewport sizes, data shapes actually present in the codebase), apply the Improvement-articulation pass before emitting:
->
->   1. Identify the VERIFIED PRESENT NEED — what current input, requirement, or demonstrated maintenance burden warrants a change now?
->   2. Identify the SPECIFIC IMPROVEMENT — what would change for the user/code/maintainer if applied?
->   3. Identify the POSITIVE NET VALUE — how would the change make the UX/code measurably better after accounting for added complexity, testing, coupling, and maintenance cost?
->   4. If you can establish ALL THREE in one or two sentences each, emit the finding at POLISH severity with:
->        Present need: <one-sentence statement of (1)>
->        Improvement: <one-sentence statement of (2)>
->        Value: <one-sentence statement of (3), including material costs>
->   5. If you CANNOT establish any one of (1), (2), or (3) — DROP the finding entirely. Do not emit at MINOR or POLISH. Speculative pattern-flagging without present need and positive net value is what the cosmetic-edge-case-not-manifest-at-current-data anti-pattern prevents (see Reviewer Anti-Patterns section in .aivv/methodology.md, N=2 corpus).
->
-> POLISH is reserved for value-add suggestions, not low-confidence defects. A finding you would only justify with "well, it could break in some edge case" is a finding to DROP, not downgrade.
+The verbatim reviewer instruction lives in [severity-confidence.md](../skills/methodology/references/severity-confidence.md) ("Improvement-articulation pass"), which is embedded in every reviewer prompt.
 
 ## Finding Lifecycle
 

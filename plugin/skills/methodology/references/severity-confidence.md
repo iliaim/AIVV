@@ -21,7 +21,7 @@ Apply this pass to any finding that does NOT clearly impact users at the current
 >        Present need: <one-sentence statement of (1)>
 >        Improvement: <one-sentence statement of (2)>
 >        Value: <one-sentence statement of (3), including material costs>
->   5. If you CANNOT establish any one of (1), (2), or (3) — DROP the finding entirely. Do not emit at MINOR or POLISH. Speculative pattern-flagging without present need and positive net value is what the cosmetic-edge-case-not-manifest-at-current-data anti-pattern prevents (see Reviewer Anti-Patterns section in .aivv/methodology.md, N=2 corpus).
+>   5. If you CANNOT establish any one of (1), (2), or (3) — DROP the finding entirely. Do not emit at MINOR or POLISH. Speculative pattern-flagging without present need and positive net value is what the cosmetic-edge-case-not-manifest-at-current-data anti-pattern prevents (see Reviewer Anti-Patterns section in .aivv/methodology.md).
 >
 > POLISH is reserved for value-add suggestions, not low-confidence defects. A finding you would only justify with "well, it could break in some edge case" is a finding to DROP, not downgrade.
 
