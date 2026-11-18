@@ -22,20 +22,11 @@ Analytics use one target project's external calibration corpus and legacy or sha
 - Minimum-N floor: FP/TP rates emit `insufficient_data` when the denominator is
   below 5.
 
-## Host Adapter Mapping
+## Host Notes
 
-| Adapter operation | Claude Code | Codex |
-|---|---|---|
-| Run analytics | `Bash` | `shell_command` |
-| Run explicit `--migrate` maintenance | `Bash` | `shell_command` |
-| Read-only fallback | `Read` | `shell_command` with `cat` |
-
-The full host capability matrix is in
-[.aivv/runtime-contract.md](../../.aivv/runtime-contract.md). Claude Code
-behavior specifics are in
-[.aivv/platform-adapters/claude-code.md](../../.aivv/platform-adapters/claude-code.md).
-Codex behavior specifics are in
-[.aivv/platform-adapters/codex.md](../../.aivv/platform-adapters/codex.md).
+Run the helper with the host's shell tool; host capabilities are in
+[.aivv/runtime-contract.md](../../.aivv/runtime-contract.md) and the active
+platform adapter.
 
 <!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, load the host adapter with
 `read_file` from `${HERMES_SKILL_DIR}/../../.aivv/platform-adapters/hermes-agent.md`
@@ -61,32 +52,17 @@ When `/aivv-calibrate` triggers:
 1. Preserve the read-only default. Honor `--migrate` only when the user's original
    arguments include it, and limit it to legacy calibration files in the
    selected target.
-2. Resolve and preflight the loaded AIVV runtime root once before reading
-   calibration data, then run the deterministic helper from that pinned root
-   while preserving the user's original target arguments. If preflight reports
+2. Before reading calibration data, preflight once per
+   [.aivv/runtime-root.md](../../.aivv/runtime-root.md) with profile
+   `aivv-calibrate` and export the result as `AIVV_ROOT`. If preflight reports
    `AIVV_INSTALLATION_INCOMPLETE`, show that diagnostic once and stop; do not
    retry or select another cache. Do not assume the reviewed target project
    contains AIVV's `tools/` directory.
 
-   ```bash
-   # Select the resolver once using the procedure in .aivv/runtime-root.md.
-   # If that selected resolver is absent, stop with the installation diagnostic;
-   # do not search a lower-priority cache.
-   if [ ! -f "${AIVV_RUNTIME_ROOT_HELPER:-}" ]; then
-     echo "[AIVV] AIVV_INSTALLATION_INCOMPLETE: runtime-root resolver not found in the selected installation. Repair or reinstall this AIVV installation, restart the host, and retry in a new invocation." >&2
-     exit 3
-   fi
-   if ! AIVV_ROOT="$(node "$AIVV_RUNTIME_ROOT_HELPER" --preflight aivv-calibrate "${SKILL_BASE_DIR:-}")"; then
-     exit 3
-   fi
-   export AIVV_ROOT
-   AIVV_CALIBRATE_MJS="$AIVV_ROOT/tools/aivv-calibrate.mjs"
-   ```
-
-3. Invoke the helper by absolute path:
+3. Invoke the helper by absolute path, preserving the user's original arguments:
 
    ```bash
-   node "$AIVV_CALIBRATE_MJS" <original arguments>
+   node "$AIVV_ROOT/tools/aivv-calibrate.mjs" <original arguments>
    ```
 
 4. Return the helper's stdout to the user. If the helper exits nonzero, surface
