@@ -11,7 +11,7 @@ Read from `skills/aivv-fix/SKILL.md` before investigator dispatch or same-agent 
 
 ### Step 3: INVESTIGATE — Root Cause Analysis
 
-**Default assumption: root cause is unknown.** Every finding gets an investigator unless it passes the low-risk fast path below, the only skip route. Confidence in a plausible explanation is not a reason to skip.
+**Default assumption: root cause is unknown.** Every finding that still needs a fix gets an investigator unless it passes the low-risk fast path below, the only skip route. A finding the reproducibility gate closes first (`already-correct`, or `unreachable-static` → `wont-fix`) needs no investigation. Confidence in a plausible explanation is not a reason to skip.
 
 #### Reproducibility gate (Signal 2-4 only — fires before investigator dispatch)
 
@@ -96,7 +96,7 @@ Ask: *"Do I know with confidence exactly why this is happening AND exactly what 
 
 **Same-agent fallback for `documentation-gap`:** When `capability_degradations` contains `"investigator_cold_dispatch_unavailable"`, ALL `documentation-gap` findings route directly to Branch E (`CLARIFICATION_NEEDED:empirical_verification_required`) without proceeding to Branch B prose edit. The same-agent investigator role may still run inline and emit `verification_method` for telemetry/calibration, but this does NOT affect routing — Branch E fires regardless of `verification_method` value. Structural independence required by the verifier's evidence grep is absent under same-agent mode.
 
-**Low-risk fast path — the only way to skip the investigator:** check [fast-path.md](fast-path.md). When every fast-path eligibility gate passes, emit the structured `investigation_route: "fast_path_inline"` record and continue through Step 4 write-intent and verification gates. A finding that fails any gate gets the investigator; there is no other skip route.
+**Low-risk fast path — the only way to skip the investigator:** check [fast-path.md](fast-path.md). When every fast-path eligibility gate passes, emit the structured `investigation_route: "fast_path_inline"` record and continue through Step 4 write-intent and verification gates. A finding that still needs a fix and fails any gate gets the investigator; there is no other skip route.
 
 **When in doubt, spawn the investigator.** The cost of a false skip (missing root cause, missing similar patterns) is higher than the cost of an unnecessary investigation.
 
