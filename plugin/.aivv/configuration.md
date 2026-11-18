@@ -262,9 +262,10 @@ Run:
 
 - WCAG SC IDs (e.g., `WCAG 2.4.11`)
 - FTC enforcement actions
+- GDPR
 - EU DSA Article 25 (matches `EU-DSA`, `EU DSA`, `EUDSA` compressed forms)
 - ADA, Section 508, ARIA APG patterns
-- Rules with `rule_id` matching `COMP-LEGAL-*` or `A11Y-*`
+- Rules with `rule_id` matching `COMP-LEGAL-*`, `DP-LEGAL-*`, or `A11Y-*`
 
 These are forced-shown regardless of threshold setting, so preferences cannot accidentally suppress legal/safety findings. Forced-show is a rendering rule, not a legal-applicability conclusion. The canonical detection regex, forced-show semantics, and batch-apply refusal guard are in [polish-and-l1-source-policy.md](../skills/aivv-fix/references/polish-and-l1-source-policy.md).
 
