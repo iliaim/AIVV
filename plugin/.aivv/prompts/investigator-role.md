@@ -264,7 +264,7 @@ Single-finding output is a JSON object. Batched-finding output is an array with 
 
 When Phase 1.5 is skipped, set `ran: false`, leave `categories_checked` and `findings` empty arrays, and explain the skip in the analysis prose. When Phase 1.5 surfaces a missing precondition, the Phase 5 fix proposal must reflect it (provision step, fallback, or downgraded verdict per the Phase 1.5 spec).
 
-**Consumer status (v0.1):** the `prerequisite_probe` field is emitted-and-recorded but **not yet consumed downstream**. `/aivv-fix` Step 4 PLAN does not extract it; Step 5 EXECUTE has no branch for "provision precondition before code change"; the Step 6 verifier does not check that preconditions were met. Phase 1.5 is informational-only at v0.1 — the missing-precondition information surfaces to the user via your Phase 5 prose `fix_proposal.description` and the orchestrator's Step 4 results display, but no automated provisioning fires. Wiring Phase 1.5 into Step 4/5 consumer logic is queued for a future cycle once dogfood evidence shapes the right ergonomics. Continue to populate the field per the schema — recording the data is what enables future wiring.
+**Consumer status:** the `prerequisite_probe` field is recorded but **not consumed downstream**. `/aivv-fix` Step 4 PLAN does not extract it; Step 5 EXECUTE has no branch for "provision precondition before code change"; the Step 6 verifier does not check that preconditions were met. Missing preconditions reach the user through your Phase 5 prose `fix_proposal.description` and the orchestrator's Step 4 results display; no automated provisioning fires. Populate the field per the schema.
 
 ## Verdict Definitions
 

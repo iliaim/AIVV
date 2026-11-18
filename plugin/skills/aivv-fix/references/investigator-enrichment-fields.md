@@ -1,26 +1,6 @@
-### Prerequisite Probe (optional — added for Phase 1.5; backward-compatible)
+### Prerequisite Probe (optional; backward-compatible)
 
-Investigators emit this field when Phase 1.5 PREREQUISITE PROBE is run (default-on for fixes touching environmental dependencies; skipped for pure-logic fixes). Backward-compatible — outputs that omit the field remain valid; the orchestrator treats absence as "Phase 1.5 skipped".
-
-```json
-"prerequisite_probe": {
-  "ran": boolean,                       // false when skipped because the fix is a pure-logic change
-  "categories_checked": [               // any subset of the five Phase 1.5 categories
-    "env-vars" | "deployed-files" | "services" | "dependency-versions" | "feature-flags"
-  ],
-  "findings": [
-    {
-      "category": string,               // one of the category enum values above
-      "command": string,                // the verification command run (e.g., "vercel env ls")
-      "result": string                  // brief observed outcome (e.g., "CHROME_EXTENSION_ID not set on Vercel")
-    }
-  ]
-}
-```
-
-When Phase 1.5 surfaces a missing precondition, the Phase 5 fix proposal must reflect it (provision step, fallback, or downgraded verdict per the Phase 1.5 spec in `.aivv/prompts/investigator-role.md`).
-
-**Consumer status (v0.1):** the field is emitted-and-recorded but **not yet consumed downstream**. `/aivv-fix` Step 4 PLAN does not extract it; Step 5 EXECUTE has no branch for "provision precondition before code change"; the verifier in Step 6 does not check that preconditions were met. This makes Phase 1.5 informational-only at v0.1 — the investigator's prose analysis surfaces missing preconditions to the user via the Step 4 results display, but no automated provisioning or execution branch fires. Wiring Phase 1.5 into Step 4/5 consumer logic is queued for a future cycle once dogfood evidence shapes the right ergonomics.
+The `prerequisite_probe` field records the investigator's Phase 1.5 PREREQUISITE PROBE. Its schema and consumer status are defined once in [`.aivv/prompts/investigator-role.md`](../../../.aivv/prompts/investigator-role.md) (Output Format), which every investigator loads. Outputs that omit the field remain valid; the orchestrator treats absence as "Phase 1.5 skipped".
 
 ## Source Finding Identity
 
@@ -40,7 +20,7 @@ Investigators MAY emit this field for `lens: sec` findings to document the stati
 }
 ```
 
-**Consumer status (v0.1):** emitted-and-recorded but **not yet consumed by automated routing**. The prose Sec-lens reproducibility extension in `investigation-dispatch.md` drives the actual gate decision (proceed / proceed-static-only / wont-fix-with-sign-off); this structured field is for record-keeping and future tooling. The `unreachable-static` route reuses the existing wont-fix sign-off flow (`SKILL.md` Step 4), not a new mechanism. (Design note: the spec's separately-named `reachability_note` finding field was consolidated into `execution_path` here per the dev.235 re-validate gate — one field, not two, per Operating Principle 1.)
+**Consumer status:** emitted-and-recorded but **not yet consumed by automated routing**. The prose Sec-lens reproducibility extension in `investigation-dispatch.md` drives the actual gate decision (proceed / proceed-static-only / wont-fix-with-sign-off); this structured field is for record-keeping and future tooling. The `unreachable-static` route reuses the existing wont-fix sign-off flow (`SKILL.md` Step 4), not a new mechanism. (Design note: the spec's separately-named `reachability_note` finding field was consolidated into `execution_path` here per the dev.235 re-validate gate — one field, not two, per Operating Principle 1.)
 
 ### unsafe_control_action (optional — interaction/coordination findings only; backward-compatible)
 
@@ -58,4 +38,4 @@ Investigators MAY emit this field on `root_cause_analysis` when the finding is a
 }
 ```
 
-**Consumer status (v0.1):** emitted-and-recorded but **not yet consumed by automated routing** — it enriches the root-cause record for interaction bugs (the class 5-Whys/Fishbone frame poorly) and is surfaced to the user via the Step 4 results display; no Step 4/5 branch dispatches on it yet. Wiring is queued for a future cycle once dogfood evidence shapes the ergonomics, mirroring the `prerequisite_probe` / `static_reachability` staging pattern.
+**Consumer status:** emitted-and-recorded but **not yet consumed by automated routing** — it enriches the root-cause record for interaction bugs (the class 5-Whys/Fishbone frame poorly) and is surfaced to the user via the Step 4 results display; no Step 4/5 branch dispatches on it yet. Wiring is queued for a future cycle once dogfood evidence shapes the ergonomics, mirroring the `prerequisite_probe` / `static_reachability` staging pattern.

@@ -306,7 +306,7 @@ SRE-postmortem-style context. **Required for CRITICAL findings; recommended for 
 
 | Field | Source | Description |
 |---|---|---|
-| `introduced_by` | Orchestrator Phase 1.5 probe — **DO NOT fill this yourself** | Pre-populated by orchestrator git log/blame before investigator dispatch. If absent from your context, omit the field entirely. |
+| `introduced_by` | Orchestrator change-attribution probe — **DO NOT fill this yourself** | Pre-populated by orchestrator git log/blame before investigator dispatch. If absent from your context, omit the field entirely. |
 | `detection_failure` | Investigator-filled | WHY did existing tests/checks/process not catch this? Drives `prevention_plan.mechanism` selection. |
 | `contributing_factors[]` | Investigator-filled | Parallel contributing causes (not just the primary 5-Why chain). |
 
