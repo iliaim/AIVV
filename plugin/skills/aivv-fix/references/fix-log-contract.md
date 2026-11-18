@@ -4,12 +4,15 @@ Read from `skills/aivv-fix/SKILL.md` before writing or recovering `session_chang
 
 ## Contents
 
-- Target resolution and dry-run gate
-- Session log schema
-- Atomic full-object write semantics
-- Recovery on re-invocation
+- [Step 5: EXECUTE — Apply Approved Fixes](#step-5-execute--apply-approved-fixes)
+  - [Change Readiness Gate](#change-readiness-gate)
+  - [Step 5.0 — Target resolution and pre-write banner](#step-50--target-resolution-and-pre-write-banner)
+  - [Step 5 pre-loop: class-verdict gate (FAIL-CLOSED) + variant scan + class-sibling triage](#step-5-pre-loop-class-verdict-gate-fail-closed--variant-scan--class-sibling-triage)
+  - [Step 5 pre-loop: scope_search_seed execution](#step-5-pre-loop-scope_search_seed-execution)
+  - [Per-fix execution and the session log](#per-fix-execution-and-the-session-log)
+    - Inside item 1: schema, field semantics, write semantics, recovery on re-invocation, collision safety
 
-### Step 5: EXECUTE — Apply Approved Fixes
+## Step 5: EXECUTE — Apply Approved Fixes
 
 Every new fix log carries the immutable `authorized_scope` snapshot captured at
 Step 1.9 and these shared retry fields:
@@ -67,6 +70,8 @@ the storage helper, checks that its `id` matches `source_review_id`, and checks
 that every selected root finding exists in the source review. Keep the source
 ID and relative path immutable through the fix invocation.
 
+### Change Readiness Gate
+
 **Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents, the Step 5 pre-loops below, and any Step 4.5 challenge (including one a pre-loop demotion re-triggers); but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
 
 Trivial fixes still record readiness. They normally use `risk_tier: "low"` and `approval_mode: "auto"` only when W10 classifies them as auto-eligible and no consequence gate applies.
@@ -118,6 +123,8 @@ Choice: approve writes | dry-run only | revise plan | stop | defer
 
 Each `closed`, `closed_with_residual_risk` or `false_positive` disposition names its own evidence in `evidence_refs`. Every `required: true` check in `required_verification` must be proven once for the run: some evidence entry joined to such a finding lists the check's `id` in `satisfies`. A finding does not need copies of the checks that prove the other findings.
 
+### Step 5.0 — Target resolution and pre-write banner
+
 **Step 5.0 — Target resolution + pre-write banner (run once, before the first fix-log write at Step 4.4; otherwise the FIRST action in Step 5):**
 
 Before any state mutation, reuse the context bound before maintenance per
@@ -138,7 +145,7 @@ through the shared storage mutation helper so import cannot race writes.
 
 **Fix lifecycle audit fields (optional, non-dry-run only):** after the dry-run gate has passed, the initialized fix-log may include `fix_plans[]` and `verification_cycles[]` as additive lifecycle metadata. `fix_plans[]` records proposed or approved remediation plans and alternatives; it does not imply that a change was applied. Even `status: "applied"` means only that the selected plan reached write dispatch/execution; durable applied-change truth still requires a matching `changes_summary[]` entry. `changes_summary[]` remains the source of truth for applied changes. `verification_cycles[]` records scoped verifier outcomes after execution. `/aivv-fix --dry-run` must not write a fix log or persistent `fix_plans[]`; dry-run plans are preview output only unless a future reviewed contract explicitly changes that no-write rule.
 
-#### Step 5 pre-loop: class-verdict gate (FAIL-CLOSED) + variant scan + class-sibling triage
+### Step 5 pre-loop: class-verdict gate (FAIL-CLOSED) + variant scan + class-sibling triage
 
 Before the scope_search_seed pre-loop, enforce the mandatory class verdict on the approved findings, scan for class siblings, and triage them. This is the class-breadth counterpart of the scope_search_seed pre-loop: `scope_search_seed` answers *which other files need the same change* (scope breadth); `class_signature` answers *which other locations have the same bug* (class breadth). Both pre-loops run before any per-finding fix branch; the class-verdict gate runs first because a finding without a verdict is not ready for either scan.
 
@@ -193,7 +200,7 @@ search examples below.
 
 Warnings (`missing-class-verdict`, `self-contained-falsified`, `class-scan-timeout`, `escalation-budget-exhausted`) are recorded in the session warnings array AND surfaced in the run summary so the operator sees class-breadth activity and its impact each cycle.
 
-#### Step 5 pre-loop: scope_search_seed execution
+### Step 5 pre-loop: scope_search_seed execution
 
 Before dispatching any per-finding fix branch, scan for multi-SSoT siblings:
 
@@ -212,6 +219,8 @@ For each approved finding with a non-empty `scope_search_seed` field in its `roo
 5. Sub-findings do NOT increment `cycle_count` (they are expanded scope within the same investigation cycle, not a re-investigation due to failure).
 
 The seed is required for fixes that change a canonical name, public API, schema key, route/asset ID, prompt/template field, evidence claim, or other source-of-truth token. It is not limited to code registries. The purpose is to catch post-fix sibling artifact drift across docs, schemas, tests, prompt templates, route budgets, and state fixtures before a verifier has to infer missing scope from prose.
+
+### Per-fix execution and the session log
 
 For each approved fix (in priority order: CRITICAL first):
 

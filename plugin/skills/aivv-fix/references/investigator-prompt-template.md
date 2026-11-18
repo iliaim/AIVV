@@ -4,6 +4,25 @@ Use this template verbatim when building the prompt for each `aivv:investigator`
 
 **Native prompt boundary:** the orchestrator builds this prompt with `tools/aivv-fix-records.mjs` (`prompts` key), which fences every substituted `{placeholder}` value under one fresh nonce, as specified in [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts). Values added by hand are wrapped the same way.
 
+## Contents
+
+The fenced template below has these sections, in order (headings inside a code block have no links):
+
+- Input Trust Boundary
+- THE IRON LAW
+- Common Rationalizations — Stop If You Catch Yourself Thinking These
+- Findings to Investigate
+- Immutable Authorized Scope
+- Source Signal Guide
+- Batch Context
+- Architectural Remediation Assessment
+- Debugging Technique — Select the Most Relevant
+- Working Directory
+- Handoff Files
+- Change Attribution
+- Project Context
+- Instructions
+
 ```
 Investigate these related findings using the Investigation Protocol (Phases 1, 1.5, 2, 3, 4, 5).
 

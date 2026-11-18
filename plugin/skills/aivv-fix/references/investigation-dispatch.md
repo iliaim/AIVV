@@ -4,20 +4,25 @@ Read from `skills/aivv-fix/SKILL.md` before investigator dispatch or same-agent 
 
 ## Contents
 
-- Reproducibility gate ([reproducibility-gate.md](reproducibility-gate.md))
-- Change-attribution probe
-- Investigator decision gate
-- Cold dispatch and fallback rules
+- [Step 3: INVESTIGATE — Root Cause Analysis](#step-3-investigate--root-cause-analysis)
+  - [Reproducibility gate](#reproducibility-gate)
+  - [Change-attribution probe (CRITICAL/MAJOR findings — before investigator dispatch)](#change-attribution-probe-criticalmajor-findings--before-investigator-dispatch)
+  - [Decision gate (per batch)](#decision-gate-per-batch)
+  - [Architectural remediation assessment seed](#architectural-remediation-assessment-seed)
+  - [Host adapter mapping](#host-adapter-mapping)
+  - [Spawning rules (for batches that require investigation)](#spawning-rules-for-batches-that-require-investigation)
+  - [Building subagent prompts](#building-subagent-prompts)
+  - [Subagent handles](#subagent-handles)
 
-### Step 3: INVESTIGATE — Root Cause Analysis
+## Step 3: INVESTIGATE — Root Cause Analysis
 
 **Default assumption: root cause is unknown.** Confidence in a plausible explanation is not a reason to skip the investigator.
 
-#### Reproducibility gate
+### Reproducibility gate
 
 For findings sourced from `[user-reported]`, `[deferred]`, or `[agent-noted]`, and for any `lens: sec` finding, run the [reproducibility gate](reproducibility-gate.md) before investigator dispatch.
 
-#### Change-attribution probe (CRITICAL/MAJOR findings — before investigator dispatch)
+### Change-attribution probe (CRITICAL/MAJOR findings — before investigator dispatch)
 
 For each **CRITICAL or MAJOR** finding, before spawning investigators, run:
 
@@ -49,7 +54,7 @@ If the file does not exist at HEAD (deleted or renamed without `--follow` resolu
 
 **Dispatch-context handoff:** The `introduced_by` object is passed to the investigator as the `{introduced_by_context}` prompt template token — set to the JSON-serialized `introduced_by` object, or `"(not available)"` when the file is untracked. See the Key placeholders list below for fill instructions. Instruction 8e in `investigator-prompt-template.md` reads this token as "dispatch context" to determine whether `introduced_by` is available.
 
-#### Decision gate (per batch)
+### Decision gate (per batch)
 
 Ask: *"Do I know with confidence exactly why this is happening AND exactly what the fix is?"*
 
@@ -68,7 +73,7 @@ Ask: *"Do I know with confidence exactly why this is happening AND exactly what 
 
 **When in doubt, spawn the investigator.** The cost of a false skip (missing root cause, missing similar patterns) is higher than the cost of an unnecessary investigation.
 
-#### Architectural remediation assessment seed
+### Architectural remediation assessment seed
 
 Before investigator dispatch, compute `architectural_remediation_assessment` for each batch and pass the full reason-coded object into the investigator prompt as `{architectural_remediation_assessment}`.
 
@@ -79,7 +84,7 @@ Before investigator dispatch, compute `architectural_remediation_assessment` for
 
 The investigator must prove or disprove each reason with file/grep evidence.
 
-#### Host adapter mapping
+### Host adapter mapping
 
 Shared operations are the same as `/aivv`: see the Host notes paragraph at the end of the [`/aivv` skill](../../aivv/SKILL.md), the Adapter Operations table in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md), and the per-host adapters in [`.aivv/platform-adapters/`](../../../.aivv/platform-adapters/). Additional `/aivv-fix`-specific operations:
 
@@ -92,7 +97,7 @@ Shared operations are the same as `/aivv`: see the Host notes paragraph at the e
 | Apply edits | `Edit`/`Write` tools | `apply_patch` |
 | Prevention paths | `.claude/hooks/`, `.claude/patterns/`, `.claude/rules/`, or project equivalents | Project-equivalent hook/pattern/rule directories (no `.claude/` assumption); see project conventions |
 
-#### Spawning rules (for batches that require investigation)
+### Spawning rules (for batches that require investigation)
 
 Build the prompt carefully — the investigator has NO conversation history.
 
@@ -128,7 +133,7 @@ Wait for all investigators (and any inline analyses) to complete before proceedi
 
 **Investigator errors:** on invalid JSON, retry once with a clarified prompt. On a timeout (max-turns exhausted on the host), use partial results if available and flag the analysis incomplete.
 
-#### Building subagent prompts
+### Building subagent prompts
 
 Build every investigator, fix-challenger, and verifier prompt with the shipped helper instead of reading the prompt template. Write `{"prompts": [{"template": "<investigator|fix-challenger|verifier>", "values": {...}}]}` to a private temp file and run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin). Key `values` by placeholder name from the step's fill list: the investigator list above, the challenger list in [challenge-loop.md](challenge-loop.md), the verifier list in [verifier-dispatch.md](verifier-dispatch.md).
 
@@ -138,7 +143,7 @@ Build every investigator, fix-challenger, and verifier prompt with the shipped h
 - Open a `*-prompt-template.md` file only when `unfilled` names a placeholder whose meaning neither the fill list nor its annotation in the returned prompt gives.
 - Send the returned prompt with its `## Working Directory` block (and, for the challenger, its `## OUTPUT FORMAT OVERRIDE` block) intact.
 
-#### Subagent handles
+### Subagent handles
 
 One lifecycle covers every AIVV-owned subagent this skill spawns: investigators and second-opinion investigators, the fix-plan challenger, and the verifier.
 

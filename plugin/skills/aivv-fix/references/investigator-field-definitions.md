@@ -1,3 +1,31 @@
+## Contents
+
+- [Field Definitions](#field-definitions)
+  - [Category (required — mirrors envelope schema)](#category-required--mirrors-envelope-schema)
+  - [Domain (optional, default `code`)](#domain-optional-default-code)
+  - [Root Cause Categories](#root-cause-categories)
+  - [`root_cause_analysis.cause_structure` (optional — backward-compatible)](#root_cause_analysiscause_structure-optional--backward-compatible)
+  - [`root_cause_analysis.insertion_phase` (optional — backward-compatible)](#root_cause_analysisinsertion_phase-optional--backward-compatible)
+  - [`root_cause_analysis.problem_specification` (conditionally required)](#root_cause_analysisproblem_specification-conditionally-required)
+  - [Confidence Levels](#confidence-levels)
+  - [Verification Methods (required for `documentation-gap` findings)](#verification-methods-required-for-documentation-gap-findings)
+  - [`class_signature` (optional, in `root_cause_analysis`)](#class_signature-optional-in-root_cause_analysis)
+  - [`scope_search_seed` (optional, in `root_cause_analysis`)](#scope_search_seed-optional-in-root_cause_analysis)
+  - [`root_cause_analysis.class_assessment` (optional - class-breadth remediation; the self-contained branch of the mandatory class verdict, executed at the Step 5 pre-loop)](#root_cause_analysisclass_assessment-optional---class-breadth-remediation-the-self-contained-branch-of-the-mandatory-class-verdict-executed-at-the-step-5-pre-loop)
+  - [`root_cause_analysis.class_sibling_triage[]` (optional - class-breadth remediation; populated by the Step 5 pre-loop class-sibling triage pass)](#root_cause_analysisclass_sibling_triage-optional---class-breadth-remediation-populated-by-the-step-5-pre-loop-class-sibling-triage-pass)
+  - [Sub-finding suffix taxonomy + fix_confidence demotion](#sub-finding-suffix-taxonomy--fix_confidence-demotion)
+  - [`root_cause_analysis.architectural_remediation_check` (conditional)](#root_cause_analysisarchitectural_remediation_check-conditional)
+  - [`fix_proposal.alternative_approaches[]` (optional / recommended, in `fix_proposal`)](#fix_proposalalternative_approaches-optional--recommended-in-fix_proposal)
+  - [`fix_proposal.approach_id` (optional, in `fix_proposal`)](#fix_proposalapproach_id-optional-in-fix_proposal)
+  - [`incident_context` (conditionally required — top-level on finding)](#incident_context-conditionally-required--top-level-on-finding)
+  - [`verification_method.command_args` (optional, in `root_cause_analysis`)](#verification_methodcommand_args-optional-in-root_cause_analysis)
+  - [Low-Confidence Fields (required when `confidence: low`)](#low-confidence-fields-required-when-confidence-low)
+  - [Fix Approaches](#fix-approaches)
+  - [`write_intents` (required for write-capable fixes)](#write_intents-required-for-write-capable-fixes)
+  - [`pre_write_assertions` (optional, sibling on `fix_proposal`; required inside `write_intents[]`)](#pre_write_assertions-optional-sibling-on-fix_proposal-required-inside-write_intents)
+  - [Verdicts](#verdicts)
+  - [Prevention Mechanisms](#prevention-mechanisms)
+
 ## Field Definitions
 
 ### Category (required — mirrors envelope schema)

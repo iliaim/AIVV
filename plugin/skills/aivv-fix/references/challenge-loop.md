@@ -2,6 +2,12 @@
 
 Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder fill list), and the 4.5.3 verdict handling + counter semantics. The challenger prompt is built from [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md) by the helper; do not read the template to build it. The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
 
+## Contents
+
+- [4.5.1 — Trigger evaluation (per batch)](#451--trigger-evaluation-per-batch)
+- [4.5.2 — Dispatch](#452--dispatch)
+- [4.5.3 — Verdict handling](#453--verdict-handling)
+
 ## 4.5.1 — Trigger evaluation (per batch)
 
 **CHALLENGE fires** when ANY of these holds for any finding in the batch:

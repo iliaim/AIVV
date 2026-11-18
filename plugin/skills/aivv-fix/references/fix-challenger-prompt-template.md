@@ -6,6 +6,27 @@ Use this template when dispatching the Step 4.5 CHALLENGE subagent. Fill in all 
 
 **Portable role source:** `.aivv/prompts/fix-challenger-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific payload and output schema; it must not drift from the portable role's authority, untrusted-content, and review-posture requirements.
 
+## Contents
+
+The fenced template below has these sections, in order (headings inside a code block have no links):
+
+- OUTPUT FORMAT OVERRIDE — READ THIS FIRST
+- What You Are Reviewing
+- Handoff Files
+- Findings + Fix Proposals
+- Immutable Authorized Scope
+- Exact Proposed Write Content
+- Failing Test Evidence (red run)
+- Predecessor Cycle Context
+- Earlier Challenge of This Plan
+- Other Session Findings (class context)
+- Mandatory Review Axes (assess ALL NINE for each finding; on a re-check, for the changed parts)
+- Recurring Class Scan
+- Output Schema
+- Verdict Decision Rules
+- Same-Model Bias Acknowledgment
+- Working Directory
+
 ```
 ## OUTPUT FORMAT OVERRIDE — READ THIS FIRST
 

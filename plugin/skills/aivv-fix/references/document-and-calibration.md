@@ -2,6 +2,13 @@
 
 Canonical home for the Step 7 resolution summary, the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence), the calibration JSONL append-record field specs, and pattern capture.
 
+## Contents
+
+- [Resolution summary](#resolution-summary)
+- [Predecessor backfill on fix-log → review-log](#predecessor-backfill-on-fix-log--review-log)
+- [Calibration write-specs (JSONL append)](#calibration-write-specs-jsonl-append)
+- [Pattern capture](#pattern-capture)
+
 ## Resolution summary
 
 Present this final summary:

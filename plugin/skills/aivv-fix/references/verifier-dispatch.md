@@ -4,13 +4,13 @@ Read from `skills/aivv-fix/SKILL.md` before Step 6 VERIFY.
 
 ## Contents
 
-- Verification context
-- Scoped verifier dispatch
-- Same-agent verification discipline
-- Verifier result parsing
-- Shared retry limit
+- [Step 6: VERIFY — Scoped Re-Verification](#step-6-verify--scoped-re-verification)
+  - Item 1: Verification context
+  - Item 2: Scoped verifier dispatch and same-agent verification discipline
+  - Item 3: Verifier result parsing
+  - Item 4: Shared retry-budget enforcement
 
-### Step 6: VERIFY — Scoped Re-Verification
+## Step 6: VERIFY — Scoped Re-Verification
 
 After all fixes applied:
 

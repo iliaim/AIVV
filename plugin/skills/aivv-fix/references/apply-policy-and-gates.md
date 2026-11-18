@@ -4,6 +4,16 @@ Canonical home for the investigation-results presentation template, the architec
 
 Cross-step ordering is owned by [execution-decisioning.md](execution-decisioning.md). This file owns the route definitions below and the `--dangerously-auto-apply` bypass list; other references point here instead of restating them.
 
+## Contents
+
+- [Step 4 order](#step-4-order)
+- [Investigation-results presentation](#investigation-results-presentation)
+- [Architectural remediation lane](#architectural-remediation-lane)
+- [Batch reconciliation (pre-execution cross-batch collision check)](#batch-reconciliation-pre-execution-cross-batch-collision-check)
+- [W10 batched apply-policy decision queue](#w10-batched-apply-policy-decision-queue)
+- [Pre-execution gates for uncertain or overconfident findings](#pre-execution-gates-for-uncertain-or-overconfident-findings)
+- [`fix_confidence` computation (per approved finding, computed here — consumed by Step 4.5)](#fix_confidence-computation-per-approved-finding-computed-here--consumed-by-step-45)
+
 ## Step 4 order
 
 **Field propagation (required — load-bearing for Step 5 dispatch):** Before presenting the structured summary, for every approved finding, carry the **`category`** value set in Step 2a (inherited from the envelope schema for Signal 0 findings; inferred for Signal 1-4) onto the approved-finding record. Step 5 Branch dispatch reads this field and falls back to Branch A (`code-bug`) on missing-or-unknown with a warning logged to `session_changes`. Undefined-on-read is never acceptable for a dispatch key.

@@ -6,6 +6,26 @@ Use the fenced template below verbatim when building the scoped verification pro
 
 **Portable role source:** `.aivv/prompts/verifier-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific change log and verification checklist; it must not drift from the portable role's authority, untrusted-content, and scoped-verification requirements.
 
+## Contents
+
+The fenced template below has these sections, in order (headings inside a code block have no links):
+
+- What to Review
+- Original Findings (Checklist)
+- Immutable Authorized Scope
+- Session Changes Applied (PRIMARY — this is what you are verifying)
+- Files to Read (for verification)
+- Prior Cycle History (only populated on cycle >= 2)
+- Predecessor Review
+- Verification Instructions
+- Runtime Evidence Advisory
+- Working Directory
+- Handoff Files
+- Documentation-Gap Verification Protocol (applies when any finding has `category: documentation-gap`)
+- Execution Evidence (build-script / ci-gate / verification-method fixes)
+- Step 5.5 Warnings (PRIMARY for the ADDITIONAL VERIFICATION section, if appended below)
+- After the fence: the ADDITIONAL VERIFICATION addendum, appended only when the Step 6 gate matches
+
 ```
 ADVISORY MODE — Scoped verification of specific fixes.
 
