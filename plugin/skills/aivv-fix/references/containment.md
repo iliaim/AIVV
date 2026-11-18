@@ -17,11 +17,11 @@ Containment is NOT the fix. It is a temporary measure to limit ongoing damage wh
 When recommending a containment action that itself causes service disruption, present the disruption cost alongside the recommendation — e.g., "Revoking this credential will cause [downstream service] to lose [capability] until the root-cause fix is applied." Default to the least-disruptive reversible action when multiple options exist.
 
 **Protocol:**
-1. For each CRITICAL finding, ask: "Does this affect users/data RIGHT NOW or only when triggered?"
+1. For each finding that meets the Step 2.5 trigger in SKILL.md, ask: "Does this affect users/data RIGHT NOW or only when triggered?"
    - If "right now" (e.g., data is actively leaking, financial transactions are wrong): surface immediately with "CONTAINMENT AVAILABLE?" prompt to user. Pause investigation until user decides on containment.
    - If "when triggered" (e.g., bug exists but hasn't been exploited): proceed to Step 3 without containment, but note the available options in the triage output.
 
-   **When the same batch contains BOTH "right now" AND "when triggered" CRITICAL findings:**
+   **When the same batch contains BOTH "right now" AND "when triggered" findings:**
    Surface all "right now" findings together in a single containment prompt; "when triggered" findings in the same batch proceed to Step 3 in parallel without waiting for the containment decision.
 
 2. If the user chooses to apply a containment action:
