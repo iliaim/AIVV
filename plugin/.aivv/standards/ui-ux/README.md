@@ -13,7 +13,7 @@ Curated checklist of UI/UX pattern violations that an IV&V reviewer can catch by
 | [feedback-confirmation.md](feedback-confirmation.md) | UX-012..014 | Feedback & confirmation (destructive actions, toasts, modals) |
 | [navigation.md](navigation.md) | UX-015..017 | Navigation (active state, skip links, link-vs-button) |
 | [responsive-touch.md](responsive-touch.md) | UX-018..019 | Responsive & touch (viewport, hit area) |
-| [ux-microcopy.md](ux-microcopy.md) | UX-020..021 | UX-lens microcopy (peer file [`microcopy.md`](../microcopy.md) covers the full `MC-*` catalog) |
+| [ux-microcopy.md](ux-microcopy.md) | UX-020..021 | UX-lens microcopy (the full `MC-*` catalog is in [`microcopy/`](../microcopy/README.md)) |
 | [data-performance.md](data-performance.md) | UX-022..026 | Data UX & performance-UX (URL state, LCP, alt text, infinite scroll, responsive tables) |
 | [progressive-enhancement.md](progressive-enhancement.md) | UX-027..029 | Progressive enhancement (form action, forward-looking errors, silent retry) |
 | [checkout-payment.md](checkout-payment.md) | UX-030..036 | Checkout & payment (dev.81 = T22 phase 1; Baymard checkout-usability + web.dev forms + NN/g error-messages anchored; 8-rule initial ship trimmed to 7 by post-ship IV&V corrective) |

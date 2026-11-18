@@ -16,14 +16,14 @@ hand; update the source rule heading and run `node scripts/standards-index.mjs w
 
 | File | Purpose | Check count |
 |---|---|---|
-| [`accessibility.md`](accessibility.md) (TOC stub) → [`accessibility/`](accessibility/) subdir (8 by-domain files; `aria.md` itself sub-split into [`aria/`](accessibility/aria/) 3 by-domain files, dev.80 nested retrofit) | WCAG 2.1 AA + WCAG 2.2 NEW SC + ARIA APG + COGA + SR-divergence code-reviewable baseline | 74 checks, runtime-deferred per parent subdir README |
-| [`ui-ux.md`](ui-ux.md) (TOC stub) → [`ui-ux/`](ui-ux/) subdir (9 by-domain files) | Production-quality UI/UX pattern enforcement | 36 checks, 10 runtime-deferred |
-| [`visual-verification-triggers.md`](visual-verification-triggers.md) (TOC stub) → [`visual-verification-triggers/`](visual-verification-triggers/) subdir (8 by-category files; 6 by-domain + 2 CLOSED by-date historical batches per the dev.86 by-domain partition policy) | Heuristics for when the reviewer emits "⚠ Visual verification required" | 73 triggers, 4 decision examples |
-| [`microcopy.md`](microcopy.md) (TOC stub) → [`microcopy/`](microcopy/) subdir (9 by-domain files) | UX-writing patterns — buttons, labels, errors, empty states, confirmations, microcopy mechanics | 38 checks, 0 runtime-deferred |
-| [`ux-heuristics.md`](ux-heuristics.md) (TOC stub) → [`ux-heuristics/`](ux-heuristics/) subdir (4 by-source files; `laws-of-ux.md` itself sub-split into [`laws-of-ux/`](ux-heuristics/laws-of-ux/) 6 by-domain files, dev.69 nested retrofit) | Operationalized cognitive-psychology heuristics — Nielsen 10, Schneiderman 8, Laws of UX, Cognitive Biases | 51 checks, 0 runtime-deferred |
-| [`interaction-states.md`](interaction-states.md) (TOC stub) → [`interaction-states/`](interaction-states/) subdir (6 by-primitive files) | Per-primitive state inventories — buttons, forms, async lists, dialogs, navigation, toasts | 30 checks, 0 runtime-deferred |
-| [`visual-design.md`](visual-design.md) (TOC stub) → [`visual-design/`](visual-design/) subdir (6 by-domain files) | Code-reviewable aesthetic baselines — typography, spacing, color, iconography, motion, layout (L4 source-class, mostly POLISH) | 73 checks, 0 runtime-deferred |
-| [`dark-patterns.md`](dark-patterns.md) (TOC stub) → [`dark-patterns/`](dark-patterns/) subdir (9 by-domain files) | Code-reviewable manipulative-UX detection — pricing, subscription, consent, urgency, scarcity, social-proof, gamification, accessibility-trap, dark-PR; L1 legal-risk subset (FTC + EU DSA + GDPR) | 93 checks, 0 runtime-deferred |
+| [`accessibility/`](accessibility/README.md) | WCAG 2.1 AA + WCAG 2.2 NEW SC + ARIA APG + COGA + SR-divergence code-reviewable baseline | 74 checks, runtime-deferred per parent subdir README |
+| [`ui-ux/`](ui-ux/README.md) | Production-quality UI/UX pattern enforcement | 36 checks, 10 runtime-deferred |
+| [`visual-verification-triggers/`](visual-verification-triggers/README.md) | Heuristics for when the reviewer emits "⚠ Visual verification required" | 73 triggers, 4 decision examples |
+| [`microcopy/`](microcopy/README.md) | UX-writing patterns — buttons, labels, errors, empty states, confirmations, microcopy mechanics | 38 checks, 0 runtime-deferred |
+| [`ux-heuristics/`](ux-heuristics/README.md) | Operationalized cognitive-psychology heuristics — Nielsen 10, Schneiderman 8, Laws of UX, Cognitive Biases | 51 checks, 0 runtime-deferred |
+| [`interaction-states/`](interaction-states/README.md) | Per-primitive state inventories — buttons, forms, async lists, dialogs, navigation, toasts | 30 checks, 0 runtime-deferred |
+| [`visual-design/`](visual-design/README.md) | Code-reviewable aesthetic baselines — typography, spacing, color, iconography, motion, layout (L4 source-class, mostly POLISH) | 73 checks, 0 runtime-deferred |
+| [`dark-patterns/`](dark-patterns/README.md) | Code-reviewable manipulative-UX detection — pricing, subscription, consent, urgency, scarcity, social-proof, gamification, accessibility-trap, dark-PR; L1 legal-risk subset (FTC + EU DSA + GDPR) | 93 checks, 0 runtime-deferred |
 | [`compliance/`](compliance/) subdir (3 by-domain files; shipped dev.103 Wave 2 phase 1) | Regulatory + legal-risk + AAA-enhancement rules — WCAG 2.1 AAA realistic subset, full ARIA APG conformance, FTC + EU DSA + GDPR + ADA + Section 508 + EU EAA legal-risk subset | 39 checks (15 WCAG-AAA + 15 APG + 9 LEGAL); 0 runtime-deferred for WCAG-AAA + APG; LEGAL rules carry "Consult counsel" notes signaling AIVV-detects-pattern-but-counsel-determines-application |
 | [`i18n/`](i18n/) subdir (3 by-domain files; shipped dev.104 Wave 2 phase 2) | Internationalization patterns — translation-function discipline, CLDR-aware pluralization, locale-aware formatters, RTL safety + bidi text | 30 checks (10 STR + 10 FMT + 10 RTL); 0 runtime-deferred |
 | [`runtime-visual.md`](runtime-visual.md) (shipped dev.106 Wave 2 phase 4, B3 reconciled) | Runtime-visual rules — axe-core driven runtime a11y checks, computed-style contrast measurement, screenshot baseline diff. Opt-in via `/aivv --runtime` or explicit runtime-evidence emit/ingest flags; default path is generated Playwright probes + user-run JSON ingest | 25 checks (10 AXE + 7 CONTRAST + 8 DIFF); ALL runtime-deferred (requires supplied runtime artifacts or explicit host adapter) |
@@ -34,14 +34,14 @@ hand; update the source rule heading and run `node scripts/standards-index.mjs w
 
 | Prefix | File | Range |
 |---|---|---|
-| `A11Y-` | `accessibility.md` | `A11Y-001..074` |
-| `UX-` | `ui-ux.md` | `UX-001..036` |
-| `VVT-` | `visual-verification-triggers.md` | `VVT-001..073` |
-| `MC-` | `microcopy.md` | `MC-001..038` |
-| `HEU-` | `ux-heuristics.md` | `HEU-NN1..NN10` (Nielsen) + `HEU-SCH1..SCH8` (Schneiderman) + `HEU-LUX-<slug>` (Laws of UX, lawsofux.com-anchored) + `HEU-COG-<slug>` (cognitive biases, primary HCI/psychology literature) |
-| `IS-` | `interaction-states.md` | `IS-001..030` |
-| `VD-` | `visual-design.md` | `VD-TYPE-01..12` (typography) + `VD-SPACE-01..10` (spacing & rhythm) + `VD-COLOR-01..14` (color & contrast) + `VD-ICON-01..08` (iconography) + `VD-MOTION-01..12` (motion) + `VD-LAYOUT-01..17` (layout & responsive) |
-| `DP-` | `dark-patterns.md` | `DP-PRICE-01..12` (pricing manipulation) + `DP-SUB-01..10` (subscription manipulation) + `DP-CONSENT-01..12` (consent + privacy) + `DP-URGENCY-01..08` (urgency) + `DP-SCARCITY-01..06` (scarcity) + `DP-SOCIAL-01..08` (social-proof manipulation) + `DP-GAME-01..10` (gamification / dark engagement) + `DP-A11Y-01..06` (accessibility-as-trap) + `DP-PR-01..08` (dark-PR / washing) + `DP-LEGAL-01..13` (L1 legal-risk, forced-shown; hard legal floor is context-gated) |
+| `A11Y-` | `accessibility/` | `A11Y-001..074` |
+| `UX-` | `ui-ux/` | `UX-001..036` |
+| `VVT-` | `visual-verification-triggers/` | `VVT-001..073` |
+| `MC-` | `microcopy/` | `MC-001..038` |
+| `HEU-` | `ux-heuristics/` | `HEU-NN1..NN10` (Nielsen) + `HEU-SCH1..SCH8` (Schneiderman) + `HEU-LUX-<slug>` (Laws of UX, lawsofux.com-anchored) + `HEU-COG-<slug>` (cognitive biases, primary HCI/psychology literature) |
+| `IS-` | `interaction-states/` | `IS-001..030` |
+| `VD-` | `visual-design/` | `VD-TYPE-01..12` (typography) + `VD-SPACE-01..10` (spacing & rhythm) + `VD-COLOR-01..14` (color & contrast) + `VD-ICON-01..08` (iconography) + `VD-MOTION-01..12` (motion) + `VD-LAYOUT-01..17` (layout & responsive) |
+| `DP-` | `dark-patterns/` | `DP-PRICE-01..12` (pricing manipulation) + `DP-SUB-01..10` (subscription manipulation) + `DP-CONSENT-01..12` (consent + privacy) + `DP-URGENCY-01..08` (urgency) + `DP-SCARCITY-01..06` (scarcity) + `DP-SOCIAL-01..08` (social-proof manipulation) + `DP-GAME-01..10` (gamification / dark engagement) + `DP-A11Y-01..06` (accessibility-as-trap) + `DP-PR-01..08` (dark-PR / washing) + `DP-LEGAL-01..13` (L1 legal-risk, forced-shown; hard legal floor is context-gated) |
 | `COMP-` | `compliance/` subdir (shipped dev.103 Wave 2 phase 1) | `COMP-WCAG-AAA-01..15` (WCAG 2.1 AAA realistic subset; default MINOR, escalate to MAJOR when AAA-conformance is project target) + `COMP-APG-01..15` (full ARIA APG widget conformance; default MAJOR) + `COMP-LEGAL-01..09` (FTC + EU DSA + GDPR + ADA + Section 508 + EU EAA legal-risk; L1 source-class, forced-shown; CRITICAL/DISPOSITION floor only when Project Context makes the cited authority applicable or undeclared-context) |
 | `I18N-` | `i18n/` subdir (shipped dev.104 Wave 2 phase 2) | `I18N-STR-01..10` (translation-function discipline, CLDR pluralization, lang-attribute correctness, ICU select, no-concatenation, locale fallback, collation, accent-insensitive search, missing-key handling, message-key conventions; default MAJOR) + `I18N-FMT-01..10` (locale-aware Intl.* APIs — DateTimeFormat, NumberFormat, currency, RelativeTimeFormat, ListFormat, DisplayNames, Segmenter, Locale, timezone, locale-detection; default MAJOR) + `I18N-RTL-01..10` (root dir attribute, CSS logical properties, bidi isolation, mirrored icons, Unicode bidi controls, form-control alignment, dir propagation, CSS direction pitfall, RTL-aware animations, mixed-direction layouts; default MINOR, escalate to MAJOR when project declares RTL-language target) |
 | `RTV-` | `runtime-visual.md` (shipped dev.106 Wave 2 phase 4, B3 reconciled) | `RTV-AXE-01..10` (axe-core runtime checks — WCAG 2.1 AA baseline, impact-to-severity mapping, color-contrast / focus-order / ARIA-applied-vs-declared / landmark / form-label / image-alt / link-name / html-has-lang runtime verification; default MAJOR) + `RTV-CONTRAST-01..07` (computed-style contrast for dynamic backgrounds, focus indicators, UI components, AAA enhancement, state colors, placeholder text, disabled controls; default MAJOR when AA threshold violated, MINOR when AAA-only) + `RTV-DIFF-01..08` (screenshot diff — canonical viewport, multi-viewport, animation freezing, font-loading wait, pixel-diff thresholds, baseline blessing, theme pairs, cross-browser; default MINOR) — opt-in via `/aivv --runtime` or explicit runtime-evidence emit/ingest flags |
@@ -58,9 +58,9 @@ Additional standards files planned for dev.107+ instructs it to **conditionally 
 - Viewport/document-level files (`index.html`, `app/layout.*`, `_document.*`, `head.*`)
 
 When triggered, the reviewer:
-1. Reads `accessibility.md` and `ui-ux.md` to look up specific rules matching the diff's patterns
+1. Reads [`accessibility/README.md`](accessibility/README.md) and [`ui-ux/README.md`](ui-ux/README.md) to look up specific rules matching the diff's patterns
 2. Emits findings at the rule's documented severity (CRITICAL / MAJOR / MINOR) citing the rule ID and authoritative source
-3. Separately checks `visual-verification-triggers.md` to decide whether to emit a `⚠ Visual verification required` advisory block after the findings
+3. Separately checks [`visual-verification-triggers/README.md`](visual-verification-triggers/README.md) to decide whether to emit a `⚠ Visual verification required` advisory block after the findings
 
 The reviewer should **NOT**:
 - Try to verify rendered-output properties (color contrast ratios, focus ring visibility, animation timing, layout at different viewports). Those are runtime checks; the reviewer emits the visual-verification advisory so the user runs them externally.

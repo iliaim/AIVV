@@ -13,7 +13,7 @@ This subdir is a lookup reference for the AIVV code-reviewer when inspecting dif
 | [forms.md](forms.md) | A11Y-009..014, A11Y-042..044, A11Y-061..064 | Forms & inputs |
 | [interactive-elements.md](interactive-elements.md) | A11Y-015..019, A11Y-039..040, A11Y-068..069 | Interactive elements |
 | [images-media.md](images-media.md) | A11Y-020..023 | Images & media |
-| [aria.md](aria.md) | A11Y-024..029, A11Y-045..060, A11Y-073..074 | ARIA usage + APG widget patterns + SR-divergence |
+| [aria/](aria/README.md) | A11Y-024..029, A11Y-045..060, A11Y-073..074 | ARIA usage + APG widget patterns + SR-divergence |
 | [keyboard-focus.md](keyboard-focus.md) | A11Y-030..031, A11Y-036..038 | Keyboard & focus |
 | [color-motion.md](color-motion.md) | A11Y-032..035, A11Y-070..071 | Color, meaning, and motion |
 

@@ -53,7 +53,7 @@ All Phase 2 VERIFY rules apply as written. No lens-specific triggers.
 
 - `.aivv/methodology.md` — universal review phases + Three-Tier scope + Scope Discipline
 - `.aivv/standards/code-quality.md` (CQ-*, within-file simplification) + `.aivv/standards/architecture.md` (AS-*, cross-file/structure) — code-simplification + architecture-altitude signals for logic-code diffs
-- `.aivv/standards/ui-ux.md`, `.aivv/standards/accessibility.md`, `.aivv/standards/visual-verification-triggers.md` — consulted when the change touches UI code even under the `code` lens (the lens focus is *code review*, but UI code is still code)
+- `.aivv/standards/ui-ux/README.md`, `.aivv/standards/accessibility/README.md`, `.aivv/standards/visual-verification-triggers/README.md` — consulted when the change touches UI code even under the `code` lens (the lens focus is *code review*, but UI code is still code)
 
 ## Graceful degradation
 

@@ -13,7 +13,7 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 **Rule-ID conventions**:
 - `HEU-NN1` … `HEU-NN10` — Nielsen's 10 usability heuristics (NN/g 1994, refined 2024) — see [nielsen.md](nielsen.md)
 - `HEU-SCH1` … `HEU-SCH8` — Schneiderman's 8 Golden Rules (1987, 6th ed. 2016) — see [schneiderman.md](schneiderman.md)
-- `HEU-LUX-<slug>` — Laws of UX (Yablonski, 2020 + lawsofux.com), restricted to entries on lawsofux.com's published index — see [laws-of-ux.md](laws-of-ux.md) (TOC stub) → [laws-of-ux/](laws-of-ux/) sub-subdir (6 by-domain files, dev.69 nested sub-split)
+- `HEU-LUX-<slug>` — Laws of UX (Yablonski, 2020 + lawsofux.com), restricted to entries on lawsofux.com's published index — see [laws-of-ux/](laws-of-ux/README.md) (6 by-domain files)
 - `HEU-COG-<slug>` — Cognitive-bias rules sourced from primary HCI/psychology literature (not on lawsofux.com); separated from `HEU-LUX-` to keep the LUX prefix's source-anchor unambiguous — see [cognitive-biases.md](cognitive-biases.md)
 
 ## Rule index (51 rules)
@@ -22,7 +22,7 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 |---|---|---|
 | [nielsen.md](nielsen.md) | `HEU-NN1` … `HEU-NN10` | 10 |
 | [schneiderman.md](schneiderman.md) | `HEU-SCH1` … `HEU-SCH8` | 8 |
-| [laws-of-ux.md](laws-of-ux.md) (TOC stub) → [laws-of-ux/](laws-of-ux/) sub-subdir (6 by-domain files, dev.69) | `HEU-LUX-doherty` … `HEU-LUX-working-memory` | 28 |
+| [laws-of-ux/](laws-of-ux/README.md) | `HEU-LUX-doherty` … `HEU-LUX-working-memory` | 28 |
 | [cognitive-biases.md](cognitive-biases.md) | `HEU-COG-curiosity-gap` … `HEU-COG-novelty` | 5 |
 | **Total** | | **51** |
 

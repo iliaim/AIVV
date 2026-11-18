@@ -2,7 +2,7 @@
 
 28 operationalized rules from Jon Yablonski's *Laws of UX* (lawsofux.com), split into 6 by-domain subfiles. Source-class layer: **L2 cognitive-psychology** — empirically validated by HCI research and decades of usability testing. L2 findings default to MINOR or MAJOR depending on user impact; several are POLISH-tier value-add suggestions.
 
-This sub-subdir is the dev.69 sub-split retrofit of the prior `laws-of-ux.md` (532 lines) — applies the Wave A subdir-pattern recursively to close the only Wave A >500-line outlier. Parent directory: [.aivv/standards/ux-heuristics/](../README.md).
+Parent directory: [.aivv/standards/ux-heuristics/](../README.md).
 
 > **Reviewers consulting this README:** open the relevant subfile for actual rule bodies. Rule-ID-to-subfile mapping is in the index table below.
 
@@ -30,5 +30,5 @@ When adding a new `HEU-LUX-*` rule:
 1. **Verify it has a lawsofux.com page**; if not, route to `HEU-COG-*` per the source-anchoring rule above.
 2. **Place in the appropriate by-domain subfile** (timing / memory / decision / mental-models / gestalt / engagement). Avoid creating new subfiles unless ≥3 rules cluster in a new domain.
 3. **Add the rule-ID to the index table and quick-lookup line** in this README.
-4. **Update parent count** in [../README.md](../README.md) `Rule index` table (`laws-of-ux.md` row count).
+4. **Update parent count** in [../README.md](../README.md) `Rule index` table (`laws-of-ux/` row count).
 5. The maintainer validator recurses `ux-heuristics/` (which transitively recurses this directory), so no validate.sh edit is needed when adding rules in-place.
