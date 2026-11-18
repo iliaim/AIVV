@@ -62,7 +62,7 @@ Degradation banner:
 before dispatch:
 
 ```bash
-( cd '<target>' && git status --porcelain=v1 -z; echo ''; git diff --no-color --no-ext-diff HEAD ) 2>&1
+( cd '<target>' && git --no-optional-locks -c core.fsmonitor=false status --porcelain=v1 -z; echo ''; git --no-optional-locks -c core.fsmonitor=false diff --no-color --no-ext-diff --no-textconv HEAD ) 2>&1
 ```
 
 Record stdout as `workspace_sha_start`; capture again at Step 6.0. If changed,

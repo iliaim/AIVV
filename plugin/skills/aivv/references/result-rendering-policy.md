@@ -10,7 +10,7 @@ When read-only enforcement has the canonical `partial` or `unsupported` status
 from `.aivv/runtime-contract.md`, capture before and after reviewer dispatch:
 
 ```bash
-( cd '<target>' && git status --porcelain=v1 -z; echo ''; git diff --no-color --no-ext-diff HEAD ) 2>&1
+( cd '<target>' && git --no-optional-locks -c core.fsmonitor=false status --porcelain=v1 -z; echo ''; git --no-optional-locks -c core.fsmonitor=false diff --no-color --no-ext-diff --no-textconv HEAD ) 2>&1
 ```
 
 Compare raw strings. Equal means proceed. Different means:
