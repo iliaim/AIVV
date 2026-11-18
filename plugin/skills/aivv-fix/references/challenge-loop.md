@@ -34,7 +34,7 @@ Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder
 
 ## 4.5.2 — Dispatch
 
-Before spawning challengers, apply the lifecycle pre-spawn cleanup rule from Host Adapter Mapping. This is the same AIVV-owned-handle-only cleanup used before investigator dispatch; preserve any cleanup warning in `session_changes.warnings` when possible.
+Before spawning challengers, run pre-spawn cleanup; track, mark consumed, and close each challenger handle per [Subagent handles](investigation-dispatch.md#subagent-handles).
 
 <!-- CLAUDE-CODE-SPECIFIC -->
 On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer` and the prompt from `fix-challenger-prompt-template.md` (fill ALL `{placeholder}` values from session state before sending). Cold context; NO conversation history.
@@ -42,8 +42,6 @@ On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer` and the prompt 
 On Codex: subagent dispatch via `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` with the fix-challenger prompt. Same cold-context requirement.
 
 **Dispatch granularity:** per-batch. One challenger sees all approved findings in the batch plus their fix proposals. Independent batches may be challenged in parallel (same rules as Step 3 investigator parallel dispatch).
-
-Track each challenger handle with `batch_id`, `role: "challenger"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 4.5.3 parses APPROVE, REVISE, or REJECT and records the decision. Close consumed challenger handles before looping to Step 3 or proceeding to Step 5.
 
 **Prompt construction:** use `fix-challenger-prompt-template.md`. Fill:
 - `{batch_id}`: e.g., `B1`
@@ -65,8 +63,6 @@ Track each challenger handle with `batch_id`, `role: "challenger"`, `dispatch_pa
 
 ## 4.5.3 — Verdict handling
 
-After parsing the challenger's JSON verdict and recording the decision, mark that challenger handle `output_consumed: true`. Close consumed challenger handles before any Step 3 loop or before proceeding to Step 5.
-
 **APPROVE:** proceed to Step 5 EXECUTE. The red run already happened at Step 4.4.5 (or is deferred to Step 5 by its user-decision rule).
 
 **REVISE:** only when a concern identifies a specific defect, cites evidence that supports it, and gives a concrete correction inside `authorized_scope`. If the shared retry budget has room, record one retry event, append the concern to the investigator prompt, discard affected write intents (undoing an early test write per [red-green-gate.md](red-green-gate.md)), and re-enter Step 3. If the budget is exhausted, leave those findings unresolved and report them. `--dangerously-auto-apply` does not change this or the retry budget (see Dangerous bypass route in [apply-policy-and-gates.md](apply-policy-and-gates.md)).
@@ -74,8 +70,6 @@ After parsing the challenger's JSON verdict and recording the decision, mark tha
 **REJECT:** only when evidence shows the proposed fix direction is wrong and the challenger supplies a concrete alternative inside `authorized_scope`. If the shared retry budget has room, record one retry event and investigate that alternative as a candidate implementation. An out-of-scope alternative is not adopted; report the finding unresolved. If the budget is exhausted, do not re-enter Step 3.
 
 **Uncertainty-only output:** record missing evidence or hypothetical risk under `non_blocking_observations`. It does not invalidate an otherwise supported plan, does not trigger another investigation, and does not consume a retry. The `concerns` array contains only actionable blockers.
-
-**Immediate targeted-follow-up exception:** If the next immediate step requires targeted interactive follow-up with a specific challenger, keep that challenger's `output_consumed` value `false` until the follow-up response is integrated. Surface and persist the reason in `session_changes.warnings` when possible. This is the only valid reason to leave a completed challenger subagent open after its current response.
 
 Do not add a separate double-REJECT escalation prompt. If evidence-backed concerns conflict, include both in the next in-budget investigation. If they remain unresolved at the shared cap, report the evidence and leave the finding unresolved.
 

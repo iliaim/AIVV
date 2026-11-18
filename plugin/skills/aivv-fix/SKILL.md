@@ -288,7 +288,7 @@ Read the canonical [outer-loop contract](../../.aivv/outer-loop.md) before evalu
 
 After all findings are resolved (or escalated), run Step 7.0 and then items 1–4 in order.
 
-**Step 7.0: Final Subagent cleanup:** Before returning the final resolution summary, run one final best-effort cleanup over any AIVV-owned handles from this invocation whose outputs are consumed and not yet closed. Persist cleanup warnings in the fix log `warnings` array when possible and surface them in the Step 7 summary. If cleanup fails after output was already consumed, preserve the resolved verifier/challenger/investigator decision and report only the cleanup warning.
+**Step 7.0: Final Subagent cleanup:** run the final cleanup in [Subagent handles](references/investigation-dispatch.md#subagent-handles).
 
 1. **Summary report**: Present this final summary:
 

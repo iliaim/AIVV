@@ -83,7 +83,7 @@ The investigator must prove or disprove each reason with file/grep evidence.
 
 Build the prompt carefully — the investigator has NO conversation history.
 
-Before spawning investigators, apply the lifecycle pre-spawn cleanup rule (see **Lifecycle pre-spawn cleanup** below). This cleanup is best-effort and scoped only to visible completed AIVV-owned handles from prior interrupted invocations; unrelated user-created agents are never closed.
+Before spawning investigators, run pre-spawn cleanup and track each handle per [Subagent handles](#subagent-handles).
 
 **Prompt template**: See [investigator-prompt-template.md](investigator-prompt-template.md) — read and fill in all `{placeholder}` values before sending. Key placeholders:
 - `{authorized_scope}` → copy the immutable `authorized_scope` snapshot from `/aivv-fix` Step 1.9. Do not regenerate it from the current finding summary or accept alternative wording that changes the original goal or boundaries.
@@ -98,7 +98,6 @@ Before spawning investigators, apply the lifecycle pre-spawn cleanup rule (see *
 - Batches containing CRITICAL findings: dispatch sequentially (full attention).
 - Maximum 3 parallel investigators at once.
 - All cold investigators load the portable role from `.aivv/prompts/investigator-role.md` (Claude Code: preloaded via the `aivv:investigator` agent's frontmatter; Codex: inlined into `developer_instructions` of `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml` at install time).
-- Track each spawned investigator handle with `batch_id`, `role: "investigator"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 4 integrates the investigator JSON into the structured investigation summary. Close consumed investigator handles before any Step 3 re-entry or second-opinion respawn.
 
 If `can_spawn_cold_agents` is unavailable (e.g., Codex `agents.max_depth=0`), fall back to **same-agent investigation** (single pass per batch). Append a `capability_degradations` entry: `"investigator_cold_dispatch_unavailable"`. Mark the resulting investigation in fix-log as `same_agent_investigation: true`. The investigator role still applies — just to the same agent that orchestrates the fix flow. Apply extra rigor against confirmation bias (the active agent already saw the finding context). On Codex, run the [Codex dispatch preflight](codex-dispatch-preflight.md) before using this fallback.
 
@@ -109,11 +108,15 @@ On Codex: dispatch a subagent declared at `<codex-home>/agents/aivv-investigator
 
 Wait for all investigators (and any inline analyses) to complete before proceeding.
 
-#### Lifecycle pre-spawn cleanup
+#### Subagent handles
 
+One lifecycle covers every AIVV-owned subagent this skill spawns: investigators and second-opinion investigators, the fix-plan challenger, and the verifier.
 
-**Lifecycle pre-spawn cleanup / Subagent cleanup:** Before spawning native fix-phase subagents, perform lifecycle pre-spawn cleanup when the active host exposes explicit subagent close primitives (see `.aivv/runtime-contract.md` and `.aivv/platform-adapters/codex.md` for the Codex adapter operation). Close visible completed AIVV-owned handles from interrupted prior invocations. Scope is limited to AIVV-owned handles; do not close unrelated user-created agents. Cleanup failures are warnings and do not invalidate already-consumed output. If cleanup fails before the fix log exists, surface the warning immediately and carry it into `session_changes.warnings` once the fix log is created.
-
-**Immediate targeted-follow-up exception:** If the next immediate step requires targeted interactive follow-up with a specific investigator, keep that investigator's `output_consumed` value `false` until the follow-up response is integrated. Surface the reason immediately and persist it in `session_changes.warnings` when possible. This is the only valid reason to leave a completed investigator subagent open after its current response.
+- **Pre-spawn cleanup:** before spawning native fix-phase subagents, perform lifecycle pre-spawn cleanup when the active host exposes explicit subagent close primitives (see `.aivv/runtime-contract.md` and `.aivv/platform-adapters/codex.md` for the Codex adapter operation). Close visible completed AIVV-owned handles from interrupted prior invocations. Scope is limited to AIVV-owned handles; do not close unrelated user-created agents. Cleanup failures are warnings and do not invalidate already-consumed output. If cleanup fails before the fix log exists, surface the warning immediately and carry it into `session_changes.warnings` once the fix log is created.
+- **Track:** record each handle with its `batch_id` (verifier: `cycle_number`), `role` (`investigator`, `challenger`, or `verifier`), `dispatch_path`, and `output_consumed: false`.
+- **Consumed:** set `output_consumed: true` only after the output is integrated: an investigator's JSON into the Step 4 Investigation Results summary; a second-opinion investigator's once the gate decision integrates it; a challenger's once Step 4.5.3 parses APPROVE, REVISE, or REJECT and records the decision; a verifier's once Step 6 parses the current cycle's verdict.
+- **Close:** close consumed handles before the next step that could spawn again: investigators before any Step 3 re-entry (including re-investigation caused by Step 4.5 or Step 6) or second-opinion respawn; a second-opinion investigator before continuing; challengers before looping to Step 3 or proceeding to Step 5; a verifier before any next-cycle verifier.
+- **Immediate targeted-follow-up exception:** if the next immediate step requires targeted interactive follow-up with a specific subagent, keep its `output_consumed` value `false` until the follow-up response is integrated. Surface the reason immediately and persist it in `session_changes.warnings` when possible. This is the only valid reason to leave a completed subagent open after its current response.
+- **Final cleanup (Step 7.0):** before returning the final resolution summary, run one final best-effort cleanup over any AIVV-owned handles from this invocation whose outputs are consumed and not yet closed. Persist cleanup warnings in the fix log `warnings` array when possible and surface them in the Step 7 summary. If cleanup fails after output was already consumed, preserve the resolved verifier/challenger/investigator decision and report only the cleanup warning.
 
 ---

@@ -6,7 +6,7 @@ Cross-step ordering is owned by [execution-decisioning.md](execution-decisioning
 
 ## Investigation-results presentation
 
-After each investigator JSON response is integrated into the structured summary below, mark that investigator handle `output_consumed: true`. Close consumed investigator handles before any Step 3 re-entry, including re-investigation caused by Step 4.5 or Step 6. If immediate targeted follow-up is required, use the Step 3 exception and leave `output_consumed: false` until the follow-up is integrated.
+Investigator handles (including second opinions) are marked consumed and closed per [Subagent handles](investigation-dispatch.md#subagent-handles).
 
 Collect all investigator JSON results and present a structured summary:
 
@@ -118,7 +118,6 @@ The audit record and end-of-Step-5 banner are specified in [execution-branches.m
 1. **Action-driving + high-confidence → independent second opinion**: Any finding with `recommended_next_step ∈ {fix-now, investigate-first}` where the investigator returned `confidence: high` auto-spawns a second `aivv:investigator` agent with this prompt: *"Independently assess this root cause. What alternative explanations could produce the same symptom, and what evidence would distinguish them? Is the proposed fix addressing the correct cause, or is there a more upstream cause that would also produce this symptom? Disagree only by naming a specific alternative cause and the evidence from the code, logs or tests that favors it. If you find none, agree: that is the correct result. Record remaining doubts as notes."* Pass the first investigator's root cause and fix proposal as input. Legacy findings without `recommended_next_step` use the previous CRITICAL fallback.
    - If the second investigator agrees: proceed. Its notes are advisory.
    - If the second investigator disagrees by naming an alternative cause with supporting evidence: present both analyses to the user as a contradiction; do not auto-proceed. A disagreement without both is recorded as a note and does not stop the run.
-   - Second-opinion investigator handles follow the same lifecycle: track `batch_id`, `role`, `dispatch_path`, and `output_consumed: false`; mark consumed after the gate decision integrates the second opinion, then close before continuing.
    - Rationale: "confidently wrong on a finding that drives action" is the most dangerous failure mode; one extra agent call on those findings is cheap insurance.
 
 2. **Low-confidence, context-shaped gap → ask the user directly**: If `confidence: low` AND `confidence_gap_shape: context-shaped`, phrase the `confidence_gap` as a concrete question to the user (e.g., *"Should save_task treat empty-string and null as equivalent, or is null supposed to be filtered upstream?"*) and pause. Do not spawn a second investigator — the gap is in user knowledge, not code reading. Cheaper than a subagent call and usually faster for the user.
