@@ -139,6 +139,7 @@ If none of the above precisely fits, apply whichever is closest and note the ada
 
 ## Handoff Files
 
+- Plugin root: `{plugin_root_absolute_path}`
 - Target project root: `{target_project}`
 - Investigator output schema/index: `{json_schema_absolute_path}`
 - Review or fix log source: `{source_log_absolute_path_or_none}`

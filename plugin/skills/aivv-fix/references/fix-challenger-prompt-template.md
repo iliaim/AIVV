@@ -36,6 +36,7 @@ For each finding below, you will see:
 
 ## Handoff Files
 
+- Plugin root: `{plugin_root_absolute_path}`
 - Target project root: `{target_project}`
 - Fix log or draft session state: `{fix_log_absolute_path_or_none}`
 - Challenger role source: `{fix_challenger_role_absolute_path}`

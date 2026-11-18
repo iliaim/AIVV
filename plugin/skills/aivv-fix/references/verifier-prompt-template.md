@@ -103,6 +103,7 @@ When reporting on each finding, use one of three resolution states:
 
 ## Handoff Files
 
+- Plugin root: `{plugin_root_absolute_path}`
 - Target project root: `{target_project}`
 - Fix log: `{fix_log_absolute_path}`
 - Modified/created files list: `{modified_files_manifest_absolute_path_or_inline}`
