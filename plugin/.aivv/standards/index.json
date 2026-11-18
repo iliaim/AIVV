@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_by": "tools/standards-index.mjs",
+  "generated_by": "scripts/standards-index.mjs",
   "rule_id_prefixes": [
     "A11Y",
     "AS",
