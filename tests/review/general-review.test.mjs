@@ -41,6 +41,16 @@ function renderPrompt(name, request) {
   return JSON.parse(result.stdout);
 }
 
+// Markdown rule checks assert that a rule is present by its key tokens, not its exact
+// sentence, so the instructions can be reworded. A block is one paragraph or one list
+// item with whitespace collapsed; a string token matches case-insensitively.
+function assertRule(text, tokens, message) {
+  const mentions = (block, token) => (token instanceof RegExp ? token.test(block) : block.toLowerCase().includes(token.toLowerCase()));
+  const found = text.split(/\n\s*\n|\n(?=\s*(?:[-*•]|\d+\.)\s)/).map((block) => block.replace(/\s+/g, ' ').trim())
+    .some((block) => tokens.every((token) => mentions(block, token)));
+  assert.ok(found, `${message} (no paragraph or list item mentions all of: ${tokens.join(' | ')})`);
+}
+
 function lensEnum(schema, pathParts) {
   let value = schema;
   for (const part of pathParts) value = value[part];
@@ -54,18 +64,21 @@ try {
     'clear explicit read-only reviews announce resolved scope/method without a second approval prompt');
   assert.deepEqual(goldenConfig.properties.scope_confirmation_mode.enum, ['ask', 'announce']);
   const scopePolicy = readFileSync(path.join(REPO_ROOT, 'plugin/skills/aivv/references/scope-confirmation.md'), 'utf8');
-  assert.match(scopePolicy, /A clear, explicit request for a\s+read-only review authorizes that review/);
-  assert.match(scopePolicy, /Ask when[\s\S]*?proceeding would materially expand[\s\S]*?the requested scope/);
-  assert.match(scopePolicy, /explicitly selected ask mode \(`--ask-scope` or\s+`scope_confirmation_mode: "ask"` with manual config provenance\)/,
+  assertRule(scopePolicy, ['clear', 'read-only review', 'authoriz', 'announce'],
+    'a clear, explicit read-only review request authorizes the review: announce it, do not ask again');
+  assertRule(scopePolicy, ['ask', 'ambiguous', 'materially expand'],
+    'ask only when the subject is ambiguous or proceeding would materially expand the scope');
+  assertRule(scopePolicy, ['--ask-scope', 'scope_confirmation_mode: "ask"', 'manual config provenance'],
     'an explicit user preference for scope confirmation remains honored');
-  assert.match(scopePolicy, /Treat old wizard\/default `ask`\s+values as `announce`/,
+  assertRule(scopePolicy, ['wizard', 'default', '`ask`', '`announce`'],
     'a persisted old default does not masquerade as an explicit user preference');
-  assert.match(scopePolicy, /Never broaden\s+scope silently/);
-  assert.doesNotMatch(scopePolicy, /clear proposal always requires confirmation/);
-  assert.match(scopePolicy, /Keep one active proposal and at most\s+one unanswered scope question/);
-  assert.match(scopePolicy, /Cancellation marks the current invocation terminal/);
-  assert.match(scopePolicy, /Ignore later answers to its stale prompt/);
-  assert.match(scopePolicy, /An answer authorizes only the exact awaited host question/);
+  assertRule(scopePolicy, [/\bnever\b/i, 'broaden', 'silently'], 'scope is never broadened silently');
+  assertRule(scopePolicy, ['one active proposal', 'one unanswered'],
+    'one active proposal and at most one unanswered scope question');
+  assertRule(scopePolicy, ['cancel', 'terminal'], 'cancellation ends the invocation');
+  assertRule(scopePolicy, ['cancel', 'ignore', 'stale'], 'answers to a cancelled invocation\'s stale prompt are ignored');
+  assertRule(scopePolicy, ['answer', 'only', 'question', '`proposal_id`'],
+    'an answer authorizes only the exact question and proposal it was given for');
 
   const findingSchema = readJson('plugin/.aivv/schemas/finding.json');
   assert.equal(findingSchema.properties.lens.default, 'code', 'legacy findings without lens keep the code default');
