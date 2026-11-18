@@ -2,9 +2,23 @@
 
 Canonical home for the conversation Signal 0–4 scan, the severity inference model, the wont-fix registry pre-filter, and the de-duplication rules. The canonical fingerprint formula lives in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md) `compute_fingerprint(location, description)` and "Canonical Fingerprint Formula".
 
+## Contents
+
+- [Source routing](#source-routing)
+- [Conversation signals](#conversation-signals)
+- [Severity inference](#severity-inference)
+- [Source labeling and wont-fix pre-filter](#source-labeling-and-wont-fix-pre-filter)
+- [De-duplication](#de-duplication)
+- [Step 4 wont-fix accept path (registry write)](#step-4-wont-fix-accept-path-registry-write)
+- [No findings](#no-findings)
+
+## Source routing
+
 **Task ID** (`[A-Z]+-\d{4}-\d{4}`, `FixSession.source = "task_file"`) — an optional external integration: findings come from the task file's `review_tracking.open_issues`, located by the project's own task-file convention; resolved items are written back per Task integration in [execution-branches.md](execution-branches.md).
 
 **No argument (or blank)** — Extract from current session by scanning signal types in priority order. `FixSession.source = "conversation"`.
+
+## Conversation signals
 
 **Signal 0 — Machine-readable findings sidecar (JSONL)** (highest confidence, deterministic): `aivv:reviewer` emits a trailing fenced ```jsonl block AFTER each prose review (see `.aivv/schemas/finding.json` + `.aivv/schemas/README.md` for the emission contract). When this signal is present, use it instead of LLM-interpreting Signal 1. Mechanics:
 
@@ -38,6 +52,8 @@ Benefits when Signal 0 fires: deterministic dedup across N reviewers (no LLM sca
 **Scan boundary**: Scan from session start (or the most recent `/aivv-fix` invocation, whichever is later). Determine the last-invocation time using `storage-paths.mjs list --context "$storage_context_file" --area state --prefix fix- --archive` and reading returned records through the shared `read` command (external canonical state; legacy paths remain historical until explicit import). `<target>` is the resolved target-project path per [`.aivv/target-resolution.md`](../../../.aivv/target-resolution.md). **Comparator for "most recent"**: `invoked_at` (ISO 8601 timestamp in the JSON body), NOT filesystem mtime — mtime can drift from invocation time (file copy, backup restore, tar extract). For this boundary check, use the context bound before collection; never a
 provisional finding-derived target or cwd-local `.aivv/state`. Take the most recent file with `status: "completed"`; use its `invoked_at` as the scan-start boundary. If no such file exists, fall back to session start. Skip issues the user explicitly marked as resolved ("fixed", "done", "ignore that", "that's fine").
 
+## Severity inference
+
 **Severity inference for informal signals** (no explicit label present) is gated by `severity_model`:
 
 - Under `severity_model: legacy_4pass`, use the compatibility 4-pass below; first matching rule wins.
@@ -63,6 +79,8 @@ The pass behavior is gated on the resolved `severity_model` config key (resolved
   - Language like "improvement opportunity", "value-add", "nicer if", "could be polished", "would be cleaner" (without imperative "fix" framing) → POLISH only when the finding establishes verified `Present need:`, a specific `Improvement:`, and positive-net `Value:` per the methodology gate; otherwise DROP
   - No context clues → legacy fallback MAJOR.
 - **Under `severity_model: impact_likelihood`**: tone/keywords are a scrutiny cue only. "Broken", "blocker", or "urgent" means investigate for a concrete harm mode and reachability; "minor", "small", or "style" means check whether the issue is an IMPROVEMENT/POLISH candidate. Do not assign a tier from wording alone. If no harm/reachability/exposure evidence is available, ask for clarification or mark the evidence unknown rather than choosing MAJOR from absence of context.
+
+## Source labeling and wont-fix pre-filter
 
 **Source labeling**: Tag each finding with its signal type so the triage table is clear:
 - `[ivv]` — from formal review
@@ -101,6 +119,8 @@ On Claude Code: invoke the runtime-contract quoted-heredoc stdin form via `Bash`
 On Codex: invoke via `shell_command`; use its PowerShell single-quoted string
 form when appropriate. Compute once per finding and compare against the read-side
 matching view; do not alter the existing fingerprint or approval contract.
+
+## De-duplication
 
 **De-duplication** — merge findings that refer to the same underlying issue. Apply in order:
 
@@ -160,3 +180,8 @@ This is the Step 4 `wont-fix` verdict handler — the write counterpart to the p
 
     Writes are append-style (preserve prior entries). Do NOT deduplicate on write — if the user accepts wont-fix twice for the same finding, both entries are kept for audit history.
 - **If overridden**: user decision is ephemeral (this session only); do NOT write to registry. Finding proceeds to Step 5.
+
+## No findings
+
+**Validation**: If no findings can be parsed from any source, inform the user:
+> No findings detected. Scanned for: machine-readable findings sidecar (JSONL block), formal /aivv prose output, user-reported bugs, deferred issues, and agent observations. Run `/aivv` (or `/aivv --reviewers=2` for higher-confidence dual review), provide a task ID with open issues, or paste specific findings.

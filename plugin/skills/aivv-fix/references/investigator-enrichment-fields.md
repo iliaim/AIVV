@@ -8,7 +8,7 @@ When a source finding includes `rule_id`, fix-session records must preserve that
 
 ### static_reachability (optional — `lens: sec` findings only; backward-compatible)
 
-Investigators MAY emit this field for `lens: sec` findings to document the static-reachability determination from the **Sec-lens reproducibility extension** (see [investigation-dispatch.md](investigation-dispatch.md)). Optional and backward-compatible — findings that omit it remain valid; absence means the trace was not recorded as structured data (the prose `reproduction_status` in the gate is the source of truth either way). Named `static_reachability` (not `reachability_analysis`) to stay distinct from the W5 LIKELIHOOD `reachability` axis in `.aivv/lenses/sec.md` — this field is a reproduce-gate path trace, not a severity input.
+Investigators MAY emit this field for `lens: sec` findings to document the static-reachability determination from the **Sec-lens reproducibility extension** (see [reproducibility-gate.md](reproducibility-gate.md)). Optional and backward-compatible — findings that omit it remain valid; absence means the trace was not recorded as structured data (the prose `reproduction_status` in the gate is the source of truth either way). Named `static_reachability` (not `reachability_analysis`) to stay distinct from the W5 LIKELIHOOD `reachability` axis in `.aivv/lenses/sec.md` — this field is a reproduce-gate path trace, not a severity input.
 
 ```json
 "static_reachability": {
@@ -20,7 +20,7 @@ Investigators MAY emit this field for `lens: sec` findings to document the stati
 }
 ```
 
-**Consumer status:** emitted-and-recorded but **not yet consumed by automated routing**. The prose Sec-lens reproducibility extension in `investigation-dispatch.md` drives the actual gate decision (proceed / proceed-static-only / wont-fix-with-sign-off); this structured field is for record-keeping and future tooling. The `unreachable-static` route reuses the existing wont-fix sign-off flow (`SKILL.md` Step 4), not a new mechanism. (Design note: the spec's separately-named `reachability_note` finding field was consolidated into `execution_path` here — one field, not two, per Operating Principle 1.)
+**Consumer status:** emitted-and-recorded but **not yet consumed by automated routing**. The prose Sec-lens reproducibility extension in `reproducibility-gate.md` drives the actual gate decision (proceed / proceed-static-only / wont-fix-with-sign-off); this structured field is for record-keeping and future tooling. The `unreachable-static` route reuses the existing wont-fix sign-off flow (`SKILL.md` Step 4), not a new mechanism. (Design note: the spec's separately-named `reachability_note` finding field was consolidated into `execution_path` here — one field, not two, per Operating Principle 1.)
 
 ### unsafe_control_action (optional — interaction/coordination findings only; backward-compatible)
 

@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.6.2 — lighter /aivv-fix reading load
+
+- `/aivv-fix`'s SKILL.md is 17 KB instead of 39 KB, so the whole file survives context compaction (Claude Code keeps the first 5,000 tokens of a skill). The rules that hold for the whole run are in a "Standing rules" block at the top; each step points to the reference that owns it.
+- The orchestrator builds investigator, fix-challenger and verifier prompts with `aivv-fix-records.mjs` instead of reading the templates itself.
+- Rare routes moved to their own references, read only when taken: Branches B–F, wont-fix registry handlers, lifecycle routing, the reproducibility gate, and the Codex dispatch preflight.
+- Repeated rules now have one home each, and long references have a table of contents. A normal one-finding fix reads about 283 KB of instructions instead of about 394 KB; a dry run about 136 KB instead of 190 KB.
+- The verifier template has a Predecessor Review slot, so the predecessor values the dispatch step already filled now reach the verifier.
+- Two links to moved `/aivv` sections are repaired.
+
 ## 0.6.1 — owner decisions from issue #26
 
 - A failing reproduction test written in the project's existing test framework is not "generated verification", so it no longer blocks the early red run before the plan challenge. New check scripts, CI and build gates, and hooks still need approval.

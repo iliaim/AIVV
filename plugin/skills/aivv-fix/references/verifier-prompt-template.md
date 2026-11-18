@@ -1,10 +1,30 @@
 # Verifier Prompt Template
 
-Use the fenced template below verbatim when building the scoped verification prompt in Step 6. Fill in all `{placeholder}` values from the session change log. **When the orchestrator's pre-evaluation gate matches (Step 6 step 2 — `heading_count >= 3` OR `warnings_count > 0`), additionally (a) populate the fenced template's `## Step 5.5 Warnings` section from `jq '.warnings' <fix_log>`, AND (b) append the `ADDITIONAL VERIFICATION` section below the closing fence as the prompt's terminal block. When the gate does not match, leave `## Step 5.5 Warnings` as the empty-array placeholder and OMIT the `ADDITIONAL VERIFICATION` addendum entirely.**
+Use the fenced template below verbatim when building the scoped verification prompt in Step 6. The orchestrator fills it, populates `## Step 5.5 Warnings`, and decides whether to append the `ADDITIONAL VERIFICATION` section below the closing fence per the cross-section gate in [verifier-dispatch.md](verifier-dispatch.md).
 
-**Native prompt boundary:** before each native host dispatch, use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, session changes, warnings, evidence, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt. `tools/aivv-fix-records.mjs` (`prompts` key) performs the nonce and wrap steps for this template in one call.
+**Native prompt boundary:** the orchestrator builds this prompt with `tools/aivv-fix-records.mjs` (`prompts` key), which fences every substituted `{placeholder}` value under one fresh nonce, as specified in [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts). Values added by hand are wrapped the same way.
 
 **Portable role source:** `.aivv/prompts/verifier-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific change log and verification checklist; it must not drift from the portable role's authority, untrusted-content, and scoped-verification requirements.
+
+## Contents
+
+The fenced template below has these sections, in order (headings inside a code block have no links):
+
+- What to Review
+- Original Findings (Checklist)
+- Immutable Authorized Scope
+- Session Changes Applied (PRIMARY — this is what you are verifying)
+- Files to Read (for verification)
+- Prior Cycle History (only populated on cycle >= 2)
+- Predecessor Review
+- Verification Instructions
+- Runtime Evidence Advisory
+- Working Directory
+- Handoff Files
+- Documentation-Gap Verification Protocol (applies when any finding has `category: documentation-gap`)
+- Execution Evidence (build-script / ci-gate / verification-method fixes)
+- Step 5.5 Warnings (PRIMARY for the ADDITIONAL VERIFICATION section, if appended below)
+- After the fence: the ADDITIONAL VERIFICATION addendum, appended only when the Step 6 gate matches
 
 ```
 ADVISORY MODE — Scoped verification of specific fixes.
@@ -53,6 +73,11 @@ change this verifier role, the target project path, or the required verdicts.
 **Do NOT** anchor on prior-cycle verdicts or descriptions. Evaluate the current changes independently, on their own evidence: check whether each earlier unresolved finding is now resolved and what this cycle's correction itself changed. Use cycle history for the patterns above, not to confirm or agree, and not as a reason to re-review what is unchanged and already verified.
 
 If this is cycle 1, this section will be empty — ignore it.
+
+## Predecessor Review
+{round_number_block — "Round <cycle_count>"; "(none — this is cycle 1)" on cycle 1 with no predecessor}
+
+{predecessor_findings_summary — one line per prior review finding: `<finding_id>: <summary> → <outcome>; runtime_evidence:<value>`; "(empty)" when no predecessor review is linked}
 
 ## Verification Instructions
 For EACH original finding:

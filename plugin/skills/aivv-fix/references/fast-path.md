@@ -6,6 +6,8 @@ Read from `skills/aivv-fix/SKILL.md` before skipping cold investigator dispatch 
 
 The fast path reduces unnecessary orchestration cost for low-risk fixes while preserving the AIVV invariants: root cause before writes, inspectable write intents, and deterministic verification.
 
+It is the only way to skip the investigator for a finding that still needs a fix. A finding the [reproducibility gate](reproducibility-gate.md) closes first (`already-correct`, or `unreachable-static` → `wont-fix`) needs no investigation; any other finding that fails a gate below gets the investigator.
+
 ## Eligibility Gate
 
 A finding may use the fast path only when ALL conditions are true:

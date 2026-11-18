@@ -4,52 +4,27 @@ Read from `skills/aivv-fix/SKILL.md` before investigator dispatch or same-agent 
 
 ## Contents
 
-- Reproducibility gate
-- Change-attribution probe
-- Investigator decision gate
-- Cold dispatch and fallback rules
+- [Step 3: INVESTIGATE — Root Cause Analysis](#step-3-investigate--root-cause-analysis)
+  - [Reproducibility gate](#reproducibility-gate)
+  - [Change-attribution probe (CRITICAL/MAJOR findings — before investigator dispatch)](#change-attribution-probe-criticalmajor-findings--before-investigator-dispatch)
+  - [Decision gate (per batch)](#decision-gate-per-batch)
+  - [Architectural remediation assessment seed](#architectural-remediation-assessment-seed)
+  - [Host adapter mapping](#host-adapter-mapping)
+  - [Spawning rules (for batches that require investigation)](#spawning-rules-for-batches-that-require-investigation)
+  - [Building subagent prompts](#building-subagent-prompts)
+  - [Subagent handles](#subagent-handles)
 
-### Step 3: INVESTIGATE — Root Cause Analysis
+## Step 3: INVESTIGATE — Root Cause Analysis
 
-**Default assumption: root cause is unknown.** Every finding that still needs a fix gets an investigator unless it passes the low-risk fast path below, the only skip route. A finding the reproducibility gate closes first (`already-correct`, or `unreachable-static` → `wont-fix`) needs no investigation. Confidence in a plausible explanation is not a reason to skip.
+When `lifecycle_context` is present, load the lifecycle record per [lifecycle-route.md](lifecycle-route.md#lifecycle-write-back-rules) before dispatch.
 
-#### Reproducibility gate (Signal 2-4 only — fires before investigator dispatch)
+**Default assumption: root cause is unknown.** Confidence in a plausible explanation is not a reason to skip the investigator.
 
-For findings sourced from `[user-reported]`, `[deferred]`, or `[agent-noted]`:
+### Reproducibility gate
 
-1. **Attempt to reproduce the issue** using the steps/evidence available in the finding description.
-   - For code-bugs: look at the code path mentioned. Can you see the condition that triggers it? If yes → `reproduction_status: code-confirmed`; proceed.
-   - For runtime issues: is there a reproduction script or test case available? Run it. If yes and it fails as described → `reproduction_status: runtime-confirmed`; proceed.
-   - If neither → `reproduction_status: unconfirmed`.
+For findings sourced from `[user-reported]`, `[deferred]`, or `[agent-noted]`, and for any `lens: sec` finding, run the [reproducibility gate](reproducibility-gate.md) before investigator dispatch.
 
-2. **If `unconfirmed`:**
-   - Set `confidence_gap_shape: context-shaped` on the finding's triage record.
-   - Ask the user: "I cannot reproduce [F###]: [description]. Can you provide: (a) the exact input that triggers it, (b) the expected vs actual output, (c) the environment/conditions?"
-   - Proceed only after user provides reproduction evidence OR user explicitly says "proceed anyway."
-   - If user says "proceed anyway": spawn investigator with `source_signal: [agent-noted]` tier-scrutiny and `confidence` likely to come back `low` + `confidence_gap_shape: context-shaped`.
-
-3. **For `[deferred]` findings:** verify the issue is STILL PRESENT. Quick code check (grep/read) before spawning. If no longer present → `verdict: already-correct`; skip investigation.
-
-**Skip when:** finding is Signal 0 (`[ivv]`) or Signal 1 (formal review output).
-
-#### Sec-lens reproducibility extension (fires for any `lens: sec` finding — all signal tiers)
-
-Security findings get one extra step in the reproducibility gate: state the **reachable execution path** statically. Unlike the base gate above, this fires regardless of signal tier (a sec finding is usually Signal 1, which the base gate skips) — it is gated only on the finding's `lens`/`domain` being `sec`. No runtime PoC is required or attempted — `/aivv` analyzes static artifacts, not running systems.
-
-> **Disambiguation (one word, two jobs):** this *static-reachability* determination answers **"can user input reach the vulnerable code at all"** — a reproduce-gate question that decides whether to investigate. It is distinct from the W5 LIKELIHOOD `reachability` axis in `.aivv/lenses/sec.md` (the `### LIKELIHOOD: reachability and exposure` determinant), which answers **"will the harm manifest"** and feeds *severity*. Do not conflate `unreachable-static` (no code path → wont-fix) with a W5 `UNLIKELY` likelihood (a path exists but rarely fires → severity discount).
-
-This **extends** the base `reproduction_status` values (`code-confirmed | runtime-confirmed | unconfirmed`) — it does not replace them:
-
-1. **Trace the path (static):** "User-controlled input at `[entry point]` flows to `[vulnerable code]` via `[code path]`." Read the code; no runtime PoC.
-
-2. **Classify the outcome:**
-   - **Path traceable** → `reproduction_status: code-confirmed`; proceed to investigation (same value the base code-bug case uses).
-   - **Path traceable but exploitability uncertain** (timing attack, second-order injection, SSRF, info disclosure via error differential) → `reproduction_status: code-confirmed-uncertain-exploitability`. Record the traced path in the finding's `static_reachability.execution_path` and the static-only basis in `static_reachability.exploitability_note`, and **proceed to the fix** — inability to confirm runtime exploitability does NOT block it. Let the uncertainty inform the W5 LIKELIHOOD axis (discount toward `POSSIBLE`/`UNLIKELY`) rather than acting as a separate severity input, so the two systems don't double-count it.
-   - **Genuinely unreachable from any entry point under static analysis** → `reproduction_status: unreachable-static`. This is a structural "there is no execution path" determination, NOT an "I can't confirm it" case. Set `verdict: wont-fix` with the traced no-path reasoning and route through the **existing wont-fix sign-off flow** (`SKILL.md` Step 4 wont-fix: present reasoning → user accepts (registry write, `user_approved: true`) or overrides). Mandatory user sign-off before deferring — never auto-defer a security finding.
-
-**Why `lens: sec` only:** accessibility (`A11Y-*`) and legal-compliance (`COMP-LEGAL-*`) findings are definitionally not security-exploitability findings under AIVV's lens taxonomy and must never be gated on a reachability trace; the trigger is the security lens exclusively. Investigators MAY persist the trace as a structured `static_reachability` object — see [investigator-enrichment-fields.md](investigator-enrichment-fields.md) `### static_reachability`.
-
-#### Change-attribution probe (CRITICAL/MAJOR findings — before investigator dispatch)
+### Change-attribution probe (CRITICAL/MAJOR findings — before investigator dispatch)
 
 For each **CRITICAL or MAJOR** finding, before spawning investigators, run:
 
@@ -81,7 +56,7 @@ If the file does not exist at HEAD (deleted or renamed without `--follow` resolu
 
 **Dispatch-context handoff:** The `introduced_by` object is passed to the investigator as the `{introduced_by_context}` prompt template token — set to the JSON-serialized `introduced_by` object, or `"(not available)"` when the file is untracked. See the Key placeholders list below for fill instructions. Instruction 8e in `investigator-prompt-template.md` reads this token as "dispatch context" to determine whether `introduced_by` is available.
 
-#### Decision gate (per batch)
+### Decision gate (per batch)
 
 Ask: *"Do I know with confidence exactly why this is happening AND exactly what the fix is?"*
 
@@ -92,15 +67,15 @@ Ask: *"Do I know with confidence exactly why this is happening AND exactly what 
 - Any CRITICAL finding (always investigate — the stakes are too high to assume)
 - You're unsure whether similar patterns exist elsewhere in the codebase
 
-**Documentation-gap routing:** `documentation-gap` findings normally dispatch the investigator. The only exception is the formal [fast-path.md](fast-path.md) route for a low-risk documentation gap whose exact `verbatim_doc_content` is already known and every fast-path eligibility gate passes. Otherwise, the investigator is the cheapest correct path: it discovers unknown content or confirms the mechanical prose via `fix_proposal.verbatim_doc_content`.
+**Documentation-gap routing:** `documentation-gap` findings normally dispatch the investigator, the cheapest correct path: it discovers unknown content or confirms the mechanical prose via `fix_proposal.verbatim_doc_content`. The fast path applies only when that exact content is already known.
 
 **Same-agent fallback for `documentation-gap`:** When `capability_degradations` contains `"investigator_cold_dispatch_unavailable"`, ALL `documentation-gap` findings route directly to Branch E (`CLARIFICATION_NEEDED:empirical_verification_required`) without proceeding to Branch B prose edit. The same-agent investigator role may still run inline and emit `verification_method` for telemetry/calibration, but this does NOT affect routing — Branch E fires regardless of `verification_method` value. Structural independence required by the verifier's evidence grep is absent under same-agent mode.
 
-**Low-risk fast path — the only way to skip the investigator:** check [fast-path.md](fast-path.md). When every fast-path eligibility gate passes, emit the structured `investigation_route: "fast_path_inline"` record and continue through Step 4 write-intent and verification gates. A finding that still needs a fix and fails any gate gets the investigator; there is no other skip route.
+**Low-risk fast path — the only way to skip the investigator:** see [fast-path.md](fast-path.md), which owns its eligibility gates and the `investigation_route: "fast_path_inline"` record.
 
 **When in doubt, spawn the investigator.** The cost of a false skip (missing root cause, missing similar patterns) is higher than the cost of an unnecessary investigation.
 
-#### Architectural remediation assessment seed
+### Architectural remediation assessment seed
 
 Before investigator dispatch, compute `architectural_remediation_assessment` for each batch and pass the full reason-coded object into the investigator prompt as `{architectural_remediation_assessment}`.
 
@@ -111,42 +86,74 @@ Before investigator dispatch, compute `architectural_remediation_assessment` for
 
 The investigator must prove or disprove each reason with file/grep evidence.
 
-#### Spawning rules (for batches that require investigation)
+### Host adapter mapping
+
+Shared operations are the same as `/aivv`: see the Host notes paragraph at the end of the [`/aivv` skill](../../aivv/SKILL.md), the Adapter Operations table in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md), and the per-host adapters in [`.aivv/platform-adapters/`](../../../.aivv/platform-adapters/). Additional `/aivv-fix`-specific operations:
+
+<!-- CLAUDE-CODE-SPECIFIC: the table below names Claude Code tool surfaces (Agent / subagent_type) explicitly; Codex column maps to Codex equivalents. -->
+
+| Adapter operation | Claude Code | Codex |
+|---|---|---|
+| Spawn cold investigator subagent | `Agent` tool with `subagent_type: aivv:investigator` | Subagent dispatch using TOML at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml` |
+| Spawn cold verifier subagent | `Agent` tool with `subagent_type: aivv:reviewer` (Step 6) | Subagent dispatch using `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` |
+| Apply edits | `Edit`/`Write` tools | `apply_patch` |
+| Prevention paths | `.claude/hooks/`, `.claude/patterns/`, `.claude/rules/`, or project equivalents | Project-equivalent hook/pattern/rule directories (no `.claude/` assumption); see project conventions |
+
+### Spawning rules (for batches that require investigation)
 
 Build the prompt carefully — the investigator has NO conversation history.
 
-Before spawning investigators, apply the lifecycle pre-spawn cleanup rule (see the **Codex dispatch preflight + lifecycle pre-spawn cleanup** section below). This cleanup is best-effort and scoped only to visible completed AIVV-owned handles from prior interrupted invocations; unrelated user-created agents are never closed.
+Before spawning investigators, run pre-spawn cleanup and track each handle per [Subagent handles](#subagent-handles).
 
-**Prompt template**: See [investigator-prompt-template.md](investigator-prompt-template.md) — read and fill in all `{placeholder}` values before sending. Key placeholders:
+**Prompt:** build it per [Building subagent prompts](#building-subagent-prompts) with template `investigator`. Fill:
+- `{For each finding in this batch}` loop, one copy per finding: `{finding_id}`, `{severity}`, `{description}`; `{file}` → `file:line`, or `"not specified"`; `{source}` → the source reviewer, or `"user-reported"`.
 - `{authorized_scope}` → copy the immutable `authorized_scope` snapshot from `/aivv-fix` Step 1.9. Do not regenerate it from the current finding summary or accept alternative wording that changes the original goal or boundaries.
 - `{json_schema_absolute_path}` → the absolute path to `references/json-schema.md` within the installed plugin cache at runtime (e.g., `~/.claude/plugins/cache/<marketplace>/aivv/<version>/skills/aivv-fix/references/json-schema.md`). This index links the focused schema references. The orchestrator fills the exact path at dispatch time — the investigator runs in the project's working directory and cannot resolve relative paths back to the skill.
-- `{source_signal}` → the signal label for each finding from the triage table: `[ivv]`, `[user-reported]`, `[deferred]`, or `[agent-noted]` — must be populated so the investigator calibrates scrutiny appropriately
+- `{source_signal}` (loop field) → the signal label for each finding from the triage table: `[ivv]`, `[user-reported]`, `[deferred]`, or `[agent-noted]` — must be populated so the investigator calibrates scrutiny appropriately
+- `{clustering}` → the Step 2b clustering rationale for this batch.
+- `{architectural_remediation_assessment}` → the reason-coded object from [Architectural remediation assessment seed](#architectural-remediation-assessment-seed).
+- `{source_log_absolute_path_or_none}` → the absolute path of the source review log or fix log, or `none`.
+- `{investigator_field_definitions_absolute_path}` → the absolute path of this skill's `references/investigator-field-definitions.md`.
 - `{introduced_by_context}` → JSON-serialized `introduced_by` object from the change-attribution probe above, or the literal string `"(not available)"` when the file is untracked, deleted/renamed at HEAD, or the finding is MINOR/POLISH (the probe skips non-CRITICAL/MAJOR findings). Passed to each CRITICAL/MAJOR finding's investigator as the `## Change Attribution` section in the prompt.
-- `{plugin_root_absolute_path}` → the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start (see `SKILL.md` "Runtime pin and preflight"); do not re-resolve it. The investigator reads its role file from this root, never from the target project.
-- `{target_project}` → the session target project absolute path. Use the canonical target/storage context bound before maintenance; do not infer a provisional target from findings. **Worktree-CWD note:** the investigator independently searches files to discover root causes and similar patterns, and inherits the orchestrator's shell CWD — which may be a stale git worktree at a different commit than the target. The template's `## Working Directory` block anchors all file operations on this absolute path — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint), so the investigator searches the real target tree rather than the inherited CWD.
+- `{plugin_root_absolute_path}` → `$AIVV_ROOT`. The investigator reads its role file from this root, never from the target project.
+- `{target_project}` → the session target project absolute path from the canonical target/storage context bound before maintenance; do not infer a provisional target from findings.
 
 **Spawning rules** (host-neutral; each host's specific dispatch syntax in `<!-- CLAUDE-CODE-SPECIFIC -->` aside below):
 - Independent batches (no shared context): dispatch cold investigators in parallel via the host's subagent facility.
 - Batches containing CRITICAL findings: dispatch sequentially (full attention).
 - Maximum 3 parallel investigators at once.
 - All cold investigators load the portable role from `.aivv/prompts/investigator-role.md` (Claude Code: preloaded via the `aivv:investigator` agent's frontmatter; Codex: inlined into `developer_instructions` of `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml` at install time).
-- Track each spawned investigator handle with `batch_id`, `role: "investigator"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 4 integrates the investigator JSON into the structured investigation summary. Close consumed investigator handles before any Step 3 re-entry or second-opinion respawn.
 
-If `can_spawn_cold_agents` is unavailable (e.g., Codex `agents.max_depth=0`), fall back to **same-agent investigation** (single pass per batch). Append a `capability_degradations` entry: `"investigator_cold_dispatch_unavailable"`. Mark the resulting investigation in fix-log as `same_agent_investigation: true`. The investigator role still applies — just to the same agent that orchestrates the fix flow. Apply extra rigor against confirmation bias (the active agent already saw the finding context). On Codex, do not use this fallback when `spawn_agent` / `wait_agent` are discoverable and investigator TOML exists but host policy blocks delegation; ask once for explicit delegation permission or halt with `codex-subagent-delegation-blocked`.
+If `can_spawn_cold_agents` is unavailable (e.g., Codex `agents.max_depth=0`), fall back to **same-agent investigation** (single pass per batch). Append a `capability_degradations` entry: `"investigator_cold_dispatch_unavailable"`. Mark the resulting investigation in fix-log as `same_agent_investigation: true`. The investigator role still applies — just to the same agent that orchestrates the fix flow. Apply extra rigor against confirmation bias (the active agent already saw the finding context). On Codex, run the [Codex dispatch preflight](codex-dispatch-preflight.md) before using this fallback.
 
 <!-- CLAUDE-CODE-SPECIFIC -->
 On Claude Code: dispatch via the `Agent` tool with `subagent_type: aivv:investigator`. For parallel batches, emit all Agent calls in a single assistant message. The `aivv:investigator` agent has its frontmatter set so the role + methodology preload before the prompt arrives.
 
-On Codex: dispatch a subagent declared at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml`; multiple subagents run in parallel under `agents.max_threads`. The TOML's `developer_instructions` already contains the portable role. If the callable dispatch surface is not initially visible, perform the Codex preflight (below) before falling back.
+On Codex: dispatch a subagent declared at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml`; multiple subagents run in parallel under `agents.max_threads`. The TOML's `developer_instructions` already contains the portable role. If the callable dispatch surface is not initially visible, perform the [Codex dispatch preflight](codex-dispatch-preflight.md) before falling back.
 
 Wait for all investigators (and any inline analyses) to complete before proceeding.
 
-#### Codex dispatch preflight + lifecycle pre-spawn cleanup
+**Investigator errors:** on invalid JSON, retry once with a clarified prompt. On a timeout (max-turns exhausted on the host), use partial results if available and flag the analysis incomplete.
 
-**Codex preflight before fallback:** <!-- Codex-SPECIFIC --> When AIVV is running inside a Codex agent session, a missing visible `spawn_agent` tool is not by itself a capability failure. Before same-agent investigation or same-agent verification fallback, run the Codex dispatch preflight from `.aivv/platform-adapters/codex.md` ("Codex Dispatch Preflight" section): confirm the relevant TOML exists under `<codex-home>/agents/` or project `.codex/agents/`, checking both scopes before declaring TOML missing, and if the dispatch tool is not already loaded, use `tool_search` with `multi-agent subagent dispatch codex agents spawn_agent wait_agent close_agent`. If discovery returns `spawn_agent` / `wait_agent`, use cold subagent dispatch and do not record a dispatch degradation; if `close_agent` is absent, keep dispatch available but record cleanup as a lifecycle degradation per the Codex adapter. Explicit `/aivv-fix`, `$aivv-fix`, `/aivv --fix`, and `$aivv --fix` invocations authorize AIVV-owned read-only investigator/verifier subagents; do not require a second delegation phrase. If Codex host policy still blocks delegation despite visible dispatch tools and existing TOML, ask once for explicit delegation permission or halt with `codex-subagent-delegation-blocked`; do not silently continue as same-agent investigation/verification. When AIVV is running outside Codex and merely calls `codex exec` as a provider subprocess, this preflight does not apply; that is multi-model provider dispatch, not native Codex subagent dispatch.
+### Building subagent prompts
 
-**Lifecycle pre-spawn cleanup / Subagent cleanup:** Before spawning native fix-phase subagents, perform lifecycle pre-spawn cleanup when the active host exposes explicit subagent close primitives (see `.aivv/runtime-contract.md` and `.aivv/platform-adapters/codex.md` for the Codex adapter operation). Close visible completed AIVV-owned handles from interrupted prior invocations. Scope is limited to AIVV-owned handles; do not close unrelated user-created agents. Cleanup failures are warnings and do not invalidate already-consumed output. If cleanup fails before the fix log exists, surface the warning immediately and carry it into `session_changes.warnings` once the fix log is created.
+Build every investigator, fix-challenger, and verifier prompt with the shipped helper instead of reading the prompt template. Write `{"prompts": [{"template": "<investigator|fix-challenger|verifier>", "values": {...}}]}` to a private temp file and run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin). Key `values` by placeholder name from the step's fill list: the investigator list above, the challenger list in [challenge-loop.md](challenge-loop.md), the verifier list in [verifier-dispatch.md](verifier-dispatch.md).
 
-**Immediate targeted-follow-up exception:** If the next immediate step requires targeted interactive follow-up with a specific investigator, keep that investigator's `output_consumed` value `false` until the follow-up response is integrated. Surface the reason immediately and persist it in `session_changes.warnings` when possible. This is the only valid reason to leave a completed investigator subagent open after its current response.
+- The helper returns the template body with every supplied value fenced under one fresh nonce (never derived from prompt or project content), plus `unfilled` (placeholders still open) and `loop_sections` (per-entry sections and their placeholders). Supply every listed value in one call; for any value still in `unfilled`, add it and call again, except placeholders a fill list says to fill by hand.
+- A loop section with more than one entry is yours to expand: repeat it once per entry and wrap each added value with `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD`, using the helper's returned `nonce` and a stable uppercase field name. Lines opening with `{For each …}`, `{/…}`, or another capitalised directive are instructions to you: replace them with the content they describe, or drop the section where they say to omit it.
+- Do not hand-type the fence tags, reuse an unwrapped copy, or place instructions or schema inside a fence. Use the nonce only for this prompt.
+- Open a `*-prompt-template.md` file only when `unfilled` names a placeholder whose meaning neither the fill list nor its annotation in the returned prompt gives, or, for the verifier, to append the `ADDITIONAL VERIFICATION` text after its closing fence when [verifier-dispatch.md](verifier-dispatch.md) says to.
+- Send the returned prompt with its `## Working Directory` block (and, for the challenger, its `## OUTPUT FORMAT OVERRIDE` block) intact.
+
+### Subagent handles
+
+One lifecycle covers every AIVV-owned subagent this skill spawns: investigators and second-opinion investigators, the fix-plan challenger, and the verifier.
+
+- **Pre-spawn cleanup:** before spawning native fix-phase subagents, perform lifecycle pre-spawn cleanup when the active host exposes explicit subagent close primitives (see `.aivv/runtime-contract.md` and `.aivv/platform-adapters/codex.md` for the Codex adapter operation). Close visible completed AIVV-owned handles from interrupted prior invocations. Scope is limited to AIVV-owned handles; do not close unrelated user-created agents. Cleanup failures are warnings and do not invalidate already-consumed output. If cleanup fails before the fix log exists, surface the warning immediately and carry it into `session_changes.warnings` once the fix log is created.
+- **Track:** record each handle with its `batch_id` (verifier: `cycle_number`), `role` (`investigator`, `challenger`, or `verifier`), `dispatch_path`, and `output_consumed: false`.
+- **Consumed:** set `output_consumed: true` only after the output is integrated: an investigator's JSON into the Step 4 Investigation Results summary; a second-opinion investigator's once the gate decision integrates it; a challenger's once Step 4.5.3 parses APPROVE, REVISE, or REJECT and records the decision; a verifier's once Step 6 parses the current cycle's verdict.
+- **Close:** close consumed handles before the next step that could spawn again: investigators before any Step 3 re-entry (including re-investigation caused by Step 4.5 or Step 6) or second-opinion respawn; a second-opinion investigator before continuing; challengers before looping to Step 3 or proceeding to Step 5; a verifier before any next-cycle verifier.
+- **Immediate targeted-follow-up exception:** if the next immediate step requires targeted interactive follow-up with a specific subagent, keep its `output_consumed` value `false` until the follow-up response is integrated. Surface the reason immediately and persist it in `session_changes.warnings` when possible. This is the only valid reason to leave a completed subagent open after its current response.
+- **Final cleanup (Step 7.0):** before returning the final resolution summary, run one final best-effort cleanup over any AIVV-owned handles from this invocation whose outputs are consumed and not yet closed. Persist cleanup warnings in the fix log `warnings` array when possible and surface them in the Step 7 summary. If cleanup fails after output was already consumed, preserve the resolved verifier/challenger/investigator decision and report only the cleanup warning.
 
 ---

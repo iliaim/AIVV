@@ -4,12 +4,15 @@ Read from `skills/aivv-fix/SKILL.md` before writing or recovering `session_chang
 
 ## Contents
 
-- Target resolution and dry-run gate
-- Session log schema
-- Atomic full-object write semantics
-- Recovery on re-invocation
+- [Step 5: EXECUTE — Apply Approved Fixes](#step-5-execute--apply-approved-fixes)
+  - [Change Readiness Gate](#change-readiness-gate)
+  - [Step 5.0 — Target resolution and pre-write banner](#step-50--target-resolution-and-pre-write-banner)
+  - [Step 5 pre-loop: class-verdict gate (FAIL-CLOSED) + variant scan + class-sibling triage](#step-5-pre-loop-class-verdict-gate-fail-closed--variant-scan--class-sibling-triage)
+  - [Step 5 pre-loop: scope_search_seed execution](#step-5-pre-loop-scope_search_seed-execution)
+  - [Per-fix execution and the session log](#per-fix-execution-and-the-session-log)
+    - Inside item 1: schema, field semantics, write semantics, recovery on re-invocation, collision safety
 
-### Step 5: EXECUTE — Apply Approved Fixes
+## Step 5: EXECUTE — Apply Approved Fixes
 
 Every new fix log carries the immutable `authorized_scope` snapshot captured at
 Step 1.9 and these shared retry fields:
@@ -67,6 +70,8 @@ the storage helper, checks that its `id` matches `source_review_id`, and checks
 that every selected root finding exists in the source review. Keep the source
 ID and relative path immutable through the fix invocation.
 
+### Change Readiness Gate
+
 **Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents, the Step 5 pre-loops below, and any Step 4.5 challenge (including one a pre-loop demotion re-triggers); but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
 
 Trivial fixes still record readiness. They normally use `risk_tier: "low"` and `approval_mode: "auto"` only when W10 classifies them as auto-eligible and no consequence gate applies.
@@ -118,6 +123,8 @@ Choice: approve writes | dry-run only | revise plan | stop | defer
 
 Each `closed`, `closed_with_residual_risk` or `false_positive` disposition names its own evidence in `evidence_refs`. Every `required: true` check in `required_verification` must be proven once for the run: some evidence entry joined to such a finding lists the check's `id` in `satisfies`. A finding does not need copies of the checks that prove the other findings.
 
+### Step 5.0 — Target resolution and pre-write banner
+
 **Step 5.0 — Target resolution + pre-write banner (run once, before the first fix-log write at Step 4.4; otherwise the FIRST action in Step 5):**
 
 Before any state mutation, reuse the context bound before maintenance per
@@ -138,7 +145,7 @@ through the shared storage mutation helper so import cannot race writes.
 
 **Fix lifecycle audit fields (optional, non-dry-run only):** after the dry-run gate has passed, the initialized fix-log may include `fix_plans[]` and `verification_cycles[]` as additive lifecycle metadata. `fix_plans[]` records proposed or approved remediation plans and alternatives; it does not imply that a change was applied. Even `status: "applied"` means only that the selected plan reached write dispatch/execution; durable applied-change truth still requires a matching `changes_summary[]` entry. `changes_summary[]` remains the source of truth for applied changes. `verification_cycles[]` records scoped verifier outcomes after execution. `/aivv-fix --dry-run` must not write a fix log or persistent `fix_plans[]`; dry-run plans are preview output only unless a future reviewed contract explicitly changes that no-write rule.
 
-#### Step 5 pre-loop: class-verdict gate (FAIL-CLOSED) + variant scan + class-sibling triage
+### Step 5 pre-loop: class-verdict gate (FAIL-CLOSED) + variant scan + class-sibling triage
 
 Before the scope_search_seed pre-loop, enforce the mandatory class verdict on the approved findings, scan for class siblings, and triage them. This is the class-breadth counterpart of the scope_search_seed pre-loop: `scope_search_seed` answers *which other files need the same change* (scope breadth); `class_signature` answers *which other locations have the same bug* (class breadth). Both pre-loops run before any per-finding fix branch; the class-verdict gate runs first because a finding without a verdict is not ready for either scan.
 
@@ -193,7 +200,7 @@ search examples below.
 
 Warnings (`missing-class-verdict`, `self-contained-falsified`, `class-scan-timeout`, `escalation-budget-exhausted`) are recorded in the session warnings array AND surfaced in the run summary so the operator sees class-breadth activity and its impact each cycle.
 
-#### Step 5 pre-loop: scope_search_seed execution
+### Step 5 pre-loop: scope_search_seed execution
 
 Before dispatching any per-finding fix branch, scan for multi-SSoT siblings:
 
@@ -212,6 +219,8 @@ For each approved finding with a non-empty `scope_search_seed` field in its `roo
 5. Sub-findings do NOT increment `cycle_count` (they are expanded scope within the same investigation cycle, not a re-investigation due to failure).
 
 The seed is required for fixes that change a canonical name, public API, schema key, route/asset ID, prompt/template field, evidence claim, or other source-of-truth token. It is not limited to code registries. The purpose is to catch post-fix sibling artifact drift across docs, schemas, tests, prompt templates, route budgets, and state fixtures before a verifier has to infer missing scope from prose.
+
+### Per-fix execution and the session log
 
 For each approved fix (in priority order: CRITICAL first):
 
@@ -347,10 +356,10 @@ For each approved fix (in priority order: CRITICAL first):
    - `decision_ledger[]` — the per-finding decision ledger defined in [execution-decisioning.md](execution-decisioning.md), keyed by `finding_id`. It records decisions, not applied changes.
    - `fix_plans[]` — optional non-dry-run proposal records keyed by `finding_id`. From Step 4.4 each entry also carries that finding's integrated investigator result (root cause, `class_signature`/`class_assessment`, `prevention_plan`, `fix_proposal`) so a Resume and every later prompt read it from the log instead of re-investigating. `status` is one of `proposed | approved | applied | superseded | abandoned`; `applied` means the selected plan reached write dispatch/execution and is not proof that a change landed. Applied-change truth still comes from a matching `changes_summary[]` entry. `dry_run` records whether the plan originated as preview context, but persistent fix logs are only written after the dry-run gate has passed; a standalone `/aivv-fix --dry-run` writes no fix log.
    - `verification_cycles[]` — optional post-execution verifier records keyed by `finding_id`. `status` is one of `verified_resolved | verified_unresolved | needs_rework | skipped | error`. Use this for scoped verifier outcomes; do not overload `changes_summary[]` with verifier status.
-   - `dangerously_auto_apply` — null/absent for normal runs. When `--dangerously-auto-apply` is explicitly confirmed, set `{confirmed: true, confirmation_source, bypassed_gates, applied_count}` and mirror per-change `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on each affected `changes_summary[]` entry. Step 5's final audit banner reads this object; do not reconstruct the count from git diff.
+   - `dangerously_auto_apply` — null/absent for normal runs. When `--dangerously-auto-apply` is explicitly confirmed, set `{confirmed: true, confirmation_source, bypassed_gates, applied_count}` and mirror per-change `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on each affected `changes_summary[]` entry. Step 5's final audit banner reads this object.
    - `warnings` — top-level array of orchestrator-side warnings (dispatch fallbacks, schema-mismatch notes, recovery events). Separate from `changes_summary[].root_cause` which documents actual finding root causes — do NOT overload. Warning-object shape: `{"code": "<identifier>", "finding_id": "<F###>"|null, "ts": "<RFC 3339>", ...contextual fields}`. Common codes: `category-fallback` (see [investigator-field-definitions.md](investigator-field-definitions.md) Category section), `stale-skill-cache` (if the Step 8 canary fires in /aivv), `schema-migration` (on-read handling of historical session log paths). Surfaced in Step 7 DOCUMENT if non-empty.
 
-  **Lifecycle write-back contract:** When `lifecycle_context` is present, load the lifecycle record from `lifecycle_context.record_path` before investigation and pass a compact context summary to the investigator. `rca_status: "not-started"` and `rca_status: "draft"` mean investigation-first. Incident/problem writes are limited to schema-backed RCA/prevention fields (`root_cause_analysis`, `incident_context`, `prevention_plan`, `rca_status`, `updated_at` when supported, and `links`). Local issue writes are limited to schema-backed workflow fields (`status`, `updated_at` when supported, `links`, `closure_decision` when closing, `timeline`, and `sync.status`). Use the `AIVV_ROOT` pinned and preflighted at this invocation's start, then validate every lifecycle write with `node "$AIVV_ROOT/tools/incident-state.mjs" validate --file "<record-file>" --state-dir "<state_dir>" --kind "<incident|problem|local-issue>"`. Draft or apply GitHub changes only through `node "$AIVV_ROOT/tools/incident-github-sync.mjs" plan --context "$storage_context_file" --issue "<issue-record>" --repo "<owner>/<repo>"` and `node "$AIVV_ROOT/tools/incident-github-sync.mjs" apply --context "$storage_context_file" --issue "<issue-record>" --repo "<owner>/<repo>" --confirm`; `/aivv-fix` must not call `gh` directly.
+  **Lifecycle write-back contract:** when `lifecycle_context` is present, follow the write-back rules in [lifecycle-route.md](lifecycle-route.md).
 
    **Write semantics** (full-object publication, not literal append-to-entries):
 
@@ -362,7 +371,7 @@ For each approved fix (in priority order: CRITICAL first):
    - Initialize only after the Step 4.3 dry-run halt, through the shared storage mutation helper. A plan-stage log has no `changes_summary` entries and no `findings_addressed` yet; a review-sourced log must gain both before it can be marked `completed`.
    - Reuse the invocation ID bound after Step 1.0 recovery selection and create the session file with `status: "in-progress"` and `cycle_count: 1`. Include any evidence-backed rework retries already consumed in memory before this first durable write; the first persisted snapshot becomes the transition baseline.
    - After every in-memory `session_changes` mutation, stage the complete candidate in private scratch and validate it with `node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fix-log <candidate> --context "$storage_context_file" --new` for the first write or `--update` thereafter. The validator reads the exact persisted record itself; do not supply a model-authored or stale prior snapshot. Then publish to `<state_dir>/fix-<invocation_id>.json` under the shared target operation lock. Never write active state with a host Write/apply_patch operation outside the helper; this would race import. Invocation-specific names preserve the existing independent-session model.
-   - **JSON emission canonical form:** to ensure byte-stable output across orchestrator agent invocations and across hosts, follow the same canonical-form rules documented in [/aivv Step 7.5](../../aivv/SKILL.md#step-75-write-review-log-orchestrator-side-unconditional) ("JSON emission canonical form" subsection). Briefly: 2-space indent, key order matches the **Schema** example above (top-to-bottom), exactly one trailing `\n`, raw UTF-8 (no `\u` escapes for non-ASCII), absent optional fields are OMITTED (not `null`), empty arrays as `[]`, all timestamps in UTC `Z` form, paths in POSIX forward-slash form even on Windows. Maintainer-side schema-fixture validation (run by AIVV's own pre-release validator) embodies the canonical form for fix-log shape; if your output differs from a freshly-emitted fix log's shape (modulo per-invocation ID/timestamp/finding values), you have drifted from canonical.
+   - **JSON emission canonical form:** to ensure byte-stable output across orchestrator agent invocations and across hosts, follow the same canonical-form rules as the `/aivv` review log ([Canonical JSON Form](../../aivv/references/review-log-schema.md#canonical-json-form)). Briefly: 2-space indent, key order matches the **Schema** example above (top-to-bottom), exactly one trailing `\n`, raw UTF-8 (no `\u` escapes for non-ASCII), absent optional fields are OMITTED (not `null`), empty arrays as `[]`, all timestamps in UTC `Z` form, paths in POSIX forward-slash form even on Windows. Maintainer-side schema-fixture validation (run by AIVV's own pre-release validator) embodies the canonical form for fix-log shape; if your output differs from a freshly-emitted fix log's shape (modulo per-invocation ID/timestamp/finding values), you have drifted from canonical.
    - The first Step 6 verifier dispatch uses `cycle_count: 1`. When an evidence-backed verifier defect qualifies for re-entry, increment `rework_retry_count`, append its `verification` retry event, and increment `cycle_count` together in one validated update before returning to Step 3. The next Step 6 verifier uses that already-incremented value; do not increment it again at dispatch. The shared `rework_retry_count` is the sole semantic rework cap.
    - Set `status: "completed"` and `completed_at` at the end of Step 7.
    - **Later decisions on a finished log.** A `completed` or `failed` log accepts one kind of `--update`: recording a decision made after the run on a finding it left `deferred` or `needs_evidence` (for example, the owner approves a deferred deletion days later and it is done). Change that entry in place: new `disposition`, `decided_by`, `rationale`, `decided_at`, and `supersedes` holding an exact copy of the entry it replaces. Add any new evidence after the existing `objective_evidence` entries, with new IDs, for that finding only; a `closed`, `closed_with_residual_risk` or `false_positive` decision needs it (`false_positive` needs a `refuted` outcome, and `closed_with_residual_risk` also needs `residual_risk`). `status`, `completed_at` and every other field stay as they were. Validate with `--update` and publish through the storage helper as usual. Anything else, such as reopening a closed finding, is a new invocation.
@@ -385,5 +394,3 @@ For each approved fix (in priority order: CRITICAL first):
    7. If `status: "abandoned"` AND NOT auto-reaped (manually marked by user in a prior session): no recovery prompt.
 
    **Collision safety**: The `<4-char-random>` suffix in the invocation ID prevents concurrent invocations from colliding on filename. Do not re-use or share session files across invocations.
-
-   **Do NOT rely on `git diff` or `git log` to reconstruct what was changed — the persisted `session_changes` file IS the source of truth.** Other agents may be making unrelated commits simultaneously.

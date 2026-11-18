@@ -4,13 +4,13 @@ Read from `skills/aivv-fix/SKILL.md` before Step 6 VERIFY.
 
 ## Contents
 
-- Verification context
-- Scoped verifier dispatch
-- Same-agent verification discipline
-- Verifier result parsing
-- Shared retry limit
+- [Step 6: VERIFY — Scoped Re-Verification](#step-6-verify--scoped-re-verification)
+  - Item 1: Verification context
+  - Item 2: Scoped verifier dispatch and same-agent verification discipline
+  - Item 3: Verifier result parsing
+  - Item 4: Shared retry-budget enforcement
 
-### Step 6: VERIFY — Scoped Re-Verification
+## Step 6: VERIFY — Scoped Re-Verification
 
 After all fixes applied:
 
@@ -19,27 +19,27 @@ After all fixes applied:
    - Read `authorized_scope` from that same fix log and copy it unchanged into the verifier prompt; do not reconstruct or widen it from current context.
    - For each file in `files_modified` and `files_created`: read the current file content
    - Compile the original findings as a verification checklist
-   - **Do NOT rely on `git diff` or `git log`** — in multi-agent parallel environments, other sessions may be making unrelated commits that would confuse the verifier
+   - If the session change log is incomplete, warn the user that verification may miss changes not logged in `session_changes`, and suggest manual review of all files touched during the session.
 
-2. **Dispatch a scoped verifier**: Before spawning a verifier, apply the lifecycle pre-spawn cleanup rule from Host Adapter Mapping. This is the same AIVV-owned-handle-only cleanup used before investigator dispatch; preserve any cleanup warning in `session_changes.warnings` when possible. Then launch a cold reviewer subagent using the template in [verifier-prompt-template.md](verifier-prompt-template.md) — read and fill in all `{placeholder}` values from the session change log before sending.
+2. **Dispatch a scoped verifier**: Before spawning a verifier, run pre-spawn cleanup; track, mark consumed, and close each verifier handle per [Subagent handles](investigation-dispatch.md#subagent-handles). Then launch a cold reviewer subagent with a prompt built per [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts) with template `verifier`, filled from the session change log:
 
    - `{authorized_scope}` → copy the immutable object from the same fix log byte-for-byte. The verifier must check the original goal and boundaries; it must not infer a revised task from later summaries.
-   - `{plugin_root_absolute_path}` → the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start (see `SKILL.md` "Runtime pin and preflight"); do not re-resolve it. The verifier reads its role file from this root, never from the target project.
-   - `{target_project}` → fill with `session_changes.target_project` (the absolute path resolved at Step 5.0 and cached on the session object). **Worktree-CWD note:** the verifier greps `<cited_file>` / `<written_doc_file>` and "find ALL occurrences in the modified file" — and every such path is recorded **relative** to the target project (per the Step 5.7 `os.path.join(target_project, entry.file)` contract). The verifier subagent inherits the orchestrator's shell CWD, which may be a stale git worktree at a different commit than the target, so a bare relative grep would verify against the wrong tree (false `RESOLVED`/`NOT RESOLVED`). The template's `## Working Directory` block anchors all file operations on this absolute path — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint). **Timing advantage over the Step-3 investigator:** the verifier dispatches at Step 6, *after* the canonical Step-5.0 resolution, so `session_changes.target_project` is already cached and absolute — fill it directly, with none of the provisional-resolution nuance the investigator's Step-3 (pre-Step-5.0) dispatch required.
-
-   Track each verifier handle with `cycle_number`, `role: "verifier"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 6 parses the verifier verdict for the current cycle. Close the consumed verifier before spawning any next-cycle verifier.
+   - `{plugin_root_absolute_path}` → `$AIVV_ROOT`. The verifier reads its role file from this root, never from the target project.
+   - `{For each entry in session_changes.changes_summary}` loop, one copy per entry: `{finding_id}`; `{list of files}` (key `list`) → the entry's files; `{root cause being addressed}` (key `root`); `{prevention mechanism description}` (key `prevention`). The key `description` appears twice in this loop (the finding's description and `{description of changes made}`): leave it out of `values` and fill each copy by hand per the wrap rule.
+   - Execution Evidence loop: one copy per `changes_summary[]` entry carrying `execution_evidence` or `red_green_evidence`, each field (`{file}`, `{execution_evidence.*}`, `{red_green_evidence.*}`) from that entry; omit the section when no entry has either.
+   - `{warnings_excerpt}` → see the cross-section gate below.
+   - Handoff paths: `{fix_log_absolute_path}` → `<state_dir>/fix-<invocation_id>.json`; `{modified_files_manifest_absolute_path_or_inline}` and `{verification_checklist_absolute_path_or_inline}` → `inline` when the prompt's Files to Read list and findings checklist carry them; `{verifier_role_absolute_path}` → `$AIVV_ROOT/.aivv/prompts/verifier-role.md`.
+   - `{target_project}` → fill with `session_changes.target_project` (the absolute path resolved at Step 5.0 and cached on the session object). Every verifier path is recorded relative to it (per the Step 5.7 `os.path.join(target_project, entry.file)` contract).
 
    **Conditional cross-section invariant section:** before dispatching the verifier subagent, the orchestrator computes:
 
    - `heading_count` per file: for each file in `session_changes.files_modified`, run `grep -cE '^### Task |^## Phase |^### Phase |^## §[0-9]|^### Step [0-9]|^### T[0-9]' <file>`. The gate fires on the **ANY-file-≥3** semantic — if any single file's heading_count is ≥3, the gate matches. (Aggregating across files would mask multi-section signal — one multi-section file with co-edits to a flat code file should still route to cold-verification of the multi-section file's invariants.)
    - `warnings_count = jq '.warnings | length' <fix_log>`. If the `warnings` key is absent (legacy fix-log shape), `jq` returns `0` — gate evaluates false on the warnings branch. If `jq` itself is unavailable on the host (the shell surface returns `command not found` / exit 127), treat `warnings_count` as `0`, append `{"code": "jq_unavailable", "ts": "<now>"}` to `session_changes.warnings`, and continue — the gate's `heading_count >= 3` branch still evaluates independently; only the warnings-only fire is forfeit. See `.aivv/platform-adapters/{claude-code,codex}.md` Runtime dependencies for per-host install commands.
 
-   If (`heading_count >= 3` on ANY modified file) OR (`warnings_count > 0`), the orchestrator (a) populates the fenced template's `## Step 5.5 Warnings` placeholder section from `jq '.warnings' <fix_log>`, AND (b) appends the `ADDITIONAL VERIFICATION` section from `references/verifier-prompt-template.md` below the closing fence as the prompt's terminal block. Sub-instruction 4 in the addendum reads the populated `Step 5.5 Warnings` section, NOT the fix-log directly — the verifier subagent has no fix-log access. When the gate fires false, the orchestrator leaves `## Step 5.5 Warnings` populated with the empty-array placeholder (`[]`) and OMITS the `ADDITIONAL VERIFICATION` addendum entirely; the fenced template is self-contained without it.
-
-   Lifecycle cleanup for the verifier handle follows the `output_consumed` tracking rule above: close consumed AIVV-owned verifier handles before next-cycle verifier dispatch unless an immediate targeted clarification is still pending.
+   If (`heading_count >= 3` on ANY modified file) OR (`warnings_count > 0`), the orchestrator (a) populates the fenced template's `## Step 5.5 Warnings` placeholder section from `jq '.warnings' <fix_log>`, AND (b) appends the `ADDITIONAL VERIFICATION` section (the text after the closing fence of [verifier-prompt-template.md](verifier-prompt-template.md); the one part of a template the orchestrator reads) as the prompt's terminal block. Sub-instruction 4 in the addendum reads the populated `Step 5.5 Warnings` section, NOT the fix-log directly — the verifier subagent has no fix-log access. When the gate fires false, the orchestrator leaves `## Step 5.5 Warnings` populated with the empty-array placeholder (`[]`) and OMITS the `ADDITIONAL VERIFICATION` addendum entirely; the fenced template is self-contained without it.
 
    <!-- CLAUDE-CODE-SPECIFIC -->
-   On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer`. On Codex: subagent dispatch using `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` (same TOML as Step 5 of `/aivv`). If the callable dispatch surface is not initially visible, perform the Codex preflight above before falling back. Same-agent verification fallback applies if cold dispatch is unavailable after preflight or dispatch attempt; record in fix-log `verification_cycles[*].capability_degradations`. On Codex, if `spawn_agent` / `wait_agent` are discoverable and reviewer TOML exists but host policy blocks delegation, ask once for explicit delegation permission or halt with `codex-subagent-delegation-blocked`; do not silently continue with same-agent verification.
+   On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer`. On Codex: subagent dispatch using `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` (same TOML as Step 5 of `/aivv`). If the callable dispatch surface is not initially visible, perform the [Codex dispatch preflight](codex-dispatch-preflight.md) before falling back. Same-agent verification fallback applies if cold dispatch is unavailable after preflight or dispatch attempt; record in fix-log `verification_cycles[*].capability_degradations`.
 
    **Same-agent-verification discipline:** the orchestrator MAY skip cold-verifier dispatch and run a same-agent verification pass IF AND ONLY IF ALL of these hold:
    - **NEVER when any approved finding in this session has `category: documentation-gap`.** Cold-verifier dispatch required regardless of the five conditions below. Rationale: the `verification_evidence` grep check (Change 4 — doc citation + source grep) cannot be structurally enforced when the agent that wrote the prose also runs the verification — structural independence is required. This condition takes precedence over all five conditions below.
@@ -68,7 +68,6 @@ After all fixes applied:
    **WAI-ARIA sub-protocol for L1-source a11y findings:** when any finding in the verification checklist has a L1-source pattern matching `ARIA|a11y|wcag|ADA|Section.508` (case-insensitive), add this one-line directive to the verification instructions: `For a11y findings: verify that fixes do not introduce aria-label-overrides-subtree issues (WAI-ARIA Accessible Name Computation §4.3: aria-label on a parent element overrides ALL subtree content for assistive technology; sr-only children are silently suppressed).`
 
 3. **Parse verification results**:
-   - After parsing the verifier verdict for the current cycle, mark the verifier handle `output_consumed: true`. Close the consumed verifier before the next-cycle verifier is spawned. If the next immediate step requires targeted interactive follow-up with the verifier for clarification, keep that verifier's `output_consumed` value `false` until the clarification is integrated; surface and persist the reason in `session_changes.warnings` when possible.
    - **All findings verified as resolved + no regressions** → Proceed to Step 7
    - **Some findings not resolved** → Do NOT retry based on the label alone. Read the verifier's cited evidence. Re-enter Step 3 only when it establishes a specific defect in the prior fix or investigation and identifies a concrete correction inside `authorized_scope`; in one validated state update, append one evidence-backed `verification` retry event, increment the shared counter, and increment `cycle_count` before returning to Step 3. If the verifier reports uncertainty, missing context, or an unsupported conclusion without an actionable defect, stop that finding as unresolved and report the evidence gap without consuming a retry. At the cap, report unresolved and stop.
    - **New regressions introduced** → Use the session change log to isolate which batch caused the regression:

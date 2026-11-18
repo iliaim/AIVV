@@ -4,12 +4,13 @@ Read from `skills/aivv-fix/SKILL.md` before post-write mechanical verification.
 
 ## Contents
 
-- Fix-bundle coherence pass
-- Fix-log hygiene assertions
-- Cycle-N+1 sibling-surface grep
-- Step 5.7 verification-code execution
+- [Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)](#step-55-fix-bundle-coherence-pass-orchestrator-side-advisory)
+- [Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions](#step-56-fix-log-hygiene--mechanical-assertions)
+- [Step 5.6.5: Cycle-N+1 mandatory sibling-surface grep](#step-565-cycle-n1-mandatory-sibling-surface-grep)
+- [Step 5.7: ORCHESTRATOR EXECUTION — Run New Verification Code](#step-57-orchestrator-execution--run-new-verification-code)
+- [Objective Evidence Closure](#objective-evidence-closure)
 
-### Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)
+## Step 5.5: Fix-bundle coherence pass (orchestrator-side, advisory)
 
 After all per-finding fixes are applied in Step 5 AND before dispatching the Step 6 verifier (or running same-agent verification), execute these orchestrator-side checks against the fix-bundle as a whole. Outputs are advisory warnings logged to the fix-log's top-level `warnings` array; they do NOT block Step 6 dispatch but ARE included in the verifier's input.
 
@@ -27,7 +28,9 @@ The pass is **advisory** (warning-level, never blocking). When Step 6 VERIFY dis
 
 ---
 
-### Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions
+## Step 5.6: FIX-LOG HYGIENE — Mechanical Assertions
+
+Check `authorized_scope`, retry history, `changes_summary` coverage, modified/created-file consistency, status, cycle count, and required entry fields. Halt on corrupted scope or retry state; otherwise append warnings and continue to verifier dispatch.
 
 After Step 5.5 (coherence pass advisory warnings) and before Step 6 (verifier dispatch), run these orchestrator-side mechanical assertions against the session log. No LLM reasoning required — these are structural checks.
 
@@ -60,7 +63,7 @@ The Step 6 verifier prompt receives the `session_changes.warnings` array and is 
 
 ---
 
-### Step 5.6.5: Cycle-N+1 mandatory sibling-surface grep
+## Step 5.6.5: Cycle-N+1 mandatory sibling-surface grep
 
 When `cycle_count >= 2`, the orchestrator's recovery path automatically runs:
 
@@ -79,7 +82,9 @@ This catches a fix on one surface that leaves the same wrong string on a sibling
 
 ---
 
-### Step 5.7: ORCHESTRATOR EXECUTION — Run New Verification Code
+## Step 5.7: ORCHESTRATOR EXECUTION — Run New Verification Code
+
+When a newly-authored verification method is claimed as recurrence prevention, Step 5.7 must read and preserve the Step 4.4.5 `red_green_evidence` object. If the pre-fix failure evidence is absent, wrong-reason, or only reconstructed from memory, downgrade the entry to `red_green_evidence.claim: "verification-only"` before verifier dispatch. `execution_evidence.command_argv` records the exact command arguments used for the post-fix execution path.
 
 After Step 5.6 hygiene pass, execute any verification scripts the fix bundle authored. This runs BEFORE Step 6 verifier dispatch so the verifier receives concrete execution evidence rather than having to infer from script inspection alone.
 
@@ -128,7 +133,7 @@ After Step 5.6 hygiene pass, execute any verification scripts the fix bundle aut
 
 ---
 
-### Objective Evidence Closure
+## Objective Evidence Closure
 
 Before Step 7 reports a terminal disposition, collect `objective_evidence` entries for every `closed`, `closed_with_residual_risk`, or `false_positive` finding in `final_dispositions[]`.
 

@@ -1,6 +1,33 @@
 # Step 7 DOCUMENT — predecessor backfill and calibration write-specs
 
-Canonical home for the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence) and the calibration JSONL append-record field specs.
+Canonical home for the Step 7 resolution summary, the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence), the calibration JSONL append-record field specs, and pattern capture.
+
+## Contents
+
+- [Resolution summary](#resolution-summary)
+- [Predecessor backfill on fix-log → review-log](#predecessor-backfill-on-fix-log--review-log)
+- [Calibration write-specs (JSONL append)](#calibration-write-specs-jsonl-append)
+- [Pattern capture](#pattern-capture)
+
+## Resolution summary
+
+Present this final summary:
+
+```
+## Resolution Summary
+
+| ID | Severity | Finding | Status | Root Cause | Fix Applied | Prevention Added |
+|----|----------|---------|--------|-----------|-------------|-----------------|
+| F001 | CRITICAL | <symptom <=60 chars> | Resolved | <cause <=60 chars> | <fix <=80 chars> | <prevention <=80 chars> |
+
+**Cycles**: {N} resolve-verify cycles
+**Total fixes**: {N} files modified
+**Prevention mechanisms added**: {N}
+**Codebase-wide similar patterns fixed**: {N} additional instances
+**Cleanup warnings**: {N or "none"} — include any final Subagent cleanup warnings that were persisted to `warnings`
+```
+
+The **Finding** column is sourced from `session_changes.changes_summary[].finding_id` → originating finding's `summary` field. When source is `"review_id"`, look up `FixSession.review_log.findings[id == finding_id].summary`. When source is `"task_file"`, use the issue description from the task file's `open_issues` entry for that finding ID. When source is `"conversation"` or `"literal"`, use the finding's `summary` as collected in Step 1. If summary is unavailable for a finding, use the finding ID as a fallback. Keep values short — **Finding** and **Root Cause** at ≤60 chars each, other columns at ≤80 chars — truncate with `…` if longer. Finding and Root Cause occupy different abstraction levels (observed symptom vs causal explanation) and should not duplicate each other.
 
 ## Predecessor backfill on fix-log → review-log
 
@@ -19,8 +46,6 @@ substitute. Before the durable fix-log write, materialize the candidate fix log
 to a temp JSON file and run:
 
 ```bash
-# Use the AIVV_ROOT pinned and preflighted at this `/aivv-fix` invocation's
-# start; invoke the validator by absolute path without resolving a second root.
 node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fix-log <candidate-fix-log.json> \
   --context "$storage_context_file" --new
 ```
@@ -36,7 +61,7 @@ from its original selected findings.
 
 If the validator returns non-pass, repair the candidate before writing. Do not use legacy `review_id` or `source_argument` as a substitute for `source_review_id` on new review-sourced fix logs; once a change is recorded, and always before `status: "completed"`, the log must also carry nonempty `findings_addressed[]` and nonempty `changes_summary[]`, with unambiguous bidirectional normalized ID coverage: every `changes_summary[].finding_id` must join to `findings_addressed[]`, every addressed finding must have at least one matching `changes_summary[]` entry, and ambiguous normalization collisions across `findings_addressed[]` and `changes_summary[].finding_id` must halt before write.
 
-Historical logs are not rewritten in place by compatibility tooling. Use the `AIVV_ROOT` pinned and preflighted at this invocation's start, then use `node "$AIVV_ROOT/tools/state-compat-index.mjs" --context "$storage_context_file" --state-dir "<state_dir>" --output "<state_dir>/compat-index.json"` to derive safe read-side proposals: missing/prefixed fix-log `source_review_id`, review-log `fix_invocation_id` when exactly one fix log joins to the review, and deterministic finding fingerprints. If multiple fix logs join to one review, the helper records the `fix_invocation_id` gap as `unsafe` instead of guessing.
+Historical logs are not rewritten in place by compatibility tooling. Use `node "$AIVV_ROOT/tools/state-compat-index.mjs" --context "$storage_context_file" --state-dir "<state_dir>" --output "<state_dir>/compat-index.json"` to derive safe read-side proposals: missing/prefixed fix-log `source_review_id`, review-log `fix_invocation_id` when exactly one fix log joins to the review, and deterministic finding fingerprints. If multiple fix logs join to one review, the helper records the `fix_invocation_id` gap as `unsafe` instead of guessing.
 
 Retain `FixSession.source_review_relative_path` from review-ID resolution and
 use that exact selected relative path for both the read and write, including an
@@ -137,3 +162,7 @@ When writing the `review_meta` calibration record (per the de-dup contract), inc
  "findings_produced": N, "reviewers": 2, "review_id": "...",
  "fix_confidence_distribution": {"high": N1, "medium": N2, "low": N3}}
 ```
+
+## Pattern capture
+
+If a new prevention mechanism was created, suggest promoting it to project/global guidance. If `/lesson` is available, also suggest `/lesson "Prevention mechanism created for recurring pattern: [description]. Applies to: [scope]." --category technical --severity medium`; otherwise skip silently.

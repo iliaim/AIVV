@@ -2,9 +2,30 @@
 
 Use this template when dispatching the Step 4.5 CHALLENGE subagent. Fill in all `{placeholder}` values from the current session state before sending. The challenger receives NO conversation history — everything it needs must be in this prompt.
 
-**Native prompt boundary:** before each native host dispatch, use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings, write intents, batch/session data, and paths, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt. `tools/aivv-fix-records.mjs` (`prompts` key) performs the nonce and wrap steps for this template in one call.
+**Native prompt boundary:** the orchestrator builds this prompt with `tools/aivv-fix-records.mjs` (`prompts` key), which fences every substituted `{placeholder}` value under one fresh nonce, as specified in [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts). Values added by hand are wrapped the same way.
 
 **Portable role source:** `.aivv/prompts/fix-challenger-role.md` is the first-class role contract for this dispatch. This template supplies the invocation-specific payload and output schema; it must not drift from the portable role's authority, untrusted-content, and review-posture requirements.
+
+## Contents
+
+The fenced template below has these sections, in order (headings inside a code block have no links):
+
+- OUTPUT FORMAT OVERRIDE — READ THIS FIRST
+- What You Are Reviewing
+- Handoff Files
+- Findings + Fix Proposals
+- Immutable Authorized Scope
+- Exact Proposed Write Content
+- Failing Test Evidence (red run)
+- Predecessor Cycle Context
+- Earlier Challenge of This Plan
+- Other Session Findings (class context)
+- Mandatory Review Axes (assess ALL NINE for each finding; on a re-check, for the changed parts)
+- Recurring Class Scan
+- Output Schema
+- Verdict Decision Rules
+- Same-Model Bias Acknowledgment
+- Working Directory
 
 ```
 ## OUTPUT FORMAT OVERRIDE — READ THIS FIRST

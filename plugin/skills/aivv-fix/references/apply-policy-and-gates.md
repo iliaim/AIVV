@@ -4,9 +4,31 @@ Canonical home for the investigation-results presentation template, the architec
 
 Cross-step ordering is owned by [execution-decisioning.md](execution-decisioning.md). This file owns the route definitions below and the `--dangerously-auto-apply` bypass list; other references point here instead of restating them.
 
+## Contents
+
+- [Step 4 order](#step-4-order)
+- [Investigation-results presentation](#investigation-results-presentation)
+- [Architectural remediation lane](#architectural-remediation-lane)
+- [Batch reconciliation (pre-execution cross-batch collision check)](#batch-reconciliation-pre-execution-cross-batch-collision-check)
+- [W10 batched apply-policy decision queue](#w10-batched-apply-policy-decision-queue)
+- [Pre-execution gates for uncertain or overconfident findings](#pre-execution-gates-for-uncertain-or-overconfident-findings)
+- [`fix_confidence` computation (per approved finding, computed here — consumed by Step 4.5)](#fix_confidence-computation-per-approved-finding-computed-here--consumed-by-step-45)
+
+## Step 4 order
+
+**Field propagation (required — load-bearing for Step 5 dispatch):** Before presenting the structured summary, for every approved finding, carry the **`category`** value set in Step 2a (inherited from the envelope schema for Signal 0 findings; inferred for Signal 1-4) onto the approved-finding record. Step 5 Branch dispatch reads this field and falls back to Branch A (`code-bug`) on missing-or-unknown with a warning logged to `session_changes`. Undefined-on-read is never acceptable for a dispatch key.
+
+Collect investigator JSON and render the structured **Investigation Results** summary below. Reconcile batches after investigators declare `files_to_modify`.
+
+**Earlier repairs (report only):** once the planned files are known, run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin) with `{"invocation_id": "<this run>", "prior_repairs": {"context": "$storage_context_file", "files": [<planned files>]}}`. When `prior_repairs.count` is above zero, show its `note` in the Investigation Results summary; the full run list stays in the JSON. Each run's rework limit starts fresh, so this note is how a loop that starts a new `/aivv-fix` per round sees the same area being repaired again; weigh whether the root cause is the design rather than another patch. The note never blocks, demotes `fix_confidence`, or counts against the rework limit. It is not by itself the `bounded same-area recurrence` signal of the architecture check and is separate from `predecessor_finding_match`. If the helper answers with an error, or `prior_repairs.error` is set, say so in one line and continue.
+
+Handle special verdicts in order: `already-correct` → false-positive calibration; `clarification-needed` → explanation/Branch E; `wont-fix` → user accept/override and, if accepted, the Step 4 wont-fix accept path in [finding-collection.md](finding-collection.md). Then apply Gate 1/2/3 (Gate 1 challenges the root cause; Step 4.5 later challenges the fix plan) and compute `fix_confidence`, which Step 4.5 consumes.
+
+**Auto-proceed precheck:** do not move any finding to Step 5 yet. Record each finding's blockers now; its final route (Auto-eligible, Decision queue, Architecture decision queue, Skipped by policy, or Dangerously-auto-approved) is settled only after Steps 4.4–4.5, by the definitions below.
+
 ## Investigation-results presentation
 
-After each investigator JSON response is integrated into the structured summary below, mark that investigator handle `output_consumed: true`. Close consumed investigator handles before any Step 3 re-entry, including re-investigation caused by Step 4.5 or Step 6. If immediate targeted follow-up is required, use the Step 3 exception and leave `output_consumed: false` until the follow-up is integrated.
+Investigator handles (including second opinions) are marked consumed and closed per [Subagent handles](investigation-dispatch.md#subagent-handles).
 
 Collect all investigator JSON results and present a structured summary:
 
@@ -118,7 +140,6 @@ The audit record and end-of-Step-5 banner are specified in [execution-branches.m
 1. **Action-driving + high-confidence → independent second opinion**: Any finding with `recommended_next_step ∈ {fix-now, investigate-first}` where the investigator returned `confidence: high` auto-spawns a second `aivv:investigator` agent with this prompt: *"Independently assess this root cause. What alternative explanations could produce the same symptom, and what evidence would distinguish them? Is the proposed fix addressing the correct cause, or is there a more upstream cause that would also produce this symptom? Disagree only by naming a specific alternative cause and the evidence from the code, logs or tests that favors it. If you find none, agree: that is the correct result. Record remaining doubts as notes."* Pass the first investigator's root cause and fix proposal as input. Legacy findings without `recommended_next_step` use the previous CRITICAL fallback.
    - If the second investigator agrees: proceed. Its notes are advisory.
    - If the second investigator disagrees by naming an alternative cause with supporting evidence: present both analyses to the user as a contradiction; do not auto-proceed. A disagreement without both is recorded as a note and does not stop the run.
-   - Second-opinion investigator handles follow the same lifecycle: track `batch_id`, `role`, `dispatch_path`, and `output_consumed: false`; mark consumed after the gate decision integrates the second opinion, then close before continuing.
    - Rationale: "confidently wrong on a finding that drives action" is the most dangerous failure mode; one extra agent call on those findings is cheap insurance.
 
 2. **Low-confidence, context-shaped gap → ask the user directly**: If `confidence: low` AND `confidence_gap_shape: context-shaped`, phrase the `confidence_gap` as a concrete question to the user (e.g., *"Should save_task treat empty-string and null as equivalent, or is null supposed to be filtered upstream?"*) and pause. Do not spawn a second investigator — the gap is in user knowledge, not code reading. Cheaper than a subagent call and usually faster for the user.

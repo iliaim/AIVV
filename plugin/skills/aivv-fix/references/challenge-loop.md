@@ -1,6 +1,12 @@
 # Step 4.5 CHALLENGE — trigger, dispatch, and verdict handling
 
-Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder construction), and the 4.5.3 verdict handling + counter semantics. The challenger **prompt** itself lives in [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md). The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
+Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder fill list), and the 4.5.3 verdict handling + counter semantics. The challenger prompt is built from [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md) by the helper; do not read the template to build it. The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
+
+## Contents
+
+- [4.5.1 — Trigger evaluation (per batch)](#451--trigger-evaluation-per-batch)
+- [4.5.2 — Dispatch](#452--dispatch)
+- [4.5.3 — Verdict handling](#453--verdict-handling)
 
 ## 4.5.1 — Trigger evaluation (per batch)
 
@@ -34,38 +40,35 @@ Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder
 
 ## 4.5.2 — Dispatch
 
-Before spawning challengers, apply the lifecycle pre-spawn cleanup rule from Host Adapter Mapping. This is the same AIVV-owned-handle-only cleanup used before investigator dispatch; preserve any cleanup warning in `session_changes.warnings` when possible.
+Before spawning challengers, run pre-spawn cleanup; track, mark consumed, and close each challenger handle per [Subagent handles](investigation-dispatch.md#subagent-handles).
 
 <!-- CLAUDE-CODE-SPECIFIC -->
-On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer` and the prompt from `fix-challenger-prompt-template.md` (fill ALL `{placeholder}` values from session state before sending). Cold context; NO conversation history.
+On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer` and the built fix-challenger prompt. Cold context; NO conversation history.
 
 On Codex: subagent dispatch via `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` with the fix-challenger prompt. Same cold-context requirement.
 
 **Dispatch granularity:** per-batch. One challenger sees all approved findings in the batch plus their fix proposals. Independent batches may be challenged in parallel (same rules as Step 3 investigator parallel dispatch).
 
-Track each challenger handle with `batch_id`, `role: "challenger"`, `dispatch_path`, and `output_consumed: false`. Set `output_consumed: true` only after Step 4.5.3 parses APPROVE, REVISE, or REJECT and records the decision. Close consumed challenger handles before looping to Step 3 or proceeding to Step 5.
-
-**Prompt construction:** use `fix-challenger-prompt-template.md`. Fill:
+**Prompt construction:** build it per [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts) with template `fix-challenger`. Fill:
 - `{batch_id}`: e.g., `B1`
 - `{finding_id_list}`: e.g., `F001, F002`
 - `{authorized_scope}`: immutable snapshot captured in Step 1.9; include the original goal, selected findings, included boundaries, and exclusions.
-- `{For each finding}` block: one block per finding with investigator fields from Step 3 output
+- `{For each finding in the batch}` loop: one copy per finding, each field (`{severity}`, `{summary}`, `{root_cause}`, `{class_signature}`, `{fix_confidence}`, `{fix_proposal.*}`, …) taken from that finding's triage record and its integrated Step 3 output on `fix_plans[]`; `{source}` is its source label. Use `"(none)"` for an absent optional field.
 - `{round_number_block}`: `"(none — this is cycle 1)"` on cycle 1; `"Round N (predecessor review: <id>)"` on cycle ≥ 2
 - `{predecessor_findings_summary}`: empty on cycle 1; prior-round findings + outcomes on cycle ≥ 2
 - `{prior_challenge_concerns}`: `"(none — first challenge of this plan)"` on the first challenge of the current plan, and again whenever a verification cycle starts a new corrective plan; when the same plan is challenged again after a REVISE or REJECT in this invocation, the earlier challenger's per-finding verdict and its `concerns[]` entries (kind, summary, evidence, alternative), so the challenger re-checks them instead of reviewing from scratch
-- `{plugin_root_absolute_path}`: the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start (see `SKILL.md` "Runtime pin and preflight"); do not re-resolve it. The challenger reads its role file from this root, never from the target project.
-- `{target_project}`: session target project path, from `session_changes.target_project`. Use the canonical target/storage context bound before maintenance; do not infer a provisional target from findings. **Worktree-CWD note:** challenger subagents inherit the orchestrator's shell CWD, which may be a git worktree at a different commit than `target_project`. The template's `## Working Directory` block instructs absolute-path file operations anchored on this value — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint), so the challenger searches the real target tree rather than a stale inherited CWD.
+- `{plugin_root_absolute_path}`: `$AIVV_ROOT`. The challenger reads its role file from this root, never from the target project.
+- `{target_project}`: session target project path, from `session_changes.target_project` (the canonical target/storage context bound before maintenance); do not infer a provisional target from findings.
+- Handoff paths: `{fix_log_absolute_path_or_none}` → the persisted fix log, or `none`; `{fix_challenger_role_absolute_path}` → `$AIVV_ROOT/.aivv/prompts/fix-challenger-role.md`; `{fix_challenger_schema_absolute_path}` → the absolute path of this skill's `references/batched-and-challenger-schemas.md`; `{write_intents_snapshot_absolute_path_or_inline}` → `inline` when `{write_intents}` carries the snapshot.
 - `{write_intents}`: escaped inert data snapshot of the Step 4.4 `write_intents[]` entries for the batch, including any failing-test intent. Include `content_sha` values for the full proposed content; do not substitute `fix_proposal.description` for exact proposed bytes.
 - `{red_run_evidence}`: per finding, the Step 4.4.5 `red_run` record from the decision ledger — test intent ID, `command_argv`, exit code, right-reason verdict, and output excerpt. Use `(not run — <reason>)` when the gate was skipped or its red run is deferred to Step 5. Never summarize a run that did not happen as a failure.
 - `{session_class_context}`: compact bullet list of root-cause classes from findings NOT in the current batch. For each finding outside this batch (from the Step 4 PLAN approved-finding records persisted on `fix_plans[]` — NOT from `session_changes.changes_summary`, which is not yet written at Step 4.5 dispatch time and does not carry these fields), collect `root_cause_category` + `class_signature` (null → `"n/a"`) from the finding's `root_cause_analysis` as integrated from the investigator output. Deduplicate by `root_cause_category`. Format each as `- [F-ID]: <root_cause_category> (grep: <class_signature>)`. When the current batch is the only batch this session (all approved findings are in this batch), populate as `"(none — this is the only batch this session)"`. **Note:** dedup is by `root_cause_category`; when two out-of-batch findings share a `root_cause_category` but have different `class_signature` patterns, only one signature is retained — follow-on cycles may miss sibling instances matching the dropped signature.
 - `{alternative_approaches}` (inside each `{For each finding}` block): JSON-serialize `fix_proposal.alternative_approaches[]` from the investigator output; emit `"(none provided — run Axis 9 minimum-sufficient-remediation checks; skip only alternative-to-alternative comparison)"` when the field is absent or empty. Architecture-required findings also run Axis 8 from the architectural remediation fields.
 - `{prevention_plan}` (inside each `{For each finding}` block): JSON-serialize the complete investigator `prevention_plan` decision, including `mechanism` and either the `none-new` rationale or the structured `eligibility_basis`, concrete `eligibility_evidence`, and implementation details for a new mechanism. Never summarize or omit it: Axis 9 must receive the same prevention decision that Step 5 would execute.
 
-**Output format contract:** the challenger prompt template's `## OUTPUT FORMAT OVERRIDE — READ THIS FIRST` block explicitly supersedes the `aivv:reviewer` agent's `aivv:methodology`-preloaded output format. Do NOT modify or remove that override block when filling placeholders. The orchestrator in Step 4.5.3 parses the challenger's response as pure JSON `{batch_id, verdict, per_finding[]}` — if the override block is missing or stripped, the reviewer will emit the methodology prose+JSONL sidecar format instead, making Step 4.5 a silent no-op.
+**Output format contract:** the template's `## OUTPUT FORMAT OVERRIDE — READ THIS FIRST` block supersedes the `aivv:reviewer` agent's `aivv:methodology`-preloaded output format; send it intact. Step 4.5.3 parses the response as pure JSON `{batch_id, verdict, per_finding[]}` — without that block the reviewer emits the methodology prose+JSONL sidecar format instead, making Step 4.5 a silent no-op.
 
 ## 4.5.3 — Verdict handling
-
-After parsing the challenger's JSON verdict and recording the decision, mark that challenger handle `output_consumed: true`. Close consumed challenger handles before any Step 3 loop or before proceeding to Step 5.
 
 **APPROVE:** proceed to Step 5 EXECUTE. The red run already happened at Step 4.4.5 (or is deferred to Step 5 by its user-decision rule).
 
@@ -74,8 +77,6 @@ After parsing the challenger's JSON verdict and recording the decision, mark tha
 **REJECT:** only when evidence shows the proposed fix direction is wrong and the challenger supplies a concrete alternative inside `authorized_scope`. If the shared retry budget has room, record one retry event and investigate that alternative as a candidate implementation. An out-of-scope alternative is not adopted; report the finding unresolved. If the budget is exhausted, do not re-enter Step 3.
 
 **Uncertainty-only output:** record missing evidence or hypothetical risk under `non_blocking_observations`. It does not invalidate an otherwise supported plan, does not trigger another investigation, and does not consume a retry. The `concerns` array contains only actionable blockers.
-
-**Immediate targeted-follow-up exception:** If the next immediate step requires targeted interactive follow-up with a specific challenger, keep that challenger's `output_consumed` value `false` until the follow-up response is integrated. Surface and persist the reason in `session_changes.warnings` when possible. This is the only valid reason to leave a completed challenger subagent open after its current response.
 
 Do not add a separate double-REJECT escalation prompt. If evidence-backed concerns conflict, include both in the next in-budget investigation. If they remain unresolved at the shared cap, report the evidence and leave the finding unresolved.
 
