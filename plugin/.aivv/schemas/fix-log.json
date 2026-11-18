@@ -488,7 +488,16 @@
           "residual_risk": {
             "anyOf": [{"type": "string"}, {"type": "null"}]
           },
-          "reopen_trigger": {"type": "string"}
+          "reopen_trigger": {"type": "string"},
+          "decided_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When a later decision was recorded on a finished fix log."
+          },
+          "supersedes": {
+            "type": "object",
+            "description": "On a later decision recorded after the run finished: an exact copy of the deferred or needs_evidence entry this one replaces."
+          }
         }
       }
     },
