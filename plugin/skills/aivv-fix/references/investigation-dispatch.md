@@ -85,10 +85,15 @@ Build the prompt carefully — the investigator has NO conversation history.
 
 Before spawning investigators, run pre-spawn cleanup and track each handle per [Subagent handles](#subagent-handles).
 
-**Prompt template**: See [investigator-prompt-template.md](investigator-prompt-template.md) — read and fill in all `{placeholder}` values before sending. Key placeholders:
+**Prompt:** build it per [Building subagent prompts](#building-subagent-prompts) with template `investigator`. Fill:
+- `{For each finding in this batch}` loop, one copy per finding: `{finding_id}`, `{severity}`, `{description}`; `{file}` → `file:line`, or `"not specified"`; `{source}` → the source reviewer, or `"user-reported"`.
 - `{authorized_scope}` → copy the immutable `authorized_scope` snapshot from `/aivv-fix` Step 1.9. Do not regenerate it from the current finding summary or accept alternative wording that changes the original goal or boundaries.
 - `{json_schema_absolute_path}` → the absolute path to `references/json-schema.md` within the installed plugin cache at runtime (e.g., `~/.claude/plugins/cache/<marketplace>/aivv/<version>/skills/aivv-fix/references/json-schema.md`). This index links the focused schema references. The orchestrator fills the exact path at dispatch time — the investigator runs in the project's working directory and cannot resolve relative paths back to the skill.
-- `{source_signal}` → the signal label for each finding from the triage table: `[ivv]`, `[user-reported]`, `[deferred]`, or `[agent-noted]` — must be populated so the investigator calibrates scrutiny appropriately
+- `{source_signal}` (loop field) → the signal label for each finding from the triage table: `[ivv]`, `[user-reported]`, `[deferred]`, or `[agent-noted]` — must be populated so the investigator calibrates scrutiny appropriately
+- `{clustering}` → the Step 2b clustering rationale for this batch.
+- `{architectural_remediation_assessment}` → the reason-coded object from [Architectural remediation assessment seed](#architectural-remediation-assessment-seed).
+- `{source_log_absolute_path_or_none}` → the absolute path of the source review log or fix log, or `none`.
+- `{investigator_field_definitions_absolute_path}` → the absolute path of this skill's `references/investigator-field-definitions.md`.
 - `{introduced_by_context}` → JSON-serialized `introduced_by` object from the change-attribution probe above, or the literal string `"(not available)"` when the file is untracked, deleted/renamed at HEAD, or the finding is MINOR/POLISH (the probe skips non-CRITICAL/MAJOR findings). Passed to each CRITICAL/MAJOR finding's investigator as the `## Change Attribution` section in the prompt.
 - `{plugin_root_absolute_path}` → the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start (see `SKILL.md` "Runtime pin and preflight"); do not re-resolve it. The investigator reads its role file from this root, never from the target project.
 - `{target_project}` → the session target project absolute path. Use the canonical target/storage context bound before maintenance; do not infer a provisional target from findings. **Worktree-CWD note:** the investigator independently searches files to discover root causes and similar patterns, and inherits the orchestrator's shell CWD — which may be a stale git worktree at a different commit than the target. The template's `## Working Directory` block anchors all file operations on this absolute path — keep that block intact when filling placeholders (do not relax it to a bare relative-path hint), so the investigator searches the real target tree rather than the inherited CWD.
@@ -107,6 +112,16 @@ On Claude Code: dispatch via the `Agent` tool with `subagent_type: aivv:investig
 On Codex: dispatch a subagent declared at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml`; multiple subagents run in parallel under `agents.max_threads`. The TOML's `developer_instructions` already contains the portable role. If the callable dispatch surface is not initially visible, perform the [Codex dispatch preflight](codex-dispatch-preflight.md) before falling back.
 
 Wait for all investigators (and any inline analyses) to complete before proceeding.
+
+#### Building subagent prompts
+
+Build every investigator, fix-challenger, and verifier prompt with the shipped helper instead of reading the prompt template. Write `{"prompts": [{"template": "<investigator|fix-challenger|verifier>", "values": {...}}]}` to a private temp file and run `node "$AIVV_ROOT/tools/aivv-fix-records.mjs" <request.json>` (or `-` with the JSON on stdin). Key `values` by placeholder name from the step's fill list: the investigator list above, the challenger list in [challenge-loop.md](challenge-loop.md), the verifier list in [verifier-dispatch.md](verifier-dispatch.md).
+
+- The helper returns the template body with every supplied value fenced under one fresh nonce (never derived from prompt or project content), plus `unfilled` (placeholders still open) and `loop_sections` (per-entry sections and their placeholders). Supply every listed value in one call; for any value still in `unfilled`, add it and call again.
+- A loop section with more than one entry is yours to expand: repeat it once per entry and wrap each added value with `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD`, using the helper's returned `nonce` and a stable uppercase field name. Lines opening with `{For each …}`, `{/…}`, or another capitalised directive are instructions to you: replace them with the content they describe, or drop the section where they say to omit it.
+- Do not hand-type the fence tags, reuse an unwrapped copy, or place instructions or schema inside a fence. Use the nonce only for this prompt.
+- Open a `*-prompt-template.md` file only when `unfilled` names a placeholder whose meaning neither the fill list nor its annotation in the returned prompt gives.
+- Send the returned prompt with its `## Working Directory` block (and, for the challenger, its `## OUTPUT FORMAT OVERRIDE` block) intact.
 
 #### Subagent handles
 

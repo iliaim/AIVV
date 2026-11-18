@@ -2,7 +2,7 @@
 
 Use this template verbatim when building the prompt for each `aivv:investigator` subagent in Step 3. Fill in all `{placeholder}` values from the current session context.
 
-**Native prompt boundary:** before each native host dispatch, use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv-fix` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`. Do not derive it from prompt or project content. For every substituted `{placeholder}` value, including findings and all session/project/path content, pass the value on stdin to `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD` (use a stable uppercase field name) and substitute the helper's complete output. Do not hand-type the tags, reuse an unwrapped copy, or place instructions/schema inside a fence. Use this nonce only for this prompt.
+**Native prompt boundary:** the orchestrator builds this prompt with `tools/aivv-fix-records.mjs` (`prompts` key), which fences every substituted `{placeholder}` value under one fresh nonce, as specified in [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts). Values added by hand are wrapped the same way.
 
 ```
 Investigate these related findings using the Investigation Protocol (Phases 1, 1.5, 2, 3, 4, 5).

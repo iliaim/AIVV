@@ -46,7 +46,7 @@ Do not rely on `git diff` in Steps 5/6, skip same-file batching, or auto-proceed
 
 ## Reference Loading
 
-Read the linked reference when a step or condition below calls for it; do not preload the full reference set. Load prompt templates and schemas only for the dispatch that uses them: [investigator-prompt-template.md](references/investigator-prompt-template.md), [json-schema.md](references/json-schema.md), [investigator-output-example.md](references/investigator-output-example.md), [investigator-enrichment-fields.md](references/investigator-enrichment-fields.md), [investigator-field-definitions.md](references/investigator-field-definitions.md), [batched-and-challenger-schemas.md](references/batched-and-challenger-schemas.md), [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md), and [verifier-prompt-template.md](references/verifier-prompt-template.md).
+Read the linked reference when a step or condition below calls for it; do not preload the full reference set. Build investigator, fix-challenger, and verifier prompts with `aivv-fix-records.mjs` per [Building subagent prompts](references/investigation-dispatch.md#building-subagent-prompts); do not read the `*-prompt-template.md` files except as that section allows. Load output schemas ([json-schema.md](references/json-schema.md) and the files it links, [batched-and-challenger-schemas.md](references/batched-and-challenger-schemas.md)) only when parsing that dispatch's output.
 
 Calibration data is appended inline as JSONL; see Step 7.
 
