@@ -28,8 +28,8 @@
 
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdtempSync, rmdirSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { existsSync, readFileSync, unlinkSync, mkdtempSync, rmdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessProviderTrust, redactProviderDiagnostic, writeProviderTrustMemory } from './provider-trust.mjs';
@@ -629,35 +629,6 @@ function isInsideClaudeCodeSession() {
 // cwd is set to $HOME (not inherited project dir) to prevent maintainer guidance from being
 // auto-discovered by the spawned subprocess — avoids the project context leaking
 // into the cold reviewer role and overriding the --system-prompt schema instruction.
-const FINDINGS_SCHEMA_FOR_CLI = JSON.stringify({
-  type: 'object',
-  required: ['findings'],
-  properties: {
-    findings: {
-      type: 'array',
-      items: {
-        type: 'object',
-        required: ['id', 'severity', 'confidence', 'category', 'summary'],
-        properties: {
-          id: { type: 'string' },
-          severity: { type: 'string', enum: ['CRITICAL', 'MAJOR', 'MINOR', 'POLISH'] },
-          confidence: { type: 'string', enum: ['HIGH', 'MEDIUM', 'LOW'] },
-          category: { type: 'string', enum: CATEGORY_ENUM_VALUES },
-          summary: { type: 'string' },
-          value: { type: ['string', 'null'], enum: [...IMPROVEMENT_VALUE_ENUM, null] },
-          effort: { type: ['string', 'null'], enum: [...IMPROVEMENT_EFFORT_ENUM, null] },
-          file: { type: ['string', 'null'] },
-          line: { type: ['integer', 'null'] },
-          lens: { type: 'string' },
-          rule_id: { type: 'string' },
-          grounded_by: { type: 'array' },
-          ...MODERN_FINDING_JSON_SCHEMA_PROPERTIES,
-        },
-      },
-    },
-  },
-});
-
 const MODERN_FINDING_FILE_EXAMPLE = '{"id":"F001","severity":"CRITICAL|MAJOR|MINOR|POLISH","confidence":"HIGH|MEDIUM|LOW","category":"code-bug|design-flaw|process-violation|documentation-gap|clarification-needed|improvement","summary":"description","value":null,"effort":null,"quality_profile":"modern","file":"path/to/file","evidence":[{"kind":"internal-repo|websearch|webfetch|runtime|command|state-log|thread|unverified|unverifiable","ref":"source reference","excerpt":"short excerpt or null"}],"impact":"user or maintenance impact","severity_rationale":"why this severity is justified","recommended_next_step":"fix-now|investigate-first|document|defer-with-rationale|accept-risk","verification_path":"deterministic way to verify the fix","proportional_remediation":{"present_problem":"current evidenced problem","simplest_viable_correction":"minimum sufficient change","net_complexity":"moving pieces added or removed","why_current_shape_insufficient":"why no change or a smaller correction is insufficient"}}';
 const MODERN_FINDING_SCOPED_EXAMPLE = '{"id":"F002","severity":"CRITICAL|MAJOR|MINOR|POLISH","confidence":"HIGH|MEDIUM|LOW","category":"code-bug|design-flaw|process-violation|documentation-gap|clarification-needed|improvement","summary":"description","value":null,"effort":null,"quality_profile":"modern","scope_ref":{"kind":"process|session|artifact|user-journey|project","ref":"stable scope reference"},"evidence":[{"kind":"internal-repo|websearch|webfetch|runtime|command|state-log|thread|unverified|unverifiable","ref":"source reference","excerpt":"short excerpt or null"}],"impact":"user or maintenance impact","severity_rationale":"why this severity is justified","recommended_next_step":"fix-now|investigate-first|document|defer-with-rationale|accept-risk","verification_path":"deterministic way to verify the fix","proportional_remediation":{"present_problem":"current evidenced problem","simplest_viable_correction":"minimum sufficient change","net_complexity":"moving pieces added or removed","why_current_shape_insufficient":"why no change or a smaller correction is insufficient"}}';
 const MODERN_FINDING_FORMAT = '{"findings":[' + MODERN_FINDING_FILE_EXAMPLE + ']} or {"findings":[' + MODERN_FINDING_SCOPED_EXAMPLE + ']}';
