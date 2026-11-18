@@ -175,7 +175,8 @@ apply the proposal lifecycle, announce/ask, and hold rules in
 
 ## Step 4: Reviewer Prompt
 
-Use `reviewer-prompt-template.md`. Native prompts may use compact pointers;
+Use `reviewer-prompt-template.md` under the Prompt Construction rules in
+`review-dispatch-lifecycle.md`. Native prompts may use compact pointers;
 provider-backed prompts must be self-contained.
 
 Keep `Session Activity` before code, include metadata, capability degradations,

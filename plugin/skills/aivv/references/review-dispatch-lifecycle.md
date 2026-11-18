@@ -1,6 +1,7 @@
 # Review Dispatch Lifecycle
 
-Read before native reviewer dispatch, lifecycle cleanup, or same-agent fallback.
+Read before reviewer prompt construction, native reviewer dispatch, lifecycle
+cleanup, or same-agent fallback.
 
 ## Preflight
 
@@ -68,6 +69,33 @@ Record stdout as `workspace_sha_start`; capture again at Step 6.0. If changed,
 void with `WORKSPACE_DRIFT_VOIDED_REVIEW`. This catches tracked-file changes and
 untracked additions/deletions; existing untracked-file content changes remain a
 v0.1 limitation.
+
+## Prompt Construction (Step 4)
+
+Build each prompt from `reviewer-prompt-template.md` under these rules:
+
+- **Native prompt boundary:** before each native host reviewer dispatch,
+  use the absolute `AIVV_ROOT` pinned and preflighted at this `/aivv` invocation's start; do not re-resolve it during dispatch. Then generate one fresh nonce by running `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --nonce`.
+  Do not derive it from prompt or project content. For every value substituted into a
+  `{placeholder}`, pass its text on stdin to
+  `node "$AIVV_ROOT/tools/native-prompt-boundary.mjs" --wrap "$nonce" FIELD`
+  (use a stable uppercase field name) and substitute the helper's complete output.
+  Do not hand-type the tags. Use the same nonce throughout this one prompt only; use
+  this nonce only for this prompt. Keep template instructions and output requirements
+  outside fences.
+  Apply this to all session, user, project, file, diff, plan, path, and metadata values;
+  do not paste an unwrapped copy elsewhere in the prompt.
+
+- Every prompt includes `Review Dispatch Metadata`.
+- Homogeneous review: build one evidence body; vary only reviewer label.
+- Multi-lens `K==N`: each reviewer gets the same evidence plus only its own
+  metadata and lens-focus section.
+- KxM replication: construct K DISTINCT evidence bodies and replicate each to its block; reviewers in the same lens block share one evidence body.
+- `What to Review` and confirmed Scope designate the primary subject. Include a direct artifact's content or read-only pointer when that artifact is primary.
+- Session Activity is primary for a session review and supporting context for a direct artifact review. Keep it before Code Changes.
+- Code Changes are supplementary evidence for a session review; they are primary only when the confirmed subject is the code changes themselves.
+- Every reviewer reads the shared general review checklist before the four phases and performs its one applicability scan. An explicit lens set does not implicitly add the `general` lens.
+- Orchestrator owns scope, evidence selection, degradation labels, and synthesis.
 
 ## Multi-Model Branch
 
