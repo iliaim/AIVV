@@ -38,4 +38,4 @@ Investigators MAY emit this field on `root_cause_analysis` when the finding is a
 }
 ```
 
-**Consumer status:** emitted-and-recorded but **not yet consumed by automated routing** — it enriches the root-cause record for interaction bugs (the class 5-Whys/Fishbone frame poorly) and is surfaced to the user via the Step 4 results display; no Step 4/5 branch dispatches on it yet. Wiring is queued for a future cycle once dogfood evidence shapes the ergonomics, mirroring the `prerequisite_probe` / `static_reachability` staging pattern.
+**Consumer status:** emitted-and-recorded but **not yet consumed by automated routing** — it enriches the root-cause record for interaction bugs (the class 5-Whys/Fishbone frame poorly) and is surfaced to the user via the Step 4 results display; no Step 4/5 branch dispatches on it yet.

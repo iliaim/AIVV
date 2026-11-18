@@ -316,7 +316,7 @@ SRE-postmortem-style context. **Required for CRITICAL findings; recommended for 
 
 **Prose-only enum:** This enum is not machine-enforced — `finding.json` carries no schema constraint on `factor_type` values. Investigators may use any string; the listed values are the recommended vocabulary.
 
-**Per-factor evidence and confidence (deferred):** Each contributing factor intentionally omits individual `evidence` and `confidence` sub-fields. This is a YAGNI deferral — the factor array serves as a structured prompt for investigator reasoning; per-factor grounding fields are out of scope for v0.1 and may be added in a later schema version.
+**Per-factor evidence and confidence (deferred):** Each contributing factor intentionally omits individual `evidence` and `confidence` sub-fields. This is a YAGNI deferral — the factor array serves as a structured prompt for investigator reasoning; per-factor grounding fields are out of scope.
 
 **Key discipline:** `detection_failure` informs the `prevention_plan` decision; it does not automatically justify new machinery. A new mechanism is allowed only when the evidence establishes confirmed recurrence, a systemic failure class, high-impact safety/security exposure, or failure of an existing control that the mechanism directly repairs. Otherwise select `none-new` with a bounded rationale.
 
