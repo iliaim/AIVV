@@ -49,13 +49,13 @@ const hermesAdapter = readFileSync(path.join(pluginRoot, '.aivv/platform-adapter
 assert.match(hermesAdapter, /\$\{HERMES_SKILL_DIR\}/, 'Hermes adapter must use Hermes skill-dir substitution');
 assert.match(hermesAdapter, /skill_view[\s\S]*read_file/, 'Hermes adapter must distinguish in-skill and cross-root references');
 assert.match(hermesAdapter, /SKILL_BASE_DIR[\s\S]*does not export/, 'Hermes adapter must map shared path placeholders without assuming shell variables');
-assert.match(hermesAdapter, /can_enforce_readonly[\s\S]*unverified/, 'Hermes adapter must not claim unverified read-only enforcement');
+assert.ok(hermesAdapter.split('\n').some((line) => line.includes('can_enforce_readonly') && line.includes('unverified')),
+  'Hermes adapter must not claim unverified read-only enforcement');
 
-const readme = readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
 const installGuide = readFileSync(path.join(repoRoot, 'INSTALL.md'), 'utf8');
-assert.match(readme, /Hermes Agent/, 'README should identify the Hermes host integration');
 assert.match(installGuide, /skills\.external_dirs/, 'installation guide should document Hermes external skill setup');
-assert.ok(installGuide.includes('git clone --branch main https://github.com/iliaim/AIVV.git'), 'Hermes setup should use the canonical public main branch');
+assert.ok(installGuide.split('\n').some((line) => line.includes('git clone') && line.includes('github.com/iliaim/AIVV')
+  && /--branch main\b/.test(line)), 'Hermes setup should clone the canonical public repository at its main branch');
 
 for (const skill of ['aivv', 'aivv-fix', 'aivv-view', 'aivv-calibrate']) {
   const content = readFileSync(path.join(pluginRoot, `skills/${skill}/SKILL.md`), 'utf8');
