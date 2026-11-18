@@ -255,16 +255,14 @@ Review independently: you have no stake in the plan and no view of the maker's c
 **`{target_project}`**
 
 > ⚠ **All file operations MUST use this absolute path as the base.**
-> Do NOT use bare relative paths (`find src/`, `grep src/`, `ls src/`).
 > Your inherited shell CWD may NOT be the target project — it could be a
 > stale git worktree pinned to a different commit, so a relative path can
 > silently resolve against the wrong tree and make you REJECT a fix for a
-> file that exists (or APPROVE against stale content). Always anchor on the
-> absolute path above:
+> file that exists (or APPROVE against stale content). Search and read with
+> absolute paths under the path above. On Claude Code use the Read, Grep and
+> Glob tools: the Bash guard allows only read-only `git` in the inherited CWD.
 >
-> - ✓ `find {target_project}/src -name "*.ts"`
-> - ✓ `grep -rn "pattern" {target_project}/src/`
-> - ✗ `find src -name "*.ts"`   ← resolves to the wrong directory in a worktree
->
-> When in doubt, `cd {target_project}` before any file operation.
+> - ✓ Grep `pattern` in `{target_project}/src`
+> - ✓ Glob `**/*.ts` in `{target_project}/src`
+> - ✗ Grep `pattern` in `src`   ← resolves against the inherited CWD, not the target
 ```
