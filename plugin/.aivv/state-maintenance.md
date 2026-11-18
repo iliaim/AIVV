@@ -80,7 +80,27 @@ When older than seven days, write `status: "abandoned"`, `completed_at`, and a
 `{"code":"reaped-stale","ts":"<now>"}` warning through the shared mutation
 helper. Never reap a legacy original or an incomplete imported record.
 
-## Archival (maintenance-route only)
+## Maintenance route (`/aivv --maintenance`)
+
+`/aivv --maintenance` runs this preamble plus the maintenance actions below,
+then returns. It does not run session extraction, reviewer dispatch, a
+review-log write, or calibration.
+
+- Through the shared target-lock mutation boundary, preserve unparsable external
+  `review-*.json`, `fix-*.json`, `index.json`, and `wont-fix-registry.json`
+  under `<state_dir>/quarantine/`. Warn `quarantine-overflow` when the
+  quarantine count exceeds 20.
+- Rebuild `<state_dir>/index.json` from parseable review/fix logs with
+  `schema_version: 2`, `rebuilt_at`, and metadata entries.
+- Apply the 90-day archival move below.
+
+Surface summaries: `index-rebuilt`, `periodic-quarantine`,
+`quarantine-overflow` and `reaped-stale`. Legacy originals are never modified.
+Publish index candidates with `storage-paths.mjs write --context "$storage_context_file" --area
+state --relative index.json --source "<candidate>"`; move external quarantined
+records only inside the shared `lock -- <executable> <argv...>` operation.
+
+### Archival
 
 Only explicit `/aivv --maintenance` may MOVE, never delete, external
 `review-*.json` / `fix-*.json` with completed/abandoned status and

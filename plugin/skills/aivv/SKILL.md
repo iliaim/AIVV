@@ -68,7 +68,7 @@ Config/shape anchors:
 /aivv --fix --dry-run         # review normally, then plan fixes only
 /aivv --target=/path/project  # state + relative-path target
 /aivv --full                  # seven specialist lenses, N=14
-/aivv --maintenance           # quarantine + index rebuild; no review
+/aivv --maintenance           # quarantine, index rebuild, 90-day archive; no review
 ```
 
 Other routed flags include `--lens=...`, `--lens-replicate=M`, `--full-ui-ux`,
@@ -92,7 +92,7 @@ runtime-evidence flags, and multi-model provider overrides.
   diagnostic and stop; do not fall back to another installation or retry the
   missing reference.
 - Real reviews: read [orchestration-workflow.md](references/orchestration-workflow.md) first; it owns execution and routes to the other references.
-- Argument/config/setup/eval/maintenance: [argument-parsing.md](references/argument-parsing.md), [help-text.md](references/help-text.md), [preferences.md](references/preferences.md), [thoroughness-dial.md](references/thoroughness-dial.md), [setup-wizard.md](references/setup-wizard.md), [eval-harness.md](references/eval-harness.md), [lens-composition.md](references/lens-composition.md).
+- Argument/config/setup/eval/maintenance: [argument-parsing.md](references/argument-parsing.md), [help-text.md](references/help-text.md), [preferences.md](references/preferences.md), [thoroughness-dial.md](references/thoroughness-dial.md), [setup-wizard.md](references/setup-wizard.md), [eval-harness.md](references/eval-harness.md), [state-maintenance.md](../../.aivv/state-maintenance.md).
 - Review shape/scope: [review-shape-resolution.md](references/review-shape-resolution.md), [lens-composition.md](references/lens-composition.md), [scope-confirmation.md](references/scope-confirmation.md).
 - Dispatch/prompt: [reviewer-prompt-template.md](references/reviewer-prompt-template.md), [review-dispatch-lifecycle.md](references/review-dispatch-lifecycle.md), [multi-model-dispatch.md](references/multi-model-dispatch.md).
 - Output/persistence: [result-rendering-policy.md](references/result-rendering-policy.md), [setup-hint.md](references/setup-hint.md), [consensus-output-templates.md](references/consensus-output-templates.md), [self-calibration.md](references/self-calibration.md), [review-log-schema.md](references/review-log-schema.md), [viewer-hook.md](references/viewer-hook.md), [auto-chain-handoff.md](references/auto-chain-handoff.md).

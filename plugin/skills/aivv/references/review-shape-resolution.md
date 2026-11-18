@@ -55,13 +55,7 @@ resolution, smart-lens detection, or high-risk floor reporting.
 
 ## 2. Composition Rules
 
-`lens-composition.md` owns the K/M/N matrix:
-
-- K=1, M=1: homogeneous dispatch; all reviewers use the single lens.
-- K=N, M=1: 1:1 multi-lens spike; reviewer `i` gets `lenses_list[i]`.
-- M>=2: KxM block replication; requires `N == K*M`; reviewer `i` gets
-  `lenses_list[i // M]`.
-- Mismatches reject with the exact errors in `lens-composition.md`.
+`lens-composition.md` owns the K/M/N matrix and its rejection errors.
 
 Full-audit wrappers are KxM shortcuts. `--lens-replicate=<M>` can override the
 wrapper default M through the precedence chain in `argument-parsing.md`.

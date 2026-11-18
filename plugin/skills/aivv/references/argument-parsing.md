@@ -34,7 +34,8 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
   suppresses auto-detection.
 - `--lens-replicate=M`: integer 1-9; requires `--lens=` when M > 1; Step 1.4
   requires `N == K*M`.
-- Full wrappers conflict with `--lens=`, `--reviewers=`, bare integer, and other
+- Full wrappers are fixed specialist audits: their ordered lens lists never
+  implicitly add `general`. They conflict with `--lens=`, `--reviewers=`, bare integer, and other
   full wrappers; `--lens-replicate=M` is allowed. M precedence: CLI
   `--lens-replicate` > config `default_lens_replicate` / legacy `default_M` >
   wrapper default > schema default.
@@ -42,9 +43,10 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
 - `--full-ui-ux`: lenses `visual,ux,polish,compliance,i18n,user-journey`,
   wrapper M=2, default N=12.
 - `--full-a11y`: lenses `visual,compliance`, wrapper M=2, default N=4.
-- `--full`: all seven specialist lenses (excluding the general default lens), wrapper M=2, default N=14.
-- `--full-with-journey`: all eight specialist lenses including `user-journey` (excluding the general default lens), wrapper M=2,
-  default N=16; warn that this exceeds the dev.70 tested ceiling of N=14, then
+- `--full`: lenses `code,sec,visual,ux,polish,compliance,i18n` (all seven
+  specialist lenses), wrapper M=2, default N=14.
+- `--full-with-journey`: lenses `code,sec,visual,ux,polish,compliance,i18n,user-journey`
+  (all eight specialist lenses), wrapper M=2, default N=16; warn that this exceeds the dev.70 tested ceiling of N=14, then
   continue unless host dispatch cannot support it.
 - `--thoroughness=<tier>`: accepts exactly `fast, balanced, thorough, exhaustive`.
   Reject others with `config-invalid-value: thoroughness must be one of fast, balanced, thorough, exhaustive; got '<received-value>'.` The dial supplies defaults only; explicit `--reviewers`, `--lens-replicate`, or pinned config values win.
@@ -66,7 +68,9 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
   runtime-evidence behavior only. They do not authorize browser driving unless
   the runtime adapter supports it.
 - `--eval`: maintainer eval path; exits before review dispatch/log/fix chain.
-- `--maintenance`: state-maintenance path; exits before review dispatch.
+- `--maintenance`: runs the Maintenance route in
+  [`.aivv/state-maintenance.md`](../../../.aivv/state-maintenance.md)
+  (quarantine, index rebuild, 90-day archive move); exits before review dispatch.
 
 ## Setup
 
@@ -116,3 +120,11 @@ After stripping flags, first existing path positional means artifact review;
 quoted/non-path text means idea review; no positional means session review.
 Directory positional is not a project sweep; project/subtree sweep must be
 stated as the session review goal.
+
+Quoted text wins over file path when ambiguous. Explicit `--reviewers=N` wins
+over bare integer shorthand. Examples:
+
+- `/aivv src/foo.ts 4` -> file positional, 4 reviewers.
+- `/aivv "should we use Redis" 3` -> idea positional, 3 reviewers.
+- `/aivv 3 src/foo.ts` -> reviewers 3, file positional.
+- `/aivv src/foo.ts 4 5` -> reviewers 4; trailing 5 warned and ignored.

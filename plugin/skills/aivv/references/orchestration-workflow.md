@@ -65,11 +65,7 @@ or auto-chain.
 After parsing N/K/M, derive provisional `reviewer_lens_assignments`. Recompute
 after preferences and smart-lens detection.
 
-Use `review-shape-resolution.md`; use `lens-composition.md` for K>=2, M>=2, or
-`--maintenance`.
-
-Invariants: K=1/M=1 all reviewers use one lens; K=N/M=1 is 1:1; M>=2 requires
-`N == K*M`; maintenance/eval are early exits.
+Use `review-shape-resolution.md`; `lens-composition.md` owns the K/M/N matrix.
 
 ## Step 1.5: Preferences
 

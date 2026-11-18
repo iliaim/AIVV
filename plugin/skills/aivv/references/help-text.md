@@ -54,7 +54,7 @@ Configuration:
   --config-get <key>                Get the effective value for one key
 
 Maintenance / eval:
-  --maintenance                     Quarantine sweep + index rebuild; no review dispatch
+  --maintenance                     Quarantine sweep, index rebuild, 90-day archive move; no review
   --eval [--lens=<X>]               Maintainer-side eval corpus run; exits before review dispatch
 
 Modifiers:
