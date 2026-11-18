@@ -8,8 +8,6 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 
 **Scope**: code-observable patterns only. Heuristic violations that require runtime confirmation (actual response time, real focus-ring rendering, computed contrast under live theme) are out of scope; those route to `visual-verification-triggers/` and the runtime-visual lens (planned).
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### HEU-[A-Za-z0-9.-]+:' .aivv/standards/ux-heuristics/`) and asserts the count matches the documented total. When adding new heuristics, place each in the appropriate by-source subfile.
-
 **Rule-ID conventions**:
 - `HEU-NN1` … `HEU-NN10` — Nielsen's 10 usability heuristics (NN/g 1994, refined 2024) — see [nielsen.md](nielsen.md)
 - `HEU-SCH1` … `HEU-SCH8` — Schneiderman's 8 Golden Rules (1987, 6th ed. 2016) — see [schneiderman.md](schneiderman.md)

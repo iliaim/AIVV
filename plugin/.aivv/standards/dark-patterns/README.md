@@ -12,8 +12,6 @@ The audience for this document is the AIVV reviewer agent applying the `visual`,
 
 **Scope**: code-observable patterns only. Dark-pattern concerns that require runtime confirmation (actual measured time spent in cancel flow, real countdown-timer accuracy under network variance, real consent-banner accept-rate manipulation) are out of scope; those route to `visual-verification-triggers/` and the runtime-visual lens (planned).
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### DP-[A-Z0-9]+-[0-9]+:' .aivv/standards/dark-patterns/`) and asserts the count matches the documented total. When adding new rules, place each in the appropriate by-domain subfile.
-
 **Rule-ID conventions**:
 - `DP-PRICE-NN` — pricing manipulation (drip pricing, hidden fees, anchor manipulation) — see [pricing.md](pricing.md)
 - `DP-SUB-NN` — subscription manipulation (auto-renew, hard-to-cancel, payment-method dark patterns) — see [subscription.md](subscription.md)

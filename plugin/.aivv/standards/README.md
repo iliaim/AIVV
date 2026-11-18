@@ -78,7 +78,7 @@ These standards are curated content, not author-invented. When adding a rule:
 1. **Cite an authoritative source** — W3C WAI, WebAIM, NN/g, MDN, GOV.UK, USWDS, web.dev. No "we think it's good practice" entries.
 2. **Verify the rule is code-reviewable** — if verification requires rendered output, put it in the Out-of-code-review-scope section, not the main checklist.
 3. **Follow the numbering convention** — `A11Y-NNN`, `UX-NNN`, `VVT-NNN`; sequential per file.
-4. **Ship with a positive + negative fixture** if `validate.sh` tests the rule mechanically (currently none do — these are reviewer-reference docs, not lint rules).
+4. **Add each rule as a `### PREFIX-ID: title` heading** in the family's subfile, then regenerate the index as described in Generated Rule Index above.
 
 ## Relationship to Tier 2
 

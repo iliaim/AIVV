@@ -8,8 +8,6 @@ The audience for this document is the AIVV reviewer agent applying the `visual` 
 
 **Scope**: code-observable patterns only. Visual concerns that require rendered-output measurement (actual computed contrast under live theme, measured motion timing, pixel-diff regression, real font-load timing) route to `visual-verification-triggers/` triggers and the runtime-visual lens (planned). VD-* rules flag the *pattern* in source; the runtime layer measures the *outcome*.
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### VD-[A-Z]+-[0-9]+:' .aivv/standards/visual-design/`) and asserts the count matches the documented total. When adding new rules, place each in the appropriate by-domain subfile.
-
 **Rule-ID conventions**:
 - `VD-TYPE-NN` — typography (font scale, line-height, weight, family, loading, wrap, line length) — see [typography.md](typography.md)
 - `VD-SPACE-NN` — spacing, rhythm, touch targets, grid — see [spacing.md](spacing.md)

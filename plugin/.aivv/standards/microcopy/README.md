@@ -6,8 +6,6 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 
 **Scope:** rendered UI copy only — button labels, field labels, error/empty/loading prose, dialog text, toast/notification body, page metadata visible to users. Out of scope: contributor-facing prose (commit messages, code comments, internal docs), generated machine output (logs, debug strings), trademarked names and product nouns where the project's brand guidelines override these defaults.
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### MC-[0-9]+:' .aivv/standards/microcopy/`) and asserts the count matches the documented total. When adding `MC-039` or beyond, place the new rule in the appropriate by-domain subfile so the recursive grep continues to enforce.
-
 ## Rule index (38 code-reviewable rules)
 
 | File | Rules | Section |

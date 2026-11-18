@@ -2,8 +2,6 @@
 
 Curated checklist of UI/UX pattern violations that an IV&V reviewer can catch by reading code alone — no runtime, no rendered output. Each rule cites an authoritative source (NN/g, GOV.UK, WCAG, MDN, Smashing, Baymard, web.dev, Inclusive Components). Out of scope: design aesthetics ("use blue, not green"), design-system choices (Tailwind vs. Material), and rendered-output concerns (cross-browser visual regression, real touch-target size on physical devices, animation timing). Those belong to Tier 2 visual/runtime verification; a flag-list appears at the bottom of this README.
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### UX-[0-9]+:' .aivv/standards/ui-ux/`) and asserts the count matches the documented total. When adding `UX-030` or beyond, place the new rule in the appropriate by-domain subfile so the recursive grep continues to enforce.
-
 ## Rule index (46 code-reviewable rules)
 
 | File | Rules | Section |

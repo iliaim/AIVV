@@ -31,4 +31,3 @@ When adding a new `HEU-LUX-*` rule:
 2. **Place in the appropriate by-domain subfile** (timing / memory / decision / mental-models / gestalt / engagement). Avoid creating new subfiles unless ≥3 rules cluster in a new domain.
 3. **Add the rule-ID to the index table and quick-lookup line** in this README.
 4. **Update parent count** in [../README.md](../README.md) `Rule index` table (`laws-of-ux/` row count).
-5. The maintainer validator recurses `ux-heuristics/` (which transitively recurses this directory), so no validate.sh edit is needed when adding rules in-place.

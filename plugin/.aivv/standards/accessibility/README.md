@@ -2,8 +2,6 @@
 
 This subdir is a lookup reference for the AIVV code-reviewer when inspecting diffs that touch UI code (HTML, JSX/TSX, Vue, Svelte, CSS). It curates WCAG 2.1 Level A/AA + WCAG 2.2 NEW Level A/AA/AAA rules that can be verified by reading source code alone — no runtime, no rendered output, no screen-reader testing required. Rules requiring rendered output (computed contrast ratios, actual focus appearance, live screen-reader announcements) are flagged at the bottom of this README for Tier 2 visual verification. All rules cite an authoritative source (W3C WAI, WebAIM, MDN, or The A11y Project). Severities are assigned on impact: CRITICAL blocks assistive tech; MAJOR degrades UX for disabled users; MINOR is best-practice drift.
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### A11Y-[0-9]+:' .aivv/standards/accessibility/`) and asserts the count matches the documented total. When adding `A11Y-075` or beyond, place the new rule in the appropriate by-domain subfile so the recursive grep continues to enforce.
-
 ## Rule index (74 code-reviewable rules)
 
 | File | Rules | Section |

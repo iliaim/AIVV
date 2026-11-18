@@ -10,8 +10,6 @@ The audience for this document is the AIVV reviewer agent applying the `ux` or `
 
 **The principle**: every interactive primitive has a finite state inventory. A button is `default | hover | focus | active | disabled | loading | success | error`. A form field is `empty | typing | valid | invalid | disabled | readonly | submitting | submitted | error`. An async list is `initial | loading | empty | populated | error | refreshing`. A dialog is `closed | opening | open | closing | error`. Code that introduces a primitive without covering its full inventory produces a finding.
 
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### IS-[0-9]+:' .aivv/standards/interaction-states/`) and asserts the count matches the documented total. When adding `IS-031` or beyond, place the rule in the appropriate by-primitive subfile.
-
 ## Rule index (30 code-reviewable rules)
 
 | File | Rules | Primitive class |
