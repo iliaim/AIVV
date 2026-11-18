@@ -25,8 +25,10 @@ const USAGE = [
   '    retry           {history, gate, finding_ids, defect, evidence[, beyond_limit_reason]} -> retry_entry',
   '    prompts         [{template, values}, ...] -> prompts, each value fenced with a fresh nonce',
   '                    template: fix-challenger | verifier | investigator',
-  '                    unfilled lists the {placeholders} left for you to fill; it can also',
-  '                    name a literal {example} in the template text, which you leave alone',
+  '                    unfilled lists the {placeholders} left for you to fill; loop_sections',
+  '                    lists each {For each ...} section and its placeholders, which repeat once',
+  '                    per entry: a supplied value fills every copy, so expand them yourself',
+  '                    when there is more than one entry',
   '    prior_repairs   {context, files}          -> prior_repairs: earlier /aivv-fix runs on this',
   '                    target whose fix logs changed any of files, newest first (report only)',
   '                    context: this run\'s storage context file; files: paths this run plans to change;',
@@ -130,19 +132,73 @@ function templateBody(name) {
   return lines.slice(start + 1, end).join('\n') + '\n';
 }
 
+// Placeholders on one line: brace groups opening with a lowercase key, matched with their nested braces,
+// so an annotation such as {list — JSON array of {id, ...}} is one placeholder named by its outer key.
+// Inside an inline `code span`, a group whose key is not followed directly by } is a literal example
+// of a value shape (`{block_id: <N>}`), not a placeholder.
+function placeholderTokens(line) {
+  const tokens = [];
+  let inCode = false;
+  for (let i = 0; i < line.length; i += 1) {
+    if (line[i] === '`') inCode = !inCode;
+    if (line[i] !== '{' || !/[a-z]/.test(line[i + 1] ?? '')) continue;
+    let depth = 0;
+    let end = -1;
+    for (let j = i; j < line.length; j += 1) {
+      if (line[j] === '{') depth += 1;
+      if (line[j] === '}' && (depth -= 1) === 0) {
+        end = j;
+        break;
+      }
+    }
+    if (end < 0) continue;
+    const key = /^\{([a-z][a-z0-9_.]*)/.exec(line.slice(i))[1];
+    if (!(inCode && line[i + 1 + key.length] !== '}')) tokens.push({ start: i, end: end + 1, key });
+    i = end;
+  }
+  return tokens;
+}
+
 function fillPrompt(request) {
   const values = request.values ?? {};
   const nonce = newNonce();
   const unfilled = new Set();
-  const prompt = templateBody(request.template).replace(/\{([a-z][a-z0-9_.]*)[^{}\n]*\}/g, (token, key) => {
-    if (!Object.hasOwn(values, key)) {
-      unfilled.add(key);
-      return token;
+  const loopSections = [];
+  let loop = null;
+  const lines = templateBody(request.template).split('\n').map((line) => {
+    // A line opening with {For each ...}, {/...} or another capitalised directive is an instruction to
+    // the orchestrator, not a placeholder. A {For each ...} section runs to its {/For each ...} line or
+    // the next ## heading; its placeholders repeat once per entry, which this helper does not expand.
+    const directive = /^\s*\{(?:[A-Z]|\/)/.test(line);
+    if (/^## /.test(line) || /^\s*\{\/For each\b/.test(line)) loop = null;
+    if (/^\s*\{For each\b/.test(line)) {
+      loop = { marker: line.trim().replace(/^\{|\}$/g, '').replace(/:$/, ''), fields: [] };
+      loopSections.push(loop);
     }
-    const value = typeof values[key] === 'string' ? values[key] : JSON.stringify(values[key], null, 2);
-    return wrapUntrusted(nonce, key.toUpperCase().replaceAll('.', '_'), value);
+    if (directive) return line;
+    let out = '';
+    let last = 0;
+    for (const { start, end, key } of placeholderTokens(line)) {
+      out += line.slice(last, start);
+      last = end;
+      if (loop && !loop.fields.includes(key)) loop.fields.push(key);
+      if (!Object.hasOwn(values, key)) {
+        unfilled.add(key);
+        out += line.slice(start, end);
+        continue;
+      }
+      const value = typeof values[key] === 'string' ? values[key] : JSON.stringify(values[key], null, 2);
+      out += wrapUntrusted(nonce, key.toUpperCase().replaceAll('.', '_'), value);
+    }
+    return out + line.slice(last);
   });
-  return { template: request.template, nonce, prompt, unfilled: [...unfilled] };
+  return {
+    template: request.template,
+    nonce,
+    prompt: lines.join('\n'),
+    unfilled: [...unfilled],
+    loop_sections: loopSections.filter((section) => section.fields.length > 0),
+  };
 }
 
 function relativeTo(file, ...roots) {

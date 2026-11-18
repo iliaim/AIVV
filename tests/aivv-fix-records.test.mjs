@@ -96,6 +96,26 @@ try {
   assert.ok(verifier.unfilled.includes('execution_evidence.stdout_excerpt'), 'dotted placeholders are reported');
   assert.ok(run({ prompts: [{ template: 'investigator', values: {} }] }).out.prompts[0].prompt.length > 1000);
 
+  // Literal brace examples are not placeholders; an annotated placeholder with nested braces is one placeholder.
+  assert.ok(!verifier.unfilled.includes('build'), 'a brace group inside a {For each ...} directive is not a placeholder');
+  const investigator = run({ prompts: [{ template: 'investigator', values: {} }] }).out.prompts[0];
+  for (const literal of ['block_id', 'temporal_target', 'language']) {
+    assert.ok(!investigator.unfilled.includes(literal), `${literal}: a value-shape example in a code span is not a placeholder`);
+  }
+  assert.ok(investigator.prompt.includes('`{block_id: <N>}`'), 'literal examples stay in the prompt unchanged');
+  assert.ok(!prompt.unfilled.includes('pros'), 'a brace group nested in a placeholder annotation is not a placeholder');
+  assert.ok(prompt.unfilled.includes('alternative_approaches'), 'a placeholder whose annotation nests braces is reported');
+  const filled = run({ prompts: [{ template: 'fix-challenger', values: { alternative_approaches: '[]' } }] }).out.prompts[0];
+  assert.ok(!filled.unfilled.includes('alternative_approaches') && !filled.prompt.includes('{alternative_approaches'),
+    'a placeholder whose annotation nests braces is filled by its name');
+
+  // Per-entry loop sections are named with their placeholders; the helper does not expand them.
+  const [findingLoop] = prompt.loop_sections;
+  assert.equal(findingLoop.marker, 'For each finding in the batch');
+  assert.ok(findingLoop.fields.includes('summary') && findingLoop.fields.includes('alternative_approaches'));
+  assert.ok(!findingLoop.fields.includes('write_intents'), 'a placeholder after the section is not in it');
+  assert.ok(verifier.loop_sections.some((section) => section.fields.includes('execution_evidence.stdout_excerpt')));
+
   // Refusals name the cause.
   const noBytes = run({ write_intents: [{ id: 'WI-9', finding_id: 'F001' }] });
   assert.equal(noBytes.status, 1);
