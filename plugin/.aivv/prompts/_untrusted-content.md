@@ -42,9 +42,9 @@ Current members: `reviewer-role.md`, `investigator-role.md`, `fix-challenger-rol
 
 ## Enforcement
 
-No automated check covers the three concepts above: review every new or edited surface
-against them by hand. `tests/provider-agnostic-contract.test.mjs` scans these files, but
-only checks that they assume no provider or model family.
+`tests/untrusted-boundary.test.mjs` discovers surfaces by the convention above, requires the
+`untrusted` token in each, and requires the member list above to match. Concepts 2 and 3 have
+no automated check: review every new or edited surface against them by hand.
 
 ## Structural delimiter enforcement
 
