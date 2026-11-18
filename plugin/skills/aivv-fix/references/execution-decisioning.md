@@ -58,6 +58,6 @@ Missing or unknown `category` falls back to Branch A only with an explicit warni
 - Investigation: `fast-path.md`, `investigation-dispatch.md`.
 - Planning and final route classification: `apply-policy-and-gates.md`.
 - Write readiness: `write-intents-and-prewrite-validation.md`, `challenge-loop.md`, `red-green-gate.md`.
-- Execution and audit: `fix-log-contract.md`, `execution-branches.md`, `mechanical-verification-checks.md`.
+- Execution and audit: `fix-log-contract.md`, `execution-branches.md` (Branches B–F: `execution-branches-b-to-f.md`), `mechanical-verification-checks.md`.
 
 Do not use this reference as a substitute for those mechanics; use it to preserve their ordering and avoid duplicated route decisions.

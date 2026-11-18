@@ -142,6 +142,7 @@ const PREFLIGHT_FILES = {
     "skills/aivv-fix/references/containment.md",
     "skills/aivv-fix/references/document-and-calibration.md",
     "skills/aivv-fix/references/execution-branches.md",
+    "skills/aivv-fix/references/execution-branches-b-to-f.md",
     "skills/aivv-fix/references/execution-decisioning.md",
     "skills/aivv-fix/references/fast-path.md",
     "skills/aivv-fix/references/finding-collection.md",
