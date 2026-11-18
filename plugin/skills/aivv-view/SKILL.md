@@ -56,53 +56,22 @@ and linked `reviews/` output retain their selected destinations. Legacy pending
 Inbox requests cannot execute: explicitly import the review if necessary, then
 requeue selected findings through the current receiver's normal validation.
 
-## TUI hotkeys
+## Reports
 
-| Key | Action |
-|-----|--------|
-| `Enter` | Open finding's file:line in `$EDITOR` |
-| `p` | Toggle POLISH findings (hidden by default) |
-| `g` | Cycle group-by: severity → rule → file → lens |
-| `r` | Open rule body in `$PAGER` |
-| `w` | Show wont-fix recurrence detail |
-| `/` | Search/filter (fzf built-in) |
-| `?` | Help overlay |
-| `q` / `ESC` | Quit |
-
-Graceful degradation: if `fzf` is not installed, `--tui` falls back to `--summary` with an install hint.
-
-## HTML reports
-
-`--html` renders a self-contained single-file HTML report — no network dependencies, works offline, shareable by copying one file. It compacts and inlines CSS/JS from `templates/` at render time.
-
-- **Sticky header** with severity chip filters (`aria-pressed` state) plus search, decisions-only placeholder, and hide addressed / verified toggle.
-- **Severity-grouped sections** — CRITICAL → MAJOR → MINOR → POLISH, each with collapsible `<details>` cards.
-- **Decision handoff** — static reports read optional `decisions-<review-id>.json` from the resolved external state store (or the selected read-only historical store), render per-finding decision controls, and copy a JSON payload for `/aivv-fix --resume <review-id>` or `/aivv-fix --resolve <review-id>`. The separate opt-in `--inbox` service turns selected `Fix` decisions into one typed, local request for `/aivv-fix --action-request=<uuid>`; it never executes remediation from the browser.
-- **XSS-safe** — all finding data rendered through jq's `@html` filter.
-- **Accessibility:** skip-to-content link, ARIA landmarks, `aria-pressed` on severity filters, focus-visible rings, `aria-live` visible-count updates, and `prefers-reduced-motion` honored on transitions.
-- **Size:** bounded by a normalized corpus budget (static shell + per-finding allowance). The renderer compacts embedded CSS/JS at output time and avoids duplicated card-body prose while preserving issue metadata and full visible-summary search.
-
-```bash
-/aivv-view --html -o review.html --open
-```
+`--tui` needs `fzf`; without it, `--tui` falls back to `--summary` with an
+install hint. `--html` renders a self-contained single-file report that works
+offline: CSS/JS from `templates/` are compacted and inlined at render time, and
+all finding data passes through jq's `@html` filter.
 
 `--open` is only valid with `--html -o report.html` or `--browser -o browser.html`; stdout HTML cannot be opened because there is no generated file path. The script-level opener uses the host OS default browser (`open`, `xdg-open`, or PowerShell) and respects `AIVV_QUIET=1`, `AIVV_HEADLESS=1`, `CI=true`, and display-less Linux environments by writing the report without launching a browser. In automatic `/aivv` and `/aivv-fix` flows, the active platform adapter owns any native auto-open behavior when `post_review_html_open_mode=open`; this script remains portable and host-neutral. Bare interactive `/aivv-view` is browser-first and writes the browser under the external target-instance report cache; piped bare invocations still emit JSON for scripts.
 
-## Findings browser
+### Findings browser
 
 `--browser` renders a static multi-cycle HTML index over review logs in
 the external `state/` and `state/archive/`, plus bounded read-only legacy directories. The active-state copy wins, with a
-warning, if the same review filename exists in both locations. It is read-only:
-it summarizes open, no-fix-session, fix-unjoinable, addressed-unverified,
-verified-resolved, deferred, wont-fix, legacy-fixed-claim, severity, and
-warning counts across cycles without writing state, calibration, decisions, or
-lifecycle incidents.
-
-```bash
-/aivv-view --browser -o browser.html --open
-```
-
-The browser consumes the same loader and humanize pipeline as `--html`, then renders a searchable static table. When written with `-o`, it also writes a sibling `reviews/` directory of linked single-review reports so users can move from a cycle row to the detailed report and back.
+warning, if the same review filename exists in both locations. It summarizes
+per-review status, severity, and warning counts across cycles without writing
+state, calibration, decisions, or lifecycle incidents. It consumes the same loader and humanize pipeline as `--html`, then renders a searchable static table. When written with `-o`, it also writes a sibling `reviews/` directory of linked single-review reports so users can move from a cycle row to the detailed report and back.
 
 ## Decisions Clipboard Handoff
 
