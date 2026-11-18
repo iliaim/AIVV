@@ -12,7 +12,7 @@
  *     --timeout 300
  *
  *   node <AIVV_ROOT>/tools/dispatch.mjs --probe --provider <provider-id> --provider-egress-consent
- *   node <AIVV_ROOT>/tools/dispatch.mjs --assert-prompt-pack
+ *   node <AIVV_ROOT>/tools/dispatch.mjs --assert-provider-registry
  *
  * Exit codes:
  *   0  Success
@@ -55,9 +55,6 @@ function parseArgs(argv) {
     reviewerId: 'solo',
     timeout: 300,
     authMode: 'auto',
-    assertPromptPack: false,
-    assertModernFindingSchema: false,
-    assertExtractJSON: false,
     assertProviderRegistry: false,
     modelSource: 'request',
     renderPromptOnly: false,
@@ -69,9 +66,6 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--probe') { args.probe = true; continue; }
-    if (arg === '--assert-prompt-pack') { args.assertPromptPack = true; continue; }
-    if (arg === '--assert-modern-finding-schema') { args.assertModernFindingSchema = true; continue; }
-    if (arg === '--assert-extract-json') { args.assertExtractJSON = true; continue; }
     if (arg === '--assert-provider-registry') { args.assertProviderRegistry = true; continue; }
     if (arg === '--render-prompt-only') { args.renderPromptOnly = true; continue; }
     if (arg === '--provider-egress-consent') { args.providerEgressConsent = true; continue; }
@@ -115,9 +109,6 @@ if (args.help) {
     '  printf "%s" "$prompt" | node <AIVV_ROOT>/tools/dispatch.mjs --provider <p> --model <m> --reviewer-id <id> [--timeout <s>] [--auth-mode auto|cli|api_key]',
     '  printf "%s" "$prompt" | node <AIVV_ROOT>/tools/dispatch.mjs --provider <p> --model <m> --reviewer-id <id> --render-prompt-only',
     '  node <AIVV_ROOT>/tools/dispatch.mjs --probe --provider <p> --provider-egress-consent',
-    '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-prompt-pack',
-    '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-modern-finding-schema',
-    '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-extract-json',
     '  node <AIVV_ROOT>/tools/dispatch.mjs --assert-provider-registry',
     '',
     'Registered providers: ' + providerIds.join(', '),
@@ -177,10 +168,6 @@ const LENS_ENUM = new Set(['general', 'code', 'sec', 'visual', 'ux', 'polish', '
 const CATEGORY_ENUM_VALUES = ['code-bug', 'design-flaw', 'process-violation', 'documentation-gap', 'clarification-needed', 'improvement'];
 const CATEGORY_ENUM = new Set(CATEGORY_ENUM_VALUES);
 const MODERN_FINDING_FIELDS = ['quality_profile', 'scope_ref', 'evidence', 'impact', 'severity_rationale', 'recommended_next_step', 'verification_path', 'proportional_remediation'];
-const MODERN_SCOPE_KIND_ENUM = ['process', 'session', 'artifact', 'user-journey', 'project'];
-const MODERN_EVIDENCE_KIND_ENUM = ['internal-repo', 'websearch', 'webfetch', 'runtime', 'command', 'state-log', 'thread', 'unverified', 'unverifiable'];
-const RECOMMENDED_NEXT_STEP_ENUM = ['fix-now', 'investigate-first', 'document', 'defer-with-rationale', 'accept-risk'];
-const IMPROVEMENT_VALUE_ENUM = ['high', 'medium', 'low'];
 const IMPROVEMENT_EFFORT_ENUM = ['trivial', 'moderate', 'invasive'];
 const PROVIDER_NULL_OPTIONAL_FINDING_FIELDS = [
   ...MODERN_FINDING_FIELDS,
@@ -212,74 +199,6 @@ function isCompleteProportionalRemediation(value) {
     )
   );
 }
-const MODERN_FINDING_JSON_SCHEMA_PROPERTIES = {
-  quality_profile: { type: 'string', enum: ['modern'] },
-  scope_ref: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['kind', 'ref'],
-    properties: {
-      kind: { type: 'string', enum: MODERN_SCOPE_KIND_ENUM },
-      ref: { type: 'string' },
-    },
-  },
-  evidence: {
-    type: 'array',
-    items: {
-      type: 'object',
-      additionalProperties: false,
-      required: ['kind', 'ref', 'excerpt'],
-      properties: {
-        kind: { type: 'string', enum: MODERN_EVIDENCE_KIND_ENUM },
-        ref: { type: 'string' },
-        excerpt: { type: ['string', 'null'] },
-      },
-    },
-  },
-  impact: { type: 'string' },
-  severity_rationale: { type: 'string' },
-  recommended_next_step: { type: 'string', enum: RECOMMENDED_NEXT_STEP_ENUM },
-  verification_path: { type: 'string' },
-  proportional_remediation: {
-    type: 'object',
-    additionalProperties: false,
-    required: PROPORTIONAL_REMEDIATION_FIELDS,
-    properties: Object.fromEntries(PROPORTIONAL_REMEDIATION_FIELDS.map(field => [field, { type: 'string' }])),
-  },
-};
-const GEMINI_MODERN_FINDING_SCHEMA_PROPERTIES = {
-  quality_profile: { type: 'STRING', enum: ['modern'] },
-  scope_ref: {
-    type: 'OBJECT',
-    properties: {
-      kind: { type: 'STRING', enum: MODERN_SCOPE_KIND_ENUM },
-      ref: { type: 'STRING' },
-    },
-    required: ['kind', 'ref'],
-  },
-  evidence: {
-    type: 'ARRAY',
-    items: {
-      type: 'OBJECT',
-      properties: {
-        kind: { type: 'STRING', enum: MODERN_EVIDENCE_KIND_ENUM },
-        ref: { type: 'STRING' },
-        excerpt: { type: 'STRING' },
-      },
-      required: ['kind', 'ref', 'excerpt'],
-    },
-  },
-  impact: { type: 'STRING' },
-  severity_rationale: { type: 'STRING' },
-  recommended_next_step: { type: 'STRING', enum: RECOMMENDED_NEXT_STEP_ENUM },
-  verification_path: { type: 'STRING' },
-  proportional_remediation: {
-    type: 'OBJECT',
-    required: PROPORTIONAL_REMEDIATION_FIELDS,
-    properties: Object.fromEntries(PROPORTIONAL_REMEDIATION_FIELDS.map(field => [field, { type: 'STRING' }])),
-  },
-};
-
 function validateFinding(f, idx) {
   const errs = [];
   if (!f || typeof f !== 'object') return ['not an object'];
@@ -689,41 +608,6 @@ async function callAnthropicCLI(model, prompt, timeoutSecs) {
 }
 
 // ── Anthropic provider ────────────────────────────────────────────────────
-const ANTHROPIC_FINDINGS_TOOL = {
-  name: 'submit_findings',
-  description: 'Submit all findings identified in the requested review. Call this once with the complete list. Use an empty array if no issues were found.',
-  input_schema: {
-    type: 'object',
-    required: ['findings'],
-    properties: {
-      findings: {
-        type: 'array',
-        description: 'Zero or more findings. Empty array = no issues found.',
-        items: {
-          type: 'object',
-          required: ['id', 'severity', 'confidence', 'category', 'summary'],
-          properties: {
-            id:         { type: 'string', pattern: '^F[0-9]{3,}$' },
-            severity:   { type: 'string', enum: ['CRITICAL', 'MAJOR', 'MINOR', 'POLISH'] },
-            confidence: { type: 'string', enum: ['HIGH', 'MEDIUM', 'LOW'] },
-            category:   { type: 'string', enum: CATEGORY_ENUM_VALUES },
-            summary:    { type: 'string', minLength: 8 },
-            value:      { type: ['string', 'null'], enum: [...IMPROVEMENT_VALUE_ENUM, null] },
-            effort:     { type: ['string', 'null'], enum: [...IMPROVEMENT_EFFORT_ENUM, null] },
-            file:       { type: ['string', 'null'] },
-            line:       { type: ['integer', 'null'], minimum: 1 },
-            lens:       { type: 'string', enum: ['general', 'code', 'sec', 'visual', 'ux', 'polish', 'compliance', 'i18n', 'user-journey', 'perf', 'a11y'] },
-            rule_id:    { type: 'string' },
-            devils_advocate: { type: 'boolean' },
-            grounded_by: { type: 'array' },
-            ...MODERN_FINDING_JSON_SCHEMA_PROPERTIES,
-          },
-        },
-      },
-    },
-  },
-};
-
 async function probeAnthropic() {
   // When running inside Claude Code in auto mode, spawning `claude --print` as a
   // subprocess is unreliable (session conflict — see file header comment). The correct
@@ -942,348 +826,6 @@ async function isAgyCLIAvailable() {
 // gemini: passed as -p value (appended to stdin). codex: appended to stdin directly.
 const CLI_JSON_SUFFIX = '\n\nRESPONSE FORMAT: Return ONLY a valid JSON object — no markdown fences, no text before or after. Structure: ' + MODERN_FINDING_FORMAT + '. Use exactly one location field: for file-backed findings use file and omit scope_ref; for non-file findings omit file and use scope_ref. Empty array if no issues: {"findings":[]}';
 
-function providerPromptPathTexts(packedPrompt) {
-  return {
-    'anthropic-cli-system+stdin': ANTHROPIC_CLI_SYSTEM_PROMPT + '\n\n' + packedPrompt,
-    'anthropic-api-message': packedPrompt,
-    'agy-cli-stdin+suffix': packedPrompt + CLI_JSON_SUFFIX,
-    'gemini-cli-stdin+suffix': packedPrompt + CLI_JSON_SUFFIX,
-    'gemini-api-content': packedPrompt,
-    'codex-cli-stdin+suffix': packedPrompt + CLI_JSON_SUFFIX,
-    'openai-api-message': packedPrompt,
-  };
-}
-
-function assertPromptPack() {
-  const sampleColdPrompt = [
-    'ADVISORY MODE — Session-centric IV&V review (lens: code).',
-    '',
-    '## Review Dispatch Metadata',
-    'Reviewer label: alpha',
-    'Review mode: cold_multi_model',
-    'Lens: code',
-    'Capability degradations: none',
-    '',
-    'Session Activity (PRIMARY)',
-    '- Sample no-network assertion prompt.',
-  ].join('\n');
-  const packedPrompt = buildProviderPromptPack(sampleColdPrompt);
-  const required = [
-    'AIVV Independent Reviewer',
-    `Source: ${PROVIDER_REVIEWER_ROLE_PATH}`,
-    `Source: ${PROVIDER_METHODOLOGY_PATH}`,
-    'Session Context Skepticism',
-    'Project Context Discovery',
-    'Provider transport note',
-    'Review Dispatch Metadata',
-    'Reviewer label',
-    'Review mode',
-    'Lens',
-    'Capability degradations',
-    'provider structured-output JSON is the machine-readable sidecar',
-    'not a replacement for AIVV review methodology',
-  ];
-
-  const failures = [];
-  for (const [pathName, text] of Object.entries(providerPromptPathTexts(packedPrompt))) {
-    for (const needle of required) {
-      if (!text.includes(needle)) failures.push(pathName + ' missing: ' + needle);
-    }
-  }
-
-  if (failures.length) {
-    process.stderr.write('[AIVV] Prompt-pack assertion failed:\n' + failures.map(f => '  - ' + f).join('\n') + '\n');
-    process.exit(9);
-  }
-
-  process.stdout.write('[AIVV] Prompt-pack assertion OK for provider paths: ' + Object.keys(providerPromptPathTexts(packedPrompt)).join(', ') + '\n');
-  process.exit(0);
-}
-
-function failModernFindingSchema(message) {
-  process.stderr.write('[AIVV] STRICT_FINDING_PROFILE_MISSING: ' + message + '\n');
-  process.exit(9);
-}
-
-function expectObject(value, message) {
-  if (!value || typeof value !== 'object') failModernFindingSchema(message);
-  return value;
-}
-
-function expectArrayIncludes(array, value, message) {
-  if (!Array.isArray(array) || !array.includes(value)) failModernFindingSchema(message);
-}
-
-function expectTypeIncludesNull(schema, fieldName) {
-  if (!Array.isArray(schema.type) || !schema.type.includes('null')) {
-    failModernFindingSchema('OpenAI strict schema field ' + fieldName + ' is not nullable');
-  }
-}
-
-function assertModernFieldsPresent(schemaName, findingSchema) {
-  const properties = expectObject(findingSchema.properties, schemaName + ' missing finding properties');
-  for (const field of MODERN_FINDING_FIELDS) {
-    if (!Object.prototype.hasOwnProperty.call(properties, field)) {
-      failModernFindingSchema(schemaName + ' missing ' + field);
-    }
-  }
-}
-
-function assertModernJsonSchemaNestedShapes(schemaName, findingSchema) {
-  const properties = findingSchema.properties;
-  const scopeRef = expectObject(properties.scope_ref, schemaName + ' missing scope_ref schema');
-  const scopeProperties = expectObject(scopeRef.properties, schemaName + ' missing scope_ref properties');
-  expectArrayIncludes(scopeRef.required, 'kind', schemaName + ' scope_ref missing required kind');
-  expectArrayIncludes(scopeRef.required, 'ref', schemaName + ' scope_ref missing required ref');
-  if (scopeRef.additionalProperties !== false) failModernFindingSchema(schemaName + ' scope_ref allows additional properties');
-  if (scopeProperties.kind?.enum?.includes('file')) failModernFindingSchema(schemaName + ' scope_ref.kind enum includes file');
-
-  const evidence = expectObject(properties.evidence, schemaName + ' missing evidence schema');
-  const evidenceItems = expectObject(evidence.items, schemaName + ' missing evidence items schema');
-  const evidenceProperties = expectObject(evidenceItems.properties, schemaName + ' missing evidence item properties');
-  if (evidenceItems.additionalProperties !== false) failModernFindingSchema(schemaName + ' evidence items allow additional properties');
-  for (const field of ['kind', 'ref', 'excerpt']) {
-    expectArrayIncludes(evidenceItems.required, field, schemaName + ' evidence item missing required ' + field);
-    if (!Object.prototype.hasOwnProperty.call(evidenceProperties, field)) {
-      failModernFindingSchema(schemaName + ' evidence item missing property ' + field);
-    }
-  }
-}
-
-function assertOpenAIStrictModernSchema(findingSchema) {
-  assertModernFieldsPresent('OpenAI strict schema', findingSchema);
-  const properties = findingSchema.properties;
-  for (const field of MODERN_FINDING_FIELDS) {
-    expectArrayIncludes(findingSchema.required, field, 'OpenAI strict schema required array missing ' + field);
-    expectTypeIncludesNull(properties[field], field);
-  }
-  assertModernJsonSchemaNestedShapes('OpenAI strict schema', findingSchema);
-}
-
-function assertModernPromptStrings() {
-  const directPromptTexts = {
-    ANTHROPIC_CLI_SYSTEM_PROMPT,
-    CLI_JSON_SUFFIX,
-  };
-  for (const [name, text] of Object.entries(directPromptTexts)) {
-    for (const field of MODERN_FINDING_FIELDS) {
-      if (!text.includes(field)) failModernFindingSchema(name + ' missing ' + field);
-    }
-    if (!text.includes(MODERN_FINDING_FORMAT)) failModernFindingSchema(name + ' is not using the shared modern finding format examples');
-    if (!text.includes('Use exactly one location field') || !text.includes('omit scope_ref') || !text.includes('omit file')) {
-      failModernFindingSchema(name + ' missing exactly-one-location guidance');
-    }
-  }
-
-  if (MODERN_FINDING_FILE_EXAMPLE.includes('"scope_ref"')) {
-    failModernFindingSchema('shared file example includes scope_ref');
-  }
-  if (MODERN_FINDING_SCOPED_EXAMPLE.includes('"file"')) {
-    failModernFindingSchema('shared scoped example includes file');
-  }
-
-  const sampleColdPrompt = [
-    'ADVISORY MODE — Session-centric IV&V review (lens: code).',
-    '',
-    '## Review Dispatch Metadata',
-    'Reviewer label: alpha',
-    'Review mode: cold_multi_model',
-    'Lens: code',
-    'Capability degradations: none',
-    '',
-    'Session Activity (PRIMARY)',
-    '- Sample modern finding schema assertion prompt.',
-  ].join('\n');
-  const packedPrompt = buildProviderPromptPack(sampleColdPrompt);
-  const packedTexts = providerPromptPathTexts(packedPrompt);
-  for (const pathName of ['anthropic-cli-system+stdin', 'agy-cli-stdin+suffix', 'gemini-cli-stdin+suffix', 'codex-cli-stdin+suffix']) {
-    const text = packedTexts[pathName];
-    for (const field of MODERN_FINDING_FIELDS) {
-      if (!text.includes(field)) failModernFindingSchema(pathName + ' packed prompt missing ' + field);
-    }
-  }
-}
-
-function assertProviderNullNormalization() {
-  const openAiStyle = {
-    findings: [{
-      id: 'F001',
-      severity: 'MAJOR',
-      confidence: 'HIGH',
-      category: 'design-flaw',
-      summary: 'Strict provider emitted nullable optional fields',
-      quality_profile: null,
-      scope_ref: null,
-      evidence: null,
-      impact: null,
-      severity_rationale: null,
-      recommended_next_step: null,
-      verification_path: null,
-      proportional_remediation: null,
-      file: null,
-      line: null,
-      lens: null,
-    }],
-  };
-  const validation = validateResponse(openAiStyle, 'schema-assertion');
-  if (!validation.ok) {
-    failModernFindingSchema('provider null normalization fixture failed raw validation: ' + validation.error);
-  }
-  const normalized = normalizeProviderResponseForDurableOutput(openAiStyle);
-  for (const field of [...MODERN_FINDING_FIELDS, 'file', 'line', 'lens']) {
-    if (Object.prototype.hasOwnProperty.call(normalized.findings[0], field)) {
-      failModernFindingSchema('provider null normalization retained ' + field);
-    }
-  }
-
-  const mixedModernNulls = normalizeProviderResponseForDurableOutput({
-    findings: [{
-      id: 'F002',
-      severity: 'MAJOR',
-      confidence: 'HIGH',
-      category: 'design-flaw',
-      summary: 'Strict provider emitted modern marker with null required fields',
-      quality_profile: 'modern',
-      scope_ref: { kind: 'process', ref: 'aivv-step-5-output' },
-      evidence: null,
-      impact: null,
-      severity_rationale: null,
-      recommended_next_step: null,
-      verification_path: null,
-      proportional_remediation: null,
-    }],
-  });
-  if (Object.prototype.hasOwnProperty.call(mixedModernNulls.findings[0], 'quality_profile')) {
-    failModernFindingSchema('provider null normalization retained quality_profile on incomplete modern envelope');
-  }
-
-  const nestedNullExcerpt = normalizeProviderResponseForDurableOutput({
-    findings: [{
-      id: 'F003',
-      severity: 'MAJOR',
-      confidence: 'HIGH',
-      category: 'design-flaw',
-      summary: 'Strict provider emitted nested null excerpt',
-      quality_profile: 'modern',
-      scope_ref: { kind: 'process', ref: 'aivv-step-5-output' },
-      evidence: [{ kind: 'internal-repo', ref: 'skills/aivv/SKILL.md', excerpt: null }],
-      impact: 'Provider output must normalize to the durable schema.',
-      severity_rationale: 'MAJOR because durable persistence would otherwise fail.',
-      recommended_next_step: 'fix-now',
-      verification_path: 'Run provider normalization assertion.',
-      proportional_remediation: {
-        present_problem: 'Strict provider output otherwise loses its modern profile.',
-        simplest_viable_correction: 'Preserve a complete four-field proportionality object.',
-        net_complexity: 'One nested object is retained with no runtime branch.',
-        why_current_shape_insufficient: 'The existing fields do not express the complexity trade-off.',
-      },
-    }],
-  });
-  if (Object.prototype.hasOwnProperty.call(nestedNullExcerpt.findings[0].evidence[0], 'excerpt')) {
-    failModernFindingSchema('provider null normalization retained nested evidence excerpt');
-  }
-  if (nestedNullExcerpt.findings[0].quality_profile !== 'modern') {
-    failModernFindingSchema('provider null normalization stripped quality_profile from complete modern envelope');
-  }
-
-  const malformedEvidence = normalizeProviderResponseForDurableOutput({
-    findings: [{
-      id: 'F004',
-      severity: 'MAJOR',
-      confidence: 'HIGH',
-      category: 'design-flaw',
-      summary: 'Provider emitted malformed modern evidence',
-      quality_profile: 'modern',
-      scope_ref: { kind: 'process', ref: 'aivv-step-5-output' },
-      evidence: ['repo-ref'],
-      impact: 'Provider output must not retain modern markers on malformed evidence.',
-      severity_rationale: 'MAJOR because durable persistence would otherwise keep invalid evidence.',
-      recommended_next_step: 'fix-now',
-      verification_path: 'Run provider normalization assertion.',
-    }],
-  });
-  if (Object.prototype.hasOwnProperty.call(malformedEvidence.findings[0], 'quality_profile')) {
-    failModernFindingSchema('provider null normalization retained quality_profile on malformed modern evidence');
-  }
-  if (malformedEvidence.findings[0].evidence[0] !== 'repo-ref') {
-    failModernFindingSchema('provider null normalization rewrote malformed evidence item');
-  }
-
-  const groundedByNullExcerpt = normalizeProviderResponseForDurableOutput({
-    findings: [{
-      id: 'F005',
-      severity: 'MAJOR',
-      confidence: 'HIGH',
-      category: 'design-flaw',
-      summary: 'Strict provider emitted grounded_by null excerpt',
-      grounded_by: [{ source_type: 'internal-repo', source_ref: 'skills/aivv/SKILL.md', excerpt: null }],
-    }],
-  });
-  if (Object.prototype.hasOwnProperty.call(groundedByNullExcerpt.findings[0].grounded_by[0], 'excerpt')) {
-    failModernFindingSchema('provider null normalization retained nested grounded_by excerpt');
-  }
-}
-
-function assertModernFindingSchema() {
-  const anthropicFindingSchema = ANTHROPIC_FINDINGS_TOOL.input_schema.properties.findings.items;
-  const geminiFindingSchema = GEMINI_FINDINGS_SCHEMA.properties.findings.items;
-  const openAiFindingSchema = OPENAI_FINDINGS_SCHEMA.properties.findings.items;
-
-  assertModernFieldsPresent('Anthropic tool schema', anthropicFindingSchema);
-  assertModernFieldsPresent('Gemini response schema', geminiFindingSchema);
-  assertOpenAIStrictModernSchema(openAiFindingSchema);
-  assertModernPromptStrings();
-  assertProviderNullNormalization();
-
-  process.stdout.write('[AIVV] Modern finding schema assertion OK: provider schemas (Anthropic, Gemini, OpenAI), direct prompt paths (Anthropic CLI, CLI suffix), packed prompt paths, null-normalization check.\n');
-  process.exit(0);
-}
-
-function assertExtractJSON() {
-  // Case 1: Strategy 1 — clean JSON, direct JSON.parse
-  {
-    const result = extractJSONFromOutput('{"id":"F001","severity":"MAJOR"}');
-    if (result.id !== 'F001' || result.severity !== 'MAJOR') {
-      throw new Error('assertExtractJSON case 1 failed: clean JSON not parsed correctly');
-    }
-  }
-  // Case 2: Strategy 2 — JSON with preamble; depth-counting finds the first balanced block
-  {
-    const result = extractJSONFromOutput('Here is the result:\n{"id":"F002","severity":"MINOR"}');
-    if (result.id !== 'F002') {
-      throw new Error('assertExtractJSON case 2 failed: preamble JSON not extracted correctly');
-    }
-  }
-  // Case 3: Strategy 3 — unbalanced { inside a string value; depth-counter gets confused;
-  //          greedy first{…last} slice hands the full string to JSON.parse which handles it
-  {
-    const result = extractJSONFromOutput('Preamble text {"id":"F003","note":"has { inside string"} trailing');
-    if (result.id !== 'F003') {
-      throw new Error('assertExtractJSON case 3 failed: unbalanced brace inside string not handled');
-    }
-  }
-  // Case 4: Two adjacent objects; Strategy 1 fails (two root-level objects), Strategy 2 picks
-  //         the first balanced block — ordering invariant preserved
-  {
-    const result = extractJSONFromOutput('{"id":"F004"} {"id":"F005"}');
-    if (result.id !== 'F004') {
-      throw new Error('assertExtractJSON case 4 failed: first-object-selection ordering not preserved');
-    }
-  }
-  // Case 5: U002 boundary — unbalanced { in string value AND trailing } in postamble;
-  //         all three strategies fail — function must throw (documented limitation)
-  {
-    let threw = false;
-    try { extractJSONFromOutput('{"id":"F006","note":"has { inside"} and postamble }'); }
-    catch (_) { threw = true; }
-    if (!threw) {
-      throw new Error('assertExtractJSON case 5 failed: expected throw on unbalanced-string-brace + postamble-} but did not throw');
-    }
-  }
-  process.stdout.write('[AIVV] extractJSONFromOutput assertion OK: 5 cases (clean, preamble, unbalanced-brace-in-string, two-adjacent-objects, postamble-boundary).\n');
-  process.exit(0);
-}
-
 async function callGeminiCLI(prompt, timeoutSecs) {
   return new Promise((resolve, reject) => {
     const child = spawn('gemini', ['-p', CLI_JSON_SUFFIX, '-o', 'text'],
@@ -1338,31 +880,6 @@ async function callAgyCLI(model, prompt, timeoutSecs) {
     });
   });
 }
-
-const GEMINI_FINDINGS_SCHEMA = {
-  type: 'OBJECT',
-  properties: {
-    findings: {
-      type: 'ARRAY',
-      items: {
-        type: 'OBJECT',
-        properties: {
-          id:         { type: 'STRING' },
-          severity:   { type: 'STRING' },
-          confidence: { type: 'STRING' },
-          category:   { type: 'STRING' },
-          summary:    { type: 'STRING' },
-          file:       { type: 'STRING' },
-          line:       { type: 'INTEGER' },
-          lens:       { type: 'STRING' },
-          ...GEMINI_MODERN_FINDING_SCHEMA_PROPERTIES,
-        },
-        required: ['id', 'severity', 'confidence', 'category', 'summary'],
-      },
-    },
-  },
-  required: ['findings'],
-};
 
 async function callGeminiAPI(model, prompt, timeoutSecs, authToken) {
   const url = authToken
@@ -1564,93 +1081,6 @@ async function callCodexCLI(prompt, timeoutSecs) {
   });
 }
 
-// OpenAI strict-mode JSON Schema requires every property to be in `required`
-// AND every nested object to have an explicit `type` key. Optional fields are
-// expressed via nullable union types (`["string", "null"]`). This schema remains
-// as an assertion fixture for modern finding shape; provider adapters do not use
-// it to enforce the AIVV envelope before shared validation/retry.
-//
-// Canonical grounded_by item shape derived from `.aivv/schemas/finding.json`.
-const OPENAI_FINDINGS_SCHEMA = {
-  type: 'object',
-  required: ['findings'],
-  additionalProperties: false,
-  properties: {
-    findings: {
-      type: 'array',
-      items: {
-        type: 'object',
-        required: ['id', 'severity', 'confidence', 'category', 'summary', 'value', 'effort', 'file', 'line', 'lens', 'rule_id', 'grounded_by', 'quality_profile', 'scope_ref', 'evidence', 'impact', 'severity_rationale', 'recommended_next_step', 'verification_path', 'proportional_remediation'],
-        additionalProperties: false,
-        properties: {
-          id:         { type: 'string' },
-          severity:   { type: 'string', enum: ['CRITICAL', 'MAJOR', 'MINOR', 'POLISH'] },
-          confidence: { type: 'string', enum: ['HIGH', 'MEDIUM', 'LOW'] },
-          category:   { type: 'string', enum: CATEGORY_ENUM_VALUES },
-          summary:    { type: 'string' },
-          value:      { type: ['string', 'null'], enum: [...IMPROVEMENT_VALUE_ENUM, null] },
-          effort:     { type: ['string', 'null'], enum: [...IMPROVEMENT_EFFORT_ENUM, null] },
-          file:       { type: ['string', 'null'] },
-          line:       { type: ['integer', 'null'] },
-          lens:       { type: ['string', 'null'] },
-          rule_id:    { type: ['string', 'null'] },
-          grounded_by: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: ['source_type', 'source_ref', 'excerpt'],
-              additionalProperties: false,
-              properties: {
-                source_type: { type: 'string', enum: ['websearch', 'webfetch', 'context7', 'runtime', 'unverified', 'unverifiable', 'internal-repo'] },
-                source_ref:  { type: 'string' },
-                excerpt:     { type: ['string', 'null'] },
-              },
-            },
-          },
-          quality_profile: { type: ['string', 'null'], enum: ['modern', null] },
-          scope_ref: {
-            type: ['object', 'null'],
-            additionalProperties: false,
-            required: ['kind', 'ref'],
-            properties: {
-              kind: { type: 'string', enum: ['process', 'session', 'artifact', 'user-journey', 'project'] },
-              ref: { type: 'string' },
-            },
-          },
-          evidence: {
-            type: ['array', 'null'],
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              required: ['kind', 'ref', 'excerpt'],
-              properties: {
-                kind: { type: 'string', enum: ['internal-repo', 'websearch', 'webfetch', 'runtime', 'command', 'state-log', 'thread', 'unverified', 'unverifiable'] },
-                ref: { type: 'string' },
-                excerpt: { type: ['string', 'null'] },
-              },
-            },
-          },
-          impact: { type: ['string', 'null'] },
-          severity_rationale: { type: ['string', 'null'] },
-          recommended_next_step: { type: ['string', 'null'], enum: ['fix-now', 'investigate-first', 'document', 'defer-with-rationale', 'accept-risk', null] },
-          verification_path: { type: ['string', 'null'] },
-          proportional_remediation: {
-            type: ['object', 'null'],
-            additionalProperties: false,
-            required: ['present_problem', 'simplest_viable_correction', 'net_complexity', 'why_current_shape_insufficient'],
-            properties: {
-              present_problem: { type: 'string' },
-              simplest_viable_correction: { type: 'string' },
-              net_complexity: { type: 'string' },
-              why_current_shape_insufficient: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-  },
-};
-
 async function callOpenAIAPI(model, prompt, timeoutSecs, bearerToken) {
   const ctrl = new AbortController();
   activeControllers.add(ctrl);
@@ -1763,18 +1193,6 @@ assertProviderAdapterParity(Object.keys(PROVIDERS));
 
 // ── Main entry ────────────────────────────────────────────────────────────
 async function main() {
-  if (args.assertPromptPack) {
-    assertPromptPack();
-    return;
-  }
-  if (args.assertModernFindingSchema) {
-    assertModernFindingSchema();
-    return;
-  }
-  if (args.assertExtractJSON) {
-    assertExtractJSON();
-    return;
-  }
   if (args.assertProviderRegistry) {
     process.stdout.write('[AIVV] Provider registry and runtime adapter map are consistent (' + providerIds.length + ' providers).\n');
     return;
