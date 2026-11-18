@@ -100,6 +100,7 @@ For every applied non-dry-run fix, buffer `change_readiness` into the initialize
 Hard approval rules:
 - `risk_tier: "high"` must not use `approval_mode: "auto"`.
 - Security-sensitive, L1-source/manual-review, generated-verification, auth, schema, migration, CI/build, public API, shared-interface, or high-blast-radius fixes must use `user-confirmed`, `dry-run`, `dangerous-override`, or `skipped`.
+- Generated verification means new check scripts, CI or build gates, and hooks. A failing reproduction test written in the project's existing test framework under [red-green-gate.md](red-green-gate.md) is not generated verification and does not set `generated_verification.present`.
 - `dangerous-override` is valid only when the existing `/aivv-fix --dangerously-auto-apply` confirmation path has already satisfied its fail-closed rules.
 - Non-interactive consequence-gated fixes cannot be upgraded to write-capable execution by readiness. They halt or route to dry-run.
 
