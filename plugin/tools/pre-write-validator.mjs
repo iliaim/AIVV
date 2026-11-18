@@ -517,6 +517,22 @@ function hasDottedKey(object) {
   return Object.entries(object).some(([key, value]) => key.includes(".") || hasDottedKey(value));
 }
 
+// Assertion args name project files relative to target_project, as target_file does.
+// Resolving them against the process cwd would read whichever copy sits beside the
+// orchestrator (another worktree, the plugin dir) and could pass the wrong file.
+// Relative paths must stay inside target_project; without one there is no other base.
+function assertionReadPath(fixture, file, field) {
+  if (typeof file !== "string" || file.includes("\0")) {
+    return { verdict: halt("unsupported-risky-path", `${field} must be a file path string`) };
+  }
+  if (path.isAbsolute(file) || fixture.target_project === undefined) return { path: file };
+  const verdict = targetPathVerdict(file, fixture.target_project);
+  if (verdict.status === "halt") {
+    return { verdict: halt(verdict.reason, `${field} ${JSON.stringify(file)} must be relative to target_project and stay inside it`) };
+  }
+  return { path: path.resolve(fs.realpathSync(fixture.target_project), file) };
+}
+
 export function assertionExecutionVerdict(fixture, { checkerTimeoutMs = CHECKER_TIMEOUT_MS } = {}) {
   for (const assertion of assertionRecords(fixture)) {
     if (assertion.kind === "jq-parses") {
@@ -539,16 +555,26 @@ export function assertionExecutionVerdict(fixture, { checkerTimeoutMs = CHECKER_
       const parentPath = assertion.args?.parent_schema_path;
       const expectedPath = assertion.args?.expected_nest_path;
       if (parentPath && expectedPath) {
-        const parent = JSON.parse(fs.readFileSync(parentPath, "utf8"));
+        const resolved = assertionReadPath(fixture, parentPath, "parent_schema_path");
+        if (resolved.verdict) return resolved.verdict;
+        let parent;
+        try {
+          parent = JSON.parse(fs.readFileSync(resolved.path, "utf8"));
+        } catch {
+          return halt("schema-coherence-failed", `parent_schema_path ${JSON.stringify(parentPath)} is not a readable JSON file`);
+        }
         if (!getPath(parent, expectedPath)) return { status: "halt", reason: "schema-coherence-failed" };
       }
     }
     if (assertion.kind === "line-cite-valid") {
       const args = assertion.args ?? assertion;
       if (!args.temporal_target) return { status: "halt", reason: "missing-temporal-target" };
-      const file = args.file;
       const expected = args.expected_snippet;
-      if (!file || !expected || !fs.existsSync(file)) return { status: "halt", reason: "pre-write-validate-l-n-citation-mismatch" };
+      if (!args.file || !expected) return { status: "halt", reason: "pre-write-validate-l-n-citation-mismatch" };
+      const resolved = assertionReadPath(fixture, args.file, "file");
+      if (resolved.verdict) return resolved.verdict;
+      const file = resolved.path;
+      if (!fs.existsSync(file)) return { status: "halt", reason: "pre-write-validate-l-n-citation-mismatch" };
       const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
       const cite = args.cite_form?.match(/^L(\d+)(?:-L(\d+))?$/);
       const range = cite ? lines.slice(Number(cite[1]) - 1, Number(cite[2] ?? cite[1])) : lines;

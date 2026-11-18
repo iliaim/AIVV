@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -179,6 +179,45 @@ try {
 }
 assert.equal(shellSyntaxVerdict({ write_intents: [{ id: "WI-1", content_shape: "shell", language: "bash", exact_content: "if then\n" }] }).reason,
   "shell-syntax-invalid", "real syntax errors keep their own reason");
+
+// Assertion file args resolve against target_project, not the process cwd: a stale copy
+// of the same relative path beside the orchestrator must not decide the verdict.
+const citeRoot = mkdtempSync(path.join(os.tmpdir(), "aivv-cite-base-"));
+const originalCwd = process.cwd();
+try {
+  const project = path.join(citeRoot, "project");
+  const decoy = path.join(citeRoot, "decoy");
+  for (const dir of [project, decoy]) mkdirSync(path.join(dir, "docs"), { recursive: true });
+  writeFileSync(path.join(project, "docs/notes.md"), "current text\n");
+  writeFileSync(path.join(decoy, "docs/notes.md"), "stale text\n");
+  writeFileSync(path.join(project, "docs/schema.json"), JSON.stringify({ properties: { current: { type: "object" } } }));
+  writeFileSync(path.join(decoy, "docs/schema.json"), JSON.stringify({ properties: { stale: { type: "object" } } }));
+  writeFileSync(path.join(citeRoot, "outside.md"), "current text\n");
+  const cite = (file, expected_snippet) => assertionExecutionVerdict({
+    target_project: project,
+    write_intents: [{ id: "WI-1", pre_write_assertions: [{ kind: "line-cite-valid", args: { temporal_target: "pre_write", cite_form: "L1", file, expected_snippet } }] }],
+  });
+  const nest = (parent_schema_path, expected_nest_path) => assertionExecutionVerdict({
+    target_project: project,
+    write_intents: [{ id: "WI-1", exact_content: '```json\n{"properties":{}}\n```', pre_write_assertions: [{ kind: "schema-coherence", args: { block_id: 1, parent_schema_path, expected_nest_path } }] }],
+  });
+  process.chdir(decoy);
+  assert.equal(cite("docs/notes.md", "current text").status, "pass", "the target project's copy is the one cited");
+  assert.equal(cite("docs/notes.md", "stale text").reason, "pre-write-validate-l-n-citation-mismatch",
+    "a matching copy beside the process cwd does not pass the citation");
+  assert.equal(nest("docs/schema.json", "properties.current").status, "pass");
+  assert.equal(nest("docs/schema.json", "properties.stale").reason, "schema-coherence-failed",
+    "the parent schema is read from the target project, not the process cwd");
+  const escaped = cite("../outside.md", "current text");
+  assert.equal(escaped.reason, "unsupported-risky-path", "a relative path cannot leave the target project");
+  assert.match(escaped.detail, /file "\.\.\/outside\.md" must be relative to target_project/);
+  assert.equal(nest("../decoy/docs/schema.json", "properties.stale").reason, "unsupported-risky-path");
+  assert.equal(nest("docs/absent.json", "properties.current").reason, "schema-coherence-failed",
+    "an unreadable parent schema halts instead of throwing");
+} finally {
+  process.chdir(originalCwd);
+  rmSync(citeRoot, { recursive: true, force: true });
+}
 
 const toolsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../plugin/tools");
 const validatorCli = path.join(toolsDir, "pre-write-validator.mjs");
