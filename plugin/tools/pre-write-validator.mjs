@@ -7,13 +7,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateReviewRuntimeEvidence } from "./runtime-evidence.mjs";
 
-export const ASSERTION_KINDS = new Set([
-  "jq-parses",
-  "schema-coherence",
-  "line-cite-valid",
-  "shell-syntax-valid"
-]);
-
 const UNSUPPORTED_SHAPES = new Set(["unsupported-risky-shape"]);
 
 const REVIEW_LOG_SCOPE_KIND_ENUM = new Set(["process", "session", "artifact", "user-journey", "project"]);
