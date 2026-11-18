@@ -4,7 +4,7 @@
  *
  * Receives a fully-assembled cold prompt via stdin.
  * Calls the specified AI provider and returns findings as NDJSON.
- * Requires Node 20+ (built-in fetch; Node 18 EOL 2025-04-30). Zero external npm dependencies.
+ * Requires Node 22+ (the version CI tests; Node 20 EOL 2026-04-30). Zero external npm dependencies.
  *
  * Usage:
  *   printf '%s' "$prompt" | node <AIVV_ROOT>/tools/dispatch.mjs \
@@ -20,7 +20,7 @@
  *   2  Auth failure (401/403 from provider)
  *   3  No auth found (--auth-mode auto: CLI unavailable or unauthenticated, no API key set)
  *   4  Unsupported provider / not yet implemented
- *   5  Node version < 20 (Node 18 EOL 2025-04-30)
+ *   5  Node version < 22
  *   9  Dispatch failed after all retries / provider egress consent missing
  *
  * Authentication precedence and supported routes are defined by each provider adapter.
@@ -39,10 +39,10 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const AIVV_ROOT = dirname(SCRIPT_DIR);
 
 // ── Node version guard ─────────────────────────────────────────────────────
-// Require Node 20+ (LTS, Maintenance through 2026-04-30). Node 18 reached EOL 2025-04-30.
+// Require Node 22+, the version CI tests. Node 20 reached EOL 2026-04-30.
 const [nodeMajor] = process.versions.node.split('.').map(Number);
-if (nodeMajor < 20) {
-  process.stderr.write('[AIVV] Node 20+ required for multi-model dispatch (Node 18 EOL 2025-04-30). Current: ' + process.versions.node + '\n');
+if (nodeMajor < 22) {
+  process.stderr.write('[AIVV] Node 22+ required for multi-model dispatch. Current: ' + process.versions.node + '\n');
   process.exit(5);
 }
 
