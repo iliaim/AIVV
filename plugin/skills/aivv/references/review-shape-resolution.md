@@ -2,8 +2,9 @@
 
 Canonical runtime procedure for turning `/aivv` arguments, preferences, scope
 resolution, and smart-lens detection into the final reviewer count and
-`reviewer_lens_assignments`. Referenced from [`SKILL.md`](../SKILL.md) Steps
-1.4, 3.4, 3.5, and 3.6.
+`reviewer_lens_assignments`. Referenced from
+[`orchestration-workflow.md`](orchestration-workflow.md) Steps 1.4, 3.4, and
+3.5/3.6.
 
 Read this file before resolving or recomputing review shape: reviewer count,
 `lenses_list`, `--lens-replicate`, full-audit wrappers (`--full-ui-ux`,
@@ -30,10 +31,9 @@ resolution, smart-lens detection, or high-risk floor reporting.
    supplies an unset shape value, rerun the Step 1.4 composition before Step
    1.9.
 4. Extract session context and gather available paths / plan / file / idea
-   material. Resolve the requested material boundary. Ask before detection only
-   if the subject/boundary is genuinely ambiguous or authority to inspect it is
-   missing; clear explicit read-only requests proceed without re-approval.
-5. After `final_scope` is resolved, compute/recompute the Step 2.5
+   material. Resolve the requested material boundary per
+   `scope-confirmation.md`.
+5. After `final_scope` is resolved, compute/recompute the Step 2
    `lens_ceiling` and run Step 3.5 detection only against that scope. Resolve
    Step 3.6 mode and candidate additions using Detection Mode below.
 6. Apply the adaptive-confidence floor: when reviewer count is not pinned by
@@ -50,23 +50,13 @@ resolution, smart-lens detection, or high-risk floor reporting.
    consent for an earlier shape as authorization for a shape changed by the
    confidence floor or lens resolution. If consent is declined or unavailable,
    retain the last authorized valid shape and report any unapplied confidence
-   floor or lens; hold if no authorized valid shape remains. Announce the
-   complete final scope and method
-   before dispatch. If ask mode was explicitly selected by `--ask-scope` or a
-   manual-provenance config value, request confirmation once with that complete
-   resolved proposal. Otherwise ask only if the method
-   would materially expand scope or needs authority the request did not grant;
-   never add a redundant lens-only approval unless the user explicitly requested lens selection.
+   floor or lens; hold if no authorized valid shape remains. Announce, or ask
+   about, the complete final scope and method per `scope-confirmation.md`
+   before dispatch.
 
 ## 2. Composition Rules
 
-`lens-composition.md` owns the K/M/N matrix:
-
-- K=1, M=1: homogeneous dispatch; all reviewers use the single lens.
-- K=N, M=1: 1:1 multi-lens spike; reviewer `i` gets `lenses_list[i]`.
-- M>=2: KxM block replication; requires `N == K*M`; reviewer `i` gets
-  `lenses_list[i // M]`.
-- Mismatches reject with the exact errors in `lens-composition.md`.
+`lens-composition.md` owns the K/M/N matrix and its rejection errors.
 
 Full-audit wrappers are KxM shortcuts. `--lens-replicate=<M>` can override the
 wrapper default M through the precedence chain in `argument-parsing.md`.
@@ -85,9 +75,7 @@ only the ordering contract:
 - If a scope adjustment changes the session subset, recompute `lens_ceiling`
   before final lens admission.
 - High-risk floor still applies to remaining in-scope paths.
-- Detection and depth changes within the requested boundary are announced, not
-  separately approved unless explicit ask mode applies. Material scope expansion
-  or missing authority is held.
+- Detection and depth changes follow `scope-confirmation.md` Section 3.
 - When `was_trivial == false` and reviewer count is otherwise unpinned, the
   adaptive-confidence floor may raise the count from 1 to 2 before final
   reviewer assignment.
@@ -98,7 +86,7 @@ Step 3.5 combines four inputs:
 
 - existing `lenses_list` from explicit/default shape;
 - deterministic floor matches from lens frontmatter `detect_paths`;
-- Step 2.5 ceiling matches admitted by Step 3.6 mode;
+- Step 2 ceiling matches admitted by Step 3.6 mode;
 - `sec` / `compliance` high-risk floor matches from `high_risk_paths`.
 
 When Git is available, path matching uses `git diff --name-only HEAD --

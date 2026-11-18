@@ -30,7 +30,11 @@ has `evals.json`. If a requested lens has no corpus, warn and skip:
 ⚠ no eval corpus for lens '<X>' - skipping
 ```
 
-If no requested lens has a corpus, halt with the substep 2t parse-time error.
+If no requested lens has a corpus, halt:
+
+```text
+halt: no eval corpus for the requested lens(es)
+```
 
 ## Procedure
 
@@ -90,54 +94,10 @@ Append one JSONL record per evaluated lens to
 {"run_id":"2026-05-29T14-22-07-9f3a","lens":"visual","reviewers":1,"review_mode":"evidence_only_review","samples":3,"expected":3,"tp":3,"fn":0,"fp_candidates":1,"unkeyed":2,"recall":1.0,"precision":0.75,"f1":0.857,"misses":[],"spurious":[{"sample":"02","rule_id":"A11Y-015"}],"severity_mismatches":[],"completed_at":"2026-05-29T14:22:41Z"}
 ```
 
-Round rates to three decimals. This file is gitignored and intentionally outside
-`validate.sh` Stage 12 schema scope.
+Round rates to three decimals.
 
-## Local deterministic smoke scorer
+## Outside Rule-ID Scoring
 
-`tools/eval-smoke.mjs --evals <evals.json> --review-output <json>` (author-side tool in the AIVV source repo; not shipped with the plugin) validates
-matching mechanics without live reviewer dispatch. It emits `tp`, `fn`,
-`fp_candidates`, `unkeyed`, `recall`, `precision`, `f1`, `misses`, `spurious`,
-and `severity_mismatches`.
-
-This is not a replacement for live `/aivv --eval`; it only pins scorer behavior.
-
-## Direction Lens Exception
-
-Direction findings are prose architectural judgments without stable `rule_id`.
-They graduate via maintainer review, not rule-id scoring:
-
-- Negative fixtures must all produce at least one direction finding with
-  evidence, concrete alternative, and trade-off.
-- Trap/self-dogfood fixtures must produce zero direction findings above INFO.
-- `grounded_by` is reviewed for presence and grounding on load-bearing findings.
-
-The public proof packet at
-`tools/tests/fixtures/direction-eval-proof/valid/proof.json` preserves the
-2026-06-03 graduation evidence. `tools/direction-eval-proof-check.mjs` (author-side, AIVV source repo) validates
-packet integrity only; it does not rerun reviewers or semantically grade prose.
-
-## Reviewer-restraint proof
-
-Review restraint is evaluated against the complete reviewer output, including
-the prose Approach assessment and the findings sidecar. Rule-ID scoring cannot
-prove restraint because an unjustified recommendation may be unkeyed or appear
-only in prose.
-
-The author-side proof packet at
-`tools/tests/fixtures/reviewer-restraint-proof/valid/proof.json` covers five distinct
-traps: unneeded abstraction, speculative future capability, scope expansion,
-dependency introduction, and an unmeasured/valueless refactor. Each must have no
-finding above INFO, an empty findings sidecar, no change recommendation, explicit
-acceptance of the current shape, and no forbidden recommendation. A genuine
-over-abstraction positive control must retain a finding above INFO, evidence, a
-concrete alternative, and its trade-off.
-
-The committed result files carry a maintainer attestation that they were
-captured from a cold independent `aivv-reviewer`; no durable dispatch record
-authenticates that provenance.
-The author-side proof checker validates metadata shape, fixture/result hashes,
-class coverage, grade shape, and summary consistency. It cannot authenticate
-the attestation. The grades are maintainer-authored judgments over those complete
-outputs. This is explicitly not automated semantic scoring, and the checker
-does not rerun reviewers or infer prose meaning.
+Direction findings and reviewer restraint have no stable `rule_id`, so rule-ID
+scoring cannot grade them; they are judged by maintainer review of the complete
+reviewer output.

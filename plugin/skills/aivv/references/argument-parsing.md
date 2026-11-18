@@ -34,7 +34,8 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
   suppresses auto-detection.
 - `--lens-replicate=M`: integer 1-9; requires `--lens=` when M > 1; Step 1.4
   requires `N == K*M`.
-- Full wrappers conflict with `--lens=`, `--reviewers=`, bare integer, and other
+- Full wrappers are fixed specialist audits: their ordered lens lists never
+  implicitly add `general`. They conflict with `--lens=`, `--reviewers=`, bare integer, and other
   full wrappers; `--lens-replicate=M` is allowed. M precedence: CLI
   `--lens-replicate` > config `default_lens_replicate` / legacy `default_M` >
   wrapper default > schema default.
@@ -42,9 +43,10 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
 - `--full-ui-ux`: lenses `visual,ux,polish,compliance,i18n,user-journey`,
   wrapper M=2, default N=12.
 - `--full-a11y`: lenses `visual,compliance`, wrapper M=2, default N=4.
-- `--full`: all seven specialist lenses (excluding the general default lens), wrapper M=2, default N=14.
-- `--full-with-journey`: all eight specialist lenses including `user-journey` (excluding the general default lens), wrapper M=2,
-  default N=16; warn that this exceeds the dev.70 tested ceiling of N=14, then
+- `--full`: lenses `code,sec,visual,ux,polish,compliance,i18n` (all seven
+  specialist lenses), wrapper M=2, default N=14.
+- `--full-with-journey`: lenses `code,sec,visual,ux,polish,compliance,i18n,user-journey`
+  (all eight specialist lenses), wrapper M=2, default N=16; warn that this is above the tested ceiling of N=14, then
   continue unless host dispatch cannot support it.
 - `--thoroughness=<tier>`: accepts exactly `fast, balanced, thorough, exhaustive`.
   Reject others with `config-invalid-value: thoroughness must be one of fast, balanced, thorough, exhaustive; got '<received-value>'.` The dial supplies defaults only; explicit `--reviewers`, `--lens-replicate`, or pinned config values win.
@@ -66,7 +68,9 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
   runtime-evidence behavior only. They do not authorize browser driving unless
   the runtime adapter supports it.
 - `--eval`: maintainer eval path; exits before review dispatch/log/fix chain.
-- `--maintenance`: state-maintenance path; exits before review dispatch.
+- `--maintenance`: runs the Maintenance route in
+  [`.aivv/state-maintenance.md`](../../../.aivv/state-maintenance.md)
+  (quarantine, index rebuild, 90-day archive move); exits before review dispatch.
 
 ## Setup
 
@@ -90,13 +94,10 @@ and `--project` outside setup warns and is ignored.
 - `--auto-lens` / `--no-auto-lens`: per-run only, mutually exclusive; force
   `lens_detection_mode` to `smart` or `off`; strip before positional parsing.
 - `--auto-scope` / `--ask-scope`: accepted per-run aliases, mutually exclusive;
-  strip before positionals. `--auto-scope` announces scope/method for clear
-  explicit read-only requests; `--ask-scope` explicitly requests confirmation.
-  Ambiguous subjects, missing authority, or material scope expansion always
-  require clarification. Without either flag, the resolved config default
-  applies; explicit file/idea positionals need no second approval by default.
+  strip before positionals. Semantics per `scope-confirmation.md` Section 5;
+  without either flag, the resolved config default applies.
 
-## 2aa. `--multi-model` / `--no-multi-model`
+## `--multi-model` / `--no-multi-model`
 
 Per-run overrides for `multi_model_enabled`; do not persist. Precedence: flag >
 project `multi_model_enabled` > user `multi_model_enabled` > schema default
@@ -108,7 +109,7 @@ by effective N and ordered by `reviewer_provider_priority`. Persist with
 
 ## `--outer-cycle=<N>` / `--root-review-id=<id>`
 
-Both flags (dev.113); set by `/aivv-fix` Step 6.5 for the outer-loop reverse-chain (`/aivv --fix --outer-cycle=<new_count> --root-review-id=<root_id>`). Normally not user-set.
+Both flags are set by `/aivv-fix` Step 6.5 for the outer-loop reverse-chain (`/aivv --fix --outer-cycle=<new_count> --root-review-id=<root_id>`). Normally not user-set.
 - `--outer-cycle=<N>`: positive integer ≥1. N≥2 → pass the root id and cycle number to the outer-loop primitive, which alone reads `<state_dir>/outer-loop-<root_review_id>.json` and supplies the restored outer-loop context to later steps. N=1 or absent → fresh start. Argument parsing and later callers MUST NOT independently read the persisted outer-loop file. Passed through Step 8 to `/aivv-fix` unchanged. Mutually exclusive with the one-shot flags that skip Step 8 (`--setup`, `--config-*`, `--maintenance`, `--eval`, `--help`): on conflict the one-shot flag wins and these are silently discarded (no error).
 - `--root-review-id=<id>`: the outer-cycle-1 invocation_id, unchanged across cycles; anchors the state-file path. Required when `--outer-cycle=N≥2`; absent → `root_review_id = current invocation_id`.
 - SKIP-when: never skips Steps — additive Step-1 context + Step-8 propagation only. Full outer-loop semantics (canary probe, state file, no-progress algorithm, 5-banner matrix): [`.aivv/outer-loop.md`](../../../.aivv/outer-loop.md).
@@ -119,3 +120,11 @@ After stripping flags, first existing path positional means artifact review;
 quoted/non-path text means idea review; no positional means session review.
 Directory positional is not a project sweep; project/subtree sweep must be
 stated as the session review goal.
+
+Quoted text wins over file path when ambiguous. Explicit `--reviewers=N` wins
+over bare integer shorthand. Examples:
+
+- `/aivv src/foo.ts 4` -> file positional, 4 reviewers.
+- `/aivv "should we use Redis" 3` -> idea positional, 3 reviewers.
+- `/aivv 3 src/foo.ts` -> reviewers 3, file positional.
+- `/aivv src/foo.ts 4 5` -> reviewers 4; trailing 5 warned and ignored.

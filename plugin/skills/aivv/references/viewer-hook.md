@@ -1,15 +1,8 @@
 # Viewer Hook
 
-Read from `skills/aivv/SKILL.md` when optional post-review HTML viewer behavior is enabled.
+Read from [orchestration-workflow.md](orchestration-workflow.md) Step 7.6 when optional post-review HTML viewer behavior is enabled.
 
-## Contents
-
-- Viewer trigger conditions
-- Report generation
-- User-facing affordance
-- Open-mode behavior
-
-### Step 7.6: Optional HTML viewer hook
+## Step 7.6: Optional HTML viewer hook
 
 If resolved config has `post_review_html_viewer: true` AND no fix chain will run (`--fix` was not set and resolved `auto_chain_fix` did not set `fix_chain_requested = true`), render a static HTML report after Step 7.5 has written durable review state:
 
@@ -44,5 +37,3 @@ Operational rules:
   Use the host's clickable local-file-link convention when available; otherwise print the absolute path and the manual `aivv view` command.
 - If resolved `post_review_html_open_mode == "link"` (recommended default), stop after showing the `Open report` affordance. Do not steal browser focus.
 - If resolved `post_review_html_open_mode == "open"`, also best-effort open the generated report using the active platform adapter’s report-opening route when it provides one. If that route is unavailable or cannot open the target, rerun the viewer command with `--open` to use the viewer’s OS opener. Open failures are non-fatal; keep the `Open report` link visible.
-
----

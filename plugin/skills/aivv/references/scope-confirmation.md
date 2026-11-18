@@ -74,8 +74,7 @@ of the new proposal. Do not dispatch under an unannounced replacement method.
 Cancellation marks the current invocation terminal. Do not dispatch reviewers,
 write a review log or calibration, or enter the `/aivv-fix` handoff for that
 invocation. Ignore later answers to its stale prompt; only a new top-level
-`/aivv` request creates a new invocation. This does not roll back authorized
-preamble maintenance that already ran before the scope question.
+`/aivv` request creates a new invocation.
 
 Show scope and method together in user-visible chat before dispatch, including
 after an ambiguity question has been answered. A saved audit block, reviewer
@@ -131,9 +130,7 @@ with the unresolved choice and offer concrete subjects/boundaries grounded in
 the available material. Do not present a candidate scope as already resolved.
 After the answer, show the resolved scope and method in formatted chat before
 dispatch. If the answer changes either value, it resolves the prior question but
-does not confirm the revised proposal. Ask again only if a material ambiguity
-or authority gap remains, or explicit ask mode requires confirmation of the new
-proposal.
+does not confirm the revised proposal; apply the revision rule above.
 
 Check the active host adapter's verified formatting capabilities before choosing
 rich text; see [Codex native question formatting](../../../.aivv/platform-adapters/codex.md#native-question-formatting)
@@ -160,16 +157,12 @@ Use the existing `classification_reason` values in the audit block:
   plausible subjects;
 - `empty-context` when the subject or enough context is missing.
 
-`was_trivial` may describe whether the proposed subject is clear. By default, a
-clear proposal from an explicit read-only review request proceeds after
-announcement; there is no confirmation prompt merely because the proposal can
-be restated. Honor an explicit ask-mode preference.
+`was_trivial` may describe whether the proposed subject is clear; whether to
+announce or ask follows Section 1.
 
-For a clear proposal, announce the resolved scope and method and proceed unless
-the user explicitly selected ask mode; then ask once with the complete resolved
-scope and method. For an ambiguous proposal, ask one concise question and offer concrete alternatives
-grounded in supplied
-conversation or observed material, plus custom text input. Use the host's
+For an ambiguous proposal, ask one concise question and offer concrete
+alternatives grounded in supplied conversation or observed material, plus custom
+text input. Use the host's
 built-in free-text/“Other” control when available; do not require a separate
 custom option if the host already supplies that control. Preserve all material
 alternatives when the user narrows the proposal and show what will be left out.
@@ -181,9 +174,8 @@ and is not available, and propose a review from that material. Git availability
 is not a prerequisite for review.
 
 When no usable subject is present, ask what the user wants reviewed. Do not
-offer fabricated candidate subjects. Once the subject is clear, announce the
-complete scope and method and proceed under the original explicit request,
-unless ask mode requires the one complete scope/method confirmation.
+offer fabricated candidate subjects. Once the subject is clear, continue per
+Section 1.
 
 If the user redirects or narrows scope, apply that instruction and announce the
 result. If the revised request is still ambiguous, ask only about the unresolved
@@ -193,20 +185,15 @@ visible to reviewers.
 ## 3. Finalize The Method
 
 Resolve detection-dependent lenses, reviewer count, replication, and coverage
-before the scope-and-method announcement. If they remain within the user's
-requested scope and authority, include the resolved method in the announcement
-and proceed unless the user explicitly selected ask mode. Ask when the resulting
-method would materially expand the requested scope or requires authority the
-user has not granted. Never issue a lens-only question that hides a material
-scope or authority change.
+before the scope-and-method announcement, then announce or ask per Section 1.
+Never issue a lens-only question that hides a material scope or authority
+change.
 
 Detection can select lenses for the requested subject but can never expand the
 requested material boundaries. Recompute relevance and coverage after a user
 narrowing. Preserve explicit/configured base choices and the fixed-shape rules
 in `review-shape-resolution.md`; do not inject the default lens into those lists.
-Announce all permitted detection additions in the final method. Do not ask a
-redundant approval question for routine method resolution unless the user
-explicitly selected ask mode.
+Announce all permitted detection additions in the final method.
 
 ## 4. Ambiguous, Cancelled, Or Unauthorized Requests
 
@@ -215,7 +202,9 @@ cancels, or the user explicitly selected ask mode but the host cannot obtain a
 response. Otherwise, do not hold a clear, explicitly requested read-only review
 because the host lacks an interactive confirmation control; announce the
 resolved scope and method and proceed. Never guess at an ambiguous subject or
-use a missing answer to authorize material scope expansion.
+use a missing answer to authorize material scope expansion. A held review stops
+before reviewer prompt construction, dispatch, calibration, review-log writing,
+and fix handoff.
 
 This hold does not imply that no writes occurred: target binding, configuration
 initialization, setup/walkthrough hints, or authorized preamble maintenance may
@@ -233,8 +222,8 @@ request to confirm the resolved scope/method. Treat old wizard/default `ask`
 values as `announce`; do not infer a human choice from a persisted schema
 default. Pre-key configs also resolve to the golden `announce` default.
 
-No new flags or config keys are introduced. Persisted values remain readable;
-scope resolution follows this procedure regardless of the saved mode.
+Persisted values remain readable; scope resolution follows this procedure
+regardless of the saved mode.
 Explicit lens-selection preferences follow `review-shape-resolution.md`; they
 do not introduce a second scope-confirmation gate.
 
@@ -251,10 +240,8 @@ After scope resolution:
    `final_scope`.
 2. Recompute session lens ceilings when the requested session subset changes.
 3. Preserve applicable high-risk floors for material still in scope.
-4. Resolve the final method before announcing it; ask for explicit ask mode,
-   material scope expansion, or missing authority.
+4. Resolve the final method before announcing it (Section 3).
 
-Do not ask the user to ratify routine detection-dependent method resolution.
 Keep the announcement truthful about final lens coverage and depth.
 
 ## 7. Outer-Loop Reviews
@@ -298,8 +285,6 @@ against the top-level reviewer count and lens assignments, `review_prompt_profil
 and `reviewer_roster`. The profile and roster must be emitted for every new
 review log. Historical backfill remains compatible with older records.
 
-Do not add a second approval gate for clear explicit read-only requests. Do not
-persist answers for cancelled or superseded proposals. Do not write this block, calibration,
-or a review log unless the resolved scope and method have been announced and
-the review actually runs. The normal preamble may already have
-written configuration, hints, or maintenance state as described in Section 4.
+Do not persist answers for cancelled or superseded proposals. Do not write this
+block, calibration, or a review log unless the resolved scope and method have
+been announced and the review actually runs.

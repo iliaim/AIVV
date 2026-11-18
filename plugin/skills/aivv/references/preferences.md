@@ -41,24 +41,14 @@ An omitted `default_lenses` value resolves to the golden default `general`;
 historical configs that explicitly set `code` or another valid lens retain that
 selection.
 
-Historical golden-schema default note: `scope_confirmation_mode`, `polish_collapsed`, or `fix_apply_policy` omissions are bound by schema defaults, not persisted-file materialization.
-
 Merge project over user, then fill missing keys from schema defaults. For
 `fix_apply_policy`, omitted category entries fill from the schema object.
 
 ## Thoroughness And Direction
 
-Resolve `thoroughness`: CLI `--thoroughness=<tier>` > project > user > default
-`balanced`. `balanced` is identity. `fast`, `thorough`, and `exhaustive` apply
-the default overlays from `thoroughness-dial.md` only to unpinned lever cells:
-`default_reviewers`, `severity_threshold`, `default_lens_replicate`, and
-outer-loop keys. Explicit config pins and CLI flags win. Recompute reviewer
-assignments if the dial fills reviewer or replicate defaults.
-
-`exhaustive`: default reviewers 2; escalate to 3 for architectural scope or
-when final review coverage exceeds the resolved `default_lenses` count, except
-under `--full-*` where KxM governs. Project-kind metadata does not define a lens
-baseline. Require reviewers to attach `grounded_by` for load-bearing findings.
+Resolve `thoroughness` per [thoroughness-dial.md](thoroughness-dial.md), which
+owns tier precedence, the overlay table, pin-wins, and `exhaustive` escalation.
+Recompute reviewer assignments if the dial fills reviewer or replicate defaults.
 
 Resolve `direction`: `--direction`/`--no-direction` > project > user > golden
 schema default. Pass as `Direction: on|off` in dispatch metadata.
@@ -70,13 +60,7 @@ Unknown lens names warn and fall back to `general`; do not halt. Do not append
 `general` to an explicit or configured lens list. Fixed full-* wrappers retain
 their documented specialist lens lists.
 
-For `scope_confirmation_mode`, `announce` is the default: clear explicit
-read-only requests proceed after the final scope and method are announced. An
-`ask` value is a stored preference only when its config has manual provenance;
-old wizard/default `ask` values resolve in-memory to `announce`. The explicit
-`--ask-scope` flag always requests confirmation for this invocation. Ambiguity,
-missing authority, and material scope expansion require clarification in either
-mode.
+Resolve `scope_confirmation_mode` per `scope-confirmation.md` Section 5.
 
 Validate `default_target` directory exists. Stale paths warn and fall back to
 cwd for this invocation.
@@ -113,11 +97,11 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 | `severity_model` | `legacy_4pass` or `impact_likelihood` | severity methodology |
 | `project_context` | deployment/data/jurisdiction context | severity and legal applicability |
 | `severity_cell_map` | partial impact-likelihood table override | severity methodology |
-| `scope_confirmation_mode` | announce default; manual-provenance ask confirms scope/method; ambiguity/authority boundary always asks | Step 3.4 |
+| `scope_confirmation_mode` | announce/ask policy per `scope-confirmation.md` Section 5 | Step 3.4 |
 | `_provenance` | wizard/manual/default source tracking | default_lens_replicate binding gate |
 | `_setup_hint_shown_at` | setup-hint suppression timestamp | Step 6 hint |
-| `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 6 and `/aivv-fix` notices |
-| `multi_model_enabled` | Case D master switch | Step 5.0.5 |
+| `_walkthrough_hints_shown` | walkthrough-hint suppression map | Step 1.9 first-run notices, Step 6, and `/aivv-fix` notices |
+| `multi_model_enabled` | Case D master switch | Step 5 |
 | `reviewer_provider_priority` | provider ordering and fallback walk | multi-model-dispatch.md |
 | `model_policy`, `model_overrides`, `provider_auth_modes` | runtime model/auth selection keyed by provider ID | multi-model-dispatch.md |
 | `multi_model_fallback_strategy` | ask/subagents/none slot fallback | multi-model-dispatch.md |
@@ -126,6 +110,4 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 
 Current reader validates against the golden schema and resolves absent historical
 keys from schema defaults. Historical readers seeing newer configs warn/project
-and ignore unknown keys. Round-3.5 renamed `default_M` to
-`default_lens_replicate`; both are accepted on read, new writes use the modern
-name.
+and ignore unknown keys.

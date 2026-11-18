@@ -1,21 +1,13 @@
 ---
 name: aivv
 description: "Use for general AIVV advisory review of session work, documents, research, plans, designs, decisions, or code; optionally choose reviewers or lenses, target a project, or hand findings to /aivv-fix."
+argument-hint: "[<file>|<idea>|N] [--reviewers=N] [--lens=<list>] [--plan <file>] [--fix] [--dry-run] [--target=<dir>] [--help]"
 ---
 
 # AIVV Orchestration
 
-Compact router for `/aivv`. For read-only questions about flags, review modes,
-or this file, answer from **Contract Snapshot** and stop. The snapshot is
-complete for `--target=<dir>`, `--dry-run`, `--fix --dry-run`, `review_mode`,
-and plan-mode basics; do not open references unless the user asks for parser
-internals, implementation detail, or an actual review. For explanation-only
-questions about `--dry-run` or `/aivv --fix --dry-run`, do not read
-`argument-parsing.md`, `orchestration-workflow.md`, `auto-chain-handoff.md`, or
-`eval-harness.md`; the contract below is authoritative.
-
-Lookup economy: for Contract Snapshot answers, read only this file directly; do
-not run `find`, `ls`, `rg --files`, or read references for confirmation.
+Compact router for `/aivv`. Answer flag/mode questions from **Contract Snapshot**
+alone; open references only for an actual review or parser internals.
 
 ## Contract Snapshot
 
@@ -60,14 +52,10 @@ Plan mode:
 
 Config/shape anchors:
 - Config keys come from the golden schema at `.aivv/schemas/config.schema.json`.
-- `polish_collapsed` has default `false`.
 - Defaults start at `--reviewers=1 --lens=general`. Explicit and configured lens
   choices remain unchanged; `general` is the fallback for an unset or unknown
   configured lens.
 - `review-shape-resolution.md` owns the adaptive-confidence floor.
-- Explicit artifact routes use artifact-relevant session context.
-- Schema-gate hard-error is route-sensitive; do not hard-stop `/aivv` review
-  startup on broad historical-state schema drift outside the active route.
 
 ## Usage
 
@@ -81,7 +69,7 @@ Config/shape anchors:
 /aivv --fix --dry-run         # review normally, then plan fixes only
 /aivv --target=/path/project  # state + relative-path target
 /aivv --full                  # seven specialist lenses, N=14
-/aivv --maintenance           # quarantine + index rebuild; no review
+/aivv --maintenance           # quarantine, index rebuild, 90-day archive; no review
 ```
 
 Other routed flags include `--lens=...`, `--lens-replicate=M`, `--full-ui-ux`,
@@ -89,26 +77,6 @@ Other routed flags include `--lens=...`, `--lens-replicate=M`, `--full-ui-ux`,
 `--no-direction`, `--auto-lens`, `--no-auto-lens`, `--auto-scope`,
 `--ask-scope`, `--predecessor-review-id`, `--setup`, `--help`, `--eval`,
 runtime-evidence flags, and multi-model provider overrides.
-
-Parser anchors:
-- 2y. Extract `--no-direction` / `--direction` before config binding; explicit
-  CLI value wins over project/user/default preference.
-
-### Step 3.4: Scope Resolution
-
-Resolve the complete goal, subject, material boundaries, questions or strategy,
-and final review method. Announce that scope and method before dispatch. A clear
-explicit read-only review request authorizes itself; ask only about genuine
-ambiguity, missing authority, or material scope expansion. See
-[`scope-confirmation.md`](references/scope-confirmation.md).
-
-### Step 3.5: Lens Composition
-
-Compose requested/default lenses after Step 3.4.
-
-Lens detection — deterministic FLOOR:
-filter suggestions through `final_scope`; never expand scope merely because a
-detect signal appears outside the requested scope.
 
 ## Route Loading
 
@@ -124,23 +92,16 @@ detect signal appears outside the requested scope.
   invocation. If it reports `AIVV_INSTALLATION_INCOMPLETE`, surface that single
   diagnostic and stop; do not fall back to another installation or retry the
   missing reference.
-- Contract lookup/help summary: this file only. If the answer is in Contract
-  Snapshot, stop; do not list/read the reference tree for confirmation.
 - Real reviews: read [orchestration-workflow.md](references/orchestration-workflow.md) first; it owns execution and routes to the other references.
-- Argument/config/setup/eval/maintenance: [argument-parsing.md](references/argument-parsing.md), [help-text.md](references/help-text.md), [preferences.md](references/preferences.md), [thoroughness-dial.md](references/thoroughness-dial.md), [setup-wizard.md](references/setup-wizard.md), [eval-harness.md](references/eval-harness.md), [lens-composition.md](references/lens-composition.md).
+- Argument/config/setup/eval/maintenance: [argument-parsing.md](references/argument-parsing.md), [help-text.md](references/help-text.md), [preferences.md](references/preferences.md), [thoroughness-dial.md](references/thoroughness-dial.md), [setup-wizard.md](references/setup-wizard.md), [eval-harness.md](references/eval-harness.md), [state-maintenance.md](../../.aivv/state-maintenance.md).
 - Review shape/scope: [review-shape-resolution.md](references/review-shape-resolution.md), [lens-composition.md](references/lens-composition.md), [scope-confirmation.md](references/scope-confirmation.md).
 - Dispatch/prompt: [reviewer-prompt-template.md](references/reviewer-prompt-template.md), [review-dispatch-lifecycle.md](references/review-dispatch-lifecycle.md), [multi-model-dispatch.md](references/multi-model-dispatch.md).
 - Output/persistence: [result-rendering-policy.md](references/result-rendering-policy.md), [setup-hint.md](references/setup-hint.md), [consensus-output-templates.md](references/consensus-output-templates.md), [self-calibration.md](references/self-calibration.md), [review-log-schema.md](references/review-log-schema.md), [viewer-hook.md](references/viewer-hook.md), [auto-chain-handoff.md](references/auto-chain-handoff.md).
 
 <!-- CLAUDE-CODE-SPECIFIC --> Host notes: Claude Code uses its exposed progress tool (see the Claude Code adapter), `Read`/`Grep`/`Glob`, `Agent`, and
 `Skill`.
-<!-- Codex-SPECIFIC --> Codex uses `update_plan` when exposed and concise user-facing phase
-updates when it is unavailable, plus shell/`rg`, reviewer TOML, and same-agent
-continuation into `/aivv-fix --review-id=<id>`. Missing progress UI is not a
-`capability_degradations` entry and does not skip, weaken, or relabel review,
-safety, or verification gates. State writes are orchestrator-only and use
-the shared storage mutation helper. Bind target/storage context before maintenance
-and preserve policy provenance per `.aivv/target-resolution.md`.
+<!-- Codex-SPECIFIC --> Codex uses `update_plan` when exposed, shell/`rg`,
+reviewer TOML, and same-agent continuation into `/aivv-fix --review-id=<id>`.
 
 <!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, first load the host adapter with
 `read_file` using the substituted absolute path

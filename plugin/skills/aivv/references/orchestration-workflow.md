@@ -65,11 +65,7 @@ or auto-chain.
 After parsing N/K/M, derive provisional `reviewer_lens_assignments`. Recompute
 after preferences and smart-lens detection.
 
-Use `review-shape-resolution.md`; use `lens-composition.md` for K>=2, M>=2, or
-`--maintenance`.
-
-Invariants: K=1/M=1 all reviewers use one lens; K=N/M=1 is 1:1; M>=2 requires
-`N == K*M`; maintenance/eval are early exits.
+Use `review-shape-resolution.md`; `lens-composition.md` owns the K/M/N matrix.
 
 ## Step 1.5: Preferences
 
@@ -105,9 +101,7 @@ continue; the notice may reappear on the next invocation.
 If the user config is unavailable or unreadable after Step 1.5's warning, skip
 both notices and continue without a second warning.
 
-These fire before Step 3.4 scope resolution and announcement; those pre-review
-configuration/hint writes may already be complete if a genuine ambiguity or
-authority question later holds the review.
+These fire before Step 3.4 scope resolution and announcement.
 
 ## Step 1.95: Eval
 
@@ -161,45 +155,28 @@ Quoted text: treat as idea/approach to challenge.
 ## Step 3.4: Scope Resolution And Announcement
 
 Use `review-shape-resolution.md` and `scope-confirmation.md` to establish
-`final_scope` and its provenance. A clear explicit request to perform a
-read-only review authorizes that review unless `--ask-scope` or a manual-
-provenance `scope_confirmation_mode: "ask"` was explicitly selected; otherwise
-do not ask the user to reconfirm its scope. After resolving the final lens/depth method in Step 3.5/3.6, build the
-`resolved_method` record defined in `scope-confirmation.md`. Use that same record
+`final_scope` and its provenance. After resolving the final lens/depth method
+in Step 3.5/3.6, build the `resolved_method` record defined in `scope-confirmation.md`. Use that same record
 to render the proposal, configure dispatch, and populate the reviewer roster
 and prompt profile in the audit log; do not independently reconstruct the
 method at any of those points. Announce the goal, subject, material boundaries,
-relevant questions/strategy, and method together before dispatch. Ask only to
-resolve genuine ambiguity, missing authority, or a material scope expansion. `--ask-scope` and a manual-provenance
-`scope_confirmation_mode: "ask"` request confirmation of a clear scope. Old
-wizard/default `ask` values resolve to announce unless the flag is supplied.
-Earlier preamble writes may already have happened if such a question holds the
-review.
+relevant questions/strategy, and method together before dispatch; when to ask
+instead, and when to hold, is per `scope-confirmation.md` Sections 1 and 4.
 
 ## Step 3.5/3.6: Lens Detection And Method Resolution
 
 After `final_scope` is resolved, use `review-shape-resolution.md` to apply
 deterministic floors, recompute `reviewer_lens_assignments`, and resolve
 `lens_detection_mode`. Then create the immutable proposal tuple from the current
-invocation ID, revision, `final_scope`, and canonical `resolved_method`. Only the
-active proposal may have an unanswered question. When a question is needed,
-accept an answer only from the exact awaited host question and bind it to the
-active proposal ID. If the host cannot associate a response with that question,
-treat it as unanswered, not as approval. Close the question before superseding
-a proposal; cancellation ends the invocation and later answers to that question
-are stale. Then announce the complete final scope and method before Step 4. Do
-not ask the user to approve routine lens/depth resolution within the
-requested scope unless the user explicitly selected an ask preference. Ask if the
-resolved method would materially broaden scope or needs authority the user did
-not grant; do not issue a lens-only question that hides such a change.
-`--auto-lens` means smart; `--no-auto-lens` means off.
-If a genuine scope or authority question is pending or the user cancels, hold
-before reviewer prompt construction, dispatch, calibration, review-log writing,
-or fix handoff.
+invocation ID, revision, `final_scope`, and canonical `resolved_method`, and
+apply the proposal lifecycle, announce/ask, and hold rules in
+`scope-confirmation.md` before Step 4. `--auto-lens` means smart;
+`--no-auto-lens` means off.
 
 ## Step 4: Reviewer Prompt
 
-Use `reviewer-prompt-template.md`. Native prompts may use compact pointers;
+Use `reviewer-prompt-template.md` under the Prompt Construction rules in
+`review-dispatch-lifecycle.md`. Native prompts may use compact pointers;
 provider-backed prompts must be self-contained.
 
 Keep `Session Activity` before code, include metadata, capability degradations,

@@ -22,7 +22,7 @@ Multi-lens routing:
   (`<lens>/<invocation-id>.jsonl`), with identical `review_id` and only `lens` changed
   per shard; the `<invocation-id>` filename stem is identical across the per-lens copies.
 - FP/TP/`bad_fix`/`false_negative` outcome records: route to first lens with a
-  `lens_assignment` annotation. <!-- DEFERRED-RETIRE-WHEN: subtask 3d ADR analysis lands (per-lens FP/TP precision data accumulates to inform whether per-finding routing for outcome records changes the spike's conclusion). See `.aivv/calibration/README.md` "Tier 2B multi-lens spike evaluation protocol" Step 4 for the human-side hand-routing convention that consumes `findings[].lens` from the review log directly. -->
+  `lens_assignment` annotation.
 
 ## Append Procedure
 

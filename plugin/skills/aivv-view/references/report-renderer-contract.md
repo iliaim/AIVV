@@ -1,6 +1,6 @@
 # Report Renderer Contract
 
-This contract defines the stable boundary for AIVV report renderers. It exists so the single-review HTML report and future multi-cycle findings browser share data flow, safety rules, and size expectations without copying ad hoc logic.
+This contract defines the stable boundary for AIVV report renderers. It exists so the single-review HTML report and the multi-cycle findings browser (`--browser`) share data flow, safety rules, and size expectations without copying ad hoc logic.
 
 ## Contract Shape
 
