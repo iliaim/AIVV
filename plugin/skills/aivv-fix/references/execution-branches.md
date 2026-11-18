@@ -7,7 +7,6 @@ Read before executing any Step 5 fix. Final Branch A/B/C/D/E/F dispatch ordering
 - [Apply the fix by category](#1-apply-the-fix-by-category) — root-cause verification, Branch A
 - [Execute the prevention decision](#2-execute-the-prevention-decision)
 - [Task integration](#3-task-integration)
-- [Lifecycle write-back rules](#lifecycle-write-back-rules-when-lifecycle_context-is-present)
 - [Dangerous auto-apply audit](#dangerous-auto-apply-audit-when-dangerously_auto_apply_confirmed--true)
 
 For each approved fix, in priority order (CRITICAL first), after the session-change tracking in [fix-log-contract.md](fix-log-contract.md):
@@ -51,26 +50,6 @@ If source was a task file (`/aivv-fix TASK-XXXX`):
 - Remove resolved items from `open_issues`
 
 ---
-
-## Lifecycle write-back rules (when `lifecycle_context` is present)
-
-When `lifecycle_context` is present, initialize `session_changes.lifecycle_context` before the first fix-log write. Before Step 3 investigation, load the lifecycle record named by `lifecycle_context.record_path` and pass a compact context summary to the investigator. Treat `rca_status: "not-started"` and `rca_status: "draft"` as investigation-first states; they are not fix-ready unless linked review findings already identify concrete changes.
-
-Lifecycle write-back rules:
-- Incident and problem RCA/prevention updates may write only schema-backed fields: `root_cause_analysis`, `incident_context`, `prevention_plan`, `rca_status`, `updated_at` when the record schema supports it, and `links`.
-- Local issue workflow updates may write only schema-backed fields: `status`, `updated_at` when the record schema supports it, `links`, `closure_decision` when `status: "closed"`, `timeline`, and `sync.status`.
-- Verifier failure reopens RCA investigation by moving the lifecycle record back to an investigation state and adding a `fix_log` link to the failed fix log.
-- The convergence cap writes a problem-level or architecture-level recommendation into the lifecycle record rather than looping silently.
-- GitHub updates are drafted through the sync helper:
-  ```bash
-  node "$AIVV_ROOT/tools/incident-github-sync.mjs" plan --issue "<issue-record>" --repo "<owner>/<repo>"
-  node "$AIVV_ROOT/tools/incident-github-sync.mjs" apply --issue "<issue-record>" --repo "<owner>/<repo>" --confirm
-  ```
-- `/aivv-fix` must not directly invoke `gh`; remote issue edits go through `tools/incident-github-sync.mjs`.
-- After every lifecycle record write, validate the record:
-  ```bash
-  node "$AIVV_ROOT/tools/incident-state.mjs" validate --file "<record-file>" --state-dir "<state_dir>" --kind "<incident|problem|local-issue>"
-  ```
 
 ## Dangerous auto-apply audit (when `dangerously_auto_apply_confirmed == true`)
 

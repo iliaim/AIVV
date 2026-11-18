@@ -156,6 +156,7 @@ const PREFLIGHT_FILES = {
     "skills/aivv-fix/references/investigator-output-example.md",
     "skills/aivv-fix/references/investigator-prompt-template.md",
     "skills/aivv-fix/references/json-schema.md",
+    "skills/aivv-fix/references/lifecycle-route.md",
     "skills/aivv-fix/references/mechanical-verification-checks.md",
     "skills/aivv-fix/references/polish-and-l1-source-policy.md",
     "skills/aivv-fix/references/red-green-gate.md",
@@ -165,6 +166,7 @@ const PREFLIGHT_FILES = {
     "skills/aivv-fix/references/verifier-prompt-template.md",
     "skills/aivv-fix/references/viewer-hook.md",
     "skills/aivv-fix/references/write-intents-and-prewrite-validation.md",
+    "skills/aivv-fix/references/wont-fix-registry-handlers.md",
   ],
   "aivv-view": [
     "skills/aivv-view/SKILL.md",
