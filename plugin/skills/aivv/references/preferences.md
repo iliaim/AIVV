@@ -46,17 +46,9 @@ Merge project over user, then fill missing keys from schema defaults. For
 
 ## Thoroughness And Direction
 
-Resolve `thoroughness`: CLI `--thoroughness=<tier>` > project > user > default
-`balanced`. `balanced` is identity. `fast`, `thorough`, and `exhaustive` apply
-the default overlays from `thoroughness-dial.md` only to unpinned lever cells:
-`default_reviewers`, `severity_threshold`, `default_lens_replicate`, and
-outer-loop keys. Explicit config pins and CLI flags win. Recompute reviewer
-assignments if the dial fills reviewer or replicate defaults.
-
-`exhaustive`: default reviewers 2; escalate to 3 for architectural scope or
-when final review coverage exceeds the resolved `default_lenses` count, except
-under `--full-*` where KxM governs. Project-kind metadata does not define a lens
-baseline. Require reviewers to attach `grounded_by` for load-bearing findings.
+Resolve `thoroughness` per [thoroughness-dial.md](thoroughness-dial.md), which
+owns tier precedence, the overlay table, pin-wins, and `exhaustive` escalation.
+Recompute reviewer assignments if the dial fills reviewer or replicate defaults.
 
 Resolve `direction`: `--direction`/`--no-direction` > project > user > golden
 schema default. Pass as `Direction: on|off` in dispatch metadata.
