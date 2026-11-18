@@ -68,13 +68,7 @@ Use `response_format: {type: "json_schema", json_schema: {name: "findings", stri
 
 ## Structured output — CLI path
 
-Append a JSON-mode instruction to the prompt before invoking the CLI (identical pattern to Gemini CLI path):
-
-```
-\n\nRESPONSE FORMAT: Respond with ONLY a valid JSON object. No markdown code fences, no explanation before or after. Use exactly this structure: {"findings": [...]}. If no issues found, return {"findings": []}.
-```
-
-Parse + extract + retry logic is identical to the Gemini CLI path (see `gemini.md`).
+The JSON-mode instruction and the parse, extract, and retry logic are identical to the Gemini CLI path; see [gemini.md](gemini.md) "Structured output — CLI path".
 
 ## API-key fallback
 

@@ -62,7 +62,7 @@ Use `generation_config.responseSchema` + `responseMimeType: "application/json"`:
 }
 ```
 
-**Note:** property order in `responseSchema` should match the prompt's property order for most-reliable output. Verify against current Gemini API docs at implementation time.
+**Note:** property order in `responseSchema` should match the prompt's property order for most-reliable output.
 
 **Response extraction:** `candidates[0].content.parts[0].text` — with `responseMimeType: application/json`, this is always valid JSON.
 
