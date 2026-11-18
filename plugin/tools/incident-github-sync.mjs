@@ -17,6 +17,7 @@ const PUBLIC_REPO_POLICIES = new Set(["block-sensitive", "confirm-sensitive", "a
 const EXTERNAL_ID_MARKER_PREFIX = "AIVV-External-ID:";
 const CLOSURE_RECOMMENDATION_ID_PREFIX = "AIVV-Closure-Recommendation-ID:";
 const CLOSURE_RECOMMENDATION_HASH_PREFIX = "AIVV-Closure-Recommendation-Hash:";
+const KNOWN_REPO_VISIBILITIES = new Set(["PUBLIC", "PRIVATE", "INTERNAL"]);
 const MAX_REMOTE_MATCHES = 20;
 const MAX_REMOTE_COMMENTS = 20;
 const GITHUB_LABEL_ALLOWLIST = new Set([
@@ -146,7 +147,11 @@ function repoVisibility(repo) {
   if (!result.ok) return { ok: false, reason: "gh-unavailable" };
   const parsed = parseGhJson(result, "{}");
   if (!parsed) return { ok: false, reason: "invalid-gh-json" };
-  return { ok: true, visibility: String(parsed.visibility || "PRIVATE").toUpperCase() };
+  // An unknown visibility must not be read as private: that would skip the
+  // public-repository sensitive-content block. Fail closed instead.
+  const visibility = typeof parsed.visibility === "string" ? parsed.visibility.toUpperCase() : "";
+  if (!KNOWN_REPO_VISIBILITIES.has(visibility)) return { ok: false, reason: "repo-visibility-unknown" };
+  return { ok: true, visibility };
 }
 
 function exactMarker(issue) {

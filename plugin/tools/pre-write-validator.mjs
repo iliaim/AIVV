@@ -361,6 +361,14 @@ export function bypassVerdict(fixture) {
     ) {
       return { status: "halt", reason: "model-authored-bypass-rejected" };
     }
+    // A dated approval stops authorizing once it lapses; an unparseable date is
+    // treated as lapsed. A free-text expires_condition cannot be checked here.
+    if (approval.expires_at) {
+      const expiry = typeof approval.expires_at === "string" ? Date.parse(approval.expires_at) : NaN;
+      if (!Number.isFinite(expiry) || expiry <= Date.now()) {
+        return halt("bypass-approval-expired", `bypass_approval.expires_at is ${JSON.stringify(approval.expires_at)}; it must be a future date-time`);
+      }
+    }
     if (!approval.content_sha || approval.content_sha !== intent.content_sha) {
       return { status: "halt", reason: "bypass-content-sha-mismatch" };
     }
@@ -2169,11 +2177,66 @@ export function validateFixLogTransition(fixLog, previousFixLog, { contextFile }
   return { status: "pass", reason: "pass" };
 }
 
+// The CLI gate only ever validates a real /aivv-fix write batch, so it fails
+// closed on anything less: an object with no inspectable intents, a different
+// command, or intents missing the required Step 4.4 fields would otherwise
+// skip the scope binding, branch/kind and staleness checks and still pass.
+// detector_result is not required here because the proposal-only pass is
+// what produces it.
+const WRITE_INTENT_ENUMS = {
+  branch: ["A", "B", "C-fallthrough-A", "D"],
+  operation: ["edit", "create", "replace"],
+  kind: ["generated_patch", "verbatim_doc_content", "process_rule_content"],
+};
+
+function fixtureShapeVerdict(fixture) {
+  if (!plainObject(fixture)) {
+    return halt("fixture-not-object", "the fixture must be a JSON object describing one /aivv-fix write batch");
+  }
+  const intents = fixture.write_intents;
+  if (!Array.isArray(intents) || intents.length === 0 || !intents.every(plainObject)) {
+    return halt("no-pre-write-inspectable-intent", "write_intents must be a non-empty array of objects");
+  }
+  return { status: "pass", reason: "pass" };
+}
+
+function fixtureBatchVerdict(fixture) {
+  if (fixture.command !== "aivv-fix") {
+    return halt("fixture-command-not-aivv-fix", `command is ${JSON.stringify(fixture.command)}; expected "aivv-fix"`);
+  }
+  for (const [index, intent] of fixture.write_intents.entries()) {
+    const label = `write_intents[${index}] (${nonBlankString(intent.id) ? intent.id : "no id"})`;
+    for (const field of ["id", "finding_id", "target_file"]) {
+      if (!nonBlankString(intent[field])) return halt("write-intent-required-field-missing", `${label}: ${field} must be a non-blank string`);
+    }
+    for (const [field, allowed] of Object.entries(WRITE_INTENT_ENUMS)) {
+      if (!allowed.includes(intent[field])) return halt("write-intent-required-field-missing", `${label}: ${field} must be one of ${allowed.join(", ")}`);
+    }
+    if (typeof intent.content_sha !== "string" || !REVIEW_LOG_SHA256_RE.test(intent.content_sha)) {
+      return halt("write-intent-required-field-missing", `${label}: content_sha must be a lowercase hex SHA-256`);
+    }
+    if (intent.source_step !== "Step 4.4") return halt("write-intent-required-field-missing", `${label}: source_step must be "Step 4.4"`);
+    if (!Array.isArray(intent.pre_write_assertions)) return halt("write-intent-required-field-missing", `${label}: pre_write_assertions must be an array`);
+    const hasBytes = (Array.isArray(intent.proposed_edits) && intent.proposed_edits.length > 0) ||
+      typeof intent.exact_content_or_patch === "string" || typeof intent.exact_content === "string";
+    if (!hasBytes) {
+      return halt("no-pre-write-inspectable-intent", `${label}: carries no proposed_edits or exact_content_or_patch, so content_sha cannot be checked`);
+    }
+  }
+  return { status: "pass", reason: "pass" };
+}
+
 export function validateFile(file, options = {}) {
   const input = readJsonInput(file);
   if (input.verdict) return input.verdict;
   const fixture = input.value;
-  const verdict = validateFixture(fixture, options);
+  const shape = fixtureShapeVerdict(fixture);
+  if (shape.status === "halt") return shape;
+  let verdict = validateFixture(fixture, options);
+  if (verdict.status === "pass") {
+    const batch = fixtureBatchVerdict(fixture);
+    if (batch.status === "halt") verdict = batch;
+  }
   if (verdict.status !== "halt") return verdict;
   // The real halt reason stays on top. Where the run stands against the soft rework limit is a note
   // for the agent; the fix log's retry history is what enforces a recorded reason past the limit.

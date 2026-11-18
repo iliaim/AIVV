@@ -2,7 +2,7 @@
 // Issue #26 item 8: a lifecycle selector used from a checkout with no AIVV state
 // (a fresh worktree or clone) must say what is missing and where it looked.
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -60,6 +60,34 @@ try {
         { encoding: 'utf8', env: { ...env, AIVV_GH_BIN: path.join(temporaryRoot, 'no-gh') }, cwd: checkout });
       assert.equal(sync.status, 64, `${command} ${repoArgs.join(' ')} is a usage error`);
       assert.equal(JSON.parse(sync.stdout).reason, 'missing-or-invalid-repo');
+    }
+  }
+
+  // A sensitive issue must never be planned for a repository whose visibility
+  // gh did not report: unknown visibility is blocked, not treated as private.
+  const zero = `sha256:${'0'.repeat(64)}`;
+  const sensitiveIssue = path.join(temporaryRoot, 'sensitive-issue.json');
+  writeFileSync(sensitiveIssue, JSON.stringify({
+    schema_version: 1, id: 'ISS-1', external_id: 'aivv:issue:ISS-1', status: 'drafted', title: 'Fix the thing',
+    body_hash: zero, rca_status: 'not-started', accepted_unverified_rationale: null,
+    evidence: [{ id: 'EVID-1', kind: 'note', source_ref: 'local', redacted_excerpt: 'x', sha256: zero,
+      redactions_applied: [], publishable: false, local_only: true, captured_at: '2026-11-18T00:00:00Z' }],
+    sync: { mode: 'github-preferred', status: 'local-only', github: null, last_synced_at: null, last_checked_at: null, stale_after: 'P1D', sync_hash: null },
+    owner: null, due_at: null, acceptance_criteria: [], closure_criteria: [], closure_gates: {}, labels: [], links: [], timeline: [],
+  }));
+  const fakeGh = path.join(temporaryRoot, 'fake-gh');
+  writeFileSync(fakeGh, '#!/bin/sh\ncase "$1 $2" in\n"auth status") exit 0;;\n"repo view") printf "%s" "$FAKE_GH_REPO_VIEW"; exit 0;;\n"issue list") printf "[]"; exit 0;;\nesac\nexit 1\n');
+  chmodSync(fakeGh, 0o755);
+  const plan = (repoView) => JSON.parse(spawnSync(process.execPath, [githubSyncHelper, 'plan', '--issue', sensitiveIssue, '--repo', 'acme/widgets'],
+    { encoding: 'utf8', env: { ...env, AIVV_GH_BIN: fakeGh, FAKE_GH_REPO_VIEW: repoView }, cwd: checkout }).stdout);
+  if (process.platform !== 'win32') {
+    assert.equal(plan('{"visibility":"PUBLIC"}').reason, 'sensitive-publication-blocked');
+    assert.equal(plan('{"visibility":"PRIVATE"}').status, 'planned', 'a private repository still plans the sync');
+    for (const repoView of ['', '{}', '[]', '{"visibility":""}', '{"visibility":"unknown"}', '{"visibility":5}']) {
+      const result = plan(repoView);
+      assert.equal(result.status, 'blocked', `visibility output ${JSON.stringify(repoView)} must block`);
+      assert.equal(result.reason, 'repo-visibility-unknown');
+      assert.equal(result.remote_allowed, false);
     }
   }
 } finally {

@@ -18,7 +18,8 @@ function run(agentType, command, cwd = process.cwd()) {
 for (const command of [
   "git --no-pager --no-optional-locks -c core.fsmonitor=false status --short",
   "git --no-pager log --no-ext-diff --no-textconv -1 --oneline",
-  "git --no-pager diff --no-ext-diff --no-textconv --stat",
+  "git --no-pager --no-optional-locks -c core.fsmonitor=false diff --no-ext-diff --no-textconv --stat",
+  "git --no-pager --no-optional-locks -c core.fsmonitor=false diff --no-ext-diff --no-textconv --cached",
   "git --no-pager show --no-ext-diff --no-textconv --format=oneline HEAD",
   "cat 'file name.txt'",
   "grep -n 'token' README.md",
@@ -37,6 +38,11 @@ for (const command of [
   "git status --short",
   "git --no-pager status --short",
   "git --no-pager diff",
+  "git --no-pager diff --no-ext-diff --no-textconv --stat",
+  "git --no-pager diff --no-ext-diff --no-textconv --cached",
+  "git --no-pager --no-optional-locks diff --no-ext-diff --no-textconv",
+  "git --no-pager -c core.fsmonitor=false diff --no-ext-diff --no-textconv",
+  "git --no-pager --no-optional-locks -c core.fsmonitor=false diff",
   "git --no-pager diff --no-ext-diff --no-textconv --pathspec-from-file=-/outside",
   "git --no-pager diff --no-ext-diff --no-textconv --pathspec-file-nul",
   "git --no-pager diff --no-ext-diff",
@@ -98,6 +104,8 @@ assert.equal(run(undefined, "cat README.md").status, 0);
 assert.equal(run("OtherAgent", "pwd").status, 0);
 assert.equal(run("aivv:unknown", "pwd").status, 2);
 assert.equal(run("aivv:reviewer", "git --no-pager --no-optional-locks -c core.fsmonitor=false status --short").status, 0);
+assert.equal(run("aivv:reviewer", "git --no-pager --no-optional-locks -c core.fsmonitor=false diff --no-ext-diff --no-textconv --stat").status, 0);
+assert.equal(run("aivv:reviewer", "git --no-pager diff --no-ext-diff --no-textconv --stat").status, 2);
 assert.equal(run("aivv:reviewer", "cat README.md").status, 2);
 assert.equal(run("aivv:reviewer", "git reset --hard").status, 2);
 
@@ -140,6 +148,18 @@ try {
   assert.deepEqual(readFileSync(indexPath), indexBefore, "safe git status must not refresh the index");
   assert.equal(existsSync(marker), false, "safe git status must not run the configured fsmonitor hook");
   assert.equal(run("aivv:investigator", "git --no-pager --no-optional-locks -c core.fsmonitor=false status --short", gitWorkspace).status, 0);
+
+  // A worktree diff refreshes the index too, so an unprefixed diff runs the
+  // configured fsmonitor program. The guard must require the same opt-outs.
+  const diffArgs = ["diff", "--no-ext-diff", "--no-textconv", "--stat"];
+  const safeDiff = spawnSync("git", ["--no-pager", "--no-optional-locks", "-c", "core.fsmonitor=false", ...diffArgs], { cwd: gitWorkspace, encoding: "utf8" });
+  assert.equal(safeDiff.status, 0, `safe git diff failed: ${safeDiff.stderr}`);
+  assert.equal(existsSync(marker), false, "safe git diff must not run the configured fsmonitor hook");
+  assert.equal(run("aivv:investigator", `git --no-pager --no-optional-locks -c core.fsmonitor=false ${diffArgs.join(" ")}`, gitWorkspace).status, 0);
+  const unsafeDiff = spawnSync("git", ["--no-pager", ...diffArgs], { cwd: gitWorkspace, encoding: "utf8" });
+  assert.equal(unsafeDiff.status, 0, `unprefixed git diff failed: ${unsafeDiff.stderr}`);
+  assert.equal(existsSync(marker), true, "unprefixed git diff is expected to run the configured fsmonitor hook");
+  assert.equal(run("aivv:investigator", `git --no-pager ${diffArgs.join(" ")}`, gitWorkspace).status, 2);
 } finally {
   rmSync(gitWorkspace, { recursive: true, force: true });
 }

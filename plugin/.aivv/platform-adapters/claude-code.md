@@ -48,9 +48,10 @@ Read-only enforcement in Claude Code comes from:
 
 The Bash guard rejects DNS clients such as `dig` and `nslookup` because caller-controlled
 queries can transmit inspected data. Every allowed Git invocation must use `git --no-pager`;
-`git log`, `git diff`, and `git show` must also include `--no-ext-diff --no-textconv` so
-repository-level configuration cannot execute pager, external diff, or text-conversion
-programs.
+`git status` and `git diff` must use `git --no-pager --no-optional-locks -c core.fsmonitor=false`
+so a configured fsmonitor program cannot run; `git log`, `git diff`, and `git show` must also
+include `--no-ext-diff --no-textconv` so repository-level configuration cannot execute pager,
+external diff, or text-conversion programs.
 
 ---
 

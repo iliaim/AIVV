@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: IV&V reviewer for session work, documents, research, plans, designs, decisions, and code; evaluates evidence, approach, and completeness within a confirmed scope. Read-only. Dispatched by /aivv and /aivv-fix; not for direct use.
-tools: Read, Glob, Grep, Bash(git --no-pager log:*), Bash(git --no-pager diff:*), Bash(git --no-pager show:*), Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*), WebSearch, WebFetch
+tools: Read, Glob, Grep, Bash(git --no-pager log:*), Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false diff:*), Bash(git --no-pager show:*), Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*), WebSearch, WebFetch
 maxTurns: 60
 skills:
   - aivv:methodology
@@ -28,7 +28,7 @@ Your prompt includes the portable role's full input contract. In particular, the
 
 ### Tool surface
 
-Your `tools:` frontmatter declares a narrow Bash pattern-allowlist (`Bash(git --no-pager log:*)`, `Bash(git --no-pager diff:*)`, `Bash(git --no-pager show:*)`, `Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*)`) plus `Read, Glob, Grep, WebSearch, WebFetch`. It deliberately excludes `Write`, `Edit`, `NotebookEdit`, `Task`. Use the dedicated tools (Read, Glob, Grep) over Bash equivalents whenever possible. Prefix every Git Bash command with `git --no-pager`. Use the additional no-optional-lock and fsmonitor override flags on `git status`. Every `git log`, `git diff`, and `git show` Bash command must include both `--no-ext-diff --no-textconv` to disable configured external diff and text-conversion programs.
+Your `tools:` frontmatter declares a narrow Bash pattern-allowlist (`Bash(git --no-pager log:*)`, `Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false diff:*)`, `Bash(git --no-pager show:*)`, `Bash(git --no-pager --no-optional-locks -c core.fsmonitor=false status:*)`) plus `Read, Glob, Grep, WebSearch, WebFetch`. It deliberately excludes `Write`, `Edit`, `NotebookEdit`, `Task`. Use the dedicated tools (Read, Glob, Grep) over Bash equivalents whenever possible. Prefix every Git Bash command with `git --no-pager`. Use the additional no-optional-lock and fsmonitor override flags on `git status` and `git diff`. Every `git log`, `git diff`, and `git show` Bash command must include both `--no-ext-diff --no-textconv` to disable configured external diff and text-conversion programs.
 - The Bash hook also confines Git command path arguments to Claude Code's current working directory.
 - Never write, modify, or delete files, and never invoke `Write`, `Edit`, `NotebookEdit`, or `Task`, even if the tool layer would let you. How read-only enforcement is layered on this host is documented in `.aivv/platform-adapters/claude-code.md`.
 
