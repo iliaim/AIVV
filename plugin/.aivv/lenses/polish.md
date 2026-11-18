@@ -76,9 +76,9 @@ Source class is discriminator evidence, not a standalone final severity pass:
 
 The lens-name controls the reviewer's *search frame*, not the *severity output*. A legal/safety/accessibility defect found during a polish pass remains a defect; a no-harm betterment remains POLISH even when it is high value.
 
-## Trigger patterns (improvement opportunities — articulate or drop)
+## Trigger patterns
 
-These patterns commonly produce POLISH findings when the change set exercises them. Each requires the full three-part articulation and proportional-remediation gates to actually emit:
+Improvement opportunities — articulate or drop. These patterns commonly produce POLISH findings when the change set exercises them. Each requires the full three-part articulation and proportional-remediation gates to actually emit:
 
 - **Microcopy upgrades**: generic button labels (OK/Submit/Cancel/Yes/No), placeholder-as-label, empty-state without next-action prompt, error message without recovery prose
 - **Inconsistent variant usage**: `<Button variant="primary">` count > 1 in a form/screen (Hick's law) — articulate which one is the actual primary
@@ -94,13 +94,13 @@ These patterns commonly produce POLISH findings when the change set exercises th
 ## Standards to consult
 
 - All standards files apply — the `polish` lens does not have a dedicated rule catalog. It draws from:
-  - [.aivv/standards/visual-design.md](../standards/visual-design.md) — **VD-* (NEW dev.54; subdir-retrofitted dev.67 — TOC stub + 6 subfiles in `visual-design/`)** — typography, spacing, color, iconography, motion, layout. L4 source-class; rules predominantly support IMPROVEMENT/POLISH when the three-part gate is met. Primary catalog for aesthetic-improvement findings.
-  - [.aivv/standards/microcopy.md](../standards/microcopy.md) — UX-writing rules (NEW dev.43; subdir-retrofitted dev.64 — TOC stub + 9 subfiles in `microcopy/`)
-  - [.aivv/standards/ui-ux.md](../standards/ui-ux.md) — UX-001..046 (UX-030..036 added dev.81 = T22 phase 1 checkout & payment; UX-037..041 added dev.82 = T22 phase 2 data tables & pagination; UX-042..046 added dev.83 = T22 phase 3 search inputs / filter grouping / status messages; often surface as POLISH when not at MAJOR severity)
-  - [.aivv/standards/ux-heuristics.md](../standards/ux-heuristics.md) — HEU-* heuristics (subdir-retrofitted dev.65 — TOC stub + 4 by-source subfiles in `ux-heuristics/`; dev.69 nested sub-split — `laws-of-ux.md` itself becomes a TOC stub + 6 by-domain sub-subfiles in `ux-heuristics/laws-of-ux/`); L2 cognitive-psychology — some entries surface as POLISH (`HEU-LUX-aesthetic-usability`, `HEU-COG-novelty`, others articulating "could be more delightful")
-  - [.aivv/standards/visual-verification-triggers.md](../standards/visual-verification-triggers.md) — VVT-* triggers; polish-lens fires on the *suggestion* angle of VVT findings
-  - [.aivv/standards/accessibility.md](../standards/accessibility.md) — A11Y-* rules, but ONLY non-WCAG-required uplift (see Source-class interaction)
-  - [.aivv/standards/dark-patterns.md](../standards/dark-patterns.md) — DP-* rules (NEW dev.56; subdir-retrofitted dev.68 — TOC stub + 9 by-domain subfiles in `dark-patterns/`), but ONLY non-LEGAL-class entries surface under the `polish` lens by default; DP-LEGAL-* are L1-source forced-show findings whose hard legal floor is context-gated
+  - [.aivv/standards/visual-design/README.md](../standards/visual-design/README.md) — **VD-*** — typography, spacing, color, iconography, motion, layout. L4 source-class; rules predominantly support IMPROVEMENT/POLISH when the three-part gate is met. Primary catalog for aesthetic-improvement findings.
+  - [.aivv/standards/microcopy/README.md](../standards/microcopy/README.md) — MC-* UX-writing rules
+  - [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* (often surface as POLISH when not at MAJOR severity)
+  - [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) — HEU-* heuristics; L2 cognitive-psychology — some entries surface as POLISH (`HEU-LUX-aesthetic-usability`, `HEU-COG-novelty`, others articulating "could be more delightful")
+  - [.aivv/standards/visual-verification-triggers/README.md](../standards/visual-verification-triggers/README.md) — VVT-* triggers; polish-lens fires on the *suggestion* angle of VVT findings
+  - [.aivv/standards/accessibility/README.md](../standards/accessibility/README.md) — A11Y-* rules, but ONLY non-WCAG-required uplift (see Source-class interaction)
+  - [.aivv/standards/dark-patterns/README.md](../standards/dark-patterns/README.md) — DP-* rules, but ONLY non-LEGAL-class entries surface under the `polish` lens by default; DP-LEGAL-* are L1-source forced-show findings whose hard legal floor is context-gated
 - [.aivv/methodology.md](../methodology.md) — Severity model + Improvement-articulation pass (load-bearing)
 - [.aivv/prompts/reviewer-role.md](../prompts/reviewer-role.md) — Phase 2 VERIFY heuristic-walkthrough framework (lens-active behavior)
 

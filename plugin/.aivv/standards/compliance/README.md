@@ -1,16 +1,14 @@
 # Compliance — standards catalog index
 
-Part of [.aivv/standards/](../README.md). The `compliance.md` catalog covers regulatory + legal-risk + AAA-enhancement rules grouped by topical sub-domain. Each subfile carries a contiguous rule-ID range under the `COMP-*` namespace.
-
-**Status:** Shipped.
+Part of [.aivv/standards/](../README.md). The compliance catalog covers regulatory + legal-risk + AAA-enhancement rules grouped by topical sub-domain. Each subfile carries one `COMP-*` sub-prefix.
 
 ## Subdomains
 
-| Subfile | Rule-ID range | Rules | Focus |
-|---|---|---|---|
-| [`wcag-aaa.md`](wcag-aaa.md) | `COMP-WCAG-AAA-01..15` | 15 | WCAG 2.1 Level AAA realistic subset (NOT duplicating AAA SCs already in `accessibility/` like 2.3.3 / 2.4.13 / 2.5.5 / 3.3.9) |
-| [`aria-apg-full.md`](aria-apg-full.md) | `COMP-APG-01..15` | 15 | Full ARIA APG widget conformance (NOT duplicating APG patterns already in `accessibility/aria/apg-widgets.md` A11Y-045..060 at minimum-conformance level; extends to additional widgets + enhanced-conformance) |
-| [`legal-risk.md`](legal-risk.md) | `COMP-LEGAL-01..09` | 9 | FTC + EU DSA + GDPR + ADA + Section 508 + EU EAA legal-risk rules (companion to `dark-patterns/legal.md` DP-LEGAL-* subset on disclosure/transparency/data-subject-rights axis; rule-ID prefix `COMP-LEGAL-` triggers L1-source forced-show per `skills/aivv-fix/references/polish-and-l1-source-policy.md` canonical detection logic) |
+| Subfile | Prefix | Focus |
+|---|---|---|
+| [`wcag-aaa.md`](wcag-aaa.md) | `COMP-WCAG-AAA-*` | WCAG 2.2 Level AAA realistic subset (NOT duplicating AAA SCs already in `accessibility/` like 2.3.3 / 2.4.13 / 2.5.5 / 3.3.9) |
+| [`aria-apg-full.md`](aria-apg-full.md) | `COMP-APG-*` | Full ARIA APG widget conformance (NOT duplicating APG patterns already in `accessibility/aria/apg-widgets.md` at minimum-conformance level; extends to additional widgets + enhanced-conformance) |
+| [`legal-risk.md`](legal-risk.md) | `COMP-LEGAL-*` | FTC + EU DSA + GDPR + ADA + Section 508 + EU EAA legal-risk rules (companion to `dark-patterns/legal.md` DP-LEGAL-* subset on disclosure/transparency/data-subject-rights axis; rule-ID prefix `COMP-LEGAL-` triggers L1-source forced-show per `skills/aivv-fix/references/polish-and-l1-source-policy.md` canonical detection logic) |
 
 ## Severity discipline
 
@@ -20,7 +18,7 @@ Part of [.aivv/standards/](../README.md). The `compliance.md` catalog covers reg
 
 ## Lens routing
 
-Findings in this catalog route to the `compliance` lens (shipped dev.105 = T45 Wave 2 phase 3). Pre-dev.105 invocations may route them to `code` lens as fallback. The `--full-ui-ux` (T47) + `--full-a11y` (T48) + `--full` (T49) flags will include the `compliance` lens once shipped.
+Findings in this catalog route to the `compliance` lens. The `--full-ui-ux`, `--full-a11y`, `--full`, and `--full-with-journey` flags include it.
 
 ## Legal disclaimer
 

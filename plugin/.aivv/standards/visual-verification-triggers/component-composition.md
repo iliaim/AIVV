@@ -1,6 +1,6 @@
 # Visual Verification Triggers — Component composition and layout primitive changes
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-010..013, VVT-067). Extended dev.98 = T23 phase 8 batch 1 — HTML `<dialog>` element + `.showModal()` / `.show()` API (Baseline Widely available since March 2022) appended per the dev.86 by-domain partition policy.
+Part of [.aivv/standards/visual-verification-triggers/](README.md).
 
 ### VVT-010: Swapped layout primitive or wrapper component
 

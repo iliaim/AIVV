@@ -81,7 +81,7 @@ Part of [.aivv/standards/interaction-states/](README.md) (IS-006..012).
 ### IS-010: Long-running forms must surface progress
 
 **Severity**: MINOR
-**Rationale**: Submit operations exceeding ~3 seconds with no progress indication trigger Doherty-threshold violation (HEU-LUX-doherty, lives in `ux-heuristics/laws-of-ux/timing-perception.md` per dev.69 nested retrofit) and user re-click.
+**Rationale**: Submit operations exceeding ~3 seconds with no progress indication trigger Doherty-threshold violation (HEU-LUX-doherty, lives in `ux-heuristics/laws-of-ux/timing-perception.md`) and user re-click.
 **Source**: https://lawsofux.com/doherty-threshold/
 
 **The rule**: submit operations expected to take >3s show progress (spinner, progress bar, "Uploading 3 of 5 files…").

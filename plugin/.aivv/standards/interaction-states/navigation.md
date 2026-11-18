@@ -43,7 +43,7 @@ Part of [.aivv/standards/interaction-states/](README.md) (IS-024..026).
 ### IS-026: External links must be marked
 
 **Severity**: MINOR
-**Rationale**: Links that leave the application without indication surprise users — violating user-control (HEU-NN3) and Jakob's-Law convention (HEU-LUX-jakob, lives in `ux-heuristics/laws-of-ux/mental-models.md` per dev.69 nested retrofit).
+**Rationale**: Links that leave the application without indication surprise users — violating user-control (HEU-NN3) and Jakob's-Law convention (HEU-LUX-jakob, lives in `ux-heuristics/laws-of-ux/mental-models.md`).
 **Source**: https://www.nngroup.com/articles/external-links-new-windows/
 
 **The rule**: external links visually marked (icon, "External" label) and announced to assistive tech (`aria-label="External link"` or visually-hidden text). If opening in a new tab, communicate that.

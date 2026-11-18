@@ -1,8 +1,8 @@
-# UI/UX — UX-lens microcopy (subset; see peer `microcopy.md` for the MC-* catalog)
+# UI/UX — UX-lens microcopy (subset; see `microcopy/` for the MC-* catalog)
 
 Part of [.aivv/standards/ui-ux/](README.md) (UX-020..021).
 
-**Note:** these are the UX-lens microcopy rules. The full microcopy rule catalog (38 `MC-*` rules covering buttons, labels, errors, empty states, confirmations, loading, notifications, capitalization) lives in a peer file at [`.aivv/standards/microcopy.md`](../microcopy.md). UX-020 and UX-021 are the UX-lens-specific subset that ships alongside the broader microcopy standards.
+**Note:** these are the UX-lens microcopy rules. The full microcopy rule catalog (38 `MC-*` rules covering buttons, labels, errors, empty states, confirmations, loading, notifications, capitalization) lives in [`.aivv/standards/microcopy/`](../microcopy/README.md). UX-020 and UX-021 are the UX-lens-specific subset that ships alongside the broader microcopy standards.
 
 ### UX-020: Button labels describe the resulting action, not "OK" / "Submit" / "Yes"
 

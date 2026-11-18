@@ -1,8 +1,6 @@
 # Visual Verification Triggers — Framework boundaries & DOM observers
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-043..046). Added dev.85 = T23 phase 2 — JavaScript-framework boundary triggers (React Suspense) + Web Components encapsulation + DOM-mutation-driven UI observers (IntersectionObserver, ResizeObserver). Each trigger carries an inline `Source:` line per the dev.84 corrective discipline (Beta F2 close).
-
-<!-- POLICY-NOTE (dev.86 by-domain partition policy): this file and `modern-platform.md` are CLOSED historical by-date batches with stable rule-ID ranges (VVT-043..046 here, VVT-031..042 in `modern-platform.md`). Future VVT additions append to by-domain subfiles (`css-styling.md` / `state-interaction.md` / `component-composition.md` / `accessibility-code.md` / `assets.md` / `responsive.md`) per maintainer guidance "By-date-vs-by-domain VVT subfile policy". Re-evaluate redistribution if either by-date file crosses 300 lines individually. -->
+Part of [.aivv/standards/visual-verification-triggers/](README.md). JavaScript-framework boundary triggers (React Suspense), Web Components encapsulation, and DOM-observer-driven UI (IntersectionObserver, ResizeObserver). Each trigger carries an inline `Source:` line.
 
 **Last MDN/React-checked**: 2026-05-12. Framework-version-anchored claims drift fast; re-verify before citing past 2026-12.
 

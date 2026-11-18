@@ -2,7 +2,7 @@
 
 Part of [.aivv/standards/dark-patterns/](README.md).
 
-**i18n composition note (dev.104+):** The DP-PRICE-* manipulation patterns compose with **I18N-FMT-03** (`i18n/formatters.md`, "Currency uses `Intl.NumberFormat({style: 'currency'})`") on the currency-display surface. I18N-FMT-03 enforces the locale-aware + currency-code-explicit formatting baseline (no hardcoded `$` prefix, no assumed-USD display, no symbol-placement-locked-to-US-English); the DP-PRICE-* rules then cover manipulation-axis defects on top of that correctness baseline (drip pricing, fake anchors, hidden fees, etc.). The two layers compose: getting `Intl.NumberFormat` currency formatting correct is the i18n baseline; DP-PRICE-* findings address manipulative patterns regardless of locale-correctness.
+**i18n composition note:** The DP-PRICE-* manipulation patterns compose with **I18N-FMT-03** (`i18n/formatters.md`, "Currency uses `Intl.NumberFormat({style: 'currency'})`") on the currency-display surface. I18N-FMT-03 enforces the locale-aware + currency-code-explicit formatting baseline (no hardcoded `$` prefix, no assumed-USD display, no symbol-placement-locked-to-US-English); the DP-PRICE-* rules then cover manipulation-axis defects on top of that correctness baseline (drip pricing, fake anchors, hidden fees, etc.). The two layers compose: getting `Intl.NumberFormat` currency formatting correct is the i18n baseline; DP-PRICE-* findings address manipulative patterns regardless of locale-correctness.
 
 ### DP-PRICE-01: Drip pricing — surcharges revealed only at checkout
 
@@ -138,8 +138,8 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 ### DP-PRICE-08: Trial-to-paid price obscured
 
 **Severity**: MAJOR
-**Rationale**: "Start 30-day free trial" without prominently disclosing the post-trial recurring price is a classic pricing dark pattern. FTC negative-option rule applies.
-**Source**: FTC Negative Option Rule — https://www.ftc.gov/legal-library/browse/rules/negative-option-rule
+**Rationale**: "Start 30-day free trial" without prominently disclosing the post-trial recurring price is a classic pricing dark pattern. ROSCA requires clear disclosure of material terms before charging.
+**Source**: ROSCA, 15 U.S.C. §§8401-8405 — https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act
 
 **The rule**: trial CTAs disclose the post-trial price (amount + cadence) at the same visual prominence as the trial offer. Defer-to DP-LEGAL-04 for the compliance variant.
 

@@ -44,7 +44,7 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 **Rationale**: Removing pagination / endpoints / "Done for the day?" prompts to maximize session duration is dark engagement (a documented pattern).
 **Source**: deceptive.design — https://www.deceptive.design/types
 
-**The rule**: long content feeds include stopping cues (pagination, daily-limit, summary-of-progress) at reasonable intervals; not infinite-scroll without breaks. Defer-to UX-025 (lives in `ui-ux/data-performance.md` per dev.62 retrofit — "Use 'Load more' over pure infinite scroll", severity MINOR).
+**The rule**: long content feeds include stopping cues (pagination, daily-limit, summary-of-progress) at reasonable intervals; not infinite-scroll without breaks. Defer-to UX-025 (lives in `ui-ux/data-performance.md` — "Use 'Load more' over pure infinite scroll", severity MINOR).
 
 **Code patterns to flag**:
 - `<InfiniteScroll>` with no `<EndOfDay>` or pagination break

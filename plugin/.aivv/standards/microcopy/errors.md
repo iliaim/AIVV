@@ -66,7 +66,7 @@ Part of [.aivv/standards/microcopy/](README.md) (MC-016..021).
 ### MC-019: Color is not the only carrier of error state
 
 **Severity**: MAJOR
-**Rationale**: Cross-references A11Y-032 (lives in `accessibility/color-motion.md` per dev.61 retrofit). Red borders alone fail WCAG 1.4.1 (Use of Color). Users with color-vision differences or in high-glare environments lose the signal entirely.
+**Rationale**: Cross-references A11Y-032 (lives in `accessibility/color-motion.md`). Red borders alone fail WCAG 1.4.1 (Use of Color). Users with color-vision differences or in high-glare environments lose the signal entirely.
 **Source**: https://www.w3.org/WAI/WCAG21/Understanding/use-of-color.html
 
 **The rule**: Error states combine color (red) + icon + text. Removing any one of the three should still leave the error visible.

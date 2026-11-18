@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_by": "tools/standards-index.mjs",
+  "generated_by": "scripts/standards-index.mjs",
   "rule_id_prefixes": [
     "A11Y",
     "AS",
@@ -176,14 +176,14 @@
       "rule_id": "A11Y-073",
       "title": "Avoid `role=\"application\"` except for true app-like contexts",
       "file": ".aivv/standards/accessibility/aria/sr-divergence.md",
-      "line": 7,
+      "line": 5,
       "family": "accessibility"
     },
     {
       "rule_id": "A11Y-074",
       "title": "Don't override implicit `aria-live` defaults on `alert`/`status`/`log` roles",
       "file": ".aivv/standards/accessibility/aria/sr-divergence.md",
-      "line": 32,
+      "line": 30,
       "family": "accessibility"
     },
     {
@@ -715,273 +715,273 @@
       "rule_id": "COMP-APG-01",
       "title": "Carousel — `aria-roledescription=\"carousel\"` + rotation control + per-slide naming",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 15,
+      "line": 13,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-02",
       "title": "Checkbox (tri-state / mixed) — `role=\"checkbox\"` + `aria-checked=\"mixed\"` cycle",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 56,
+      "line": 54,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-03",
       "title": "Combobox — `role=\"combobox\"` + `aria-expanded` + `aria-activedescendant` + popup `role=\"listbox\"`",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 95,
+      "line": 93,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-04",
       "title": "Feed — `role=\"feed\"` + `aria-busy` + per-article `aria-posinset` / `aria-setsize`",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 150,
+      "line": 148,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-05",
       "title": "Grid — `role=\"grid\"` + cell navigation keyboard model + `aria-rowindex` / `aria-colindex` for virtual grids",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 192,
+      "line": 190,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-06",
       "title": "Spinbutton — `role=\"spinbutton\"` + `aria-valuemin/max/now` + arrow-key step",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 241,
+      "line": 239,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-07",
       "title": "Date Picker Dialog — text input + button trigger + dialog with `role=\"grid\"` calendar + full keyboard model",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 288,
+      "line": 286,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-08",
       "title": "Slider (Multi-thumb) — each thumb is `role=\"slider\"` with independent valuenow + mutually-constrained min/max",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 342,
+      "line": 340,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-09",
       "title": "Treegrid — `role=\"treegrid\"` + `aria-expanded` on parent rows + `aria-level` + cell navigation with expand/collapse",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 393,
+      "line": 391,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-10",
       "title": "Meter — `role=\"meter\"` + `aria-valuenow/min/max` for static measurement (NOT progress)",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 440,
+      "line": 438,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-11",
       "title": "Window Splitter — `role=\"separator\"` + `aria-controls` + arrow-key resize + Enter to collapse/restore",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 478,
+      "line": 476,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-12",
       "title": "Tabs (full keyboard model) — automatic-vs-manual activation choice + full keyboard set",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 525,
+      "line": 523,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-13",
       "title": "Listbox (multi-select with virtual focus) — `aria-multiselectable` + `aria-activedescendant` + range-extending keyboard model",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 603,
+      "line": 601,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-14",
       "title": "Dialog (Modal) — initial-focus selection rule + return-focus exceptions",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 667,
+      "line": 665,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-APG-15",
       "title": "Table (interactive sorting) — `aria-sort` on `columnheader` + grid-role when interactivity dominates",
       "file": ".aivv/standards/compliance/aria-apg-full.md",
-      "line": 715,
+      "line": 713,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-01",
       "title": "GDPR Article 13 — disclose required information at point of data collection",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 15,
+      "line": 13,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-02",
       "title": "GDPR Article 17 — provide a working \"right to erasure\" mechanism",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 67,
+      "line": 65,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-03",
       "title": "CCPA / CPRA — provide a \"Do Not Sell or Share My Personal Information\" link",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 124,
+      "line": 122,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-04",
       "title": "FTC Endorsement Guides — disclose material connections clearly + conspicuously",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 178,
+      "line": 176,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-05",
       "title": "Children's privacy — verifiable parental consent for users below the consent-age threshold",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 225,
+      "line": 223,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-06",
       "title": "ADA Title III — public-accommodation digital accessibility (WCAG 2.1 AA as practical baseline)",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 277,
+      "line": 275,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-07",
       "title": "Section 508 — US federal procurement accessibility minimum (revised 2018, WCAG 2.0 AA)",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 306,
+      "line": 304,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-08",
       "title": "GDPR Article 20 — provide data portability mechanism (structured, machine-readable export)",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 328,
+      "line": 326,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-LEGAL-09",
       "title": "EU Accessibility Act 2025 — accessibility requirements for in-scope products + services (effective June 28 2025)",
       "file": ".aivv/standards/compliance/legal-risk.md",
-      "line": 351,
+      "line": 349,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-01",
       "title": "Text contrast ratio ≥ 7:1 (Enhanced)",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 11,
+      "line": 9,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-02",
       "title": "Visual presentation of text blocks (user-controllable colors, max 80 chars/line, no-justify, 1.5× leading, 200% zoom)",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 43,
+      "line": 41,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-03",
       "title": "Avoid images-of-text except for pure-decoration or essential-presentation",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 84,
+      "line": 82,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-04",
       "title": "Full keyboard operability (No Exception — no path-dependent input)",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 125,
+      "line": 123,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-05",
       "title": "No timing constraints on essential interactions (except synchronized media + real-time events)",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 167,
+      "line": 165,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-06",
       "title": "No flashing more than 3 times per second regardless of brightness/size",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 209,
+      "line": 207,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-07",
       "title": "Identify purpose of UI components, icons, and regions",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 251,
+      "line": 249,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-08",
       "title": "Re-authenticating must preserve user data",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 291,
+      "line": 289,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-09",
       "title": "Provide location information within a set of pages",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 342,
+      "line": 340,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-10",
       "title": "Link purpose identifiable from link text alone",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 384,
+      "line": 382,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-11",
       "title": "Context changes only on user request",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 424,
+      "line": 422,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-12",
       "title": "Error prevention for all submissions (reversible / checked / confirmed)",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 473,
+      "line": 471,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-13",
       "title": "Context-sensitive help is available",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 520,
+      "line": 518,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-14",
       "title": "Section headings organize the content",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 558,
+      "line": 556,
       "family": "compliance"
     },
     {
       "rule_id": "COMP-WCAG-AAA-15",
       "title": "Warn users of inactivity timeouts that could cause data loss",
       "file": ".aivv/standards/compliance/wcag-aaa.md",
-      "line": 600,
+      "line": 598,
       "family": "compliance"
     },
     {
@@ -1182,7 +1182,7 @@
     },
     {
       "rule_id": "DP-LEGAL-01",
-      "title": "FTC Negative Option Rule — easy cancellation",
+      "title": "US easy-cancellation obligation (ROSCA / FTC Act §5 / state auto-renewal laws)",
       "file": ".aivv/standards/dark-patterns/legal.md",
       "line": 7,
       "family": "dark-patterns"
@@ -3947,7 +3947,7 @@
     },
     {
       "rule_id": "VVT-049",
-      "title": "CSS `field-sizing: content` declarations — Limited availability (progressive enhancement only)",
+      "title": "CSS `field-sizing: content` declarations — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 181,
       "family": "visual-verification-triggers"
@@ -3989,7 +3989,7 @@
     },
     {
       "rule_id": "VVT-060",
-      "title": "CSS `accent-color` property additions or changes — Limited availability (progressive enhancement only)",
+      "title": "CSS `accent-color` property additions or changes — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 317,
       "family": "visual-verification-triggers"
@@ -4017,7 +4017,7 @@
     },
     {
       "rule_id": "VVT-069",
-      "title": "CSS scroll-driven animations (`animation-timeline`, `scroll-timeline-name`, `view-timeline-name`) — Limited availability (progressive enhancement only)",
+      "title": "CSS scroll-driven animations (`animation-timeline`, `scroll-timeline-name`, `view-timeline-name`) — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 412,
       "family": "visual-verification-triggers"
@@ -4031,14 +4031,14 @@
     },
     {
       "rule_id": "VVT-071",
-      "title": "CSS `interpolate-size` property — Limited availability (progressive enhancement only)",
+      "title": "CSS `interpolate-size` property — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 459,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-072",
-      "title": "CSS `text-spacing-trim` property — Limited availability (progressive enhancement only)",
+      "title": "CSS `text-spacing-trim` property — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 482,
       "family": "visual-verification-triggers"
@@ -4054,112 +4054,112 @@
       "rule_id": "VVT-043",
       "title": "React Suspense boundary additions / changes (explicit + implicit)",
       "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
-      "line": 9,
+      "line": 7,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-044",
       "title": "Shadow DOM encapsulation (imperative `attachShadow` + Declarative Shadow DOM) + Custom Element lifecycle",
       "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
-      "line": 33,
+      "line": 31,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-045",
       "title": "`IntersectionObserver`-driven UI changes — Baseline widely available since March 2019",
       "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
-      "line": 59,
+      "line": 57,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-046",
       "title": "`ResizeObserver`-driven UI changes — Baseline widely available since July 2020",
       "file": ".aivv/standards/visual-verification-triggers/framework-observer.md",
-      "line": 83,
+      "line": 81,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-031",
       "title": "CSS container queries (`@container`, `container-type`, `container-name`)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 9,
+      "line": 7,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-032",
       "title": "CSS `:has()` selector usage",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 31,
+      "line": 29,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-033",
       "title": "CSS cascade layers (`@layer`) — Baseline widely available since March 2022",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 52,
+      "line": 50,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-034",
       "title": "CSS logical properties (`*-inline-start`, `*-block-end`, etc.) replacing physical (`left`, `top`)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 73,
+      "line": 71,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-035",
       "title": "CSS anchor positioning (`anchor-name`, `position-anchor`, `position-area`)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 95,
+      "line": 93,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-036",
       "title": "CSS subgrid (`grid-template-columns: subgrid`, `grid-template-rows: subgrid`)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 115,
+      "line": 113,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-037",
       "title": "CSS / JS view transitions (`document.startViewTransition`, `view-transition-name`, `@view-transition`, framework wrappers)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 134,
+      "line": 132,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-038",
       "title": "CSS `aspect-ratio` property additions or changes",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 157,
+      "line": 155,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-039",
       "title": "HTML `popover` attribute / Popover API usage — Baseline 2024 (Newly available since April 2024)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 176,
+      "line": 174,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-040",
       "title": "HTML `inert` attribute additions",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 200,
+      "line": 198,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-041",
       "title": "CSS native nesting (`& selector` inside a rule) — Baseline 2023 (Newly available since December 2023)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 222,
+      "line": 220,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-042",
       "title": "CSS `content-visibility` property (`auto`, `hidden`, `visible`)",
       "file": ".aivv/standards/visual-verification-triggers/modern-platform.md",
-      "line": 243,
+      "line": 241,
       "family": "visual-verification-triggers"
     },
     {

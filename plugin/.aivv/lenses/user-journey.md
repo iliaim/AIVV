@@ -98,7 +98,7 @@ The reviewer reads Session Activity FIRST per the universal Information Hierarch
 
 ## Standards to consult
 
-- [.aivv/standards/user-journey.md](../standards/user-journey.md) — UJ-AC-01a/01b, UJ-DISC-01..04, UJ-ACT-01..03, UJ-TFS-01..02
+- [.aivv/standards/user-journey.md](../standards/user-journey.md) — UJ-AC-*, UJ-DISC-*, UJ-ACT-*, UJ-TFS-*
 - [.aivv/standards/ux-heuristics/nielsen.md](../standards/ux-heuristics/nielsen.md) — HEU-NN1 (UJ-ACT-*), HEU-NN6 (UJ-DISC-*)
 - [.aivv/standards/interaction-states/](../standards/interaction-states/) — IS-* per-primitive state inventories (complement UJ-ACT-* for state-change evidence)
 
@@ -112,6 +112,3 @@ The `user-journey` lens operates statically — cognitive walkthrough of source 
 
 **Pre-implementation mode:** if the review target is a task file without an associated diff, run only Question 1 (AC-framing audit). In legacy mode, return MAJOR findings for each AC that fails UJ-AC-01a or UJ-AC-01b framing; under `severity_model: impact_likelihood`, treat MAJOR as legacy/default label guidance and assign final severity through the IMPACT and LIKELIHOOD anchors above.
 
-## Phase 0 transition note
-
-Before this lens shipped (dev.115–dev.120), the `ux` lens carried a Phase 0 "Pre-verdict disconfirmation gate" subsection inside its Trigger patterns that emitted findings under UX-* rule IDs with UJ-* candidate names in-prose. On this Wave 3 ship (dev.121), that subsection migrated here and the UJ-* candidate names promote to full rule IDs. Calibration records emitted under the Phase 0 gate stored in the legacy `.aivv/calibration/ux.jsonl` (read via union) remain valid under the `ux` lens calibration schema; new UJ-* findings post-dev.121 route to the `user-journey` lens (`.aivv/calibration/user-journey/<invocation-id>.jsonl` shards per per-invocation sharding contract).

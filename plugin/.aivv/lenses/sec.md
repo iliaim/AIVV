@@ -86,7 +86,7 @@ When `severity_model: impact_likelihood` is active, use these anchors for securi
 - Dead-code SQL injection in an unused helper with no current call path: IMPACT can remain SEVERE if it would expose or mutate sensitive data when called, but LIKELIHOOD is UNLIKELY, so the shared table maps it below CRITICAL.
 - Live unauthenticated SQL injection in a public API handler: IMPACT is CATASTROPHIC or SEVERE depending on data/action scope, and LIKELIHOOD is CERTAIN or PROBABLE, so it usually maps to CRITICAL.
 
-## Trigger patterns (flag these explicitly)
+## Trigger patterns
 
 These patterns should always produce a finding unless the surrounding context clearly establishes safety. If the safety claim depends on legal or compliance applicability, use declared `project_context` rather than a prose hedge; undeclared context is a reason to state the assumption, not a reason to drop the finding:
 

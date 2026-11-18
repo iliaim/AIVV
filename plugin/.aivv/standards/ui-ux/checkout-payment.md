@@ -1,8 +1,8 @@
 # UI/UX — Checkout & payment
 
-Part of [.aivv/standards/ui-ux/](README.md) (UX-030..036). Added dev.81 = T22 phase 1 — Baymard-checkout-research-anchored + web.dev-payment-form-anchored patterns for e-commerce checkout flows. Each rule cites a WebFetch-verified authoritative source per maintainer guidance "Per-rule WebFetch-verification discipline (dev.80+)".
+Part of [.aivv/standards/ui-ux/](README.md). Baymard-checkout-research and web.dev-payment-form patterns for e-commerce checkout flows. Each rule cites a verified authoritative source.
 
-Rules in this subfile are conversion-rate-and-UX-oriented (cart abandonment, friction). Where a payment-form pattern intersects with accessibility (e.g., autocomplete tokens on personal-info fields), the **A11Y-NNN** rule is the WCAG-compliance authority and rules here cross-reference it explicitly — do NOT duplicate the cc-* enumeration that A11Y-061 already owns. The dev.81 IV&V corrective (cross-reviewer-convergent finding) trimmed the initial 8-rule ship to 7 rules by deleting UX-036 (duplicated UX-004 on-blur-validation) and renumbering UX-037 → UX-036.
+Rules in this subfile are conversion-rate-and-UX-oriented (cart abandonment, friction). Where a payment-form pattern intersects with accessibility (e.g., autocomplete tokens on personal-info fields), the **A11Y-NNN** rule is the WCAG-compliance authority and rules here cross-reference it explicitly — do NOT duplicate the cc-* enumeration that A11Y-061 already owns.
 
 ### UX-030: Offer guest checkout (do not force account creation)
 
@@ -222,6 +222,6 @@ async function handleSubmit(e) {
 ## Maintenance
 
 When adding checkout / payment rules:
-- Cite a WebFetch-verifiable authoritative source (Baymard checkout-usability research, web.dev/learn/forms, NN/g articles, MDN attribute references). Per maintainer guidance "Per-rule WebFetch-verification discipline (dev.80+)", WebFetch every cited URL before ship and record the verified quote inline as `(WebFetch-verified <date>: "<quote>")`.
+- Cite a WebFetch-verifiable authoritative source (Baymard checkout-usability research, web.dev/learn/forms, NN/g articles, MDN attribute references). Fetch every cited URL before adding the rule and record the verified quote inline as `(WebFetch-verified <date>: "<quote>")`.
 - Distinguish from peer A11Y-* (WCAG-compliance authority) and MC-* (UX-writing patterns). Where the same pattern intersects accessibility AND conversion-rate, the A11Y-NNN rule is the compliance authority and the UX-NNN rule names the commerce-specific extension.
 - Runtime-deferred concerns (rendered button-tap-target, perceived load time of the checkout summary, actual conversion-rate measurement) stay in the parent README's runtime-deferred list — UX rules here are code-reviewable patterns only.

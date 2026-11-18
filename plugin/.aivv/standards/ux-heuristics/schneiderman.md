@@ -62,7 +62,7 @@ Part of [.aivv/standards/ux-heuristics/](README.md).
 ### HEU-SCH4: Design dialogs to yield closure
 
 **Severity**: MINOR
-**Rationale**: Sequences of actions should have a clear beginning, middle, and end with explicit closure feedback. Half-finished flows leave users in cognitive limbo (Zeigarnik Effect — see HEU-LUX-zeigarnik, lives in `laws-of-ux/memory-cognition.md` per dev.69 nested retrofit).
+**Rationale**: Sequences of actions should have a clear beginning, middle, and end with explicit closure feedback. Half-finished flows leave users in cognitive limbo (Zeigarnik Effect — see HEU-LUX-zeigarnik, lives in `laws-of-ux/memory-cognition.md`).
 **Source**: https://www.cs.umd.edu/~ben/goldenrules.html
 
 **The rule**: every multi-step flow concludes with a definitive "done" state — confirmation page, success toast, redirect to a known landing.

@@ -223,7 +223,7 @@ Part of [.aivv/standards/visual-design/](README.md).
 **Code patterns to flag**:
 - `text-align: justify` without `hyphens: auto` (river-gaps in narrow columns)
 - Button text / labels with `hyphens: auto` (can hyphenate "Sub-mit")
-- No `lang` attribute on `<html>` (hyphens require lang for dictionary lookup — defer-to A11Y-001 in `accessibility/document-language.md` per dev.61 retrofit for compliance variant)
+- No `lang` attribute on `<html>` (hyphens require lang for dictionary lookup — defer-to A11Y-001 in `accessibility/document-language.md` for compliance variant)
 
 **Correct pattern**: body / article: `hyphens: auto;` + `lang="en"` on root; UI labels: `hyphens: none;`.
 

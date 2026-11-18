@@ -2,7 +2,7 @@
 
 Part of [.aivv/standards/accessibility/aria/](README.md) (A11Y-045..060). Each rule captures one ARIA [Authoring Practices Guide (APG)](https://www.w3.org/WAI/ARIA/apg/) widget pattern. Per maintainer guidance operating principle 9, rules cite the canonical W3C APG pattern page. Each rule scopes its code-reviewable subset; full keyboard-semantics testing is runtime-deferred per the parent [`accessibility/README.md`](../README.md) runtime-deferred list.
 
-Added dev.78 = T21 phase 2 (16 patterns selected from APG's 30 by frequency-in-production-codebases). Foundational rules referenced from each pattern live in [`fundamentals.md`](fundamentals.md) (A11Y-024..029).
+Patterns were selected from the APG catalog by frequency in production codebases. Foundational rules referenced from each pattern live in [`fundamentals.md`](fundamentals.md) (A11Y-024..029).
 
 ### A11Y-045: Accordion — paired `<button aria-expanded>` + `aria-controls`
 

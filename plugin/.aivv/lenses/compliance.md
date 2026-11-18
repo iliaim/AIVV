@@ -1,6 +1,6 @@
 ---
 name: compliance
-description: Regulatory + accessibility-conformance + legal-risk review lens — WCAG 2.1 AAA realistic subset, full ARIA APG widget conformance, FTC + GDPR + CCPA/CPRA + COPPA + ADA + Section 508 + EU EAA legal-risk subset
+description: Regulatory + accessibility-conformance + legal-risk review lens — WCAG 2.2 AAA realistic subset, full ARIA APG widget conformance, FTC + GDPR + CCPA/CPRA + COPPA + ADA + Section 508 + EU EAA legal-risk subset
 calibration_lens: compliance
 applies_to: source code touching WCAG-AAA-relevant surfaces, ARIA-widget implementations, legal-risk surfaces (cookie consent, account deletion, age verification, marketing copy, opt-out flows, payment forms)
 detect_paths: "**/*consent*, **/*cookie*, **/*gdpr*, **/*ccpa*, **/*privacy*, **/*terms*, **/*tracking*, **/*analytics*, **/*.tsx, **/*.jsx, **/*.vue, **/*.svelte, **/*.html"
@@ -16,9 +16,9 @@ runtime_driver: none
 
 Apply these review concerns **in addition to** the universal Phase 2 VERIFY rules. The compliance lens extends code review with regulatory, accessibility-conformance, and legal-risk concerns code-observable without running the app.
 
-### WCAG 2.1 AAA realistic subset (see `.aivv/standards/compliance/wcag-aaa.md`)
+### WCAG 2.2 AAA realistic subset (see `.aivv/standards/compliance/wcag-aaa.md`)
 
-AAA conformance is opt-in beyond AA-baseline (which is covered by the `visual` lens via `accessibility/`). The 15 COMP-WCAG-AAA-* rules surface code-observable AAA criteria most commonly project-targeted:
+AAA conformance is opt-in beyond AA-baseline (which is covered by the `visual` lens via `accessibility/`). The COMP-WCAG-AAA-* rules surface code-observable AAA criteria most commonly project-targeted:
 
 - COMP-WCAG-AAA-01 Contrast Enhanced (7:1 for normal text, 4.5:1 for large text)
 - COMP-WCAG-AAA-02 Visual Presentation (5-sub-req: line-spacing, paragraph-spacing, letter/word-spacing, line-length ≤ 80 chars, justification, foreground/background user-selectable)
@@ -40,7 +40,7 @@ AAA conformance is opt-in beyond AA-baseline (which is covered by the `visual` l
 
 ### Full ARIA APG widget conformance (see `.aivv/standards/compliance/aria-apg-full.md`)
 
-The 15 COMP-APG-* rules cover full conformance to ARIA Authoring Practices Guide (APG) patterns where the `visual` lens's A11Y-045..060 baseline subset is not sufficient. Full-conformance applies when project declares ARIA APG conformance OR when implementing the widget at production-quality level (custom date picker, complex grid, treegrid, multi-thumb slider, listbox with virtual focus, etc.):
+The COMP-APG-* rules cover full conformance to ARIA Authoring Practices Guide (APG) patterns where the `visual` lens's A11Y APG baseline subset is not sufficient. Full-conformance applies when project declares ARIA APG conformance OR when implementing the widget at production-quality level (custom date picker, complex grid, treegrid, multi-thumb slider, listbox with virtual focus, etc.):
 
 - COMP-APG-01 Carousel
 - COMP-APG-02 Checkbox tri-state (mixed)
@@ -62,7 +62,7 @@ The 15 COMP-APG-* rules cover full conformance to ARIA Authoring Practices Guide
 
 ### Regulatory + statutory legal-risk subset (see `.aivv/standards/compliance/legal-risk.md`)
 
-The 9 COMP-LEGAL-* rules cover L1 source-class patterns from primary statute, regulation, or regulator guidance. **Default handling:** forced-show always; CRITICAL/DISPOSITION floor only when declared or plausibly undeclared Project Context makes the cited authority applicable. If declared `project_context` makes the cited authority inapplicable, render the L1 citation as a context note / POLISH or lower-priority DISPOSITION rather than applying the hard-statute floor. Per-rule "Consult counsel" notes are mandatory inline.
+The COMP-LEGAL-* rules cover L1 source-class patterns from primary statute, regulation, or regulator guidance. **Default handling:** forced-show always; CRITICAL/DISPOSITION floor only when declared or plausibly undeclared Project Context makes the cited authority applicable. If declared `project_context` makes the cited authority inapplicable, render the L1 citation as a context note / POLISH or lower-priority DISPOSITION rather than applying the hard-statute floor. Per-rule "Consult counsel" notes are mandatory inline.
 
 - COMP-LEGAL-01 GDPR Article 13 (Information at Collection)
 - COMP-LEGAL-02 GDPR Article 17 (Right to Erasure / Right to be Forgotten)
@@ -103,12 +103,12 @@ When `severity_model: impact_likelihood` is active, use these anchors for compli
 
 Runtime axe-core evidence remains deterministic when available: preserve RTV-AXE-02's mapping (`critical` -> CRITICAL, `serious` -> MAJOR, `moderate` -> MINOR, `minor` -> POLISH). In static review, use task-blocking impact as the analogy; do not claim axe-core data unless runtime evidence exists.
 
-## Trigger patterns (flag these explicitly)
+## Trigger patterns
 
 These patterns produce findings that must be rendered. Apply the hard-statute CRITICAL/DISPOSITION floor when `project_context` makes the cited authority applicable, or when context is undeclared and the code pattern plausibly falls inside that authority. If declared context makes the authority inapplicable, render a context note / POLISH or lower-priority DISPOSITION instead of the legal floor:
 
 - Cookie consent that pre-checks marketing/analytics options
-- Subscription cancellation flow with materially more steps than the signup flow (FTC Negative Option Rule + dark-pattern DP-LEGAL-01 also fires)
+- Subscription cancellation flow with materially more steps than the signup flow (ROSCA / state automatic-renewal laws; dark-pattern DP-LEGAL-01 also fires)
 - Hardcoded "13+" age-gate without subsequent age verification on service collecting child PII
 - Account deletion UX requiring email-to-support OR multi-step phone-call confirmation
 - Marketing copy with `<a href="...amazon.com/...?tag=...">` affiliate link without `rel="sponsored"` AND without disclosure within the same content view
@@ -117,11 +117,11 @@ These patterns produce findings that must be rendered. Apply the hard-statute CR
 
 ## Standards to consult
 
-- [.aivv/standards/compliance/wcag-aaa.md](../standards/compliance/wcag-aaa.md) — COMP-WCAG-AAA-01..15
-- [.aivv/standards/compliance/aria-apg-full.md](../standards/compliance/aria-apg-full.md) — COMP-APG-01..15
-- [.aivv/standards/compliance/legal-risk.md](../standards/compliance/legal-risk.md) — COMP-LEGAL-01..09
-- [.aivv/standards/accessibility/](../standards/accessibility/) — A11Y baseline (COMP-LEGAL-06 ADA Title III range-cites the entire 74-rule catalog)
-- [.aivv/standards/dark-patterns/legal.md](../standards/dark-patterns/legal.md) — DP-LEGAL-01..13 (L1 dark-pattern subset; forced-show, context-gated legal floor)
+- [.aivv/standards/compliance/wcag-aaa.md](../standards/compliance/wcag-aaa.md) — COMP-WCAG-AAA-*
+- [.aivv/standards/compliance/aria-apg-full.md](../standards/compliance/aria-apg-full.md) — COMP-APG-*
+- [.aivv/standards/compliance/legal-risk.md](../standards/compliance/legal-risk.md) — COMP-LEGAL-*
+- [.aivv/standards/accessibility/](../standards/accessibility/) — A11Y baseline (COMP-LEGAL-06 ADA Title III range-cites the entire catalog)
+- [.aivv/standards/dark-patterns/legal.md](../standards/dark-patterns/legal.md) — DP-LEGAL-* (L1 dark-pattern subset; forced-show, context-gated legal floor)
 
 ## L1-source detection
 

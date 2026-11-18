@@ -10,9 +10,7 @@ The audience for this document is the AIVV reviewer agent applying the `visual`,
 - **L3 platform conventions (MAJOR / MINOR)** — patterns deceptive.design or NN/g classify by category but where legal exposure is jurisdiction-specific. Most `DP-PRICE-*`, `DP-SUB-*`, `DP-URGENCY-*`, `DP-SCARCITY-*` rules.
 - **L4 aesthetic / improvement (POLISH)** — none default to POLISH; manipulative patterns produce real user harm even when not legally enforceable. Rules with marginal manipulation framing (e.g., onboarding default-state selection) route to MINOR, not POLISH.
 
-**Scope**: code-observable patterns only. Dark-pattern concerns that require runtime confirmation (actual measured time spent in cancel flow, real countdown-timer accuracy under network variance, real consent-banner accept-rate manipulation) are out of scope; those route to `visual-verification-triggers/` and the runtime-visual lens (planned).
-
-**Rule-count contract (maintainer-side):** the maintainer validator recurses this directory (`grep -rhcE '^### DP-[A-Z0-9]+-[0-9]+:' .aivv/standards/dark-patterns/`) and asserts the count matches the documented total. When adding new rules, place each in the appropriate by-domain subfile.
+**Scope**: code-observable patterns only. Dark-pattern concerns that require runtime confirmation (actual measured time spent in cancel flow, real countdown-timer accuracy under network variance, real consent-banner accept-rate manipulation) are out of scope; those route to `visual-verification-triggers/` and `runtime-visual.md` runtime evidence.
 
 **Rule-ID conventions**:
 - `DP-PRICE-NN` — pricing manipulation (drip pricing, hidden fees, anchor manipulation) — see [pricing.md](pricing.md)
@@ -26,20 +24,7 @@ The audience for this document is the AIVV reviewer agent applying the `visual`,
 - `DP-PR-NN` — dark-PR (greenwashing, AI-washing, false CSR claims in product copy) — see [pr-washing.md](pr-washing.md)
 - `DP-LEGAL-NN` — legal-risk subset with FTC / EU-DSA / GDPR direct citations (forced-shown; context-gated legal floor) — see [legal.md](legal.md)
 
-## Rule index (93 rules)
-
-| File | Range | Count |
-|---|---|---|
-| [pricing.md](pricing.md) | `DP-PRICE-01` … `DP-PRICE-12` | 12 |
-| [subscription.md](subscription.md) | `DP-SUB-01` … `DP-SUB-10` | 10 |
-| [consent-privacy.md](consent-privacy.md) | `DP-CONSENT-01` … `DP-CONSENT-12` | 12 |
-| [urgency-scarcity.md](urgency-scarcity.md) | `DP-URGENCY-01..08` + `DP-SCARCITY-01..06` | 14 |
-| [social-proof.md](social-proof.md) | `DP-SOCIAL-01` … `DP-SOCIAL-08` | 8 |
-| [gamification.md](gamification.md) | `DP-GAME-01` … `DP-GAME-10` | 10 |
-| [accessibility-trap.md](accessibility-trap.md) | `DP-A11Y-01` … `DP-A11Y-06` | 6 |
-| [pr-washing.md](pr-washing.md) | `DP-PR-01` … `DP-PR-08` | 8 |
-| [legal.md](legal.md) | `DP-LEGAL-01` … `DP-LEGAL-13` | 13 |
-| **Total** | | **93** |
+For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --family dark-patterns`.
 
 ## Out-of-static-review scope
 
@@ -54,7 +39,7 @@ The following dark-pattern concerns require **runtime confirmation** and are NOT
 - Notification-timing analysis (timezone respect, quiet-hours enforcement)
 - Inventory-lock semantics behind cart timers
 
-These route to `visual-verification-triggers/` triggers and the runtime-visual lens (planned post-dev.62).
+These route to `visual-verification-triggers/` triggers and `runtime-visual.md` runtime evidence.
 
 ## Source reference map
 
@@ -62,7 +47,8 @@ These route to `visual-verification-triggers/` triggers and the runtime-visual l
 |---|---|---|
 | deceptive.design | https://www.deceptive.design/ + /types + /cases | Harry Brignull's canonical taxonomy; cited across all DP-* sub-domains |
 | FTC Business Guidance | https://www.ftc.gov/business-guidance/advertising-marketing | DP-PRICE-*, DP-SOCIAL-*, DP-PR-*, DP-LEGAL-* |
-| FTC Negative Option Rule | https://www.ftc.gov/legal-library/browse/rules/negative-option-rule | DP-SUB-* + DP-LEGAL-01/02/04 |
+| ROSCA (15 U.S.C. §§8401-8405) | https://www.ftc.gov/legal-library/browse/statutes/restore-online-shoppers-confidence-act | DP-SUB-01/04, DP-PRICE-08, DP-LEGAL-01/02/04 |
+| FTC Negative Option Rule (2024 amendments vacated July 2025) | https://www.ftc.gov/legal-library/browse/rules/negative-option-rule | DP-SUB-08, DP-PRICE-09, DP-LEGAL-01 status |
 | FTC Endorsement Guides | https://www.ftc.gov/business-guidance/advertising-marketing/endorsements-influencers-reviews | DP-SOCIAL-* + DP-LEGAL-10 |
 | FTC Green Guides | https://www.ftc.gov/business-guidance/advertising-marketing/environmental-marketing | DP-PR-01, DP-LEGAL-11 |
 | FTC Health Claims | https://www.ftc.gov/business-guidance/advertising-marketing/health-claims | DP-LEGAL-12 |
@@ -74,4 +60,4 @@ These route to `visual-verification-triggers/` triggers and the runtime-visual l
 | Overlay Fact Sheet | https://overlayfactsheet.com/ | DP-A11Y-01, DP-A11Y-05 |
 | WCAG | https://www.w3.org/WAI/standards-guidelines/wcag/ | DP-A11Y-02/04/06 cross-references |
 
-**Citation-grounding policy** (post-dev.46/54 discipline): every URL in this directory resolved to HTTP 200 at authoring time (dev.56 + dev.68 retrofit verification). Internal cross-references to other AIVV catalogs (`defer-to A11Y-NNN`, `defer-to UX-NNN`, `defer-to MC-NNN`, `defer-to DP-LEGAL-NN`) were verified by greping the target file at authoring time. Severity claims about cross-referenced rules were verified against the target rule's actual severity in its catalog. Future cycles refine URLs and cross-references as catalogs evolve.
+**Citation-grounding policy**: every URL in this directory resolved to HTTP 200 at authoring time. Internal cross-references to other AIVV catalogs (`defer-to A11Y-NNN`, `defer-to UX-NNN`, `defer-to MC-NNN`, `defer-to DP-LEGAL-NN`) were verified by greping the target file at authoring time. Severity claims about cross-referenced rules were verified against the target rule's actual severity in its catalog. Future cycles refine URLs and cross-references as catalogs evolve.

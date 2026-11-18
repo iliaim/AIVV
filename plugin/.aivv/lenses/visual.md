@@ -7,7 +7,7 @@ detect_paths: "**/*.tsx, **/*.jsx, **/*.vue, **/*.svelte, **/*.html, **/*.css, *
 detect_keywords: "ui, component, layout, styling, render, screen, button, modal, responsive, design"
 detect_high_risk: false
 runtime_driver: optional (externalized B3 probe scaffolds + user-run Playwright JSON ingest by default; host browser-driver adapters are gated alternatives)
-runtime_driver_status: B3 externalized runtime evidence — RTV-* rule catalog at .aivv/standards/runtime-visual.md (25 rules: 10 AXE + 7 CONTRAST + 8 DIFF); opt-in via /aivv --runtime or explicit emit/ingest flags; graceful degradation when no runtime artifacts are supplied
+runtime_driver_status: B3 externalized runtime evidence — RTV-* rule catalog at .aivv/standards/runtime-visual.md (AXE, CONTRAST, DIFF); opt-in via /aivv --runtime or explicit emit/ingest flags; graceful degradation when no runtime artifacts are supplied
 ---
 
 ## Focus
@@ -22,7 +22,7 @@ Apply these concerns **in addition to** the universal Phase 2 VERIFY rules. The 
 - Key prop on list items — unique, stable, not index-based when list can reorder
 - Ref forwarding where needed (custom inputs wrapped by design-system components)
 
-### Form UX (see `.aivv/standards/ui-ux.md` UX-001 through UX-010)
+### Form UX (see `.aivv/standards/ui-ux/forms.md`)
 
 - Every input has a programmatically associated label (not placeholder-as-label)
 - Error messages are associated with their field (`aria-describedby`, not color-only)
@@ -30,7 +30,7 @@ Apply these concerns **in addition to** the universal Phase 2 VERIFY rules. The 
 - Disabled-state semantics correct (`disabled` attribute vs. CSS-only gray-out)
 - Autocomplete attributes on standard fields (email, tel, name, address)
 
-### Accessibility — WCAG 2.1 AA + WCAG 2.2 NEW SC code-reviewable baseline (see `.aivv/standards/accessibility.md`)
+### Accessibility — WCAG 2.1 AA + WCAG 2.2 NEW SC code-reviewable baseline (see `.aivv/standards/accessibility/README.md`)
 
 - `<html lang="...">` present (A11Y-001)
 - Heading hierarchy: no skipped levels (h1 → h3 without h2)
@@ -42,7 +42,7 @@ Apply these concerns **in addition to** the universal Phase 2 VERIFY rules. The 
 - ARIA: prefer native semantics; `role=` and `aria-*` used correctly if at all (broken ARIA is worse than no ARIA)
 - `prefers-reduced-motion` honored for animations > 5s or > subtle transitions
 
-### Visual verification triggers (see `.aivv/standards/visual-verification-triggers.md`)
+### Visual verification triggers (see `.aivv/standards/visual-verification-triggers/README.md`)
 
 When a diff matches a VVT-* pattern, emit `⚠ Visual verification required` as part of the finding. This advisory tells the user that runtime rendered-output verification (Playwright, Chrome DevTools, manual screenshot comparison) is needed in addition to this static review. Code-level review stands on its own; the advisory is a heads-up, not a finding.
 
@@ -82,7 +82,7 @@ Runtime axe-core evidence remains deterministic when available: preserve RTV-AXE
 - Arbitrary values `[123px]` — flag as design-system drift unless context justifies
 - Tailwind v3 → v4 upgrade markers (`@tailwind`, `@apply`, preflight) require VVT advisory
 
-## Trigger patterns (flag these explicitly)
+## Trigger patterns
 
 - `<div onClick>` without `role="button"` + `tabIndex={0}` + keyboard handler
 - `<img>` without `alt` attribute (even `alt=""` is fine; missing entirely is not)
@@ -99,20 +99,20 @@ Runtime axe-core evidence remains deterministic when available: preserve RTV-AXE
 
 ## Standards to consult
 
-- [.aivv/standards/ui-ux.md](../standards/ui-ux.md) — UX-001 through UX-046 (form UX, navigation, error states, loading states; UX-030..036 added dev.81 = T22 phase 1 = Baymard-checkout patterns; UX-037..041 added dev.82 = T22 phase 2 = data-tables & pagination patterns; UX-042..046 added dev.83 = T22 phase 3 = MDN-`<search>` + WCAG-4.1.3 + ARIA-APG-checkbox-mixed + W3C-WAI-forms-grouping search-input + filter-grouping + tri-state-select-all + result-count-status-message patterns, first cycle to dogfood the dev.82-surfaced Step 0.5 code-block-lint + Step 0.6 cross-reference rule-ID grep disciplines)
-- [.aivv/standards/accessibility.md](../standards/accessibility.md) — A11Y-001 through A11Y-074 (WCAG 2.1 AA + WCAG 2.2 NEW SC + ARIA APG widget patterns + COGA + SR-divergence code-reviewable baseline; A11Y-036..044 added dev.77 = WCAG 2.2 NEW SC; A11Y-045..060 added dev.78 = 16 ARIA Authoring Practices Guide patterns; A11Y-061..074 added dev.79 = T21 phase 3 = 14 COGA + SR-divergence rules; T21 substantively complete at 74 — master spec target was ~80). **Subdir-retrofitted dev.61** — TOC stub + 8 by-domain subfiles in `accessibility/` (`document-language.md`, `semantic-structure.md`, `forms.md`, `interactive-elements.md`, `images-media.md`, `aria.md`, `keyboard-focus.md`, `color-motion.md`). **Nested retrofit dev.80** — `aria.md` itself now a TOC stub + 3 by-domain sub-subfiles in `accessibility/aria/` (`fundamentals.md`, `apg-widgets.md`, `sr-divergence.md`) — retires dev.78 DEFERRED-RETIRE-WHEN sigil.
-- [.aivv/standards/visual-verification-triggers.md](../standards/visual-verification-triggers.md) — VVT-001 through VVT-073 (when to emit runtime-verification advisory; VVT-031..042 added dev.84 = T23 phase 1 = modern web-platform 2022+ baseline features; VVT-043..046 added dev.85 = T23 phase 2 = React Suspense, Web Components / Shadow DOM, IntersectionObserver, ResizeObserver; VVT-047..050 added dev.86 = T23 phase 3 = `:user-valid`/`:user-invalid` + `@starting-style` + `field-sizing` + `text-wrap: balance | pretty`, appended to by-domain subfiles per the dev.86 by-domain partition policy in maintainer guidance; `modern-platform.md` and `framework-observer.md` are CLOSED historical batches; VVT-051..054 added dev.87 = T23 phase 4 = `loading="lazy"` + `decoding`/`fetchpriority` (assets.md) + `font-display` + `prefers-reduced-motion` (css-styling.md), first downstream application of the dev.86 by-domain policy + N=3 back-reference-asymmetry codification in maintainer guidance; VVT-055..058 added dev.89 = T23 phase 5 = `inputmode` + `enterkeyhint` (state-interaction.md) + `color-scheme` + `light-dark()` (css-styling.md), first dogfood of dev.88 per-feature-page N=1 watch + back-reference symmetry corrective-binding extension; VVT-059..062 added dev.90 = T23 phase 6 = `autocomplete` (state-interaction.md) + `accent-color` (Limited availability) + `prefers-contrast` (css-styling.md) + `forced-colors` (accessibility-code.md), second downstream application of dev.88 disciplines; VVT-063..066 added dev.92 = T23 phase 7 = `:focus-visible` + `<details>`/`<summary>` (state-interaction.md) + `appearance` (css-styling.md) + scroll-snap (responsive.md), first dogfood of dev.91 3-discipline codification with Discipline 3 catching 3 pre-authoring miscites; VVT-067..068 added dev.98 = T23 phase 8 batch 1 = HTML `<dialog>` element + `.showModal()` / `.show()` API (component-composition.md, Baseline Widely available since March 2022) + CSS `oklch()` / `oklab()` perceptually-uniform color functions (css-styling.md, Baseline Widely available since May 2023), second dogfood of dev.91 Discipline 3 (semantic-fit-of-citation) catching the initial VVT-067/068/069 plan duplicating pre-existing VVT-031 Container Queries + VVT-036 subgrid + VVT-039 popover before authoring; VVT-069..070 added dev.100 = T23 phase 8 batch 2 = CSS scroll-driven animations `animation-timeline` / `view-timeline-name` / `scroll-timeline-name` (Limited availability — progressive enhancement only) + CSS `@scope` at-rule (Baseline 2025 Newly available since December 2025), both appended to css-styling.md per dev.86 by-domain partition policy; VVT-071..073 added dev.101 = T23 phase 8 batch 3 = CSS `interpolate-size` (Limited availability) + CSS `text-spacing-trim` (Limited availability, CJK typography) + CSS Anchor Positioning split-Baseline (`anchor-name` Baseline 2026 Newly available since January 2026 + `position-anchor`/`anchor()` Limited availability), all appended to css-styling.md per dev.86 by-domain partition policy)
-- [.aivv/standards/visual-design.md](../standards/visual-design.md) — VD-* (typography, spacing, color, iconography, motion, layout — code-reviewable aesthetic baselines, predominantly POLISH severity). **Subdir-retrofitted dev.67** — TOC stub + 6 subfiles in `visual-design/`.
-- [.aivv/standards/dark-patterns.md](../standards/dark-patterns.md) — DP-* (manipulative-UX detection: pricing, subscription, consent, urgency, scarcity, social-proof, gamification, accessibility-trap, dark-PR; **DP-LEGAL-*** subset is L1 source class — forced-shown regardless of `severity_threshold`; hard legal floor is context-gated). **Subdir-retrofitted dev.68** — TOC stub + 9 by-domain subfiles in `dark-patterns/`; DP-LEGAL-* in `legal.md`.
-- [.aivv/standards/runtime-visual.md](../standards/runtime-visual.md) — RTV-AXE-01..10 + RTV-CONTRAST-01..07 + RTV-DIFF-01..08 (25 runtime-visual rules). **Opt-in via `/aivv --runtime` or explicit runtime-evidence emit/ingest flags.** B3 default behavior is to generate reviewable Playwright probe scaffolds and ingest user-run JSON results. Host Playwright/DevTools drivers are optional adapters, not the default review path. RTV-AXE-* catches a11y defects axe-core surfaces only at runtime; RTV-CONTRAST-* measures rendered computed-pixel contrast; RTV-DIFF-* operationalizes screenshot-diff advisories when runtime artifacts exist. When no runtime artifacts are supplied, static A11Y/UX/VVT/VD/DP coverage remains the lens baseline.
+- [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* (form UX, navigation, error and loading states, checkout, tables and pagination, search and filters)
+- [.aivv/standards/accessibility/README.md](../standards/accessibility/README.md) — A11Y-* (WCAG 2.1 AA + WCAG 2.2 new SC + ARIA APG widget patterns + COGA + SR-divergence code-reviewable baseline).
+- [.aivv/standards/visual-verification-triggers/README.md](../standards/visual-verification-triggers/README.md) — VVT-* (when to emit the runtime-verification advisory)
+- [.aivv/standards/visual-design/README.md](../standards/visual-design/README.md) — VD-* (typography, spacing, color, iconography, motion, layout — code-reviewable aesthetic baselines, predominantly POLISH severity).
+- [.aivv/standards/dark-patterns/README.md](../standards/dark-patterns/README.md) — DP-* (manipulative-UX detection: pricing, subscription, consent, urgency, scarcity, social-proof, gamification, accessibility-trap, dark-PR; **DP-LEGAL-*** subset is L1 source class — forced-shown regardless of `severity_threshold`; hard legal floor is context-gated). DP-LEGAL-* live in `dark-patterns/legal.md`.
+- [.aivv/standards/runtime-visual.md](../standards/runtime-visual.md) — RTV-AXE-*, RTV-CONTRAST-*, RTV-DIFF-* runtime-visual rules. **Opt-in via `/aivv --runtime` or explicit runtime-evidence emit/ingest flags.** B3 default behavior is to generate reviewable Playwright probe scaffolds and ingest user-run JSON results. Host Playwright/DevTools drivers are optional adapters, not the default review path. RTV-AXE-* catches a11y defects axe-core surfaces only at runtime; RTV-CONTRAST-* measures rendered computed-pixel contrast; RTV-DIFF-* operationalizes screenshot-diff advisories when runtime artifacts exist. When no runtime artifacts are supplied, static A11Y/UX/VVT/VD/DP coverage remains the lens baseline.
 
-These six files ship with the plugin — they are the authoritative rule catalog for this lens. Reviewer should grep/read them for specific rule text when flagging a pattern.
+These files ship with the plugin — they are the authoritative rule catalog for this lens. Reviewer should grep/read them for specific rule text when flagging a pattern.
 
-The `visual-design.md` rules are L4 source-class (aesthetic / improvement) — most surface as POLISH; some at MINOR when the violation produces a user-visible defect (e.g., `VD-TYPE-06` FOIT timeout, `VD-SPACE-04` touch-target undersize, `VD-COLOR-04` color-only signal). The compliance variants of cross-cutting concerns live in `accessibility/<domain>.md` (per dev.61 retrofit — cite via `defer-to A11Y-NNN` per rule's prose; the rule itself names the specific subfile).
+The `visual-design/` rules are L4 source-class (aesthetic / improvement) — most surface as POLISH; some at MINOR when the violation produces a user-visible defect (e.g., `VD-TYPE-06` FOIT timeout, `VD-SPACE-04` touch-target undersize, `VD-COLOR-04` color-only signal). The compliance variants of cross-cutting concerns live in `accessibility/<domain>.md` (cite via `defer-to A11Y-NNN` per the rule's prose; the rule itself names the specific subfile).
 
 ## Graceful degradation
 
-The visual lens ships in v0.1 as **static review** — JSX/HTML/CSS/component-code inspection against the six standards files above. Runtime-visual.md becomes in-scope when `/aivv --runtime` is invoked and either runtime probe artifacts are emitted/ingested or an explicit host runtime adapter is available. This requires no browser, no MCP, no runtime for the static-review baseline.
+The visual lens is a **static review** — JSX/HTML/CSS/component-code inspection against the standards files above. Runtime-visual.md becomes in-scope when `/aivv --runtime` is invoked and either runtime probe artifacts are emitted/ingested or an explicit host runtime adapter is available. This requires no browser, no MCP, no runtime for the static-review baseline.
 
 **Runtime evidence path:** AIVV generates probe scaffolds and a manifest under `<target>/.aivv/runtime-probes/`; the user or target project runs those specs; AIVV ingests Playwright JSON reporter output back into review-log `runtime_evidence`. Runtime upgrade is **opt-in** and **not required for the lens to function**.
 
