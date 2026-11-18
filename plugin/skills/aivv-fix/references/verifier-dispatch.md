@@ -78,7 +78,7 @@ After all fixes applied:
      4. Re-enter Step 3 for the regression only when the evidence identifies a specific fix defect and a concrete in-scope correction. In one validated state update, append one evidence-backed `verification` retry event, increment the shared counter, and increment `cycle_count` before returning to Step 3. If not, or if the shared budget is exhausted, stop and report the regression and unresolved findings; do not reopen scope.
      > **Note**: This is inter-batch isolation, not intra-batch. Fixes within a batch are interdependent by design (that is why they were batched). Regression hunting happens at the batch boundary, not within a batch.
 
-   **Auto-emit calibration on regression (Step 11b):**
+   **Auto-emit calibration on regression:**
 
    When Step 6 verifier emits a regression finding (any finding flagged as "NEW issue introduced by the fixes"):
 
