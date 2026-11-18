@@ -40,8 +40,10 @@ auto-chain.
 - Result floor is MINOR, but the Improvement-articulation DROP rule still
   applies; it surfaces more grounded findings, not unjustified noise.
 - Fix path can run up to 3 outer-loop cycles with convergence early-stop.
-- Each load-bearing finding (MAJOR+ or merge-gating) appends:
-  `grounded_by: { source: <read|grep|trace|webfetch|spec>, ref: <file:line | grep-pattern | url>, confidence: <high|med> }`.
+- Each load-bearing finding (MAJOR+ or merge-gating) adds a `grounded_by`
+  array entry in the schema form owned by
+  [`methodology/references/source-grounding.md`](../../methodology/references/source-grounding.md)
+  (see the `exhaustive` row in `skills/methodology/SKILL.md`).
   POLISH/MINOR are exempt. This records reviewer grounding, not independent
   execution by Tier-3 scope reviewers.
 
