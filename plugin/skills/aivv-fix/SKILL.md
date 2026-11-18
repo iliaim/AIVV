@@ -50,7 +50,7 @@ Do not rely on `git diff` in Steps 5/6, skip same-file batching, or auto-proceed
 
 ## Reference Loading
 
-Read the linked reference when a step or condition below calls for it; do not preload the full reference set. Load prompt templates and schemas only for the dispatch that uses them: [investigator-prompt-template.md](references/investigator-prompt-template.md), [json-schema.md](references/json-schema.md), [investigator-output-example.md](references/investigator-output-example.md), [investigator-enrichment-fields.md](references/investigator-enrichment-fields.md), [investigator-field-definitions.md](references/investigator-field-definitions.md), [batched-and-challenger-schemas.md](references/batched-and-challenger-schemas.md), [schema-migration-notes.md](references/schema-migration-notes.md), [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md), and [verifier-prompt-template.md](references/verifier-prompt-template.md).
+Read the linked reference when a step or condition below calls for it; do not preload the full reference set. Load prompt templates and schemas only for the dispatch that uses them: [investigator-prompt-template.md](references/investigator-prompt-template.md), [json-schema.md](references/json-schema.md), [investigator-output-example.md](references/investigator-output-example.md), [investigator-enrichment-fields.md](references/investigator-enrichment-fields.md), [investigator-field-definitions.md](references/investigator-field-definitions.md), [batched-and-challenger-schemas.md](references/batched-and-challenger-schemas.md), [fix-challenger-prompt-template.md](references/fix-challenger-prompt-template.md), and [verifier-prompt-template.md](references/verifier-prompt-template.md).
 
 Calibration data is appended inline as JSONL; see Step 7.
 
@@ -118,7 +118,7 @@ short user-facing phase updates and continue.
 
 ### Step 1.0: Per-invocation preamble (FIRST action in Step 1)
 
-**MUST-READ:** [preamble-state-maintenance.md](references/preamble-state-maintenance.md) before executing this step — it points to the shared canonical home [`.aivv/state-maintenance.md`](../../.aivv/state-maintenance.md) (the same preamble mechanism /aivv Step 1.9 runs).
+**MUST-READ:** [`.aivv/state-maintenance.md`](../../.aivv/state-maintenance.md) before executing this step; it is the same preamble /aivv Step 1.9 runs.
 
 Before source parsing, minimally parse `--dry-run`, `--target=<dir>`, and
 route selectors that make state required (`--review-id`, `--resume`, `--resolve`, outer-loop and

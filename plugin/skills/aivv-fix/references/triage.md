@@ -16,7 +16,15 @@ For each finding, determine:
   - `containment-first`: CRITICAL + data-integrity/financial/security/availability impact, actively ongoing → containment (Step 2.5) is recommended before investigation. Advisory for orchestrator triage — Step 2.5's own trigger covers most such cases; `containment-first` makes the recommendation explicit. No new Step 2.5/Step 3 dispatch control-flow is wired by this value.
 <!-- DEFERRED-RETIRE-WHEN: containment-first is wired to Step 2.5 trigger or cleaned up in a future cycle -->
 
-  Legacy `complexity` values map as listed in [schema-migration-notes.md](schema-migration-notes.md). CRITICAL findings with active data-integrity, security, or availability impact that were previously `complex` should be re-classified to `containment-first` rather than the default `instrumentation-first` mapping.
+  Legacy `complexity` values in older state files map as follows; `containment-first` has no legacy equivalent:
+
+  | Legacy `complexity` value | New `investigation_mode` value |
+  |---|---|
+  | `simple` | `skip-permitted` |
+  | `moderate` | `standard` |
+  | `complex` | `instrumentation-first` |
+
+  CRITICAL findings with active data-integrity, security, or availability impact that were previously `complex` should be re-classified to `containment-first` rather than the default `instrumentation-first` mapping.
 
   **Dispatch semantics note:** `investigation_mode` values do NOT modify the orchestrator's Step 2.5 containment trigger or Step 3 dispatch logic — those remain governed by their own triggers. However, `investigation_mode: instrumentation-first` DOES condition investigator behavior via Changes 3c (adds it as a Diagnostic Instrumentation trigger) and 3d (gates `problem_specification` completion on it). This distinction — orchestrator dispatch unchanged, investigator behavior conditioned — is the precise scope of Cycle C's wiring.
 

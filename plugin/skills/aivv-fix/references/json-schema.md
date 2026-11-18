@@ -10,7 +10,6 @@ challenger, and orchestrator paths load only the contract they need.
 - [investigator-enrichment-fields.md](investigator-enrichment-fields.md) — optional backward-compatible enrichment fields such as `prerequisite_probe`, `static_reachability`, and `unsafe_control_action`.
 - [investigator-field-definitions.md](investigator-field-definitions.md) — canonical field definitions for `category`, `domain`, root-cause fields, `write_intents`, verdicts, and prevention mechanisms.
 - [batched-and-challenger-schemas.md](batched-and-challenger-schemas.md) — batched investigator output and Step 4.5 fix-challenger output schema.
-- [schema-migration-notes.md](schema-migration-notes.md) — chronological schema migration notes.
 
 ## Contract Anchors
 
