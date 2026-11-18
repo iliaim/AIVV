@@ -96,12 +96,12 @@ Part of [.aivv/standards/visual-verification-triggers/](README.md). Modern web-p
 - Content match: added `anchor-name: --<ident>`, `position-anchor: --<ident>`, `position-area:`, `position-try-fallbacks:`, or `position-try` declarations
 - File/path match: any stylesheet, popover/tooltip/dropdown component files
 
-**Why runtime verification is needed**: Anchor positioning tethers an anchored element to a separately-positioned anchor element. Diffs show the declaration but not the runtime spatial relationship at every viewport / scroll / container-width combination. Fallback positions (`position-try`) silently rearrange when the default position overflows the containing block — verifying which fallback fires requires live rendering. Limited rollout as of 2026-05: Chromium 125+ ships most properties; Safari and Firefox support is still in progress — treat as a progressive enhancement only, with explicit fallback rendering verified.
+**Why runtime verification is needed**: Anchor positioning tethers an anchored element to a separately-positioned anchor element. Diffs show the declaration but not the runtime spatial relationship at every viewport / scroll / container-width combination. Fallback positions (`position-try`) silently rearrange when the default position overflows the containing block — verifying which fallback fires requires live rendering. Browser support varies (current status on the MDN page in Source) — treat as a progressive enhancement only, with explicit fallback rendering verified.
 
 **What to verify externally**:
 - Anchored element renders adjacent to its anchor at every supported viewport
 - Fallback positions trigger correctly when the default overflows
-- Unsupported-browser fallback (CSS @supports) renders an acceptable shape (Safari + Firefox as of 2026-05)
+- Unsupported-browser fallback (CSS @supports) renders an acceptable shape (check current browser support on the MDN page in Source)
 - Anchored element follows the anchor on scroll / layout shift
 
 **Source**: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning (current property names: `anchor-name`, `position-anchor`, `position-area`, `position-try-fallbacks`, `position-try` — NOT the older `inset-area` from earlier drafts)

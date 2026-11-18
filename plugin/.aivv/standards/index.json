@@ -3947,7 +3947,7 @@
     },
     {
       "rule_id": "VVT-049",
-      "title": "CSS `field-sizing: content` declarations — Limited availability (progressive enhancement only)",
+      "title": "CSS `field-sizing: content` declarations — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 181,
       "family": "visual-verification-triggers"
@@ -3989,7 +3989,7 @@
     },
     {
       "rule_id": "VVT-060",
-      "title": "CSS `accent-color` property additions or changes — Limited availability (progressive enhancement only)",
+      "title": "CSS `accent-color` property additions or changes — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 317,
       "family": "visual-verification-triggers"
@@ -4017,7 +4017,7 @@
     },
     {
       "rule_id": "VVT-069",
-      "title": "CSS scroll-driven animations (`animation-timeline`, `scroll-timeline-name`, `view-timeline-name`) — Limited availability (progressive enhancement only)",
+      "title": "CSS scroll-driven animations (`animation-timeline`, `scroll-timeline-name`, `view-timeline-name`) — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 412,
       "family": "visual-verification-triggers"
@@ -4031,14 +4031,14 @@
     },
     {
       "rule_id": "VVT-071",
-      "title": "CSS `interpolate-size` property — Limited availability (progressive enhancement only)",
+      "title": "CSS `interpolate-size` property — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 459,
       "family": "visual-verification-triggers"
     },
     {
       "rule_id": "VVT-072",
-      "title": "CSS `text-spacing-trim` property — Limited availability (progressive enhancement only)",
+      "title": "CSS `text-spacing-trim` property — progressive enhancement only",
       "file": ".aivv/standards/visual-verification-triggers/css-styling.md",
       "line": 482,
       "family": "visual-verification-triggers"
