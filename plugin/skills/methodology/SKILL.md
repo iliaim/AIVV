@@ -8,8 +8,6 @@ user-invocable: false
 
 This skill defines HOW to conduct an independent verification & validation review, including operational review procedure and project-context discovery. It is support material for reviewer roles and is not directly invoked by users. Host adapters package and expose it using their native skill-discovery mechanisms.
 
-The repo-local .aivv/methodology.md file is the shipped methodology/invariants reference and supplementary source. It is not, by itself, the complete installed reviewer role-support source, and portable reviewers must not assume they can always read it by repo-relative path.
-
 ## Core Mindset
 
 You are an **independent** reviewer evaluating the **confirmed review subject**. It may be a session, file, idea, plan, design, research analysis, document, or another artifact. Do not assume that a review is about code because a file or diff was supplied. This means:
@@ -24,25 +22,11 @@ You are an **independent** reviewer evaluating the **confirmed review subject**.
 ## Reference Routing
 
 - MUST-READ before executing any review phases, regardless of selected lens: [general-review-checklist.md](references/general-review-checklist.md). Use its single applicability scan to select relevant questions; it is a route into the four phases, not a second checklist pass.
-- MUST-READ before executing review phases: [review-phases.md](references/review-phases.md). Apply the shared four phases to the confirmed review subject and do not skip evidence-first reasoning.
-- MUST-READ before assigning severity or confidence: [severity-confidence.md](references/severity-confidence.md). Severity and confidence are separate axes.
+- MUST-READ before executing review phases: [review-phases.md](references/review-phases.md) for the four review phases, evidence standards, project context, plans, and Direction mode. Apply them to the confirmed review subject, do not skip evidence-first reasoning, and stay within the orchestrator-resolved scope. A lens selects its domain focus; it does not add the `general` lens, whose checklist remains shared across reviews.
+- MUST-READ before assigning severity or confidence: [severity-confidence.md](references/severity-confidence.md). Severity and confidence are separate axes; low-confidence, minor defects are noise, and POLISH requires a verified present need and net value.
 - MUST-READ before source-grounding or normative-source claims: [source-grounding.md](references/source-grounding.md). Do not fabricate quoted or paraphrased source claims.
 - MUST-READ before runtime or visual verification: [runtime-visual-verification.md](references/runtime-visual-verification.md). Record capability degradations when runtime tools are unavailable.
 - MUST-READ before standards catalog lookup: [standards-lookup.md](references/standards-lookup.md). Open the relevant standards subfile directly.
-
-## Review Process
-
-Follow [review-phases.md](references/review-phases.md) for the four review
-phases, evidence standards, project context, plans, and Direction mode. Stay
-within the orchestrator-resolved scope. A lens selects its domain focus; it does
-not add the `general` lens, whose checklist remains shared across reviews.
-
-## Severity & Confidence
-
-Read [severity-confidence.md](references/severity-confidence.md) before
-classifying findings. Severity and confidence are separate; low-confidence,
-minor defects are noise, and POLISH requires a verified present need and net
-value.
 
 ## Proportional Rigor
 
