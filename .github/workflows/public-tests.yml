@@ -2,12 +2,25 @@ name: Public tests
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
+  # Job names are required status checks in branch protection; keep them stable.
+  read-only-agent-guard:
+    name: read-only-agent-guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Run the full test suite
+        run: node --test --test-concurrency=1
+
   codex-installer:
     name: Codex installer (${{ matrix.os }})
     strategy:
@@ -23,43 +36,3 @@ jobs:
         run: node tests/codex-installer.test.mjs
       - name: Verify external state persistence
         run: node tests/storage-persistence.test.mjs
-
-  markdown-links:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - name: Verify relative Markdown links resolve
-        run: node tests/markdown-links.test.mjs
-
-  read-only-agent-guard:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - name: Verify the read-only agent Bash guard
-        run: node tests/security/investigator-bash-guard.test.mjs
-      - name: Verify native prompt boundary nonce generation
-        run: node tests/security/native-prompt-boundary.test.mjs
-      - name: Verify pre-write validator policy and content boundaries
-        run: node tests/security/pre-write-validator-policy.test.mjs
-      - name: Verify AIVV fix scope, path, retry, and backfill boundaries
-        run: node tests/security/aivv-fix-scope.test.mjs
-      - name: Verify lifecycle selectors report missing state and malformed GitHub references
-        run: node tests/lifecycle-route.test.mjs
-      - name: Verify the fix records helper emits IDs, hashes, the log skeleton, retry entries, and fenced prompts
-        run: node tests/aivv-fix-records.test.mjs
-      - name: Verify active plugin runtime-root resolution
-        run: node tests/runtime-root.test.mjs
-      - name: Verify host-adapter assets and Claude/Codex marketplace metadata
-        run: node tests/plugin-package.test.mjs
-      - name: Verify general review defaults and portable runtime contract
-        run: node tests/review/general-review.test.mjs
-      - name: Verify provider-neutral roles and provider adapter registry
-        run: node tests/provider-agnostic-contract.test.mjs
-      - name: Verify documented fingerprint recipes hash finding text literally
-        run: node tests/fingerprint-recipe.test.mjs
