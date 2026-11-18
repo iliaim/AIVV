@@ -451,6 +451,17 @@ try {
     'a corrective plan after a failed verification is a first review, not a re-check');
   assert.match(challengeLoop, /`\{prior_challenge_concerns\}`/);
   assertRule(redGate, ['setup repair', '`warnings`'], 'each test-setup repair is noted in the fix log warnings');
+  assertRule(redGate, ['setup repair', 'fresh hashes', 'stale-intent'], 'a repaired test intent is re-hashed and re-checked before it is written');
+  assertRule(recheck, ['earlier verdict', 'alternative'], 'the re-check is given the earlier verdict instead of inferring it');
+  // Issue #26 owner decisions, 2026-11-18.
+  assertRule(reference('fix-log-contract.md'), ['reproduction test', 'not generated verification', '`generated_verification.present`'],
+    'a failing reproduction test is not generated verification');
+  assertRule(reference('verifier-dispatch.md'), ['test-backed', 'APPROVE', '`content_sha`', '"prevention"', 'Hard approval rule'],
+    'a one-file test-backed fix with an approved plan may use a same-agent after-fix check');
+  const gates = reference('apply-policy-and-gates.md');
+  assertRule(gates, ['second `aivv:investigator`', 'Disagree only by naming', 'evidence', 'agree'],
+    'the second-opinion investigator disagrees only with a named alternative and evidence');
+  assertRule(gates, ['without both', 'does not stop the run'], 'an unsupported disagreement does not stop the run');
   assert.match(challengerPrompt, /setup error/, 'the challenger must check the test fails for the right reason');
   const pluginRoot = path.join(REPO_ROOT, 'plugin');
   const pluginText = readdirSync(pluginRoot, { recursive: true })
