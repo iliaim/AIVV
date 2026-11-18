@@ -133,34 +133,7 @@ the cached external context. Never rename or backfill legacy originals; import
 explicitly before continuing their mutable workflows. Publish staged candidates
 through the shared storage mutation helper so import cannot race writes.
 
-**Dry-run gate:** if the invocation included the `--dry-run` flag, HALT here. Do NOT apply any fixes, do NOT create a session log, do NOT dispatch the verifier in Step 6, do NOT write calibration records in Step 7. Emit a dry-run report to the user:
-
-```
-## Dry-run Complete — No Fixes Applied
-
-Investigation results have been presented above (Step 4). If the plan looks good:
-- Re-run `/aivv-fix` WITHOUT `--dry-run` to apply fixes
-- Or re-run with a narrower argument (specific task ID or literal finding) to scope down
-
-Nothing was written to disk. Session log, fix changes, verifier dispatch, and calibration writes are all skipped in dry-run.
-```
-
-If `--dangerously-auto-apply` was confirmed on the same dry-run invocation, add this block before the final "Nothing was written" sentence:
-
-```text
-## Dangerous Auto-Apply Preview
-
-Would dangerously auto-apply: <N> finding(s)
-Confirmation source: <interactive-exact-phrase | env:AIVV_DANGEROUSLY_AUTO_APPLY>
-
-| ID | Category | Bypassed gates/reasons | Proposed action |
-|----|----------|------------------------|-----------------|
-| F006 | design-flaw | high-blast-radius; batched-decision | Update public API adapter |
-```
-
-Use the same dangerous-route classification that Step 4 assigned before the dry-run halt. If `<N>` is zero, still emit the block with `0` so the run log shows that the bypass was armed but did not affect any finding.
-
-Then terminate the skill (do NOT proceed to Steps 5 sub-items, 6, or 7).
+**Dry-run gate:** a `--dry-run` invocation stops at the SKILL.md Step 4.3 halt and never reaches Step 5. If control reaches Step 5 while `dry_run == true`, report a contract violation and halt without writing anything.
 
 **Non-dry-run session initialization:** after the dry-run gate has passed, initialize the fix-log session object before any readiness prompt or write dispatch. The initialized object buffers `change_readiness` decisions and persists them in the eventual fix log using the atomic full-object write semantics below.
 

@@ -271,6 +271,7 @@ If `dry_run == true`, stop here after investigation results, batch reconciliatio
 - findings that would be fixed, skipped, escalated, or require user decisions;
 - proposed files to modify when investigators supplied them;
 - confidence and reason-coded blockers;
+- if `--dangerously-auto-apply` is confirmed, a `Dangerous Auto-Apply Preview` table of the findings it would apply (ID, category, bypass reasons, proposed action), its confirmation source, and the would-apply count, shown even when the count is 0;
 - the exact message: `DRY RUN: no remediation writes were made. After the dry-run gate, no write intents, challenger dispatch, execution, verifier dispatch, fix log, session changes, or calibration writes occurred, and no pre-invocation state maintenance ran.`
 
 After this halt, do not materialize `write_intents[]`, enter Step 4.4.5, dispatch the fix-plan challenger, initialize a fix log, write active state, or run verification/calibration hooks. The Step 5 dry-run gate remains as defense-in-depth only; reaching Step 5 while `dry_run == true` is a contract violation to report and halt.
