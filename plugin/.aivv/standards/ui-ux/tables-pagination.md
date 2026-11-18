@@ -1,8 +1,8 @@
 # UI/UX — Data tables & pagination
 
-Part of [.aivv/standards/ui-ux/](README.md) (UX-037..041). Added dev.82 = T22 phase 2 — ARIA-APG-anchored + GOV.UK-pagination-anchored patterns for tabular data, sortable column headers, grid widgets, and pagination controls. Each rule cites a WebFetch-verified authoritative source per maintainer guidance "Per-rule WebFetch-verification discipline (dev.80+)".
+Part of [.aivv/standards/ui-ux/](README.md). ARIA-APG and GOV.UK-pagination patterns for tabular data, sortable column headers, grid widgets, and pagination controls. Each rule cites a verified authoritative source.
 
-**Scope discipline (peer-overlap deferrals):** static table semantics (`<table>` + `<caption>` + `<th scope>`) live in **A11Y-008** (`accessibility/semantic-structure.md`) — rules here cover *interactive* / *navigational* concerns layered on top of that baseline. Filter-chip patterns, page-size selectors, "Showing X–Y of Z" status text, and bulk-action toolbars were drafted but DEFERRED to a future phase because the NN/g + Baymard + Material-3 source URLs returned 404 on WebFetch verification (2026-05-11). Discipline-following per dev.80+: ship verified, defer unverifiable.
+**Scope discipline (peer-overlap deferrals):** static table semantics (`<table>` + `<caption>` + `<th scope>`) live in **A11Y-008** (`accessibility/semantic-structure.md`) — rules here cover *interactive* / *navigational* concerns layered on top of that baseline.
 
 ### UX-037: Sortable column headers communicate sort state via `aria-sort`
 

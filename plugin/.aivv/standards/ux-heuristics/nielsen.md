@@ -69,7 +69,7 @@ Part of [.aivv/standards/ux-heuristics/](README.md).
 ### HEU-NN4: Consistency and standards
 
 **Severity**: MINOR
-**Rationale**: Users transfer learning across surfaces. When a primitive behaves one way on screen A and another way on screen B, every encounter incurs a re-learning tax. Cross-product consistency (Jakob's Law — see HEU-LUX-jakob, lives in `laws-of-ux/mental-models.md` per dev.69 nested retrofit) is even more powerful: matching established platform conventions reduces the user's expected-vs-actual gap.
+**Rationale**: Users transfer learning across surfaces. When a primitive behaves one way on screen A and another way on screen B, every encounter incurs a re-learning tax. Cross-product consistency (Jakob's Law — see HEU-LUX-jakob, lives in `laws-of-ux/mental-models.md`) is even more powerful: matching established platform conventions reduces the user's expected-vs-actual gap.
 **Source**: https://www.nngroup.com/articles/consistency-and-standards/
 
 **The rule**: identical primitives behave identically across the product. Where the product can match a platform/web convention (links are blue and underlined, primary CTA is bottom-right of a dialog, X closes), it should.

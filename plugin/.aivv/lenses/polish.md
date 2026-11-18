@@ -76,9 +76,9 @@ Source class is discriminator evidence, not a standalone final severity pass:
 
 The lens-name controls the reviewer's *search frame*, not the *severity output*. A legal/safety/accessibility defect found during a polish pass remains a defect; a no-harm betterment remains POLISH even when it is high value.
 
-## Trigger patterns (improvement opportunities — articulate or drop)
+## Trigger patterns
 
-These patterns commonly produce POLISH findings when the change set exercises them. Each requires the full three-part articulation and proportional-remediation gates to actually emit:
+Improvement opportunities — articulate or drop. These patterns commonly produce POLISH findings when the change set exercises them. Each requires the full three-part articulation and proportional-remediation gates to actually emit:
 
 - **Microcopy upgrades**: generic button labels (OK/Submit/Cancel/Yes/No), placeholder-as-label, empty-state without next-action prompt, error message without recovery prose
 - **Inconsistent variant usage**: `<Button variant="primary">` count > 1 in a form/screen (Hick's law) — articulate which one is the actual primary
@@ -96,7 +96,7 @@ These patterns commonly produce POLISH findings when the change set exercises th
 - All standards files apply — the `polish` lens does not have a dedicated rule catalog. It draws from:
   - [.aivv/standards/visual-design/README.md](../standards/visual-design/README.md) — **VD-*** — typography, spacing, color, iconography, motion, layout. L4 source-class; rules predominantly support IMPROVEMENT/POLISH when the three-part gate is met. Primary catalog for aesthetic-improvement findings.
   - [.aivv/standards/microcopy/README.md](../standards/microcopy/README.md) — MC-* UX-writing rules
-  - [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* (UX-030..036 added dev.81 = T22 phase 1 checkout & payment; UX-037..041 added dev.82 = T22 phase 2 data tables & pagination; UX-042..046 added dev.83 = T22 phase 3 search inputs / filter grouping / status messages; often surface as POLISH when not at MAJOR severity)
+  - [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* (often surface as POLISH when not at MAJOR severity)
   - [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) — HEU-* heuristics; L2 cognitive-psychology — some entries surface as POLISH (`HEU-LUX-aesthetic-usability`, `HEU-COG-novelty`, others articulating "could be more delightful")
   - [.aivv/standards/visual-verification-triggers/README.md](../standards/visual-verification-triggers/README.md) — VVT-* triggers; polish-lens fires on the *suggestion* angle of VVT findings
   - [.aivv/standards/accessibility/README.md](../standards/accessibility/README.md) — A11Y-* rules, but ONLY non-WCAG-required uplift (see Source-class interaction)

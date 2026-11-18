@@ -2,7 +2,7 @@
 
 Part of [.aivv/standards/visual-design/](README.md).
 
-**i18n composition note (dev.104+):** The VD-ICON-* iconography-design rules compose with **I18N-RTL-04** (`i18n/rtl-bidi.md`, "Directional icons mirror under RTL; non-directional icons do NOT mirror") on the RTL-safety surface. VD-ICON-* governs icon-design baselines (single-family consistency, weight, optical alignment, semantic clarity); I18N-RTL-04 governs the per-icon mirror-decision under RTL locales (arrows + chevrons + back-buttons + undo arrows DO mirror; search magnifier + info + warning + brand logos + media-time-direction-icons do NOT mirror). The two layers compose: a well-designed icon set per VD-ICON-* baselines, with RTL-04's mirror-decision applied per icon kind, produces a coherent RTL UI.
+**i18n composition note:** The VD-ICON-* iconography-design rules compose with **I18N-RTL-04** (`i18n/rtl-bidi.md`, "Directional icons mirror under RTL; non-directional icons do NOT mirror") on the RTL-safety surface. VD-ICON-* governs icon-design baselines (single-family consistency, weight, optical alignment, semantic clarity); I18N-RTL-04 governs the per-icon mirror-decision under RTL locales (arrows + chevrons + back-buttons + undo arrows DO mirror; search magnifier + info + warning + brand logos + media-time-direction-icons do NOT mirror). The two layers compose: a well-designed icon set per VD-ICON-* baselines, with RTL-04's mirror-decision applied per icon kind, produces a coherent RTL UI.
 
 ### VD-ICON-01: Single icon set consistency
 
@@ -26,7 +26,7 @@ Part of [.aivv/standards/visual-design/](README.md).
 ### VD-ICON-02: Icon + label for ambiguous icons
 
 **Severity**: MINOR
-**Rationale**: Icons without labels fail when the icon's meaning is non-obvious (gear=settings is conventional; gear+star=??? is not). Industry research (NN/g) shows icon-only buttons have higher mis-tap rates than icon+label. Defer-to A11Y-027 (lives in `accessibility/aria/fundamentals.md` per dev.80 nested retrofit — "Accessible name must include visible label") and A11Y-021 (lives in `accessibility/images-media.md` per dev.61 retrofit — "Inline SVG needs accessible naming or hiding") for the compliance variants.
+**Rationale**: Icons without labels fail when the icon's meaning is non-obvious (gear=settings is conventional; gear+star=??? is not). Industry research (NN/g) shows icon-only buttons have higher mis-tap rates than icon+label. Defer-to A11Y-027 (lives in `accessibility/aria/fundamentals.md` — "Accessible name must include visible label") and A11Y-021 (lives in `accessibility/images-media.md` — "Inline SVG needs accessible naming or hiding") for the compliance variants.
 **Source**: Apple HIG sf-symbols — https://developer.apple.com/design/human-interface-guidelines/sf-symbols
 
 **The rule**: icons used as buttons are paired with text labels (visible or tooltip-on-hover) unless the icon is universally recognizable (×=close, ?=help, gear=settings, magnifying-glass=search).
@@ -45,7 +45,7 @@ Part of [.aivv/standards/visual-design/](README.md).
 ### VD-ICON-03: Accessible icon-only buttons (defer-to A11Y-021 + A11Y-026 + A11Y-027)
 
 **Severity**: MINOR
-**Rationale**: Icon-only buttons without an accessible name are invisible to screen readers. `aria-label` or `aria-labelledby` is required. The WCAG-compliance variants live at A11Y-021 (lives in `accessibility/images-media.md` per dev.61 retrofit — inline SVG accessible naming), A11Y-026 + A11Y-027 (live in `accessibility/aria/fundamentals.md` per dev.80 nested retrofit — `aria-label`/`aria-labelledby` valid target + Label-in-Name); VD-ICON-03 surfaces the aesthetic+accessibility intersection.
+**Rationale**: Icon-only buttons without an accessible name are invisible to screen readers. `aria-label` or `aria-labelledby` is required. The WCAG-compliance variants live at A11Y-021 (lives in `accessibility/images-media.md` — inline SVG accessible naming), A11Y-026 + A11Y-027 (live in `accessibility/aria/fundamentals.md` — `aria-label`/`aria-labelledby` valid target + Label-in-Name); VD-ICON-03 surfaces the aesthetic+accessibility intersection.
 **Source**: MDN ARIA button role — https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/button_role (cross-reference: ARIA APG button pattern)
 
 **The rule**: every icon-only `<button>` has an accessible name via `aria-label`. Defer-to A11Y-021 (in `accessibility/images-media.md`) / A11Y-026 + A11Y-027 (in `accessibility/aria/fundamentals.md`) for the compliance variants (all MAJOR severity).
@@ -118,7 +118,7 @@ Part of [.aivv/standards/visual-design/](README.md).
 ### VD-ICON-07: Decorative icons hidden from assistive tech
 
 **Severity**: MINOR
-**Rationale**: Decorative icons (a bullet star next to a list item, a paragraph-flourish glyph) that are read by screen readers add noise. They should have `aria-hidden="true"`. The text content remains the accessible semantic. Defer-to A11Y-021 (lives in `accessibility/images-media.md` per dev.61 retrofit — "Inline SVG needs accessible naming or hiding") and A11Y-025 (lives in `accessibility/aria/fundamentals.md` per dev.80 nested retrofit — "Do not put `aria-hidden=true` on focusable elements") for the compliance variants.
+**Rationale**: Decorative icons (a bullet star next to a list item, a paragraph-flourish glyph) that are read by screen readers add noise. They should have `aria-hidden="true"`. The text content remains the accessible semantic. Defer-to A11Y-021 (lives in `accessibility/images-media.md` — "Inline SVG needs accessible naming or hiding") and A11Y-025 (lives in `accessibility/aria/fundamentals.md` — "Do not put `aria-hidden=true` on focusable elements") for the compliance variants.
 **Source**: MDN aria-hidden — https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-hidden
 
 **The rule**: decorative icons (icons whose meaning is fully captured by adjacent text) carry `aria-hidden="true"` to suppress duplicate screen-reader announcement.

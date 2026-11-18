@@ -4,9 +4,9 @@ Curated checklist of operationalized heuristics that an IV&V reviewer can apply 
 
 The audience for this document is the AIVV reviewer agent applying the `ux` or `polish` lens (see [`.aivv/lenses/ux.md`](../../lenses/ux.md), [`.aivv/lenses/polish.md`](../../lenses/polish.md)). Rules carry severities (CRITICAL / MAJOR / MINOR / POLISH) consistent with the orchestrator's severity-inference 4-pass rule ([`.aivv/methodology.md`](../../methodology.md) Severity inference).
 
-**Source-class layer**: these rules are predominantly **L2 cognitive-psychology** — empirically validated by HCI research and decades of usability testing. L2 findings default to MINOR or MAJOR depending on user impact; some are POLISH-tier value-add suggestions. None default to CRITICAL because L1 legal/safety overrides (WCAG, FTC, EU-DSA, ADA) are out of scope here — those live in `accessibility/` and forthcoming `compliance.md`.
+**Source-class layer**: these rules are predominantly **L2 cognitive-psychology** — empirically validated by HCI research and decades of usability testing. L2 findings default to MINOR or MAJOR depending on user impact; some are POLISH-tier value-add suggestions. None default to CRITICAL because L1 legal/safety overrides (WCAG, FTC, EU-DSA, ADA) are out of scope here — those live in `accessibility/` and `compliance/`.
 
-**Scope**: code-observable patterns only. Heuristic violations that require runtime confirmation (actual response time, real focus-ring rendering, computed contrast under live theme) are out of scope; those route to `visual-verification-triggers/` and the runtime-visual lens (planned).
+**Scope**: code-observable patterns only. Heuristic violations that require runtime confirmation (actual response time, real focus-ring rendering, computed contrast under live theme) are out of scope; those route to `visual-verification-triggers/` and `runtime-visual.md` runtime evidence.
 
 **Rule-ID conventions**:
 - `HEU-NN1` … `HEU-NN10` — Nielsen's 10 usability heuristics (NN/g 1994, refined 2024) — see [nielsen.md](nielsen.md)

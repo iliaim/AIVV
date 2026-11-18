@@ -23,7 +23,7 @@ The lens treats the following heuristic catalogs as the L2 cognitive-psychology 
 - **Schneiderman's 8 golden rules** (`HEU-SCH1..SCH8`): consistency, universal usability, informative feedback, dialog closure, error handling, easy reversal, internal locus of control, short-term memory load.
 - **Laws of UX** (`HEU-LUX-<slug>`): Doherty Threshold (≤400ms perceived response), Fitts's Law (target size + distance), Hick's Law (choice count → decision time), Miller's Law (7±2 chunking), Postel's Law (input tolerance), Jakob's Law (convention familiarity), and others — see [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) for the full catalog.
 
-The specific `HEU-*` rule IDs (`HEU-NN1`, `HEU-LUX-doherty`, etc.) are defined in [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) (shipped dev.46). Reviewers cite these rule IDs directly in findings; the Forward-reference rule under "Standards to consult" below remains for IS-* / HEU-* rules added in future cycles before they're catalogued.
+The specific `HEU-*` rule IDs (`HEU-NN1`, `HEU-LUX-doherty`, etc.) are defined in [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md). Reviewers cite these rule IDs directly in findings; the Forward-reference rule under "Standards to consult" below covers rules that are not yet catalogued.
 
 The operationalization principle: each heuristic is paired with a code-reviewable question. *"Visibility of system status"* becomes *"does every async operation that takes > 1 second display a loading indicator before the response arrives?"* — a question answerable from JSX + handler code.
 
@@ -75,7 +75,7 @@ When `severity_model: impact_likelihood` is active, use these anchors for UX fin
 
 Persistence is a likelihood/exposure modifier: friction that recurs every interaction ranks higher than a one-time onboarding stumble with the same local impact. Do not upgrade a finding solely because it cites a well-known heuristic; the observable user consequence still controls impact.
 
-## Trigger patterns (flag these explicitly)
+## Trigger patterns
 
 These patterns produce a finding under the `ux` lens unless the surrounding context establishes a justified exception:
 
@@ -95,24 +95,22 @@ These patterns produce a finding under the `ux` lens unless the surrounding cont
 
 ### Boundary with the `user-journey` lens
 
-The `ux` lens audits *the surface a user encounters*, assuming the user is already on it. The `user-journey` lens (shipped dev.121) audits *the journey* — discovery, activation, perceptible feedback, completion. When a finding is about whether a zero-knowledge user can *discover* an entry point, *perceive* that activation succeeded, or *complete* the underlying task (not just "use the surface heuristically well"), prefer `user-journey` — emit the finding under that lens, not `ux`. Conversely, microcopy quality, interaction-state completeness, and heuristic conformance on a surface the user is already on remain in `ux`. Two reviewers running `--lens=ux,user-journey` will produce intentionally complementary findings; consensus synthesis deduplicates only at the fingerprint layer.
-
-**Phase 0 transition note (dev.121):** before dev.121, this lens carried a Phase 0 "Pre-verdict disconfirmation gate" subsection inside Trigger patterns that emitted findings under UX-* rule IDs with UJ-* candidate names in-prose and `grounded_by.source_type = "unverifiable"`. That subsection has migrated to `.aivv/lenses/user-journey.md`; the UJ-* candidate names promote to full backed rule IDs. Calibration records emitted under the Phase 0 gate remain in the legacy `.aivv/calibration/ux.jsonl` (read via union) under the `ux` lens; new UJ-* findings post-dev.121 route to the `user-journey` lens (`.aivv/calibration/user-journey/<invocation-id>.jsonl` shards per per-invocation sharding contract).
+The `ux` lens audits *the surface a user encounters*, assuming the user is already on it. The `user-journey` lens audits *the journey* — discovery, activation, perceptible feedback, completion. When a finding is about whether a zero-knowledge user can *discover* an entry point, *perceive* that activation succeeded, or *complete* the underlying task (not just "use the surface heuristically well"), prefer `user-journey` — emit the finding under that lens, not `ux`. Conversely, microcopy quality, interaction-state completeness, and heuristic conformance on a surface the user is already on remain in `ux`. Two reviewers running `--lens=ux,user-journey` will produce intentionally complementary findings; consensus synthesis deduplicates only at the fingerprint layer.
 
 ## Standards to consult
 
-- [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* form/nav/error/loading/checkout/tables/pagination/search/filter/status patterns (the static-code subset of `ux` lens scope; UX-030..036 added dev.81 = T22 phase 1 = checkout & payment, 7 rules; UX-037..041 added dev.82 = T22 phase 2 = data tables & pagination, 5 rules; UX-042..046 added dev.83 = T22 phase 3 = search inputs, filter grouping & status messages, 5 rules)
+- [.aivv/standards/ui-ux/README.md](../standards/ui-ux/README.md) — UX-* form/nav/error/loading/checkout/tables/pagination/search/filter/status patterns (the static-code subset of `ux` lens scope)
 - [.aivv/standards/microcopy/README.md](../standards/microcopy/README.md) — MC-* UX-writing rule catalog with authoritative-source citations
 - [.aivv/standards/ux-heuristics/README.md](../standards/ux-heuristics/README.md) — HEU-* rule catalog (Nielsen, Schneiderman, Laws of UX, cognitive biases) with authoritative-source citations
 - [.aivv/standards/interaction-states/README.md](../standards/interaction-states/README.md) — IS-* per-primitive state inventories with authoritative-source citations
 - [.aivv/standards/dark-patterns/README.md](../standards/dark-patterns/README.md) — DP-* manipulative-UX detection (DP-LEGAL-* in `legal.md`): pricing / subscription / consent / urgency / scarcity / social-proof / gamification / accessibility-trap / dark-PR; the **DP-LEGAL-*** subset carries L1 source-class (FTC / EU DSA / GDPR citations), forced-shows regardless of `severity_threshold`, and uses the context-gated hard legal floor
 - [.aivv/methodology.md](../methodology.md) — universal review phases (still apply; this lens is additive)
 
-**Forward-reference rule for unshipped standards files (general convention):** when a finding rests on operationalized heuristic prose from THIS lens file but the cited rule_id is not yet defined in any shipped standards file (e.g., a future `compliance.md` `COMP-*` rule referenced before that file ships), the reviewer MUST NOT cite a fabricated rule ID. Emit the finding with the descriptive heuristic name IN-LINE in the prose, and set `grounded_by[*].source_type = "unverifiable"` with a `source_ref` value of `"<heuristic-name>:standards-file-pending"`. When the backing standards file ships in a future cycle, the operator's calibration aggregator can promote these unverifiable groundings to verified ones via the new rule-IDs at that time. This prevents calibration-corpus pollution with non-resolving rule-ID strings while preserving the lens's ability to ship before its full standards backing. Note: as of dev.46, `HEU-*` and `IS-*` rules are shipped — the Forward-reference rule no longer applies to these prefixes.
+**Forward-reference rule for unshipped standards files (general convention):** when a finding rests on operationalized heuristic prose from THIS lens file but the cited rule_id is not yet defined in any shipped standards file (e.g., a `SEC-*` ID, which has no shipped catalog), the reviewer MUST NOT cite a fabricated rule ID. Emit the finding with the descriptive heuristic name IN-LINE in the prose, and set `grounded_by[*].source_type = "unverifiable"` with a `source_ref` value of `"<heuristic-name>:standards-file-pending"`. If a backing standards file later ships, the operator's calibration aggregator can promote these unverifiable groundings to verified ones via the new rule-IDs at that time. This prevents calibration-corpus pollution with non-resolving rule-ID strings while preserving the lens's ability to ship before its full standards backing.
 
 ## Graceful degradation
 
-The `ux` lens ships in v0.1 as **static heuristic walkthrough** — JSX/HTML/copy-string inspection against the standards files above + the operationalized-heuristic catalog. This requires no browser, no MCP, no runtime.
+The `ux` lens is a **static heuristic walkthrough** — JSX/HTML/copy-string inspection against the standards files above + the operationalized-heuristic catalog. This requires no browser, no MCP, no runtime.
 
 **When runtime evidence is supplied** (B3 generated probes + user-run Playwright JSON, or an explicitly supported host adapter), the lens may upgrade to runtime confirmation for state-machine timing (e.g., empirical Doherty-threshold check against rendered async ops). Runtime upgrade is **optional** and **not required for the lens to function**.
 

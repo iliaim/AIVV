@@ -103,7 +103,7 @@ When `severity_model: impact_likelihood` is active, use these anchors for compli
 
 Runtime axe-core evidence remains deterministic when available: preserve RTV-AXE-02's mapping (`critical` -> CRITICAL, `serious` -> MAJOR, `moderate` -> MINOR, `minor` -> POLISH). In static review, use task-blocking impact as the analogy; do not claim axe-core data unless runtime evidence exists.
 
-## Trigger patterns (flag these explicitly)
+## Trigger patterns
 
 These patterns produce findings that must be rendered. Apply the hard-statute CRITICAL/DISPOSITION floor when `project_context` makes the cited authority applicable, or when context is undeclared and the code pattern plausibly falls inside that authority. If declared context makes the authority inapplicable, render a context note / POLISH or lower-priority DISPOSITION instead of the legal floor:
 

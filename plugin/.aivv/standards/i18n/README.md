@@ -2,8 +2,6 @@
 
 Part of [.aivv/standards/](../README.md). The i18n catalog covers locale-aware code patterns grouped by topical sub-domain. Each subfile carries one `I18N-*` sub-prefix.
 
-**Status:** shipped in dev.104 (Wave 2 phase 2 — T44 from master spec). 30 rules across 3 by-domain subfiles (10 STR + 10 FMT + 10 RTL). Authored subdir-native per dev.103 precedent (compliance/ subdir).
-
 ## Subdomains
 
 | Subfile | Prefix | Focus |
@@ -20,11 +18,11 @@ Part of [.aivv/standards/](../README.md). The i18n catalog covers locale-aware c
 
 ## Lens routing
 
-Findings in this catalog route to the `i18n` lens (shipped dev.105 = T46 Wave 2 phase 3). Pre-dev.105 invocations may route them to `code` lens as fallback. The `--full-ui-ux` (T47) + `--full` (T49) flags will include the `i18n` lens once shipped.
+Findings in this catalog route to the `i18n` lens. The `--full-ui-ux`, `--full`, and `--full-with-journey` flags include it.
 
 ## Source authority
 
-Per maintainer guidance operating principle 9 + dev.80+ per-rule WebFetch-verification discipline, every i18n rule cites a canonical normative source. Primary sources:
+Every i18n rule cites a canonical normative source. Primary sources:
 
 - **CLDR** (Unicode Common Locale Data Repository) — `https://cldr.unicode.org/` — canonical for locale data, plural rules, formatter symbols.
 - **ICU MessageFormat** — `https://unicode-org.github.io/icu/userguide/format_parse/messages/` — canonical for message-formatting syntax (pluralization, gender, ordinal, choice formatting).
@@ -42,6 +40,4 @@ The A11Y catalog already covers:
 - A11Y-003 Language change within content needs `lang` attribute (WCAG 3.1.2 baseline)
 - A11Y-072 Prefer BCP 47 region-qualified `lang` values for screen-reader pronunciation
 
-I18N catalog extends these baselines with locale-aware code-pattern discipline (translation-function presence, CLDR-pluralization usage, formatter locale-awareness, RTL-safe CSS). The two catalogs cross-reference each other per the dev.87+/88+ back-reference symmetry rule.
-
-Added dev.104 = T44 Wave 2 phase 2.
+I18N catalog extends these baselines with locale-aware code-pattern discipline (translation-function presence, CLDR-pluralization usage, formatter locale-awareness, RTL-safe CSS). The two catalogs cross-reference each other.

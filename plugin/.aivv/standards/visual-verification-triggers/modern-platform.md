@@ -1,8 +1,6 @@
 # Visual Verification Triggers — Modern web-platform features (2022+ baseline)
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-031..042). Added dev.84 = T23 phase 1 — modern web-platform feature triggers covering CSS layout / cascade / selector / animation primitives and HTML interaction primitives that have crossed Baseline status (or are Baseline newly-available) since 2022. Each trigger names MDN's Baseline-status string where present AND carries an inline `Source:` line linking to the canonical MDN / WHATWG page (added dev.84 post-ship IV&V corrective; closes Beta F2 citation-trail-on-disk gap).
-
-<!-- POLICY-NOTE (dev.86 retired the dev.85 DEFERRED-RETIRE-WHEN sigil): this file and `framework-observer.md` are CLOSED historical by-date batches with stable rule-ID ranges (VVT-031..042 here, VVT-043..046 in framework-observer.md). Future VVT additions append to by-domain subfiles (css-styling.md / state-interaction.md / component-composition.md / accessibility-code.md / assets.md / responsive.md) per maintainer guidance "By-date-vs-by-domain VVT subfile policy". Re-evaluate redistribution if either by-date file crosses 300 lines individually. -->
+Part of [.aivv/standards/visual-verification-triggers/](README.md). Modern web-platform feature triggers covering CSS layout / cascade / selector / animation primitives and HTML interaction primitives that reached Baseline status since 2022. Each trigger names MDN's Baseline-status string where present and carries an inline `Source:` line linking to the canonical MDN / WHATWG page.
 
 **Last MDN/WHATWG-checked**: 2026-05-12. Baseline-status strings drift as features age; re-verify before citing in calibration corpus past 2026-12.
 

@@ -88,7 +88,7 @@ These standards are curated content, not author-invented. When adding a rule:
 
 These standards are the **Tier 1 static-review layer** for UI/UX/a11y concerns. They do NOT replace optional B3 runtime evidence for `/aivv --lens=visual` (generated probe scaffolds plus user-run Playwright JSON ingest by default; host browser adapters only when explicitly available). The separation:
 
-- **Tier 1 (here, now)**: catches patterns in source code. Reviewer consults these docs during every UI-touching diff. No MCP dependency. Ships in v0.1.
+- **Tier 1 (here, now)**: catches patterns in source code. Reviewer consults these docs during every UI-touching diff. No MCP dependency.
 - **Runtime evidence (optional)**: verifies rendered app behavior through supplied artifacts. Catches pixel-diff regressions, computed contrast, focus-ring visibility, animation jank. B3 default path is generated Playwright probes plus user-run JSON ingest; Playwright/DevTools MCPs are optional host adapters.
 
 Runtime evidence uses these standards as the documented contract for what rendered-output verification enforces — same content, different evidence model.

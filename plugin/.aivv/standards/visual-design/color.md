@@ -163,7 +163,7 @@ Part of [.aivv/standards/visual-design/](README.md).
 ### VD-COLOR-09: Color contrast at token level (compliance is runtime-deferred)
 
 **Severity**: MINOR
-**Rationale**: Background + foreground token pairs must meet 4.5:1 contrast for normal text, 3:1 for large text (WCAG 1.4.3 SC AA). Computed contrast is runtime-deferred per `accessibility/` (no code-reviewable A11Y rule covers ratio measurement) — VD-COLOR-09 surfaces the design-system *pattern* of validating contrast at token-pair level. For runtime measurement, see `visual-verification-triggers/` and the planned runtime-visual lens.
+**Rationale**: Background + foreground token pairs must meet 4.5:1 contrast for normal text, 3:1 for large text (WCAG 1.4.3 SC AA). Computed contrast is runtime-deferred per `accessibility/` (no code-reviewable A11Y rule covers ratio measurement) — VD-COLOR-09 surfaces the design-system *pattern* of validating contrast at token-pair level. For runtime measurement, see `visual-verification-triggers/` and `runtime-visual.md`.
 **Source**: web.dev color-and-contrast — https://web.dev/learn/css/color
 
 **The rule**: token pairs documented for use together (`--bg-surface` + `--text-on-surface`) have documented contrast ratios. Per-instance contrast checking is too late.

@@ -2,13 +2,11 @@
 
 Part of [.aivv/standards/compliance/](README.md) (COMP-APG-NN). Each rule captures one ARIA Authoring Practices Guide widget pattern at **full conformance** — meaning all REQUIRED roles, all REQUIRED ARIA properties, and the full canonical keyboard interaction model. The existing [`accessibility/aria/apg-widgets.md`](../accessibility/aria/apg-widgets.md) catalog (A11Y-045..060) covers a baseline subset of APG widgets at minimum-conformance level (the most common defects); this file extends to (a) widgets not in the baseline (Carousel, Date Picker, Feed, Grid, Meter, Multi-thumb Slider, Spinbutton, Treegrid, Window Splitter, interactive Table) AND (b) full-conformance enhancements on existing baseline widgets (full keyboard model, SHOULD-class ARIA properties, all required descendant relationships) where the baseline only covers the minimum.
 
-**Source authority:** the W3C WAI ARIA Authoring Practices Guide at https://www.w3.org/WAI/ARIA/apg/patterns/ is the canonical specification for each pattern. Per maintainer guidance operating principle 9 + dev.80+ per-rule WebFetch-verification discipline, each rule cites the canonical APG pattern URL and quotes verbatim normative text per dev.91+ Discipline 1.
+**Source authority:** the W3C WAI ARIA Authoring Practices Guide at https://www.w3.org/WAI/ARIA/apg/patterns/ is the canonical specification for each pattern. Each rule cites the canonical APG pattern URL and quotes verbatim normative text.
 
 **Severity convention:** APG widget rules default to **MAJOR** severity (matching the baseline A11Y APG widget severity per `accessibility/aria/apg-widgets.md`) — widget pattern violations break assistive-tech interaction substantively. Compare to `wcag-aaa.md` which defaults to MINOR (AAA conformance is opt-in beyond AA-baseline). APG conformance is part of WCAG 4.1.2 Name, Role, Value (Level A) when ARIA roles are used — widget pattern compliance is therefore an A-level requirement, not an AAA enhancement.
 
 **Out-of-scope for this file:** APG widgets already at full coverage in [`accessibility/aria/apg-widgets.md`](../accessibility/aria/apg-widgets.md) (A11Y-045 Accordion, A11Y-046 Alert, A11Y-047 Alertdialog, A11Y-049 Dialog, A11Y-050 Disclosure, A11Y-051 Listbox baseline, A11Y-052 Menu/Menubar baseline, A11Y-053 Menu Button, A11Y-054 Radio Group, A11Y-055 Slider baseline, A11Y-056 Switch, A11Y-057 Tabs baseline, A11Y-058 Toolbar, A11Y-059 Tooltip, A11Y-060 Tree View baseline) are NOT re-stated here at minimum-conformance level. Where COMP-APG-* rules cover the same widget at enhanced conformance, the See-also block cites the baseline A11Y-* rule.
-
-Added dev.103 = T43 Wave 2 phase 1 batch 6.
 
 ---
 

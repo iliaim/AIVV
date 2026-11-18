@@ -4,9 +4,9 @@ Curated checklist of operationalized visual-design rules an IV&V reviewer can ap
 
 The audience for this document is the AIVV reviewer agent applying the `visual` or `polish` lens (see [`.aivv/lenses/visual.md`](../../lenses/visual.md), [`.aivv/lenses/polish.md`](../../lenses/polish.md)). Rules carry severities (CRITICAL / MAJOR / MINOR / POLISH) consistent with the orchestrator's severity-inference 4-pass rule ([`.aivv/methodology.md`](../../methodology.md) Severity inference).
 
-**Source-class layer**: these rules are predominantly **L4 aesthetic / improvement** — design-systems guidance and visual-hygiene patterns that distinguish polished surfaces from "works but feels off." L4 findings default to **POLISH** severity (orthogonal to the defect axis — they describe improvement opportunities rather than broken behavior). A subset surfaces at **MINOR** when the violation produces a user-visible defect (e.g., FOIT > 3s, layout shift on font load, hardcoded color that breaks in dark mode). None default to MAJOR / CRITICAL because legal/safety overrides (WCAG, ADA, FTC) live in `accessibility/` and forthcoming `compliance.md` — VD-* rules defer-to those when the compliance variant exists.
+**Source-class layer**: these rules are predominantly **L4 aesthetic / improvement** — design-systems guidance and visual-hygiene patterns that distinguish polished surfaces from "works but feels off." L4 findings default to **POLISH** severity (orthogonal to the defect axis — they describe improvement opportunities rather than broken behavior). A subset surfaces at **MINOR** when the violation produces a user-visible defect (e.g., FOIT > 3s, layout shift on font load, hardcoded color that breaks in dark mode). None default to MAJOR / CRITICAL because legal/safety overrides (WCAG, ADA, FTC) live in `accessibility/` and `compliance/` — VD-* rules defer-to those when the compliance variant exists.
 
-**Scope**: code-observable patterns only. Visual concerns that require rendered-output measurement (actual computed contrast under live theme, measured motion timing, pixel-diff regression, real font-load timing) route to `visual-verification-triggers/` triggers and the runtime-visual lens (planned). VD-* rules flag the *pattern* in source; the runtime layer measures the *outcome*.
+**Scope**: code-observable patterns only. Visual concerns that require rendered-output measurement (actual computed contrast under live theme, measured motion timing, pixel-diff regression, real font-load timing) route to `visual-verification-triggers/` triggers and `runtime-visual.md` runtime evidence. VD-* rules flag the *pattern* in source; the runtime layer measures the *outcome*.
 
 **Rule-ID conventions**:
 - `VD-TYPE-NN` — typography (font scale, line-height, weight, family, loading, wrap, line length) — see [typography.md](typography.md)
@@ -29,7 +29,7 @@ The following visual-design concerns require **runtime confirmation** and are NO
 - Actual measured motion timing under throttled-CPU conditions
 - Live carousel pause-behavior across input modalities
 
-These route to `visual-verification-triggers/` triggers and the runtime-visual lens.
+These route to `visual-verification-triggers/` triggers and `runtime-visual.md` runtime evidence.
 
 ## Source reference map
 
@@ -46,4 +46,4 @@ These route to `visual-verification-triggers/` triggers and the runtime-visual l
 | WebKit blog | https://webkit.org/blog/7929/designing-websites-for-iphone-x/ | Safe-area-inset / notched-device viewport (canonical introduction) |
 | Smashing Magazine | https://www.smashingmagazine.com/2015/01/designing-for-print-with-css/ | Print-stylesheet conventions |
 
-**Citation-grounding policy** (post-dev.46): every URL in this directory resolved to HTTP 200 at authoring time (dev.54 + dev.67 retrofit verification). When citing in findings, prefer the most-specific landing page; if a future deep-link 404s due to source-system reorganization, swap to the source-system root + topic-prose and surface the swap in a future cycle's citation-grounding pass.
+**Citation-grounding policy**: every URL in this directory resolved to HTTP 200 at authoring time. When citing in findings, prefer the most-specific landing page; if a future deep-link 404s due to source-system reorganization, swap to the source-system root + topic-prose and surface the swap in a future cycle's citation-grounding pass.

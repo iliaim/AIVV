@@ -1,6 +1,6 @@
 # Visual Verification Triggers — Asset changes
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-020..022, VVT-051..052). Extended dev.87 = T23 phase 4 — image-loading hints (`loading="lazy"` per VVT-051; `decoding` + `fetchpriority` per VVT-052) appended per the dev.86 by-domain partition policy.
+Part of [.aivv/standards/visual-verification-triggers/](README.md).
 
 ### VVT-020: New or replaced image / icon / SVG
 

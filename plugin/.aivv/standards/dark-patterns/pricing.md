@@ -2,7 +2,7 @@
 
 Part of [.aivv/standards/dark-patterns/](README.md).
 
-**i18n composition note (dev.104+):** The DP-PRICE-* manipulation patterns compose with **I18N-FMT-03** (`i18n/formatters.md`, "Currency uses `Intl.NumberFormat({style: 'currency'})`") on the currency-display surface. I18N-FMT-03 enforces the locale-aware + currency-code-explicit formatting baseline (no hardcoded `$` prefix, no assumed-USD display, no symbol-placement-locked-to-US-English); the DP-PRICE-* rules then cover manipulation-axis defects on top of that correctness baseline (drip pricing, fake anchors, hidden fees, etc.). The two layers compose: getting `Intl.NumberFormat` currency formatting correct is the i18n baseline; DP-PRICE-* findings address manipulative patterns regardless of locale-correctness.
+**i18n composition note:** The DP-PRICE-* manipulation patterns compose with **I18N-FMT-03** (`i18n/formatters.md`, "Currency uses `Intl.NumberFormat({style: 'currency'})`") on the currency-display surface. I18N-FMT-03 enforces the locale-aware + currency-code-explicit formatting baseline (no hardcoded `$` prefix, no assumed-USD display, no symbol-placement-locked-to-US-English); the DP-PRICE-* rules then cover manipulation-axis defects on top of that correctness baseline (drip pricing, fake anchors, hidden fees, etc.). The two layers compose: getting `Intl.NumberFormat` currency formatting correct is the i18n baseline; DP-PRICE-* findings address manipulative patterns regardless of locale-correctness.
 
 ### DP-PRICE-01: Drip pricing — surcharges revealed only at checkout
 

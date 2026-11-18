@@ -26,7 +26,7 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 **Rationale**: A skip-link that's CSS-hidden (`display: none`) instead of visually-hidden-but-focusable defeats its accessibility purpose AND creates a false-compliance signal.
 **Source**: WCAG — https://www.w3.org/WAI/standards-guidelines/wcag/
 
-**The rule**: skip-links are visually-hidden via the standard pattern (`clip: rect(0 0 0 0)`) and become visible on focus. Defer-to UX-016 (lives in `ui-ux/navigation.md` per dev.62 retrofit — Provide a skip-link; severity MAJOR).
+**The rule**: skip-links are visually-hidden via the standard pattern (`clip: rect(0 0 0 0)`) and become visible on focus. Defer-to UX-016 (lives in `ui-ux/navigation.md` — Provide a skip-link; severity MAJOR).
 
 **Code patterns to flag**:
 - `.skip-link { display: none; }`

@@ -1,12 +1,10 @@
 # Compliance — WCAG 2.1 AAA realistic subset
 
-Part of [.aivv/standards/compliance/](README.md) (COMP-WCAG-AAA-NN). Each rule captures one WCAG 2.1 Level AAA Success Criterion in the "realistic" subset — meaning AAA SCs that apply to general production web applications (NOT the impractical-for-most-sites subset like 3.1.5 Reading Level which requires lower-secondary-education reading level for non-essential content, or 2.2.4 Interruptions which requires defer-or-postpone of all interruptions). Per maintainer guidance operating principle 9 + dev.80+ per-rule WebFetch-verification discipline, each rule cites the canonical W3C WCAG Understanding page; the Source line carries the verbatim normative SC text per dev.91+ Discipline 1.
+Part of [.aivv/standards/compliance/](README.md) (COMP-WCAG-AAA-NN). Each rule captures one WCAG 2.1 Level AAA Success Criterion in the "realistic" subset — meaning AAA SCs that apply to general production web applications (NOT the impractical-for-most-sites subset like 3.1.5 Reading Level which requires lower-secondary-education reading level for non-essential content, or 2.2.4 Interruptions which requires defer-or-postpone of all interruptions). Each rule cites the canonical W3C WCAG Understanding page; the Source line carries the verbatim normative SC text.
 
 **Conformance reality:** AAA conformance is not required for the WCAG-compliance baseline (Level AA is the standard regulatory/legal baseline in most jurisdictions). AAA rules in this catalog represent **opt-in enhancements** that improve accessibility for users with cognitive disabilities, low vision, photosensitive epilepsy, or motor impairments beyond the AA threshold. AIVV surfaces them as MINOR or POLISH severity by default (vs MAJOR for AA-class A11Y rules) — escalation to MAJOR/CRITICAL is appropriate only when explicit AAA conformance is the stated project goal.
 
 **Out-of-scope for this file:** WCAG AAA SCs that are already covered in [`accessibility/`](../accessibility/) (specifically 2.3.3 Animation from Interactions per A11Y-033 / A11Y-070, 2.4.13 Focus Appearance per A11Y-037 / A11Y-038, 2.5.5 Target Size Enhanced per A11Y-040, 3.3.9 Accessible Authentication Enhanced per A11Y-044) are NOT duplicated here — see those A11Y rules for the existing coverage.
-
-Added dev.103 = T43 Wave 2 phase 1 batch 1.
 
 ### COMP-WCAG-AAA-01: Text contrast ratio ≥ 7:1 (Enhanced)
 

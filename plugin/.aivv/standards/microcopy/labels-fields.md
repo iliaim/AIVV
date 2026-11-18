@@ -42,7 +42,7 @@ Part of [.aivv/standards/microcopy/](README.md) (MC-011..015).
 ### MC-013: Don't use placeholder text as the only label
 
 **Severity**: MAJOR
-**Rationale**: Cross-references UX-002 (lives in `ui-ux/forms.md` per dev.62 retrofit). Placeholder-as-label is a top-tier UX defect: placeholders disappear on focus, are low-contrast by default, often interpreted as pre-filled values, and are not announced consistently by screen readers.
+**Rationale**: Cross-references UX-002 (lives in `ui-ux/forms.md`). Placeholder-as-label is a top-tier UX defect: placeholders disappear on focus, are low-contrast by default, often interpreted as pre-filled values, and are not announced consistently by screen readers.
 **Source**: https://www.smashingmagazine.com/2018/06/placeholder-attribute/
 
 **The rule**: Every input has a visible `<label>`. Placeholder text is reserved for format examples ("e.g., 555-0123") or affordance hints, never for the field's identifying name.

@@ -14,7 +14,7 @@ Use the shared general review checklist as the baseline for this review. Select 
 
 No lens-specific trigger list. Apply only the relevant questions selected through the shared checklist's single applicability scan.
 
-## Severity anchors for non-code findings
+## Severity anchors
 
 For non-code findings under this lens, use actual consequences rather than the
 software legacy model's keyword or financial-category shortcuts:

@@ -221,7 +221,7 @@ Part of [.aivv/standards/visual-design/](README.md).
 ### VD-MOTION-12: Auto-advance / carousel motion ethics
 
 **Severity**: MINOR
-**Rationale**: Auto-advancing carousels (banners, hero slideshows) without user control distract from content, fail accessibility (WCAG 2.2.2 Pause/Stop/Hide), and are flagged as dark-pattern when used to push content past the user. A11Y-022 ("`<video>`/`<audio>` must not autoplay with sound") is the closest existing code-reviewable compliance variant; full WCAG 2.2.2 Pause/Stop/Hide for carousels has no shipped A11Y rule yet — `compliance.md` (planned dev.60+) will cover it. `dark-patterns/` (planned dev.55+, shipped dev.56) covers the manipulation variant.
+**Rationale**: Auto-advancing carousels (banners, hero slideshows) without user control distract from content, fail accessibility (WCAG 2.2.2 Pause/Stop/Hide), and are flagged as dark-pattern when used to push content past the user. A11Y-022 ("`<video>`/`<audio>` must not autoplay with sound") is the closest existing code-reviewable compliance variant; full WCAG 2.2.2 Pause/Stop/Hide for carousels has no shipped A11Y rule yet — COMP-APG-01 (`compliance/aria-apg-full.md`) covers the carousel rotation control. `dark-patterns/` covers the manipulation variant.
 **Source**: web.dev carousel-best-practices — https://web.dev/articles/carousel-best-practices
 
 **The rule**: auto-advancing motion (carousels, slideshows, ticker tape) is user-pausable via visible control, OR auto-advance is disabled by default and user opts in.

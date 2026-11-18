@@ -1,6 +1,6 @@
 # Visual Verification Triggers — Accessibility-code changes
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-026..030, VVT-062). Extended dev.90 = T23 phase 6 — `forced-colors` media query (Baseline Widely available since September 2022) appended per the dev.86 by-domain partition policy. forced-colors is fundamentally an accessibility-mode trigger (Windows High Contrast Mode for low-vision users), placed here rather than `css-styling.md` for semantic correctness.
+Part of [.aivv/standards/visual-verification-triggers/](README.md). `forced-colors` (Windows High Contrast Mode) is placed here rather than in `css-styling.md` because it is an accessibility-mode trigger.
 
 ### VVT-026: ARIA attribute additions or modifications
 

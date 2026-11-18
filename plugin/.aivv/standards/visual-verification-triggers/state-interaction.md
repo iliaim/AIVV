@@ -1,6 +1,6 @@
 # Visual Verification Triggers — State, interaction, and form-flow changes
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-014..019, VVT-047, VVT-055..056, VVT-059, VVT-063..064). Extended dev.86 = T23 phase 3 — `:user-valid` / `:user-invalid` interaction-gated form-validation styling (Baseline 2023) appended per the dev.86 by-domain partition policy (closes the dev.85 by-date-subfile redistribution sigil). Extended dev.89 = T23 phase 5 — `inputmode` virtual-keyboard hint (Baseline 2021) and `enterkeyhint` virtual-keyboard-action-label (Baseline 2021) appended per the same policy. Extended dev.90 = T23 phase 6 — `autocomplete` token-list attribute appended per the same policy. Extended dev.92 = T23 phase 7 — `:focus-visible` pseudo-class (Baseline 2022) and `<details>`/`<summary>` disclosure widget (Baseline 2020) appended per the same policy.
+Part of [.aivv/standards/visual-verification-triggers/](README.md).
 
 ### VVT-014: New or modified form validation logic
 

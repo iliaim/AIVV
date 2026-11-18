@@ -27,7 +27,7 @@ Part of [.aivv/standards/dark-patterns/](README.md).
 **Rationale**: Forcing the user through 5+ "Are you sure?" / "But you'll lose features!" steps to cancel is a friction-engineered dark pattern.
 **Source**: deceptive.design "Roach Motel" — https://www.deceptive.design/types
 
-**The rule**: cancellation flow has at most 1 confirmation step (matching MC-026 destructive-confirmation discipline). Defer-to MC-027 (severity MAJOR — "Confirm destructive actions; don't gate non-destructive actions", lives in `microcopy/confirmations.md` per dev.64 retrofit) for the microcopy rule.
+**The rule**: cancellation flow has at most 1 confirmation step (matching MC-026 destructive-confirmation discipline). Defer-to MC-027 (severity MAJOR — "Confirm destructive actions; don't gate non-destructive actions", lives in `microcopy/confirmations.md`) for the microcopy rule.
 
 **Code patterns to flag**:
 - Multi-step cancel wizard (`<Step1Reason>` → `<Step2Discount>` → `<Step3Survey>` → `<Step4Confirm>`)

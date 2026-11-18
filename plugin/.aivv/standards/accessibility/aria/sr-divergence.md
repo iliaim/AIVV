@@ -2,8 +2,6 @@
 
 Part of [.aivv/standards/accessibility/aria/](README.md) (A11Y-073..074). These patterns address known behavior divergences between NVDA / JAWS / VoiceOver. Each cites the underlying WAI-ARIA spec section + a divergence reference. Per maintainer guidance operating principle 9, divergence claims are grounded in published vendor or WAI documentation.
 
-Added dev.79 = T21 phase 3 (screen-reader divergence component of COGA + SR-divergence cycle).
-
 ### A11Y-073: Avoid `role="application"` except for true app-like contexts
 
 **Severity**: MAJOR

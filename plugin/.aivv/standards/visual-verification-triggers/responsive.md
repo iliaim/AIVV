@@ -1,6 +1,6 @@
 # Visual Verification Triggers — Responsive and mobile-specific changes
 
-Part of [.aivv/standards/visual-verification-triggers/](README.md) (VVT-023..025, VVT-065). Extended dev.92 = T23 phase 7 — CSS scroll-snap (`scroll-snap-type`, `scroll-snap-align`, Baseline 2022) appended per the dev.86 by-domain partition policy.
+Part of [.aivv/standards/visual-verification-triggers/](README.md).
 
 ### VVT-023: Viewport meta or document-level scaling change
 

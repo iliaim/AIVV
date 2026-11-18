@@ -1,8 +1,6 @@
 # Compliance — standards catalog index
 
-Part of [.aivv/standards/](../README.md). The `compliance.md` catalog covers regulatory + legal-risk + AAA-enhancement rules grouped by topical sub-domain. Each subfile carries one `COMP-*` sub-prefix.
-
-**Status:** Shipped.
+Part of [.aivv/standards/](../README.md). The compliance catalog covers regulatory + legal-risk + AAA-enhancement rules grouped by topical sub-domain. Each subfile carries one `COMP-*` sub-prefix.
 
 ## Subdomains
 
@@ -20,7 +18,7 @@ Part of [.aivv/standards/](../README.md). The `compliance.md` catalog covers reg
 
 ## Lens routing
 
-Findings in this catalog route to the `compliance` lens (shipped dev.105 = T45 Wave 2 phase 3). Pre-dev.105 invocations may route them to `code` lens as fallback. The `--full-ui-ux` (T47) + `--full-a11y` (T48) + `--full` (T49) flags will include the `compliance` lens once shipped.
+Findings in this catalog route to the `compliance` lens. The `--full-ui-ux`, `--full-a11y`, `--full`, and `--full-with-journey` flags include it.
 
 ## Legal disclaimer
 

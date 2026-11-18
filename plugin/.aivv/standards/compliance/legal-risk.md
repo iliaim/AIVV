@@ -8,8 +8,6 @@ Part of [.aivv/standards/compliance/](README.md) (COMP-LEGAL-NN). Each rule capt
 
 **Scope-relationship to `dark-patterns/legal.md`:** The DP-LEGAL-* subset (DP-LEGAL-01..13) covers manipulative-UX patterns that ALSO trigger legal risk (forced-continuity subscriptions, hidden recurring fees, fake scarcity disclosures, etc.) — those rules are anchored on the *behavioral-manipulation* axis with legal authority as supporting weight. COMP-LEGAL-* in this file covers the **transparency / disclosure / data-subject-rights / accessibility-lawsuit** legal-risk axis directly, where the rule's primary anchor IS the statute (GDPR / CCPA / FTC / ADA / Section 508 / COPPA / EU DSA / etc.) and dark-pattern UX is incidental. Both files contribute to the L1-source-class forced-show set per the canonical L1-source detection logic at `skills/aivv-fix/references/polish-and-l1-source-policy.md`.
 
-Added dev.103 = T43 Wave 2 phase 1 batch 7.
-
 ---
 
 ### COMP-LEGAL-01: GDPR Article 13 — disclose required information at point of data collection

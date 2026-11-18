@@ -10,7 +10,7 @@ The audience for this document is the AIVV reviewer agent applying the `visual`,
 - **L3 platform conventions (MAJOR / MINOR)** — patterns deceptive.design or NN/g classify by category but where legal exposure is jurisdiction-specific. Most `DP-PRICE-*`, `DP-SUB-*`, `DP-URGENCY-*`, `DP-SCARCITY-*` rules.
 - **L4 aesthetic / improvement (POLISH)** — none default to POLISH; manipulative patterns produce real user harm even when not legally enforceable. Rules with marginal manipulation framing (e.g., onboarding default-state selection) route to MINOR, not POLISH.
 
-**Scope**: code-observable patterns only. Dark-pattern concerns that require runtime confirmation (actual measured time spent in cancel flow, real countdown-timer accuracy under network variance, real consent-banner accept-rate manipulation) are out of scope; those route to `visual-verification-triggers/` and the runtime-visual lens (planned).
+**Scope**: code-observable patterns only. Dark-pattern concerns that require runtime confirmation (actual measured time spent in cancel flow, real countdown-timer accuracy under network variance, real consent-banner accept-rate manipulation) are out of scope; those route to `visual-verification-triggers/` and `runtime-visual.md` runtime evidence.
 
 **Rule-ID conventions**:
 - `DP-PRICE-NN` — pricing manipulation (drip pricing, hidden fees, anchor manipulation) — see [pricing.md](pricing.md)
@@ -39,7 +39,7 @@ The following dark-pattern concerns require **runtime confirmation** and are NOT
 - Notification-timing analysis (timezone respect, quiet-hours enforcement)
 - Inventory-lock semantics behind cart timers
 
-These route to `visual-verification-triggers/` triggers and the runtime-visual lens (planned post-dev.62).
+These route to `visual-verification-triggers/` triggers and `runtime-visual.md` runtime evidence.
 
 ## Source reference map
 
@@ -59,4 +59,4 @@ These route to `visual-verification-triggers/` triggers and the runtime-visual l
 | Overlay Fact Sheet | https://overlayfactsheet.com/ | DP-A11Y-01, DP-A11Y-05 |
 | WCAG | https://www.w3.org/WAI/standards-guidelines/wcag/ | DP-A11Y-02/04/06 cross-references |
 
-**Citation-grounding policy** (post-dev.46/54 discipline): every URL in this directory resolved to HTTP 200 at authoring time (dev.56 + dev.68 retrofit verification). Internal cross-references to other AIVV catalogs (`defer-to A11Y-NNN`, `defer-to UX-NNN`, `defer-to MC-NNN`, `defer-to DP-LEGAL-NN`) were verified by greping the target file at authoring time. Severity claims about cross-referenced rules were verified against the target rule's actual severity in its catalog. Future cycles refine URLs and cross-references as catalogs evolve.
+**Citation-grounding policy**: every URL in this directory resolved to HTTP 200 at authoring time. Internal cross-references to other AIVV catalogs (`defer-to A11Y-NNN`, `defer-to UX-NNN`, `defer-to MC-NNN`, `defer-to DP-LEGAL-NN`) were verified by greping the target file at authoring time. Severity claims about cross-referenced rules were verified against the target rule's actual severity in its catalog. Future cycles refine URLs and cross-references as catalogs evolve.

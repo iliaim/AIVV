@@ -4,9 +4,9 @@ This document tells the AIVV code reviewer when to emit a `⚠ Visual verificati
 
 **Placement:** add new triggers to the matching by-domain subfile (`css-styling.md`, `state-interaction.md`, `component-composition.md`, `accessibility-code.md`, `assets.md`, `responsive.md`). Do not extend `modern-platform.md` or `framework-observer.md`.
 
-## Runtime-verification composition note (dev.106+)
+## Runtime-verification composition note
 
-When `/aivv --runtime` is invoked, B3 runtime evidence is externalized by default: AIVV emits reviewable Playwright probe scaffolds and ingests user-run Playwright JSON. The runtime-visual rule catalog at [`.aivv/standards/runtime-visual.md`](../runtime-visual.md) (RTV-AXE-* + RTV-CONTRAST-* + RTV-DIFF-*) describes what those artifacts should verify. The VVT advisory remains the static-review hand-off ("you need to verify this rendered output"); RTV-DIFF-01..08 (screenshot diff + multi-viewport + animation-freezing + theme/cross-browser baseline pairs) are the runtime-verification path that operationalizes VVT-style advisories when runtime artifacts are supplied. Catalog-scope back-cite per the dev.103 COMP-LEGAL-06 → A11Y-001..074 range-cite precedent (avoids per-VVT-rule duplication across 73 surfaces).
+When `/aivv --runtime` is invoked, B3 runtime evidence is externalized by default: AIVV emits reviewable Playwright probe scaffolds and ingests user-run Playwright JSON. The runtime-visual rule catalog at [`.aivv/standards/runtime-visual.md`](../runtime-visual.md) (RTV-AXE-* + RTV-CONTRAST-* + RTV-DIFF-*) describes what those artifacts should verify. The VVT advisory remains the static-review hand-off ("you need to verify this rendered output"); RTV-DIFF-* (screenshot diff + multi-viewport + animation-freezing + theme/cross-browser baseline pairs) are the runtime-verification path that operationalizes VVT-style advisories when runtime artifacts are supplied.
 
 ## When to emit the advisory
 
@@ -22,14 +22,14 @@ For exact rule IDs per file, run `node <plugin>/tools/standards-lookup.mjs --fam
 
 | File | Category |
 |---|---|
-| [css-styling.md](css-styling.md) | CSS and styling changes (dev.86 extension: `@starting-style`, `field-sizing`, `text-wrap: balance \| pretty`; dev.87 extension: `font-display`, `prefers-reduced-motion`; dev.89 extension: `color-scheme`, `light-dark()`; dev.90 extension: `accent-color`, `prefers-contrast`; dev.92 extension: `appearance`; dev.98 extension: `oklch()`/`oklab()`; dev.100 extension: scroll-driven animations + `@scope`; dev.101 extension: `interpolate-size` + `text-spacing-trim` + CSS Anchor Positioning) |
-| [component-composition.md](component-composition.md) | Component composition and layout primitive changes (dev.98 extension: HTML `<dialog>` + `.showModal()`/`.show()` API) |
-| [state-interaction.md](state-interaction.md) | State, interaction, and form-flow changes (dev.86 extension: `:user-valid` / `:user-invalid`; dev.89 extension: `inputmode`, `enterkeyhint`; dev.90 extension: `autocomplete`; dev.92 extension: `:focus-visible`, `<details>`/`<summary>`) |
-| [assets.md](assets.md) | Asset changes (images, SVG, media; dev.87 extension: `loading="lazy"`, `decoding` + `fetchpriority`) |
-| [responsive.md](responsive.md) | Responsive and mobile-specific changes (dev.92 extension: scroll-snap) |
-| [accessibility-code.md](accessibility-code.md) | Accessibility-code changes (dev.90 extension: `forced-colors`) |
-| [modern-platform.md](modern-platform.md) | **CLOSED batch.** Modern web-platform features (2022+ baseline; dev.84 = T23 phase 1) |
-| [framework-observer.md](framework-observer.md) | **CLOSED batch.** Framework boundaries + DOM observers (dev.85 = T23 phase 2) |
+| [css-styling.md](css-styling.md) | CSS and styling changes |
+| [component-composition.md](component-composition.md) | Component composition and layout primitive changes |
+| [state-interaction.md](state-interaction.md) | State, interaction, and form-flow changes |
+| [assets.md](assets.md) | Asset changes (images, SVG, media) |
+| [responsive.md](responsive.md) | Responsive and mobile-specific changes |
+| [accessibility-code.md](accessibility-code.md) | Accessibility-code changes |
+| [modern-platform.md](modern-platform.md) | Modern web-platform features (2022+ Baseline) |
+| [framework-observer.md](framework-observer.md) | Framework boundaries + DOM observers |
 
 ## Decision examples
 
