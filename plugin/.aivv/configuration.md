@@ -5,7 +5,7 @@ AIVV reads user preferences from two locations (highest precedence first):
 1. **CLI flags** (e.g., `/aivv --reviewers=3`) — always win
 2. **Project-level config:** `<target>/.aivv/config.json` — applies when AIVV runs in that project
 3. **User-level config:** `~/.aivv/config.json` — applies across all projects
-4. **Plugin defaults** — hardcoded fallback (per golden JSON Schema at `.aivv/schemas/config.schema.json`; legacy v2/v3/v4/v5/v6 schemas remain available as compatibility artifacts)
+4. **Plugin defaults** — hardcoded fallback (per golden JSON Schema at `.aivv/schemas/config.schema.json`)
 
 ## Resolution algorithm
 
@@ -266,9 +266,7 @@ Run:
 - ADA, Section 508, ARIA APG patterns
 - Rules with `rule_id` matching `COMP-LEGAL-*` or `A11Y-*`
 
-These are forced-shown regardless of threshold setting. The user cannot accidentally suppress legal/safety findings via preferences. (See `skills/aivv-fix/references/polish-and-l1-source-policy.md` "L1-source detection logic" for the canonical regex; word boundaries on bare acronyms `FTC`/`DSA`/`ADA` prevent false-positive substring matches.)
-
-Forced-show is a rendering rule, not a legal-applicability conclusion. When `project_context` declares a statute inapplicable (for example, no EU jurisdiction and no PII for a GDPR-only pattern), the finding still renders if it carries an L1 citation, but its DISPOSITION may be `document` / `defer-with-rationale` and its POLISH batch-apply path does not trip the manual-review refusal guard. When applicability is undeclared or the context makes the statute applicable, keep the manual-review guard and state the applicability assumption.
+These are forced-shown regardless of threshold setting, so preferences cannot accidentally suppress legal/safety findings. Forced-show is a rendering rule, not a legal-applicability conclusion. The canonical detection regex, forced-show semantics, and batch-apply refusal guard are in [polish-and-l1-source-policy.md](../skills/aivv-fix/references/polish-and-l1-source-policy.md).
 
 ## POLISH tier (orthogonal value-add suggestions)
 
@@ -277,7 +275,7 @@ POLISH is a separate severity tier — improvement opportunities and value-add s
 - Are emitted only when they pass the Improvement-articulation and Proportional-remediation gates in [severity-confidence.md](../skills/methodology/references/severity-confidence.md); otherwise the finding is dropped entirely (not downgraded).
 - Render expanded by default below defect findings. Set `polish_collapsed: true` to collapse to a one-line summary; `--show-polish` expands for a single invocation.
 - Are NOT in the `severity_threshold` enum — they're orthogonal to defect severity. Setting `severity_threshold: CRITICAL` does NOT hide POLISH; `fix_apply_policy.improvement=skip` suppresses them in the apply queue unless safety floors require escalation. Legacy `apply_polish_mode: never` maps to that modern skip policy.
-- Emit calibration records with `severity: "POLISH"` (per `.aivv/schemas/finding.json` enum + `.aivv/calibration/README.md` schema). The optional `rule_id` field provides per-rule tracking (applies to all severity tiers, not POLISH-specifically). POLISH-vs-MINOR separation in the per-rule FP/TP aggregator is achieved by layering a `severity` filter (see calibration/README.md "Per-rule FP/TP rate" → "Per-tier filter" example).
+- Are recorded in calibration with `severity: "POLISH"`; see [calibration/README.md](calibration/README.md) "Per-tier filter" to separate them in per-rule analytics.
 
 When explicit `fix_apply_policy.improvement` is present, it supersedes `apply_polish_mode` for improvement/POLISH apply decisions. If explicit modern improvement policy is absent but legacy `apply_polish_mode` is explicit, the legacy value maps to the modern policy (`always` → `auto`, `ask` → `ask`, `never` → `skip`). If neither is explicit, the schema default supplies `improvement=ask`.
 
@@ -287,15 +285,15 @@ When explicit `fix_apply_policy.improvement` is present, it supersedes `apply_po
 
 | Value | Meaning |
 |---|---|
-| `auto` | Eligible for automatic application only after `/aivv-fix` confidence, CHALLENGE, L1-source, blast-radius, shared-interface, and write-intent gates clear. |
+| `auto` | Eligible for automatic application only after every `/aivv-fix` safety gate clears. |
 | `ask` | Route to the aggregated `/aivv-fix` decision queue. The prompt names the concrete trade-off or blocker, not a generic yes/no. |
 | `skip` | Do not apply by default. CRITICAL/MAJOR defects, `fix-now`/`investigate-first` dispositions, active containment, and L1-source/manual-review floors still escalate; `skip` cannot suppress safety-relevant findings. |
 
-`clarification-needed` is not directly fixable and defaults to `ask`; `improvement` also defaults to `ask`. Omitted `fix_apply_policy` resolves from the golden schema default. Defect-category `auto` defaults are confidence-gated: only high-confidence, low-consequence fixes apply automatically after CHALLENGE, L1-source/manual-review, blast-radius, shared-interface, and write-intent gates clear. Medium/low-confidence fixes, trade-offs, active containment, safety-floor cases, and all invasive improvements route to the batched decision queue.
+Omitted `fix_apply_policy` resolves from the golden schema default: defect categories are `auto`; `improvement` and `clarification-needed` (not directly fixable) are `ask`. Which findings actually auto-apply, and which gates must clear first, is defined by the batched decision queue and pre-execution gates in [apply-policy-and-gates.md](../skills/aivv-fix/references/apply-policy-and-gates.md).
 
 On the first `/aivv-fix` invocation where schema-default `auto` applies because no explicit policy was configured, AIVV emits a one-time notice keyed to `_walkthrough_hints_shown.auto_apply_v1`: `/aivv-fix now auto-applies only high-confidence low-consequence fixes after safety gates clear. Set fix_apply_policy categories to ask to return to prompting.` If persisting the marker fails, the notice may reappear; the workflow continues.
 
-`--dangerously-auto-apply` is a per-run `/aivv-fix` bypass, not a recognized config key. AIVV does not write it to user/project config and it has no golden-schema property; unknown config keys remain ignored for forward compatibility. The flag requires explicit confirmation, names the bypassed gates, fails closed in non-interactive runs unless `AIVV_DANGEROUSLY_AUTO_APPLY=1` is set, and emits a final audit banner with the number of fixes applied under bypass.
+`--dangerously-auto-apply` is a per-run `/aivv-fix` bypass, not a recognized config key. AIVV does not write it to user/project config and it has no golden-schema property. Its confirmation and non-interactive (`AIVV_DANGEROUSLY_AUTO_APPLY=1`) rules are in [fix-flags.md](../skills/aivv-fix/references/fix-flags.md).
 
 ## Backward compatibility
 
@@ -325,7 +323,6 @@ The validation strategy is: one additive golden schema for readable config shape
 | `<target>/.aivv/config.json` | Project-level preferences (overrides user) |
 | `<state_dir>/quarantine/config-<scope>-<ts>.json` | Optional private diagnostic copy; original config stays in place |
 | `.aivv/schemas/config.schema.json` | Golden JSON Schema definition in the AIVV plugin |
-| `.aivv/schemas/config.v2.schema.json`, `.aivv/schemas/config.v3.schema.json`, `.aivv/schemas/config.v4.schema.json`, `.aivv/schemas/config.v5.schema.json`, `.aivv/schemas/config.v6.schema.json` | Legacy compatibility schema artifacts |
 
 ## See also
 
