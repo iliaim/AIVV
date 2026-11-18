@@ -95,6 +95,6 @@ Readiness consumes the materialized write intents from this reference. If `revis
 
 **Calibration emit:** every Step 5.4 catch writes a `pre_write_validator_caught` calibration record with `{finding_id, validator_check, would_have_been_n_class}` fields.
 
-**AC-X1 coverage (per F-M3 Option B resolution):** Step 5.4 = the deterministic catch layer. Step 4.5 keeps its semantic focus (root-cause-vs-symptom, regression risk, hidden side effects). Defense-in-depth: 4.5 catches LLM-judgment-class defects upstream; 5.4 catches syntax/structure-class defects downstream. The verifier in Step 6 remains the post-edit safety net.
+**Layering:** Step 5.4 is the deterministic catch layer for syntax/structure defects. Step 4.5 keeps its semantic focus (root-cause-vs-symptom, regression risk, hidden side effects). The verifier in Step 6 remains the post-edit safety net.
 
 ---

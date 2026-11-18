@@ -1,6 +1,6 @@
 # Step 2.5 CONTAIN — immediate blast-radius reduction
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 2.5 CONTAIN. The inline skeleton keeps the applies-only trigger, the skip condition, and a one-line pointer. This reference is the canonical home for the containment examples, disruptive-action handling, and the right-now/when-triggered protocol.
+Canonical home for the containment examples, disruptive-action handling, and the right-now/when-triggered protocol.
 
 Before spawning investigators, ask: "Is there a reversible containment action available right now?"
 

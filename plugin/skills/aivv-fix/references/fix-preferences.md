@@ -1,6 +1,6 @@
 # `/aivv-fix`-specific preference bindings
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 1.1 "Resolve `/aivv-fix` Preferences". The **shared** resolution mechanism (W9 golden-schema dispatch + precedence + L1-source forced-override) lives in [`.aivv/configuration.md`](../../../.aivv/configuration.md#resolution-algorithm) — the inline Step 1.1 keeps a one-line pointer to it. This reference is the canonical home for the fix-only KEY catalog that remains specific to this workflow when the shared mechanism is documented separately: the `fix_apply_policy` per-category map, the `apply_polish_mode` legacy mapping, the `--apply-all-polish` / `--dangerously-auto-apply` binding rules, and the one-time `auto_apply_v1` notice.
+The shared resolution mechanism (W9 golden-schema dispatch + precedence + L1-source forced-override) lives in [`.aivv/configuration.md`](../../../.aivv/configuration.md#resolution-algorithm). This reference is the canonical home for the fix-only key catalog: the `fix_apply_policy` per-category map, the `apply_polish_mode` legacy mapping, the `--apply-all-polish` / `--dangerously-auto-apply` binding rules, and the one-time `auto_apply_v1` notice.
 
 These bindings sit on top of the shared core (CLI > project config > user config > schema defaults, validated against `.aivv/schemas/config.schema.json` regardless of `schema_version`).
 

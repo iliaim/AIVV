@@ -1,6 +1,6 @@
 # Step 4.5 CHALLENGE — trigger, dispatch, and verdict handling
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 4.5 CHALLENGE. The inline skeleton keeps the step intro (when CHALLENGE runs relative to Step 4.4 / the W10 Auto-eligible gate) and a one-line pointer. This reference is the canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder construction), and the 4.5.3 verdict handling + counter semantics. The challenger **prompt** itself lives in [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md). The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
+Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder construction), and the 4.5.3 verdict handling + counter semantics. The challenger **prompt** itself lives in [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md). The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
 
 ## 4.5.1 — Trigger evaluation (per batch)
 

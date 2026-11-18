@@ -1,6 +1,6 @@
 # Step 4 apply-policy decision queue, pre-execution gates, and fix_confidence
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 4 PLAN. The inline skeleton keeps field propagation, the special-verdict triggers, and the auto-proceed precheck (with its grepped invariant strings). This reference is the canonical home for the investigation-results presentation template, the architectural-remediation lane render + fail-closed contract, the batch-reconciliation cross-batch collision check, the W10 batched apply-policy decision queue (route classification + the "Fix Decisions Needed" surface + dangerous-bypass route), the pre-execution Gate 1/2/3 mechanics, and the `fix_confidence` computation ladder.
+Canonical home for the investigation-results presentation template, the architectural-remediation lane render + fail-closed contract, the batch-reconciliation cross-batch collision check, the W10 batched apply-policy decision queue (route classification + the "Fix Decisions Needed" surface + dangerous-bypass route), the pre-execution Gate 1/2/3 mechanics, and the `fix_confidence` computation ladder.
 
 Cross-step ordering is owned by [execution-decisioning.md](execution-decisioning.md). This file owns the route definitions below and the `--dangerously-auto-apply` bypass list; other references point here instead of restating them.
 

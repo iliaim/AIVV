@@ -27,10 +27,10 @@ The `domain` field identifies which review lens this finding belongs to. It is *
 | Value | Meaning |
 |-------|---------|
 | `code` (default) | Source-code correctness, bugs, design flaws — the `/aivv`, `/aivv-fix` pipeline (single or multi-reviewer via `--reviewers=N`) |
-| `sec` | Security findings (`/aivv --lens=sec`, shipped dev.22+) |
-| `visual` | Visual/UI/a11y review findings (`/aivv --lens=visual`, shipped dev.22+; static review baseline plus optional B3 runtime evidence emit/ingest) |
-| `ux` | UX heuristic-walkthrough + microcopy + interaction-state findings (`/aivv --lens=ux`, shipped dev.43+) |
-| `polish` | Improvement-articulation / value-add suggestions (`/aivv --lens=polish`, shipped dev.43+); subject to the Improvement-articulation gate per `.aivv/methodology.md` |
+| `sec` | Security findings (`/aivv --lens=sec`) |
+| `visual` | Visual/UI/a11y review findings (`/aivv --lens=visual`; static review baseline plus optional B3 runtime evidence emit/ingest) |
+| `ux` | UX heuristic-walkthrough + microcopy + interaction-state findings (`/aivv --lens=ux`) |
+| `polish` | Improvement-articulation / value-add suggestions (`/aivv --lens=polish`); subject to the Improvement-articulation gate per `.aivv/methodology.md` |
 | `perf` | Performance findings (planned future lens — Tier 2/3) |
 | `a11y` | Pure-a11y findings, distinct from `visual` lens's UI-a11y coverage (planned future lens — Tier 2/3) |
 
@@ -82,7 +82,7 @@ AIVV does NOT adopt IEEE 1044's severity/priority/disposition scheme — the bes
 
 Kepner-Tregoe IS/IS NOT analysis. Required when `investigation_mode: standard | instrumentation-first`; optional for `skip-permitted`.
 
-**Enforcement note:** This conditionality is prose-only in v0.1 — `finding.json` (the reviewer envelope schema) carries no if/then enforcement for `problem_specification`. Orchestrators must validate this requirement at Step 3 dispatch-time, not at schema-validation time.
+**Enforcement note:** This conditionality is prose-only — `finding.json` (the reviewer envelope schema) carries no if/then enforcement for `problem_specification`. Orchestrators must validate this requirement at Step 3 dispatch-time, not at schema-validation time.
 
 The IS/IS NOT boundary defines what makes this finding specific — which files, conditions, and contexts SHOW the problem vs which do NOT. `boundary_explanation` is the pivot: a proposed root cause must explain both the IS conditions AND why the IS NOT conditions don't show the problem.
 
@@ -119,7 +119,7 @@ The IS/IS NOT boundary defines what makes this finding specific — which files,
 
 Required for `documentation-gap` findings where `root_cause` makes an empirical claim. Optional for other categories. Absent field on a `documentation-gap` finding predating this design: verifier fails closed — see the documentation-gap verification protocol in `skills/aivv-fix/references/verifier-prompt-template.md` step 2.
 
-`evidence` (array of strings, optional on `root_cause_analysis`): verbatim quotes from external sources cited in the `why_N` chain. For `external-doc-lookup` findings, populate each entry with the character-exact verbatim quote from the cited source (per dev.91+ Discipline 1). The Step 6 verifier greps each entry against the WebFetched source URL; all entries must match. For other `verification_method` values, this array is typically empty or absent.
+`evidence` (array of strings, optional on `root_cause_analysis`): verbatim quotes from external sources cited in the `why_N` chain. For `external-doc-lookup` findings, populate each entry with the character-exact verbatim quote from the cited source. The Step 6 verifier greps each entry against the WebFetched source URL; all entries must match. For other `verification_method` values, this array is typically empty or absent.
 
 `verbatim_doc_content` (string or null, on `fix_proposal`): for `documentation-gap` mechanical fills — the literal text to write into the doc. Branch B pastes this verbatim when populated. Omit when the content requires investigation to determine. Distinct from `description` (which is a prose description of the fix approach for human reading).
 
@@ -314,9 +314,9 @@ SRE-postmortem-style context. **Required for CRITICAL findings; recommended for 
 
 `contributing_factors[].factor_type` enum: `"code" | "process" | "knowledge" | "environment" | "tooling" | "data"` — matches the Fishbone category sweep in the Debugging Technique section of the investigator prompt.
 
-**Prose-only enum (v0.1):** This enum is not machine-enforced — `finding.json` carries no schema constraint on `factor_type` values. Investigators may use any string; the listed values are the recommended vocabulary.
+**Prose-only enum:** This enum is not machine-enforced — `finding.json` carries no schema constraint on `factor_type` values. Investigators may use any string; the listed values are the recommended vocabulary.
 
-**Per-factor evidence and confidence (v0.1 deferral):** Each contributing factor intentionally omits individual `evidence` and `confidence` sub-fields. This is a YAGNI deferral — the factor array serves as a structured prompt for investigator reasoning; per-factor grounding fields are out of scope for v0.1 and may be added in a later schema version.
+**Per-factor evidence and confidence (deferred):** Each contributing factor intentionally omits individual `evidence` and `confidence` sub-fields. This is a YAGNI deferral — the factor array serves as a structured prompt for investigator reasoning; per-factor grounding fields are out of scope for v0.1 and may be added in a later schema version.
 
 **Key discipline:** `detection_failure` informs the `prevention_plan` decision; it does not automatically justify new machinery. A new mechanism is allowed only when the evidence establishes confirmed recurrence, a systemic failure class, high-impact safety/security exposure, or failure of an existing control that the mechanism directly repairs. Otherwise select `none-new` with a bounded rationale.
 
@@ -334,7 +334,7 @@ When `verification_method` is emitted in nested-object form (rather than as a ba
     "command_args": {
       "type": "array",
       "items": {"type": "string"},
-      "description": "Optional advisory argv strings for Step 5.7 execution. When non-empty, becomes argv[1:] verbatim. When absent/empty, default to argv[1] = <target_project>. Per Change 7 step 2.5. Nested-object form (NOT dotted-key) per dev.123 IV&V N1 cycle-2 corrective."
+      "description": "Optional advisory argv strings for Step 5.7 execution. When non-empty, becomes argv[1:] verbatim. When absent/empty, default to argv[1] = <target_project>. Nested-object form (NOT dotted-key) per dev.123 IV&V N1 cycle-2 corrective."
     }
   }
 }
@@ -381,7 +381,7 @@ Hash, stale-intent, and bypass invariants are delegated to [write-intents-and-pr
 
 Required when `verbatim_doc_content` contains a fenced ```` ```json ```` or ```` ```jsonschema ```` block, an `L<N>`-form line citation, or any deterministic structural assertion. Step 5.4 PRE-WRITE-VALIDATE runs these assertions before applying the fix. Omission on schema-bearing or citation-bearing fixes is a specific investigator-output defect: re-author only inside `authorized_scope` and within the shared retry budget; otherwise leave the finding unresolved (Branch E).
 
-Kinds: `jq-parses`, `schema-coherence`, `line-cite-valid`, and `shell-syntax-valid`. Their per-kind args are listed in [investigator-prompt-template.md](investigator-prompt-template.md); the registry and Step 5.4 halt handling live in [write-intents-and-prewrite-validation.md](write-intents-and-prewrite-validation.md). The legacy `count-matches-enumeration` kind remains intentionally dropped; eliminate count-claims-paired-with-enumerations at authoring time per maintainer guidance dev.119+.
+Kinds: `jq-parses`, `schema-coherence`, `line-cite-valid`, and `shell-syntax-valid`. Their per-kind args are listed in [investigator-prompt-template.md](investigator-prompt-template.md); the registry and Step 5.4 halt handling live in [write-intents-and-prewrite-validation.md](write-intents-and-prewrite-validation.md). The legacy `count-matches-enumeration` kind remains intentionally dropped; eliminate count-claims-paired-with-enumerations at authoring time.
 
 Sibling on `fix_proposal` (NOT inside `root_cause_analysis`).
 

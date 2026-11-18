@@ -16,7 +16,7 @@ challenger, and orchestrator paths load only the contract they need.
 - `category` is the Step 5 dispatch key; see [investigator-field-definitions.md](investigator-field-definitions.md) `### Category`.
 - `write_intents[]` is the inspectable pre-write surface; see [investigator-field-definitions.md](investigator-field-definitions.md) `### write_intents`.
 - `class_signature`, `class_assessment`, and `class_sibling_triage[]` are class-breadth fields; see [investigator-field-definitions.md](investigator-field-definitions.md) `### class_signature`.
-- `static_reachability` is record-only in v0.1; routing remains governed by [investigation-dispatch.md](investigation-dispatch.md).
+- `static_reachability` is record-only; routing remains governed by [investigation-dispatch.md](investigation-dispatch.md).
 - Fix-challenger concern kinds live in [batched-and-challenger-schemas.md](batched-and-challenger-schemas.md).
 
 When adding fields, prefer a backward-compatible optional field in the most specific

@@ -319,7 +319,7 @@ Check `authorized_scope`, retry history, `changes_summary` coverage, modified/cr
 
 ---
 
-### Step 5.6.5: Cycle-N+1 mandatory sibling-surface grep (AC-X3)
+### Step 5.6.5: Cycle-N+1 mandatory sibling-surface grep
 
 Run sibling-surface grep for original strings from the prior cycle and surface surviving sibling matches as warnings/sub-findings.
 

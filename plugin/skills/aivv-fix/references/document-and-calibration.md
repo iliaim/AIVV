@@ -1,6 +1,6 @@
 # Step 7 DOCUMENT — predecessor backfill and calibration write-specs
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 7 DOCUMENT. The inline skeleton keeps the resolution-summary table, the Finding-column sourcing rule, the Step 7.8 viewer hook (which has its own reference), and the pattern-capture suggestion. This reference is the canonical home for the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence) and the calibration JSONL append-record field specs.
+Canonical home for the predecessor-review backfill heuristic (`fix_invocation_id` write-back + `source_review_id` persistence) and the calibration JSONL append-record field specs.
 
 ## Predecessor backfill on fix-log → review-log
 

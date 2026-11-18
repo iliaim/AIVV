@@ -224,7 +224,7 @@ Branch A emits `generated_patch` intents with exact ordered `proposed_edits[]` e
 
 When proposed content contains fenced ```json```, ```jsonschema```, shell fences, line citations, or any deterministic structural assertion surface, emit `write_intents[].pre_write_assertions` declaring deterministic checks Step 5.4 will run before applying the edit. Required kinds and args:
 - `jq-parses` — `{block_id: <N>}` — the orchestrator runs `jq empty` on the Nth fenced block.
-- `schema-coherence` — `{block_id, parent_schema_path, expected_nest_path}` — orchestrator confirms the new property nests correctly into the parent schema (catches dotted-string-property defects per dev.123 IV&V N1).
+- `schema-coherence` — `{block_id, parent_schema_path, expected_nest_path}` — orchestrator confirms the new property nests correctly into the parent schema (catches dotted-string-property defects).
 - `line-cite-valid` — `{temporal_target: "pre_write" | "post_write", cite_form: "L<N>" | "L<N>-L<M>", file, expected_snippet}` — orchestrator greps the snippet at the cited line in the named temporal target. **On mismatch: HALT; re-author only if the mismatch is a specific fixable citation defect inside `authorized_scope` and the shared retry budget has room. Do NOT auto-rewrite.**
 - `shell-syntax-valid` — `{language: "bash" | "sh" | "zsh"}` — required for fenced shell content. `bash` uses `bash -n`; `sh` requires a POSIX-compatible checker (`dash -n`, `busybox sh -n`, or confirmed POSIX `sh -n`); `zsh` uses `zsh -n` only if zsh is available. If the checker is unavailable, do not invent success; the intent halts as unsupported risky shape/checker unavailable.
 

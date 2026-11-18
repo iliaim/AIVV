@@ -1,6 +1,6 @@
 # Step 1 flag extraction, wont-fix registry handlers, and lifecycle-selector routing
 
-Canonical home for the `/aivv-fix` Step 1 flag-parsing rules, the two read-only/write wont-fix-registry early-exit handlers, and the lifecycle-selector route helper. The SKILL body carries only the one-line "parse flags (see reference)" skeleton + trigger; this reference is the fixed contract. Do not improvise flag names, the registry handler exit codes, or the lifecycle route precedence.
+Canonical home for the `/aivv-fix` Step 1 flag-parsing rules, the two read-only/write wont-fix-registry early-exit handlers, and the lifecycle-selector route helper. Do not improvise flag names, the registry handler exit codes, or the lifecycle route precedence.
 
 ## Flag extraction
 
