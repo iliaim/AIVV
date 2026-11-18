@@ -14,12 +14,10 @@ Read from `skills/aivv-fix/SKILL.md` before writing or recovering `session_chang
 Every new fix log carries the immutable `authorized_scope` snapshot captured at
 Step 1.9 and these shared retry fields:
 
-- `rework_retry_count`: starts at 0; increments once before each semantic
-  re-authoring or verification re-entry.
-- `max_rework_retries`: the resolved `max_rework_retries` setting (default 3), fixed
-  for the invocation. It is a soft limit; see [challenge-loop.md](challenge-loop.md).
-  Stamp the resolved value when the log is created (pass it in the `fix_log` seed of
-  `aivv-fix-records.mjs`, which otherwise stamps 3).
+- `rework_retry_count` and `max_rework_retries`: the shared rework budget defined
+  in [challenge-loop.md](challenge-loop.md). Stamp the resolved `max_rework_retries`
+  when the log is created (pass it in the `fix_log` seed of `aivv-fix-records.mjs`,
+  which otherwise stamps 3).
 - `rework_retry_history`: append-only entries with retry number, gate, affected
   finding IDs, evidenced defect, and evidence locator; an entry past the limit also carries
   `beyond_limit_reason`.
@@ -168,7 +166,7 @@ recorded boundary; report it as an out-of-scope observation only when its
 existence is already known from in-scope evidence. This gate overrides broad
 search examples below.
 
-1. **Verdict presence (fail-closed).** If the finding has neither a non-empty `root_cause_analysis.class_signature` nor a valid `root_cause_analysis.class_assessment`, the verdict is **missing**: do not fix the finding on this pass. A targeted re-investigation is allowed only if the shared invocation-wide `rework_retry_count` has room; append a `class-verdict` retry event before re-entering Step 3. At the cap, report the finding unresolved with reason `rework-retry-budget-exhausted`; do not move it to a new decision queue or ask to reopen scope. This pre-execution re-entry consumes the same three-retry budget as challenge, pre-write, stale-intent, red-green, and verifier rework. Exempt categories — `improvement`, `documentation-gap`, `clarification-needed`, `process-violation` — are skipped by the class-verdict gate; if one emits a `class_signature`, it still flows through the variant scan in step 4.
+1. **Verdict presence (fail-closed).** If the finding has neither a non-empty `root_cause_analysis.class_signature` nor a valid `root_cause_analysis.class_assessment`, the verdict is **missing**: do not fix the finding on this pass. A targeted re-investigation is allowed only if the shared invocation-wide `rework_retry_count` has room; append a `class-verdict` retry event before re-entering Step 3. At the cap, report the finding unresolved with reason `rework-retry-budget-exhausted`; do not move it to a new decision queue or ask to reopen scope. This re-entry draws on the shared rework budget. Exempt categories — `improvement`, `documentation-gap`, `clarification-needed`, `process-violation` — are skipped by the class-verdict gate; if one emits a `class_signature`, it still flows through the variant scan in step 4.
 
 2. **`class_assessment` completeness (fail-closed).** A `class_assessment` is valid only when it is a JSON object carrying all three sub-fields: `self_contained == true` (the literal boolean), a non-empty `justification`, and a non-empty `searched_pattern_negative` (non-empty = ≥1 non-whitespace character; whitespace-only or non-string does NOT count). An assessment that is not an object, or has any missing/blank/wrong-typed sub-field, is **not a valid verdict** → treated as missing in step 1 (re-investigation). If a finding emits BOTH `class_signature` and a valid `class_assessment`, `class_signature` governs and the assessment is ignored (per the json-schema.md contract) — proceed to step 4, skip step 3.
 
