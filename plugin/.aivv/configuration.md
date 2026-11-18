@@ -272,9 +272,9 @@ Forced-show is a rendering rule, not a legal-applicability conclusion. When `pro
 
 ## POLISH tier (orthogonal value-add suggestions)
 
-POLISH is a separate severity tier introduced dev.39 — improvement opportunities and value-add suggestions, NOT defects. POLISH findings:
+POLISH is a separate severity tier — improvement opportunities and value-add suggestions, NOT defects. POLISH findings:
 
-- Are emitted only when the reviewer can articulate `Improvement:` and `Value:` lines per the Improvement-articulation pass in `.aivv/methodology.md`. If the reviewer cannot articulate both, the finding is dropped entirely (not downgraded).
+- Are emitted only when they pass the Improvement-articulation and Proportional-remediation gates in [severity-confidence.md](../skills/methodology/references/severity-confidence.md); otherwise the finding is dropped entirely (not downgraded).
 - Render expanded by default below defect findings. Set `polish_collapsed: true` to collapse to a one-line summary; `--show-polish` expands for a single invocation.
 - Are NOT in the `severity_threshold` enum — they're orthogonal to defect severity. Setting `severity_threshold: CRITICAL` does NOT hide POLISH; `fix_apply_policy.improvement=skip` suppresses them in the apply queue unless safety floors require escalation. Legacy `apply_polish_mode: never` maps to that modern skip policy.
 - Emit calibration records with `severity: "POLISH"` (per `.aivv/schemas/finding.json` enum + `.aivv/calibration/README.md` schema). The optional `rule_id` field provides per-rule tracking (applies to all severity tiers, not POLISH-specifically). POLISH-vs-MINOR separation in the per-rule FP/TP aggregator is achieved by layering a `severity` filter (see calibration/README.md "Per-rule FP/TP rate" → "Per-tier filter" example).
