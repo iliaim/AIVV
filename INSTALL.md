@@ -1,6 +1,6 @@
 # Installing AIVV
 
-AIVV shares review workflows and data contracts across hosts, with host adapters for tools, permissions, agent dispatch, and installation. Claude Code and Codex have operational integrations; Hermes Agent currently has an experimental local skills-only discovery adapter, not verified review or remediation support. Codex still needs the separate profile installer. See the [Codex adapter](plugin/.aivv/platform-adapters/codex.md) for verified desktop review, confirmation, persistence, restart rediscovery, and remaining capability boundaries.
+AIVV shares review workflows and data contracts across hosts, with host adapters for tools, permissions, agent dispatch, and installation. See the [Codex adapter](plugin/.aivv/platform-adapters/codex.md) for verified Codex coverage and limits.
 
 ## Claude Code
 

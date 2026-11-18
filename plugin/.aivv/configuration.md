@@ -5,7 +5,7 @@ AIVV reads user preferences from two locations (highest precedence first):
 1. **CLI flags** (e.g., `/aivv --reviewers=3`) — always win
 2. **Project-level config:** `<target>/.aivv/config.json` — applies when AIVV runs in that project
 3. **User-level config:** `~/.aivv/config.json` — applies across all projects
-4. **Plugin defaults** — hardcoded fallback (per golden JSON Schema at `.aivv/schemas/config.schema.json`; legacy v2/v3/v4/v5/v6 schemas remain available as compatibility artifacts)
+4. **Plugin defaults** — hardcoded fallback (per golden JSON Schema at `.aivv/schemas/config.schema.json`)
 
 ## Resolution algorithm
 
@@ -97,15 +97,15 @@ This table lists the stable user-facing preference keys (including `multi_model_
 | `post_review_html_viewer` | boolean | `true` | When true, `/aivv` writes a static HTML report after review-only flows and after completed auto-fix flows. First interactive setup asks before persisting the choice. |
 | `post_review_html_open_mode` | enum (`link` \| `open`) | `"link"` | Controls the post-report affordance when HTML reports are enabled. `link` shows an Open report link/path without stealing focus (recommended). `open` asks the active platform adapter to open the report when it provides that capability; otherwise, use the viewer’s OS opener. Open failures never fail the workflow. |
 | `default_M` (legacy) / `default_lens_replicate` | int (1–5) | 2 | Default reviewers-per-lens for `--full-*` modes (Wave 2+). New writes use `default_lens_replicate`; legacy configs that still carry `default_M` remain readable, and readers map `default_M` to `default_lens_replicate` when the modern key is absent. Plain-dispatch binding additionally requires `_provenance==wizard` to fire (preserves v1-baseline behavior for v1 users with default_M=2 + multi-lens dispatch). |
-| `runtime_driver_optin` | bool | `false` | Pre-consent to `--runtime` when MCP detected (post-dev.43) |
+| `runtime_driver_optin` | bool | `false` | Pre-consent to `--runtime` when MCP detected |
 | `default_target` | string \| null | `null` | Default `--target=` directory. Stale paths warn but do not error. |
-| `rule_id_back_fill` | bool | `false` | Back-fill `rule_id` on pre-dev.39 calibration entries via finding-text → rule-ID heuristic |
+| `rule_id_back_fill` | bool | `false` | Back-fill `rule_id` on older calibration entries that lack it, via finding-text → rule-ID heuristic |
 | `project_kind` | enum (`"ui"` \| `"backend"` \| `"mixed"` \| `"library"` \| `null`) | `null` | Wizard-set project category metadata. It does not select or overwrite `default_lenses`; fresh setup keeps `general`, and an existing configured lens selection is preserved. Set by `/aivv --setup`; readable/settable via `--config-set`. Runtime reads `default_lenses` directly, not `project_kind`. |
 | `outer_loop_mode` | enum (`"off"` \| `"until_clean"`) | `"off"` | When `"until_clean"`, `/aivv-fix` Step 6.5 re-invokes `/aivv --fix` in a loop until all continuation-counting findings clear or a termination condition fires (cap, no-progress, user-interrupt). Continuation-counting subset: findings with `recommended_next_step` of `fix-now` or `investigate-first` AND NOT L1-source AND NOT POLISH. Legacy findings without `recommended_next_step` fall back to `severity ≥ outer_loop_severity_floor`. Default `"off"` preserves all existing behavior. Enable per-project or globally via `--config-set outer_loop_mode=until_clean`. |
 | `outer_loop_max_cycles` | int (2–5) | 3 | Maximum outer-loop iterations. Min=2 (cycles=1 is equivalent to `off`). On reaching the cap, /aivv-fix emits a cap-reached banner and halts. |
 | `outer_loop_severity_floor` | enum (`"CRITICAL"` \| `"MAJOR"`) | `"MAJOR"` | Legacy fallback minimum severity for outer-loop continuation when a finding lacks `recommended_next_step`. Current action gates prefer DISPOSITION (`fix-now` / `investigate-first`) over raw severity. |
-| `lens_detection_mode` | enum (`"ask"` \| `"smart"` \| `"off"`) | `"ask"` | Controls smart review-lens detection (dev.154, v4 schema). Default/wizard `ask` reports optional candidates without adding them or blocking the requested review; manual-provenance `ask` requests a choice when interactive. `smart` adds relevant lenses within scope; `off` retains detect/report behavior. The mode contract lives in `skills/aivv/references/review-shape-resolution.md`. v1/v2/v3 configs predate the key and default to `ask`. |
-| `severity_model` | enum (`"legacy_4pass"` \| `"impact_likelihood"`) | `"legacy_4pass"` | Selects the severity-derivation model (v5 schema). `legacy_4pass`: the current four-pass blast-radius→tone→source-class→improvement inference (the shipped default — unchanged behavior). `impact_likelihood`: the forthcoming impact×likelihood model, under active rollout. v1/v2/v3/v4 configs predate the key and default to `legacy_4pass`. Advanced/experimental — set via `--config-set severity_model=impact_likelihood`; the wizard does not ask for it. |
+| `lens_detection_mode` | enum (`"ask"` \| `"smart"` \| `"off"`) | `"ask"` | Controls smart review-lens detection. Default/wizard `ask` reports optional candidates without adding them or blocking the requested review; manual-provenance `ask` requests a choice when interactive. `smart` adds relevant lenses within scope; `off` retains detect/report behavior. The mode contract lives in `skills/aivv/references/review-shape-resolution.md`. v1/v2/v3 configs predate the key and default to `ask`. |
+| `severity_model` | enum (`"legacy_4pass"` \| `"impact_likelihood"`) | `"legacy_4pass"` | Selects the severity-derivation model. `legacy_4pass`: the current four-pass blast-radius→tone→source-class→improvement inference (the shipped default — unchanged behavior). `impact_likelihood`: the forthcoming impact×likelihood model, under active rollout. v1/v2/v3/v4 configs predate the key and default to `legacy_4pass`. Advanced/experimental — set via `--config-set severity_model=impact_likelihood`; the wizard does not ask for it. |
 | `project_context` | object | `{}` | Optional environmental context for impact×likelihood and legal-applicability gating. `deployment` (`personal` \| `internal` \| `public`) feeds EXPOSURE. `data_classes`, `jurisdictions`, and `compliance_targets` tell reviewers whether hard-statute legal findings are applicable, inapplicable, or undeclared-context findings; declared targets can raise DISPOSITION from advisory to required. |
 | `severity_cell_map` | object | `{}` | Optional partial override for the impact×likelihood 4×4 defect table. Omitted cells use the shipped default table in `.aivv/methodology.md`. |
 | `thoroughness` | enum (`"fast"` \| `"balanced"` \| `"thorough"` \| `"exhaustive"`) | `"balanced"` | Sets the default review-effort dial when `--thoroughness=` is absent. `balanced` is the inert default; `fast` lowers effort, `thorough` raises replicate depth, and `exhaustive` adds the load-bearing-grounding obligations described in `skills/aivv/references/thoroughness-dial.md`. v1/v2/v3/v4/v5 configs predate the key and default to `balanced`. |
@@ -262,22 +262,21 @@ Run:
 
 - WCAG SC IDs (e.g., `WCAG 2.4.11`)
 - FTC enforcement actions
+- GDPR
 - EU DSA Article 25 (matches `EU-DSA`, `EU DSA`, `EUDSA` compressed forms)
 - ADA, Section 508, ARIA APG patterns
-- Rules with `rule_id` matching `COMP-LEGAL-*` or `A11Y-*`
+- Rules with `rule_id` matching `COMP-LEGAL-*`, `DP-LEGAL-*`, or `A11Y-*`
 
-These are forced-shown regardless of threshold setting. The user cannot accidentally suppress legal/safety findings via preferences. (See `skills/aivv-fix/references/polish-and-l1-source-policy.md` "L1-source detection logic" for the canonical regex; word boundaries on bare acronyms `FTC`/`DSA`/`ADA` prevent false-positive substring matches.)
-
-Forced-show is a rendering rule, not a legal-applicability conclusion. When `project_context` declares a statute inapplicable (for example, no EU jurisdiction and no PII for a GDPR-only pattern), the finding still renders if it carries an L1 citation, but its DISPOSITION may be `document` / `defer-with-rationale` and its POLISH batch-apply path does not trip the manual-review refusal guard. When applicability is undeclared or the context makes the statute applicable, keep the manual-review guard and state the applicability assumption.
+These are forced-shown regardless of threshold setting, so preferences cannot accidentally suppress legal/safety findings. Forced-show is a rendering rule, not a legal-applicability conclusion. The canonical detection regex, forced-show semantics, and batch-apply refusal guard are in [polish-and-l1-source-policy.md](../skills/aivv-fix/references/polish-and-l1-source-policy.md).
 
 ## POLISH tier (orthogonal value-add suggestions)
 
-POLISH is a separate severity tier introduced dev.39 — improvement opportunities and value-add suggestions, NOT defects. POLISH findings:
+POLISH is a separate severity tier — improvement opportunities and value-add suggestions, NOT defects. POLISH findings:
 
-- Are emitted only when the reviewer can articulate `Improvement:` and `Value:` lines per the Improvement-articulation pass in `.aivv/methodology.md`. If the reviewer cannot articulate both, the finding is dropped entirely (not downgraded).
+- Are emitted only when they pass the Improvement-articulation and Proportional-remediation gates in [severity-confidence.md](../skills/methodology/references/severity-confidence.md); otherwise the finding is dropped entirely (not downgraded).
 - Render expanded by default below defect findings. Set `polish_collapsed: true` to collapse to a one-line summary; `--show-polish` expands for a single invocation.
 - Are NOT in the `severity_threshold` enum — they're orthogonal to defect severity. Setting `severity_threshold: CRITICAL` does NOT hide POLISH; `fix_apply_policy.improvement=skip` suppresses them in the apply queue unless safety floors require escalation. Legacy `apply_polish_mode: never` maps to that modern skip policy.
-- Emit calibration records with `severity: "POLISH"` (per `.aivv/schemas/finding.json` enum + `.aivv/calibration/README.md` schema). The optional `rule_id` field provides per-rule tracking (applies to all severity tiers, not POLISH-specifically). POLISH-vs-MINOR separation in the per-rule FP/TP aggregator is achieved by layering a `severity` filter (see calibration/README.md "Per-rule FP/TP rate" → "Per-tier filter" example).
+- Are recorded in calibration with `severity: "POLISH"`; see [calibration/README.md](calibration/README.md) "Per-tier filter" to separate them in per-rule analytics.
 
 When explicit `fix_apply_policy.improvement` is present, it supersedes `apply_polish_mode` for improvement/POLISH apply decisions. If explicit modern improvement policy is absent but legacy `apply_polish_mode` is explicit, the legacy value maps to the modern policy (`always` → `auto`, `ask` → `ask`, `never` → `skip`). If neither is explicit, the schema default supplies `improvement=ask`.
 
@@ -287,15 +286,15 @@ When explicit `fix_apply_policy.improvement` is present, it supersedes `apply_po
 
 | Value | Meaning |
 |---|---|
-| `auto` | Eligible for automatic application only after `/aivv-fix` confidence, CHALLENGE, L1-source, blast-radius, shared-interface, and write-intent gates clear. |
+| `auto` | Eligible for automatic application only after every `/aivv-fix` safety gate clears. |
 | `ask` | Route to the aggregated `/aivv-fix` decision queue. The prompt names the concrete trade-off or blocker, not a generic yes/no. |
 | `skip` | Do not apply by default. CRITICAL/MAJOR defects, `fix-now`/`investigate-first` dispositions, active containment, and L1-source/manual-review floors still escalate; `skip` cannot suppress safety-relevant findings. |
 
-`clarification-needed` is not directly fixable and defaults to `ask`; `improvement` also defaults to `ask`. Omitted `fix_apply_policy` resolves from the golden schema default. Defect-category `auto` defaults are confidence-gated: only high-confidence, low-consequence fixes apply automatically after CHALLENGE, L1-source/manual-review, blast-radius, shared-interface, and write-intent gates clear. Medium/low-confidence fixes, trade-offs, active containment, safety-floor cases, and all invasive improvements route to the batched decision queue.
+Omitted `fix_apply_policy` resolves from the golden schema default: defect categories are `auto`; `improvement` and `clarification-needed` (not directly fixable) are `ask`. Which findings actually auto-apply, and which gates must clear first, is defined by the batched decision queue and pre-execution gates in [apply-policy-and-gates.md](../skills/aivv-fix/references/apply-policy-and-gates.md).
 
 On the first `/aivv-fix` invocation where schema-default `auto` applies because no explicit policy was configured, AIVV emits a one-time notice keyed to `_walkthrough_hints_shown.auto_apply_v1`: `/aivv-fix now auto-applies only high-confidence low-consequence fixes after safety gates clear. Set fix_apply_policy categories to ask to return to prompting.` If persisting the marker fails, the notice may reappear; the workflow continues.
 
-`--dangerously-auto-apply` is a per-run `/aivv-fix` bypass, not a recognized config key. AIVV does not write it to user/project config and it has no golden-schema property; unknown config keys remain ignored for forward compatibility. The flag requires explicit confirmation, names the bypassed gates, fails closed in non-interactive runs unless `AIVV_DANGEROUSLY_AUTO_APPLY=1` is set, and emits a final audit banner with the number of fixes applied under bypass.
+`--dangerously-auto-apply` is a per-run `/aivv-fix` bypass, not a recognized config key. AIVV does not write it to user/project config and it has no golden-schema property. Its confirmation and non-interactive (`AIVV_DANGEROUSLY_AUTO_APPLY=1`) rules are in [fix-flags.md](../skills/aivv-fix/references/fix-flags.md).
 
 ## Backward compatibility
 
@@ -325,7 +324,6 @@ The validation strategy is: one additive golden schema for readable config shape
 | `<target>/.aivv/config.json` | Project-level preferences (overrides user) |
 | `<state_dir>/quarantine/config-<scope>-<ts>.json` | Optional private diagnostic copy; original config stays in place |
 | `.aivv/schemas/config.schema.json` | Golden JSON Schema definition in the AIVV plugin |
-| `.aivv/schemas/config.v2.schema.json`, `.aivv/schemas/config.v3.schema.json`, `.aivv/schemas/config.v4.schema.json`, `.aivv/schemas/config.v5.schema.json`, `.aivv/schemas/config.v6.schema.json` | Legacy compatibility schema artifacts |
 
 ## See also
 

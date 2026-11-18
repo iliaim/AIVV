@@ -6,8 +6,6 @@ consumer runtime destination. Resolve and save the invocation context using
 `../target-resolution.md`; `<calibration_dir>` and `<state_dir>` below refer to
 that context. Legacy project corpora remain read-only/importable history.
 
-Contributor guidance for field-evidence submissions is in [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Layout — per-invocation shards (canonical, per-invocation sharding contract)
 
 Calibration is **sharded one JSONL file per invocation per lens**:
@@ -43,16 +41,16 @@ Each line is a single JSON object. Current fields:
 | Field | Values | Meaning |
 |---|---|---|
 | `ts` | RFC 3339 UTC timestamp with `Z` | When the record was written |
-| `lens` | `code` (v0.1), `visual`/`perf`/`sec`/`a11y` (Tier 2+) | Lens the finding/bug belongs to |
+| `lens` | a value from the `lens` enum in `.aivv/schemas/calibration.json` (e.g. `general`, `code`, `sec`, `visual`) | Lens the finding/bug belongs to |
 | `kind` | `false_positive`, `dual_false_positive`, `n_way_false_positive`, `true_positive`, `dual_true_positive`, `n_way_true_positive_agreement`, `false_negative`, `bad_fix`, `auto_deferred_at_cap`, `review_meta`, `fix_introduced_bug`, `challenger_caught_issue`, `challenger_false_positive`, `recurring_class_missed`, `challenge_budget_exhausted`, `pre_write_validator_caught` | Calibration category |
 | `finding` | string | Summary (present on `*false_positive` and `*true_positive*` kinds) |
-| `severity` | `CRITICAL`/`MAJOR`/`MINOR`/`POLISH` | Severity as flagged by the reviewer (present on FP and TP kinds). POLISH (dev.41+) is the orthogonal value-add tier per `.aivv/methodology.md` and `.aivv/schemas/finding.json`. |
+| `severity` | `CRITICAL`/`MAJOR`/`MINOR`/`POLISH` | Severity as flagged by the reviewer (present on FP and TP kinds). POLISH is the orthogonal value-add tier per `.aivv/methodology.md` and `.aivv/schemas/finding.json`. |
 | `impact_tier` | `CATASTROPHIC`/`SEVERE`/`MODERATE`/`NEGLIGIBLE` (optional) | legacy-schema compatibility rules DEFECT-track impact tier when the calibrated finding used `severity_model: impact_likelihood`. Store with `likelihood` to preserve the reviewer’s cell-map reasoning. |
 | `likelihood` | `CERTAIN`/`PROBABLE`/`POSSIBLE`/`UNLIKELY` (optional) | legacy-schema compatibility rules DEFECT-track likelihood when the calibrated finding used `severity_model: impact_likelihood`. Store with `impact_tier` so rare high-impact findings remain distinguishable from common high-impact findings. |
 | `manifestation` | `observed`/`not_observed`/`unknown` (optional) | Impact-likelihood outcome evidence. `observed` means the defect or harm mode manifested in runtime, tests, user report, incident evidence, or a reproduced failure. `not_observed` means the finding was confirmed real but no manifestation was observed in the available evidence window. `unknown` preserves that no manifestation evidence is available and is excluded from likelihood-calibration percentages. FP/TP adjudication is reviewer-correctness evidence, not a substitute for this field. |
 | `value` | `high`/`medium`/`low` (optional) | legacy-schema compatibility rules IMPROVEMENT-track value rating for POLISH findings. |
 | `effort` | `trivial`/`moderate`/`invasive` (optional) | legacy-schema compatibility rules IMPROVEMENT-track effort rating for POLISH findings. `value: high` + `effort: trivial` is the Quick-Win shape. |
-| `rule_id` | string (optional) | Stable rule identifier from `.aivv/standards/<file>.md` (e.g., `A11Y-2.4.11`, `HEU-NN6`, `MC-008`, `VD-059`). When the reviewer flagged a specific rule by ID, calibration entries SHOULD include this field on FP/TP/FN records (not on `review_meta`). Pre-dev.39 entries lack `rule_id` and remain valid (backward compat). Enables per-rule FP/TP rate aggregation via `jq` (see "jq aggregators" below). |
+| `rule_id` | string (optional) | Stable rule identifier from `.aivv/standards/<file>.md` (e.g., `A11Y-2.4.11`, `HEU-NN6`, `MC-008`, `VD-059`). When the reviewer flagged a specific rule by ID, calibration entries SHOULD include this field on FP/TP/FN records (not on `review_meta`). Older entries without `rule_id` remain valid (backward compat). Enables per-rule FP/TP rate aggregation via `jq` (see "jq aggregators" below). |
 | `reason` or `evidence` | string | Why the finding was dismissed (FP) or why it was a real defect (TP) |
 | `bug` | string | Bug description (present on `false_negative` kinds) |
 | `category` | `correctness`/`security`/`edge-case` | Bug category (present on `false_negative`) |
@@ -80,11 +78,11 @@ Each line is a single JSON object. Current fields:
 
 **Reader dedup scope (coexistence window).** `/aivv-calibrate` deduplicates the union **only** at the `review_meta` × `review_id` grain — this protects the `findings_per_review` / review-count denominator. It does **not** dedupe finding-kind records (`false_positive` / `true_positive` / `false_negative` / `bad_fix` / …). During the transition window when a lens has BOTH a legacy flat `<lens>.jsonl` and per-invocation `<lens>/*.jsonl` shards (a pre-per-invocation sharding contract writer still appending to the flat file while a new writer shards, or a flat file resurrected after `--migrate`), `records_by_kind`, `fp_rate`, `tp_rate`, `trade_offs_accepted`, and the likelihood-calibration tiers may be **inflated** by double-counted finding records. `/aivv-calibrate` emits a coexistence warning naming the lens whenever this shape is present; `--migrate` retires the flat file and closes the window. Treat a coexistence-warned corpus's finding-kind metrics as upper bounds until migrated; `findings_per_review` stays trustworthy throughout.
 
-Full schema will ship at `../schemas/calibration.json` in v0.2. Until then, the fields above are the operational contract.
+The JSON Schema for these records is [`../schemas/calibration.json`](../schemas/calibration.json).
 
 ## Read-side analytics (jq one-liners)
 
-Read-side analytics are intentionally minimal at v0.1 — small data volume, no decisions yet being made from it. Prefer `/aivv-calibrate` (it already reads the union of legacy file + shards). For ad-hoc `jq`, read the **union** of the legacy shared file and the per-invocation shards. The snippets below are written against a single `code.jsonl` for brevity; to run them over the real sharded corpus, feed the union instead — e.g. define once:
+Read-side analytics are intentionally minimal. Prefer `/aivv-calibrate` (it already reads the union of legacy file + shards). For ad-hoc `jq`, read the **union** of the legacy shared file and the per-invocation shards. The snippets below are written against a single `code.jsonl` for brevity; to run them over the real sharded corpus, feed the union instead — e.g. define once:
 
 ```bash
 # Union of legacy shared file + per-invocation shards for a lens (nullglob-safe):
@@ -140,7 +138,7 @@ jq -sr '
 ' ./code.jsonl
 ```
 
-The numerator selector matches `false_positive`, `dual_false_positive`, `n_way_false_positive`, and any operator-extended convergence kind whose prefix is `dual_false_positive_` or `n_way_false_positive_` (symmetric to TP-family suffix tolerance per dev.31 policy). The denominator selector matches the FP family plus the TP family — `true_positive`, `dual_true_positive`, `n_way_true_positive_agreement`, and any operator-extended convergence kind whose prefix is `dual_true_positive_` or `n_way_true_positive_agreement_`. `bad_fix`, `false_negative`, and `review_meta` records are excluded from both numerator and denominator (their semantics are orthogonal to the FP/TP rate — `review_meta` in particular is per-session metadata that feeds the "Findings per review" denominator below, not the agreed-events precision rate).
+The numerator selector matches `false_positive`, `dual_false_positive`, `n_way_false_positive`, and any operator-extended convergence kind whose prefix is `dual_false_positive_` or `n_way_false_positive_` (symmetric to TP-family suffix tolerance). The denominator selector matches the FP family plus the TP family — `true_positive`, `dual_true_positive`, `n_way_true_positive_agreement`, and any operator-extended convergence kind whose prefix is `dual_true_positive_` or `n_way_true_positive_agreement_`. `bad_fix`, `false_negative`, and `review_meta` records are excluded from both numerator and denominator (their semantics are orthogonal to the FP/TP rate — `review_meta` in particular is per-session metadata that feeds the "Findings per review" denominator below, not the agreed-events precision rate).
 
 ### TP rate estimate (precision: TP / (FP + TP))
 
@@ -187,7 +185,7 @@ jq -sr --arg cutoff "$CUTOFF" 'map(select(.kind == "review_meta" and .ts >= $cut
 
 Useful for trend analysis (review volume, before/after methodology changes, etc.).
 
-### Per-rule FP/TP rate (dev.39+, requires `rule_id` field on entries)
+### Per-rule FP/TP rate (requires `rule_id` field on entries)
 
 ```bash
 jq -s '
@@ -211,9 +209,9 @@ jq -s '
 
 Output: ranked list of rules by FP rate (highest first). Empirically prune rules with `fp_rate > 0.30` after `tp_plus_fp >= 10` (low-N rules have unstable rates and should not be pruned).
 
-The aggregator first FILTERS to FP-family + TP-family records (matching the FP/TP-rate aggregator above's denominator semantics — see "FP rate estimate" / "TP rate estimate" sections), then buckets by `rule_id`. Records lacking the field group under `"unknown"` (pre-dev.39 corpus or reviewer omissions). The selectors use anchored `test("true_positive($|_)")` / `test("false_positive($|_)")` patterns (same suffix-tolerance for operator-extended convergence kinds per dev.31 as the aggregate aggregator). `bad_fix`, `false_negative`, and `review_meta` records are excluded from BOTH numerator and denominator (they have no place in a FP/TP precision rate calculation). The denominator field is named `tp_plus_fp` to make the semantics explicit at the output layer — this matches the prose description and the aggregate-FP-rate aggregator at the top of this section.
+The aggregator first FILTERS to FP-family + TP-family records (matching the FP/TP-rate aggregator above's denominator semantics — see "FP rate estimate" / "TP rate estimate" sections), then buckets by `rule_id`. Records lacking the field group under `"unknown"` (older entries or reviewer omissions). The selectors use anchored `test("true_positive($|_)")` / `test("false_positive($|_)")` patterns (same suffix-tolerance for operator-extended convergence kinds as the aggregate aggregator). `bad_fix`, `false_negative`, and `review_meta` records are excluded from BOTH numerator and denominator (they have no place in a FP/TP precision rate calculation). The denominator field is named `tp_plus_fp` to make the semantics explicit at the output layer — this matches the prose description and the aggregate-FP-rate aggregator at the top of this section.
 
-**Per-tier filter (POLISH-vs-MINOR separation, dev.41+):** layer a `select(.severity == "POLISH")` (or `"MINOR"`, etc.) into the initial filter stage to scope the aggregator to one severity tier:
+**Per-tier filter (POLISH-vs-MINOR separation):** layer a `select(.severity == "POLISH")` (or `"MINOR"`, etc.) into the initial filter stage to scope the aggregator to one severity tier:
 
 ```bash
 # POLISH-only per-rule FP/TP rate
@@ -233,7 +231,7 @@ jq -s '
 
 POLISH findings are by-design value-add (NOT defects), so a high POLISH FP-rate signals over-eager Improvement-articulation pass — distinct signal from defect-tier FP-rate. Track separately when corpus reaches N≥10 POLISH samples per rule_id.
 
-### Likelihood calibration by manifestation (impact-likelihood model, dev.204+)
+### Likelihood calibration by manifestation (impact-likelihood model)
 
 Likelihood calibration is a corpus-level signal over outcome evidence, not over reviewer correctness. FP/TP-family records answer "was the reviewer right?" They do NOT answer whether the harm mode manifested. Use only records with both `likelihood` and `manifestation`, and exclude `manifestation: "unknown"` from percentages.
 
@@ -295,9 +293,9 @@ jq -s '
 ' ./code.jsonl
 ```
 
-## Tier 2B multi-lens spike evaluation protocol (dev.39+)
+## Multi-lens evaluation protocol
 
-Use this protocol when you want to evaluate whether multi-lens dispatch (`--lens=a,b`) produces findings that homogeneous same-lens dispatch (`--lens=a`) does not. The Tier 2B spike's central question — *does methodological diversity at dispatch time produce real epistemic gain, or is it prompt ornamentation?* — is answered by accumulating N≥3 such evaluations, then writing the 3d ADR off the empirical record.
+Use this protocol when you want to evaluate whether multi-lens dispatch (`--lens=a,b`) produces findings that homogeneous same-lens dispatch (`--lens=a`) does not. Its central question — *does methodological diversity at dispatch time produce real epistemic gain, or is it prompt ornamentation?* — is answered by accumulating at least three such evaluations, then writing an ADR off the empirical record.
 
 ### Step 1 — Run the A/B pair
 
@@ -341,7 +339,7 @@ comm -13 \
 
 ### Step 3 — Attribute treatment-only catches to specific lenses
 
-For each treatment-only fingerprint, look up its `findings[].lens` attribution (per dev.37 schema):
+For each treatment-only fingerprint, look up its `findings[].lens` attribution:
 
 ```bash
 # Read fingerprints into a bash array (mapfile -t handles arbitrary characters
@@ -375,28 +373,28 @@ Log each classified outcome using the `false_positive` / `true_positive` kinds. 
 **Routing the calibration write:**
 - For `lens-domain-catch` findings: write one record to `<calibration_dir>/<finding-lens>/<id>.jsonl` (the single lens from Step 3's lookup).
 - For `cross-lens-convergence` findings: write one record to **each** lens in the `findings[].lens` array — content is identical across copies EXCEPT the `lens` field, which carries the lens of the file each copy is written into (so `code.jsonl` carries `lens: "code"`, `sec.jsonl` carries `lens: "sec"`). The cross-lens identity is preserved by the duplication itself (the same finding fingerprint appearing in multiple per-lens corpora IS the cross-lens signal); the per-file `lens` field stays consistent with the file path so existing per-lens FP/TP-rate one-liners that filter inside a single corpus continue to work without re-filtering by the `lens` field.
-- For `intra-lens-convergence` findings (K×M case, dev.58+): write one record to `<calibration_dir>/<finding-lens>/<id>.jsonl` — routing identical to `lens-domain-catch` (single lens, no duplication). The epistemic signal that all M reviewers within the block agreed is recorded via the `agreement` field, NOT via duplication (duplication is reserved for the cross-lens identity). Eligible for `dual_<X>` / `n_way_<X>` calibration-kind selection in homogeneous-block sense — M reviewers with the same lens converging IS the same-lens N-reviewer agreement epistemic shape that dev.40's calibration-kind selection note describes.
+- For `intra-lens-convergence` findings (K×M case): write one record to `<calibration_dir>/<finding-lens>/<id>.jsonl` — routing identical to `lens-domain-catch` (single lens, no duplication). The epistemic signal that all M reviewers within the block agreed is recorded via the `agreement` field, NOT via duplication (duplication is reserved for the cross-lens identity). Eligible for `dual_<X>` / `n_way_<X>` calibration-kind selection in homogeneous-block sense — M reviewers with the same lens converging IS the same-lens N-reviewer agreement epistemic shape that the calibration-kind selection note below describes.
 
-**Calibration kind selection (dev.40 clarification; scope clarified dev.58):** **for cross-lens-convergence findings**, use the bare `false_positive` / `true_positive` kinds, NOT the `dual_<X>` / `n_way_<X>` family. The `dual_<X>` / `n_way_<X>` kinds are reserved for **same-lens N-reviewer agreement** (the homogeneous-case epistemic signal — N reviewers with the same lens agreeing; this includes intra-lens-convergence per the dev.58 K×M case per the prior bullet's routing rule). Cross-lens-convergence is semantically distinct (independent methodological frames converged); the cross-lens signal is preserved by the per-lens corpus separation (a cross-lens-convergence finding appearing in BOTH `code.jsonl` and `sec.jsonl` IS the cross-lens signal, machine-readable from the corpus structure). Conflating cross-lens findings with same-lens-N-reviewer findings under a shared `dual_<X>` kind would undo dev.36's deliberate machine-distinguishability between same-lens unanimity and cross-lens convergence. <!-- DEFERRED-RETIRE-WHEN: subtask 3d ADR analysis confirms whether per-lens corpus separation is sufficient or whether explicit cross-lens calibration kinds are needed for downstream consumers. -->
+**Calibration kind selection:** **for cross-lens-convergence findings**, use the bare `false_positive` / `true_positive` kinds, NOT the `dual_<X>` / `n_way_<X>` family. The `dual_<X>` / `n_way_<X>` kinds are reserved for **same-lens N-reviewer agreement** (the homogeneous-case epistemic signal — N reviewers with the same lens agreeing; this includes the intra-lens-convergence K×M case per the prior bullet's routing rule). Cross-lens-convergence is semantically distinct (independent methodological frames converged); the cross-lens signal is preserved by the per-lens corpus separation (a cross-lens-convergence finding appearing in BOTH `code.jsonl` and `sec.jsonl` IS the cross-lens signal, machine-readable from the corpus structure). Conflating cross-lens findings with same-lens-N-reviewer findings under a shared `dual_<X>` kind would remove the deliberate machine-distinguishability between same-lens unanimity and cross-lens convergence. <!-- DEFERRED-RETIRE-WHEN: subtask 3d ADR analysis confirms whether per-lens corpus separation is sufficient or whether explicit cross-lens calibration kinds are needed for downstream consumers. -->
 
-**Note on orchestrator-side `review_meta` write (dev.40):** AIVV's `/aivv` Step 7 dual-writes `review_meta` denominator records to ALL contributing lenses' corpora when a multi-lens dispatch fires (per the dev.40 fix to first-lens denominator skew). FP/TP outcome records remain orchestrator-routed to first-lens with `lens_assignment` annotation (per the v1-spike scope deferral pending 3c eval evidence). The dev.39 protocol's Step 4 hand-routing here is the canonical per-lens FP/TP routing convention; the orchestrator's first-lens routing for those records is a known v1-spike limitation.
+**Note on orchestrator-side `review_meta` write:** AIVV's `/aivv` Step 7 dual-writes `review_meta` denominator records to ALL contributing lenses' corpora when a multi-lens dispatch fires, so no single lens's denominator is skewed. FP/TP outcome records remain orchestrator-routed to the first lens with a `lens_assignment` annotation. This protocol's Step 4 hand-routing is the canonical per-lens FP/TP routing convention; the orchestrator's first-lens routing for those records is a known limitation.
 
-### Step 5 — Repeat until N≥3 evaluations
+### Step 5 — Repeat until at least three evaluations
 
-The 3d ADR write-up requires N≥3 real-diff evaluations to make a credible case. Each evaluation is:
+The ADR write-up requires at least three real-diff evaluations to make a credible case. Each evaluation is:
 - 1 baseline run + 1 treatment run + classified treatment-only catches.
 
-When N≥3:
+After at least three evaluations:
 - Compute per-lens TP/FP rates from the accumulated calibration corpus (use the existing `FP rate estimate` and `TP rate estimate` one-liners above, filtered per lens).
 - Read across the per-lens results to answer: did multi-lens lenses produce categorically different catches, or did they re-discover what the homogeneous baseline already found?
 
-### Step 6 — Write the 3d ADR
+### Step 6 — Write the ADR
 
-Three possible outcomes (pre-committed in the Tier 2B framing — outputs feed an ADR decision, not a production release):
+Three possible outcomes (pre-committed — outputs feed an ADR decision, not a production release):
 
 1. **Lens-first wins** — treatment produces TP findings the baseline missed, and these findings have lens-attributable patterns (e.g., the security-lens consistently catches injection bugs the code-lens misses). Write ADR formalizing lens-first scaling.
 2. **Lens-first loses** — treatment-only catches are all FPs, or all re-discoveries dressed in lens-specific language. Write ADR documenting the negative result; siblings-first stays.
-3. **Lens-first needs consensus extension** — treatment produces real TP findings, but the consensus-synthesis layer cannot coherently combine cross-lens findings into a useful report. Flag as Tier 3 prerequisite; postpone production lens-first until consensus extension ships.
+3. **Lens-first needs consensus extension** — treatment produces real TP findings, but the consensus-synthesis layer cannot coherently combine cross-lens findings into a useful report. Flag as a prerequisite; postpone production lens-first until consensus extension ships.
 
 The ADR consumes this protocol's accumulated evidence. The protocol itself can then be retired (or kept as a reusable harness for future spikes targeting other forms of methodological diversity).
 
@@ -405,9 +403,7 @@ The ADR consumes this protocol's accumulated evidence. The protocol itself can t
 - Before a version bump — quick sanity check that no pattern of false-positives is concentrated in one area.
 - When the prompt or methodology changes — re-read recent records to see whether the change addresses prior FPs.
 - When considering a new lens — the lens should have its own calibration file from first use.
-- When running a Tier 2B multi-lens spike evaluation cycle — see the protocol section above.
-
-Read-side analytics expanded in dev.31 (`/aivv-calibrate` slash command + `review_meta` denominator logging) and dev.39 (Tier 2B spike evaluation protocol). Future expansion (cross-project rollups, rescaling-formula consumption) is sequenced for v0.3.
+- When running a multi-lens evaluation cycle — see the protocol section above.
 
 ## `fix_introduced_bug` vs `bad_fix` — which kind to use
 

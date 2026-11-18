@@ -94,7 +94,7 @@ Concise definitions for AIVV's core vocabulary. Full contracts live in the shipp
   - `same_agent_review` — fallback with no independent epistemic signal; always surfaced to the user, never silent.
   - `evidence_only_review` — review from supplied evidence artifacts only.
 - **Severity tiers (defect track)** — **CRITICAL** (catastrophic/severe harm reachable under real-world conditions), **MAJOR** (serious impact after likelihood and exposure), **MINOR** (real defect, limited or bounded impact).
-- **POLISH** — orthogonal to the defect tiers. A value-add improvement suggestion where the reviewer can articulate both the specific improvement AND the specific value. If either cannot be articulated, the finding is dropped instead of downgraded to MINOR.
+- **POLISH** — orthogonal to the defect tiers. A value-add improvement suggestion where the reviewer can establish a present need, the specific improvement, and its net value. If any of the three is missing, the finding is dropped instead of downgraded to MINOR.
 - **Trust Card** — a compact block rendered before findings that summarizes `review_mode`, reviewers, lenses, capability degradations, applied filters, and evidence posture — so you can calibrate how much to trust the run. See `skills/aivv/references/result-rendering-policy.md`.
 - **Thoroughness (dial)** — effort tier controlling review depth: `fast` | `balanced` (default) | `thorough` | `exhaustive`. Configured via the `thoroughness` config key or `--thoroughness=` flag. Full mechanics: `skills/aivv/references/thoroughness-dial.md`.
 - **wont-fix registry** — a persisted fingerprint list (`wont-fix-registry.json` in the resolved external state directory) of findings the user explicitly accepted as not-to-fix; prevents re-surfacing on later runs.
@@ -102,22 +102,4 @@ Concise definitions for AIVV's core vocabulary. Full contracts live in the shipp
 
 ## Runtime storage and older history
 
-Normal review/fix state and calibration are personal, persistent application data
-outside the project. Resolve paths with the shipped `tools/storage-paths.mjs` through
-`runtime-root.md`; do not recreate platform paths in callers. Automatically rendered
-reports use cache, disposable scratch uses private unique temp directories.
-
-Legacy project records remain read-only history. Browsing requires no import; old
-suppressions and resumable workflows require explicit `state-import.mjs preview`
-then `import` for the selected source and target. Conflicts offer keep-current or
-replace while preserving the current version as history. Repeated import does not
-silently restore forgotten decisions. Known nested history has an explicit file/store
-route; there is no recursive source-tree scan. Pending legacy Inbox requests must be
-requeued, and current target/revision/workspace checks still apply.
-
-Separate worktrees and clones do not share active state. A recreated checkout cannot
-automatically inherit old decisions; unsupported filesystem identity needs explicit
-attachment. Old clients remain historical writers, not synchronized peers. Generated
-records no longer update tracked team corpora. Authored project config and explicit
-report/probe exports retain their destinations. No normal invocation edits ignore
-rules or deletes/moves legacy files.
+AIVV keeps review, fix, and calibration history in your user data folder, not in the project. Older in-project records stay readable; import them explicitly with `state-import.mjs` if you need old decisions. Separate clones and worktrees don't share history.

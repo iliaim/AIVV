@@ -2,17 +2,7 @@
 
 > **Shared contract:** referenced by both `/aivv` and `/aivv-fix`. Changes here propagate to both orchestrators; skill-specific deltas stay in the calling SKILL.md.
 
-Shared home for the reverse-chain (`/aivv-fix` → `/aivv`) outer-loop mechanism introduced in Stage 4 of the user-preferences-system (dev.113). Referenced from [`skills/aivv-fix/SKILL.md`](../skills/aivv-fix/SKILL.md) Step 6.5 and from `/aivv`'s argument-parsing reference (the `--outer-cycle` / `--root-review-id` flag semantics).
-
-## OUTER_LOOP_MIN_DEV constant
-
-```
-OUTER_LOOP_MIN_DEV = 113
-```
-
-Minimum dev cycle required for the outer-loop reverse-chain. The pre-dispatch canary probe reads `.claude-plugin/marketplace.json` `version` field (semver `0.1.0-dev.NN`), extracts the NN integer, and asserts `NN >= OUTER_LOOP_MIN_DEV`. If the assertion fails, the reverse-chain halts with a version warning.
-
-**Why version-probe instead of literal-content-probe:** the literal `--root-review-id=` token only exists in the version that ships outer-loop, making the canary chicken-and-egg during the Stage-4 IV&V bootstrap. Semver-based check is cleanly decidable: stale plugin cache reports lower dev.NN than the current `marketplace.json`, so the canary correctly distinguishes "old cached skill" from "current version." (Rationale per round-2 F002 of the design spec.)
+Shared home for the reverse-chain (`/aivv-fix` → `/aivv`) outer-loop mechanism. Referenced from [`skills/aivv-fix/SKILL.md`](../skills/aivv-fix/SKILL.md) Step 6.5 and from `/aivv`'s argument-parsing reference (the `--outer-cycle` / `--root-review-id` flag semantics).
 
 ## State file schema
 
@@ -75,7 +65,7 @@ Compute the fingerprint of the current outer cycle's continuation-counting findi
 
 **Step 2 — sort and serialize:**
 All signatures are normalized to 4-tuples `(severity, rule_id, file, line)` with empty string substituted for any missing or null field:
-- `rule_id` → empty string when the finding envelope lacks it (pre-dev.41 path or reviewer-emitted without the optional field)
+- `rule_id` → empty string when the finding envelope lacks it (older records or reviewer-emitted without the optional field)
 - `file` → empty string when the finding has no file attribution (whole-project finding)
 - `line` → empty string when no line is attributed (file-level finding)
 
@@ -121,16 +111,6 @@ cycles, each earlier cycle runs Step 7 as the chain unwinds, latest cycle first.
 **`--dry-run` propagation:** propagate verbatim if set.
 **All other args NOT propagated:** findings for the next cycle come from /aivv's fresh re-review of current code state, not from the prior /aivv-fix invocation's argument string.
 
-## Pre-dispatch canary probe procedure
-
-1. Read `.claude-plugin/marketplace.json` via host's read primitive.
-2. Parse JSON. Extract the AIVV version via the nested path `.plugins[] | select(.name == "aivv") | .version` (or `.plugins[0].version` for single-plugin marketplace files). **There is NO top-level `version` field** — the version lives under `.plugins[].version`. Example: `jq -r '.plugins[] | select(.name == "aivv") | .version' .claude-plugin/marketplace.json` → `"0.1.0-dev.114"`.
-3. Parse the dev.NN integer from the semver string (e.g., `"0.1.0-dev.114"` → `114`). If parse fails (version field absent, unexpected format, jq unavailable), surface warning and proceed anyway (conservative degradation: log `{"code": "outer_loop_canary_parse_failure", ...}` + proceed; the canary's purpose is to catch STALE cache, not to block on unexpected formats).
-4. If `NN >= OUTER_LOOP_MIN_DEV` (113): proceed with Skill handoff.
-5. If `NN < OUTER_LOOP_MIN_DEV`: halt and surface:
-   > "Outer-loop reverse-chain requires AIVV ≥ 0.1.0-dev.113; cached version is 0.1.0-dev.{NN}. Restart Claude Code and re-run after upgrading to dev.113+."
-   Set `capability_degradations: ["outer_loop_min_dev_not_met"]` in fix-log.
-
 ## Termination banners
 
 | Condition | Banner text |
@@ -142,7 +122,6 @@ cycles, each earlier cycle runs Step 7 as the chain unwinds, latest cycle first.
 | **User-interrupt** (Ctrl-C or explicit user halt at any `/aivv-fix` inner-loop gate) | `Outer loop interrupted at cycle {N}. {K} findings remain. Resume: /aivv --fix --root-review-id={root_review_id} --outer-cycle={N}` |
 
 **Notes:**
-- The "clean-by-auto-disposition" banner row was removed (round-3 F001 of the design spec: disjoint-set analysis proved the underlying gate was unreachable — MINOR/POLISH severity was in the continuation-counting exclusion set, so no finding could ever be auto-disposed away while still counting toward continuation).
 - The `--dry-run` note: outer-loop check is structurally bypassed when `--dry-run` is set — `/aivv-fix` Step 4 halts before Step 6/6.5 are reached; the outer-loop trigger condition is defense-in-depth only. A one-line note emits at Step 4 dry-run output: `"Outer loop disabled under --dry-run (--dry-run halts at /aivv-fix Step 4; Step 6.5 outer-loop check is never reached)."` This is an informational note, not a banner.
 
 ## Capability-unavailable degradation

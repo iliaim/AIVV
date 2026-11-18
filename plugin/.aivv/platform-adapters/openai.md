@@ -1,7 +1,7 @@
 # OpenAI Platform Adapter
 
 > Provider adapter: this document describes provider/backend behavior (model dispatch via `dispatch.mjs` subprocess), not host execution capabilities. Host capabilities are owned by the active host adapter (`claude-code.md` / `codex.md`).
-**Status:** Cycle 2 — implementation in `tools/dispatch.mjs` (not yet shipped)
+**Status:** Implemented in `tools/dispatch.mjs`
 **Probe command:** use the `AIVV_ROOT` pinned and preflighted at the current AIVV invocation's start, then run `node "$AIVV_ROOT/tools/dispatch.mjs" --probe --provider openai --provider-egress-consent`
 
 ## Auth strategy (`--auth-mode auto`, the default)
@@ -68,13 +68,7 @@ Use `response_format: {type: "json_schema", json_schema: {name: "findings", stri
 
 ## Structured output — CLI path
 
-Append a JSON-mode instruction to the prompt before invoking the CLI (identical pattern to Gemini CLI path):
-
-```
-\n\nRESPONSE FORMAT: Respond with ONLY a valid JSON object. No markdown code fences, no explanation before or after. Use exactly this structure: {"findings": [...]}. If no issues found, return {"findings": []}.
-```
-
-Parse + extract + retry logic is identical to the Gemini CLI path (see `gemini.md`).
+The JSON-mode instruction and the parse, extract, and retry logic are identical to the Gemini CLI path; see [gemini.md](gemini.md) "Structured output — CLI path".
 
 ## API-key fallback
 
