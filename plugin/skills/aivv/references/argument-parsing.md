@@ -46,7 +46,7 @@ runtime flags, full-* wrappers, or ambiguous positionals. Core defaults live in
 - `--full`: lenses `code,sec,visual,ux,polish,compliance,i18n` (all seven
   specialist lenses), wrapper M=2, default N=14.
 - `--full-with-journey`: lenses `code,sec,visual,ux,polish,compliance,i18n,user-journey`
-  (all eight specialist lenses), wrapper M=2, default N=16; warn that this exceeds the dev.70 tested ceiling of N=14, then
+  (all eight specialist lenses), wrapper M=2, default N=16; warn that this is above the tested ceiling of N=14, then
   continue unless host dispatch cannot support it.
 - `--thoroughness=<tier>`: accepts exactly `fast, balanced, thorough, exhaustive`.
   Reject others with `config-invalid-value: thoroughness must be one of fast, balanced, thorough, exhaustive; got '<received-value>'.` The dial supplies defaults only; explicit `--reviewers`, `--lens-replicate`, or pinned config values win.
@@ -97,7 +97,7 @@ and `--project` outside setup warns and is ignored.
   strip before positionals. Semantics per `scope-confirmation.md` Section 5;
   without either flag, the resolved config default applies.
 
-## 2aa. `--multi-model` / `--no-multi-model`
+## `--multi-model` / `--no-multi-model`
 
 Per-run overrides for `multi_model_enabled`; do not persist. Precedence: flag >
 project `multi_model_enabled` > user `multi_model_enabled` > schema default
@@ -109,7 +109,7 @@ by effective N and ordered by `reviewer_provider_priority`. Persist with
 
 ## `--outer-cycle=<N>` / `--root-review-id=<id>`
 
-Both flags (dev.113); set by `/aivv-fix` Step 6.5 for the outer-loop reverse-chain (`/aivv --fix --outer-cycle=<new_count> --root-review-id=<root_id>`). Normally not user-set.
+Both flags are set by `/aivv-fix` Step 6.5 for the outer-loop reverse-chain (`/aivv --fix --outer-cycle=<new_count> --root-review-id=<root_id>`). Normally not user-set.
 - `--outer-cycle=<N>`: positive integer ≥1. N≥2 → pass the root id and cycle number to the outer-loop primitive, which alone reads `<state_dir>/outer-loop-<root_review_id>.json` and supplies the restored outer-loop context to later steps. N=1 or absent → fresh start. Argument parsing and later callers MUST NOT independently read the persisted outer-loop file. Passed through Step 8 to `/aivv-fix` unchanged. Mutually exclusive with the one-shot flags that skip Step 8 (`--setup`, `--config-*`, `--maintenance`, `--eval`, `--help`): on conflict the one-shot flag wins and these are silently discarded (no error).
 - `--root-review-id=<id>`: the outer-cycle-1 invocation_id, unchanged across cycles; anchors the state-file path. Required when `--outer-cycle=N≥2`; absent → `root_review_id = current invocation_id`.
 - SKIP-when: never skips Steps — additive Step-1 context + Step-8 propagation only. Full outer-loop semantics (canary probe, state file, no-progress algorithm, 5-banner matrix): [`.aivv/outer-loop.md`](../../../.aivv/outer-loop.md).

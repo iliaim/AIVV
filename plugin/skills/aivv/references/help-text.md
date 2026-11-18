@@ -2,8 +2,6 @@
 
 Canonical categorized help text printed by `/aivv --help`. This file is the single verbatim source for the primary learnability surface — the orchestrator prints its contents verbatim on `--help` and exits before any review/state work. Do NOT paraphrase, reword, or model-compose per-flag descriptions at render time.
 
-**Maintenance rule.** Every new flag added to [argument-parsing.md](argument-parsing.md) MUST be appended here in the matching category in the same commit. The pre-dev.283 version of this template was deleted in the router compaction (only `--show-polish` survived, because it alone carried a validate.sh pin) — restoring it is F010; keeping it in sync is the standing rule.
-
 ## Verbatim Template
 
 ```text

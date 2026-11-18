@@ -41,8 +41,6 @@ An omitted `default_lenses` value resolves to the golden default `general`;
 historical configs that explicitly set `code` or another valid lens retain that
 selection.
 
-Historical golden-schema default note: `scope_confirmation_mode`, `polish_collapsed`, or `fix_apply_policy` omissions are bound by schema defaults, not persisted-file materialization.
-
 Merge project over user, then fill missing keys from schema defaults. For
 `fix_apply_policy`, omitted category entries fill from the schema object.
 
@@ -120,6 +118,4 @@ steps. `multi_model_enabled` additionally honors per-run `--multi-model` /
 
 Current reader validates against the golden schema and resolves absent historical
 keys from schema defaults. Historical readers seeing newer configs warn/project
-and ignore unknown keys. Round-3.5 renamed `default_M` to
-`default_lens_replicate`; both are accepted on read, new writes use the modern
-name.
+and ignore unknown keys.

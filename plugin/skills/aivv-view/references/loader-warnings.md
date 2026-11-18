@@ -54,9 +54,9 @@ The loader found a value whose JSON type does not match the canonical envelope. 
 Two levels are covered:
 
 - **Finding-level** — a legacy scalar/object where an array is expected (`grounded_by`, `evidence`); coerced to an array.
-- **Envelope-level audit blocks** (dev.295+) — `provider_trust`, `review_scope`, `plan_review`, `review_prompt_profile` (and its nested `redaction_summary`), `reviewer_evidence_packet`, `reviewer_roster`; a non-object is coerced to `null`, and a non-array roster (or a non-object roster entry) is dropped.
+- **Envelope-level audit blocks** — `provider_trust`, `review_scope`, `plan_review`, `review_prompt_profile` (and its nested `redaction_summary`), `reviewer_evidence_packet`, `reviewer_roster`; a non-object is coerced to `null`, and a non-array roster (or a non-object roster entry) is dropped.
 
-The envelope-level guard exists because `--html` sub-indexes these blocks. Before it, a block written with the wrong type reached the renderer and died as `jq: Cannot index string with string "..."` — exit 5, no report at all, naming neither the review nor the field. The `//` operator these panels used guards `null`, not type. Coercing at the loader means the renderer's existing section gates short-circuit, so only the affected panel is omitted while the rest of the report renders. The write-side producer gate added in dev.294 prevents new logs from reaching this path; this warning covers logs already on disk, which stay readable and are never rewritten (immutable-history policy).
+`--html` sub-indexes these blocks, so a wrongly typed block would otherwise abort the whole render. Coercing at the loader lets the renderer's section gates skip only the affected panel. New logs are validated at write time; this warning covers logs already on disk, which stay readable and are never rewritten.
 
 ### `loader_error` / `humanize_error` / `render_error`
 Browser-mode fault-isolation warnings. A single review failed in the loader, humanizer, or linked-report renderer, so the browser emitted a safe row for that review and continued building the rest of the index.
