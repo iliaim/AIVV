@@ -11,7 +11,7 @@ Read from `skills/aivv-fix/SKILL.md` before investigator dispatch or same-agent 
 
 ### Step 3: INVESTIGATE — Root Cause Analysis
 
-**Default assumption: root cause is unknown.** For every batch, you must either spawn an investigator OR document a confident root cause inline. You may only skip the investigator if you are certain of the exact root cause AND the fix — not just a plausible explanation.
+**Default assumption: root cause is unknown.** Every finding gets an investigator unless it passes the low-risk fast path below, the only skip route. Confidence in a plausible explanation is not a reason to skip.
 
 #### Reproducibility gate (Signal 2-4 only — fires before investigator dispatch)
 
