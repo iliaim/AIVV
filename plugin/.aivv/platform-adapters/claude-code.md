@@ -1,7 +1,7 @@
 # Platform Adapter: Claude Code
 
 **Platform:** Anthropic Claude Code CLI
-**Status:** Active (default substrate for AIVV v0.1.x)
+**Status:** Active
 **Runtime contract:** [.aivv/runtime-contract.md](../runtime-contract.md)
 **Shell requirement:** Unix-like shell (bash, zsh, Git Bash on Windows, WSL). Claude Code's `Bash` tool ships a Git Bash environment on Windows, so this is transparent in normal use.
 **Runtime dependencies:**
@@ -112,7 +112,7 @@ Agent definitions declare preloaded methodology via `skills:` frontmatter. Plugi
 | Agent | Preloaded skills (`skills:` frontmatter values) |
 |---|---|
 | `aivv:reviewer` | `aivv:methodology` (merged — includes review methodology + project-context discovery) |
-| `aivv:investigator` | (none — Investigation Protocol inlined in the agent body as of dev.9; Phase 1.5 PREREQUISITE PROBE added dev.29) |
+| `aivv:investigator` | (none — the agent reads the shared Investigation Protocol in `.aivv/prompts/investigator-role.md`) |
 
 Empirically confirmed 2026-04-21 via subprocess dispatch — a test agent with `skills: - aivv-test:test-methodology` in its frontmatter correctly accessed the plugin's bundled skill content.
 
@@ -173,13 +173,13 @@ AIVV skills expose slash commands via SKILL.md frontmatter's `description:` fiel
 | `aivv-fix` | `/aivv-fix` |
 | `methodology` | (not user-invocable — preload only; merged review methodology + project-context) |
 
-Lenses are defined by files in `.aivv/lenses/<name>.md`; [the lens catalog](../lenses/README.md) lists the shipped choices. `general` is the default for intent-driven review across artifact types; specialist lenses remain selectable. B3 runtime evidence is externalized by default through generated Playwright probe scaffolds plus user-run JSON ingest; host browser drivers are optional gated adapters. Additional lenses (`perf`, `a11y` as a pure-a11y split) are Tier 2/3. Alias commands (e.g., `/aivv-visual` → `/aivv --lens=visual`) and scheduled audits (`/aivv-audit`) are Tier 3.
+Lenses are defined by files in `.aivv/lenses/<name>.md`; [the lens catalog](../lenses/README.md) lists the shipped choices. `general` is the default for intent-driven review across artifact types; specialist lenses remain selectable. B3 runtime evidence is externalized by default through generated Playwright probe scaffolds plus user-run JSON ingest; host browser drivers are optional gated adapters.
 
 ---
 
 ## MCP integrations
 
-AIVV itself has no MCP dependencies in Tier 1. Runtime evidence does not require Playwright MCP: AIVV can emit probe scaffolds and ingest user-run Playwright JSON. Playwright MCP or Chrome DevTools MCP may be declared by a future host adapter for read-only enrichment, but they are not required for the default B3 path.
+AIVV itself has no MCP dependencies. Runtime evidence does not require Playwright MCP: AIVV can emit probe scaffolds and ingest user-run Playwright JSON. Playwright MCP or Chrome DevTools MCP may be declared by a future host adapter for read-only enrichment, but they are not required for the default B3 path.
 
 When an AIVV skill declares an MCP dependency, the dependency is on the MCP server itself — not on the user having a specific plugin installed. Users install the MCP server separately; AIVV gracefully degrades with a clear error if the MCP is absent.
 

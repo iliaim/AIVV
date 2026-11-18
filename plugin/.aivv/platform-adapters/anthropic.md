@@ -1,7 +1,7 @@
 # Anthropic Platform Adapter
 
 > Provider adapter: this document describes provider/backend behavior (model dispatch via `dispatch.mjs` subprocess), not host execution capabilities. Host capabilities are owned by the active host adapter (`claude-code.md` / `codex.md`).
-**Status:** Cycle 1 — implemented in `tools/dispatch.mjs`
+**Status:** Implemented in `tools/dispatch.mjs`
 **Probe command:** use the `AIVV_ROOT` pinned and preflighted at the current AIVV invocation's start, then run `node "$AIVV_ROOT/tools/dispatch.mjs" --probe --provider anthropic --provider-egress-consent`
 
 ## Auth strategy (`--auth-mode auto`, the default)

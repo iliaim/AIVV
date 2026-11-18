@@ -2,7 +2,7 @@
 
 > **Shared contract:** referenced by both `/aivv` and `/aivv-fix`. Changes here propagate to both orchestrators; skill-specific deltas stay in the calling SKILL.md.
 
-Shared home for the reverse-chain (`/aivv-fix` → `/aivv`) outer-loop mechanism introduced in Stage 4 of the user-preferences-system (dev.113). Referenced from [`skills/aivv-fix/SKILL.md`](../skills/aivv-fix/SKILL.md) Step 6.5 and from `/aivv`'s argument-parsing reference (the `--outer-cycle` / `--root-review-id` flag semantics).
+Shared home for the reverse-chain (`/aivv-fix` → `/aivv`) outer-loop mechanism. Referenced from [`skills/aivv-fix/SKILL.md`](../skills/aivv-fix/SKILL.md) Step 6.5 and from `/aivv`'s argument-parsing reference (the `--outer-cycle` / `--root-review-id` flag semantics).
 
 ## OUTER_LOOP_MIN_DEV constant
 
@@ -75,7 +75,7 @@ Compute the fingerprint of the current outer cycle's continuation-counting findi
 
 **Step 2 — sort and serialize:**
 All signatures are normalized to 4-tuples `(severity, rule_id, file, line)` with empty string substituted for any missing or null field:
-- `rule_id` → empty string when the finding envelope lacks it (pre-dev.41 path or reviewer-emitted without the optional field)
+- `rule_id` → empty string when the finding envelope lacks it (older records or reviewer-emitted without the optional field)
 - `file` → empty string when the finding has no file attribution (whole-project finding)
 - `line` → empty string when no line is attributed (file-level finding)
 
@@ -142,7 +142,6 @@ cycles, each earlier cycle runs Step 7 as the chain unwinds, latest cycle first.
 | **User-interrupt** (Ctrl-C or explicit user halt at any `/aivv-fix` inner-loop gate) | `Outer loop interrupted at cycle {N}. {K} findings remain. Resume: /aivv --fix --root-review-id={root_review_id} --outer-cycle={N}` |
 
 **Notes:**
-- The "clean-by-auto-disposition" banner row was removed (round-3 F001 of the design spec: disjoint-set analysis proved the underlying gate was unreachable — MINOR/POLISH severity was in the continuation-counting exclusion set, so no finding could ever be auto-disposed away while still counting toward continuation).
 - The `--dry-run` note: outer-loop check is structurally bypassed when `--dry-run` is set — `/aivv-fix` Step 4 halts before Step 6/6.5 are reached; the outer-loop trigger condition is defense-in-depth only. A one-line note emits at Step 4 dry-run output: `"Outer loop disabled under --dry-run (--dry-run halts at /aivv-fix Step 4; Step 6.5 outer-loop check is never reached)."` This is an informational note, not a banner.
 
 ## Capability-unavailable degradation

@@ -1,11 +1,11 @@
 # AIVV Runtime Contract
 
 **Status:** Provisional draft for cross-host support.
-**Stability:** Provisional — fields, operation names, and capability flag enum values may change until v0.2 graduation. Downstream consumers (third-party plugin authors, future host adapters) should expect breaking changes during v0.1.x.
+**Stability:** Provisional — fields, operation names, and capability flag enum values may change. Downstream consumers (third-party plugin authors, future host adapters) should expect breaking changes while the contract is provisional.
 **Contract version:** 0.3.0 (external target-instance runtime storage; legacy originals remain read-only).
 **Source of truth:** `.aivv/runtime-contract.md` (this file). Maintainer-only implementation notes are not part of this contract; shipped skills must not depend on unpublished documentation.
 
-## Implementation pattern (dev.25+)
+## Implementation pattern
 
 Review and fix use host-native inspection and source editing plus the shipped
 Node storage resolver/mutation helper. Resolve its installed location through
@@ -51,7 +51,7 @@ consumer of a capability status MUST use exactly this vocabulary:
 | `can_read_tool_history` | Host exposes files read/edited/searched during the session. | Accurate Files Touched extraction. |
 | `can_enforce_readonly` | Host can technically restrict reviewer/investigator writes. | Strong read-only claim. |
 | `can_write_project_state` | Compatibility capability name: host can create/update resolved external state/calibration through the shared helper; no consuming-project state writes. | Review logs, fix logs, calibration. |
-| `can_invoke_peer_skill` | Host can invoke peer skill in either direction — `/aivv` → `/aivv-fix` forward chain at Step 8 AND `/aivv-fix` → `/aivv` reverse chain at Step 6.5 (Stage 4 dev.113). When `unavailable`, forward chain halts at Step 8; reverse chain halts at Step 6.5 with `capability_degradations: ["outer_loop_reverse_chain_unavailable"]` and a manual-resume banner. | Bidirectional cross-skill auto-chain. |
+| `can_invoke_peer_skill` | Host can invoke peer skill in either direction — `/aivv` → `/aivv-fix` forward chain at Step 8 AND `/aivv-fix` → `/aivv` reverse chain at Step 6.5. When `unavailable`, forward chain halts at Step 8; reverse chain halts at Step 6.5 with `capability_degradations: ["outer_loop_reverse_chain_unavailable"]` and a manual-resume banner. | Bidirectional cross-skill auto-chain. |
 | `can_resolve_skill_assets` | Host has a reliable way to locate bundled AIVV files. | Lenses, schemas, scripts, prompt references. |
 | `can_emit_runtime_probe_scaffolds` (B3+) | Host can write reviewable Playwright probe specs and a manifest under `<target>/.aivv/runtime-probes/`. | Default `--runtime`/`--emit-runtime-probes` path. AIVV prepares artifacts; the target project or user runs them. |
 | `can_ingest_runtime_results` (B3+) | Host can read user-run Playwright JSON reporter output and update the matching review log. | `--ingest-runtime-results <path>` and `tools/runtime-evidence.mjs ingest`; validates review id, finding fingerprint, probe id, assertion polarity, retries/flakes, and timestamps before write. |
@@ -209,7 +209,7 @@ When `FixSession.source == "review_id"`, carry the exact `source_review_relative
 
 ## Adapter Operations
 
-| Operation | Purpose | Implementation (dev.25+) |
+| Operation | Purpose | Implementation |
 |---|---|---|
 | `read_session_context()` | Produces `SessionContext`; marks unavailable fields explicitly. | Agent reasoning over conversation context. |
 | `gather_change_context(request)` | Reads git diff, file content, or quoted idea evidence. | Host's read + shell primitives. |
@@ -289,4 +289,4 @@ must pass its existing pre-write/schema gates before publication. Read-only
 routes do not initialize stores and exclude incomplete imports. No legacy
 original is mutated. See `target-resolution.md` for the executable helper contract.
 
-**Honest limitation:** the cross-invocation last-writer-wins model is weaker than the lock/CAS guarantee that pre-dev.25 documentation aspired to. Adopters running `/aivv-fix` from multiple parallel sessions on the same target project should expect occasional registry-entry loss (recoverable: user re-confirms the wont-fix). Single-session users are unaffected.
+**Honest limitation:** the cross-invocation last-writer-wins model is weaker than a lock/CAS guarantee. Adopters running `/aivv-fix` from multiple parallel sessions on the same target project should expect occasional registry-entry loss (recoverable: user re-confirms the wont-fix). Single-session users are unaffected.
