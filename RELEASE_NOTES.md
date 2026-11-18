@@ -1,5 +1,27 @@
 # Release notes
 
+## 0.6.0 — safer gates, simpler skills
+
+Changes that can affect existing setups:
+
+- The provider dispatch tool needs Node 22 or newer.
+- `incident-github-sync` requires `--repo`, and blocks when it cannot tell whether the repository is public.
+- The pre-write validator's `--fixture` mode halts unless it gets a complete `/aivv-fix` batch: `command: "aivv-fix"` and a non-empty `write_intents[]` with the required fields and content. It used to pass empty input.
+- The read-only agents must run `git diff` with `--no-optional-locks -c core.fsmonitor=false`, like `git status`, so a repository's configured fsmonitor program cannot run.
+
+Safety fixes:
+
+- Every command-line tool now runs when installed through a symlink or a path containing a space. Before, some exited 0 without doing anything, which a caller could read as a pass.
+- The pre-write validator reads cited files and parent schemas from the target project, not the folder it was run from, and halts on an expired bypass approval.
+- A syntax checker or storage lookup that times out under load halts with its own retryable reason instead of reporting invalid syntax or changing the storage identity.
+- The investigator's Bash guard blocks more grep, ls and wc options that read outside the working directory.
+
+Simpler skills and docs:
+
+- `/aivv`, `/aivv-fix`, `/aivv-view` and `/aivv-calibrate` instructions are shorter, and each rule now lives in one place.
+- Removed unused schemas, tools and dead references, and fixed contradictions between references.
+- Tests check that each documented rule is present instead of pinning exact sentences.
+
 ## 0.5.5 — later decisions and run-wide checks
 
 - A completed or failed fix log can now record a decision made after the run on a finding it left `deferred` or `needs_evidence`, such as an owner approval days later. The entry is changed in place and keeps a copy of what it replaces; nothing else in the log can change.
