@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 // Claude Code PreToolUse hook for AIVV's read-only native agents.
 // Fail closed: only simple, explicitly read-only shell commands are permitted.
+// Residual risk: worktree `git status`/`git diff` still run any clean or process
+// filter that repository config assigns via .gitattributes (Git has no generic
+// per-command opt-out for filter drivers), and a worktree `git diff` may still
+// rewrite the index stat cache because Git ignores --no-optional-locks there.
 
 import path from "node:path";
 import { realpathSync } from "node:fs";
@@ -89,9 +93,9 @@ function isAllowed(tokens, policy) {
   // Keep the pager override before Git's global options and the subcommand.
   if (gitWords[0] !== "--no-pager") return false;
   const afterPager = gitWords.slice(1);
-  const safeStatusPrefix = ["--no-optional-locks", "-c", "core.fsmonitor=false"];
-  const hasSafeStatusPrefix = safeStatusPrefix.every((flag, index) => afterPager[index] === flag);
-  const commandWords = hasSafeStatusPrefix ? afterPager.slice(safeStatusPrefix.length) : afterPager;
+  const safeIndexPrefix = ["--no-optional-locks", "-c", "core.fsmonitor=false"];
+  const hasSafeIndexPrefix = safeIndexPrefix.every((flag, index) => afterPager[index] === flag);
+  const commandWords = hasSafeIndexPrefix ? afterPager.slice(safeIndexPrefix.length) : afterPager;
   const [subcommand, ...args] = commandWords;
 
   // Git built-ins are read-only here. Reject flags that can write output or
@@ -99,7 +103,10 @@ function isAllowed(tokens, policy) {
   // `blame` can invoke Git's diff machinery and has no safe invocation policy
   // here, so it is intentionally outside the allowlist.
   if (!["status", "log", "diff", "show"].includes(subcommand)) return false;
-  if (subcommand === "status" && !hasSafeStatusPrefix) return false;
+  // `status` and `diff` (including `diff --cached`) refresh the index, which
+  // runs the repository's configured core.fsmonitor program and may write the
+  // index. Require the opt-outs for both; `log` and `show` do not read the index.
+  if (["status", "diff"].includes(subcommand) && !hasSafeIndexPrefix) return false;
   const deniedGitFlags = /^(--output(?:=|$)|--ext-diff$|--textconv$|--exec(?:=|$)|--pager(?:=|$)|--pathspec-from-file(?:=|$)|--pathspec-file-nul$|-o(?:$|.)|-O(?:$|.))/;
   if (args.some((arg) => deniedGitFlags.test(arg))) return false;
   // Configured diff.external and textconv drivers can execute arbitrary programs.
