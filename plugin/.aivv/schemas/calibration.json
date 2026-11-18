@@ -285,7 +285,7 @@
     },
     {
       "title": "auto_deferred_at_cap — Phase 1 cap-residual auto-disposition (legacy; no longer emitted)",
-      "description": "Records a cycle-3 cap-residual finding auto-classified by the /aivv-fix Step 4 three-gate auto-disposition rule: severity ∈ {MINOR, POLISH}, grounded_by exclusively cites validate.sh Stage 15-19, target-project marker-file check returns AIVV-self. Per-cycle ephemeral — does NOT populate wont-fix-registry; the same finding may re-surface and be auto-deferred again.",
+      "description": "Records a cycle-3 cap-residual finding auto-classified by the /aivv-fix Step 4 three-gate auto-disposition rule: severity ∈ {MINOR, POLISH}, grounded_by exclusively cites AIVV's own validation stages (legacy), target-project marker-file check returns AIVV-self. Per-cycle ephemeral — does NOT populate wont-fix-registry; the same finding may re-surface and be auto-deferred again.",
       "properties": {
         "kind": {"const": "auto_deferred_at_cap"},
         "grounded_by": {"minItems": 1}
