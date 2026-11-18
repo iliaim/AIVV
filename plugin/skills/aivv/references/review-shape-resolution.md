@@ -30,9 +30,8 @@ resolution, smart-lens detection, or high-risk floor reporting.
    supplies an unset shape value, rerun the Step 1.4 composition before Step
    1.9.
 4. Extract session context and gather available paths / plan / file / idea
-   material. Resolve the requested material boundary. Ask before detection only
-   if the subject/boundary is genuinely ambiguous or authority to inspect it is
-   missing; clear explicit read-only requests proceed without re-approval.
+   material. Resolve the requested material boundary per
+   `scope-confirmation.md`.
 5. After `final_scope` is resolved, compute/recompute the Step 2.5
    `lens_ceiling` and run Step 3.5 detection only against that scope. Resolve
    Step 3.6 mode and candidate additions using Detection Mode below.
@@ -50,13 +49,9 @@ resolution, smart-lens detection, or high-risk floor reporting.
    consent for an earlier shape as authorization for a shape changed by the
    confidence floor or lens resolution. If consent is declined or unavailable,
    retain the last authorized valid shape and report any unapplied confidence
-   floor or lens; hold if no authorized valid shape remains. Announce the
-   complete final scope and method
-   before dispatch. If ask mode was explicitly selected by `--ask-scope` or a
-   manual-provenance config value, request confirmation once with that complete
-   resolved proposal. Otherwise ask only if the method
-   would materially expand scope or needs authority the request did not grant;
-   never add a redundant lens-only approval unless the user explicitly requested lens selection.
+   floor or lens; hold if no authorized valid shape remains. Announce, or ask
+   about, the complete final scope and method per `scope-confirmation.md`
+   before dispatch.
 
 ## 2. Composition Rules
 
@@ -85,9 +80,7 @@ only the ordering contract:
 - If a scope adjustment changes the session subset, recompute `lens_ceiling`
   before final lens admission.
 - High-risk floor still applies to remaining in-scope paths.
-- Detection and depth changes within the requested boundary are announced, not
-  separately approved unless explicit ask mode applies. Material scope expansion
-  or missing authority is held.
+- Detection and depth changes follow `scope-confirmation.md` Section 3.
 - When `was_trivial == false` and reviewer count is otherwise unpinned, the
   adaptive-confidence floor may raise the count from 1 to 2 before final
   reviewer assignment.

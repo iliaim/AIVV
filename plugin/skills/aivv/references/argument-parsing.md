@@ -90,11 +90,8 @@ and `--project` outside setup warns and is ignored.
 - `--auto-lens` / `--no-auto-lens`: per-run only, mutually exclusive; force
   `lens_detection_mode` to `smart` or `off`; strip before positional parsing.
 - `--auto-scope` / `--ask-scope`: accepted per-run aliases, mutually exclusive;
-  strip before positionals. `--auto-scope` announces scope/method for clear
-  explicit read-only requests; `--ask-scope` explicitly requests confirmation.
-  Ambiguous subjects, missing authority, or material scope expansion always
-  require clarification. Without either flag, the resolved config default
-  applies; explicit file/idea positionals need no second approval by default.
+  strip before positionals. Semantics per `scope-confirmation.md` Section 5;
+  without either flag, the resolved config default applies.
 
 ## 2aa. `--multi-model` / `--no-multi-model`
 

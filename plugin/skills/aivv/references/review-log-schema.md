@@ -5,10 +5,8 @@ After calibration and before Step 8 auto-chain, write
 after its scope and final method were resolved and announced, including clean
 reviews. Do not write a review log for a review held on genuine ambiguity,
 missing authority, explicit ask-mode confirmation, or canceled scope, or voided
-by workspace drift. The normal preamble may already have initialized
-configuration, written hints, or run authorized maintenance before scope
-resolution; a pre-dispatch hold does not claim
-those earlier writes were absent or rolled back. The orchestrator writes this
+by workspace drift (earlier preamble writes: `scope-confirmation.md` Section 4).
+The orchestrator writes this
 log; reviewer agents are read-only.
 
 Invocation ID format: `YYYY-MM-DDTHH-MM-SS-<4-char-random-hex>`, computed at
