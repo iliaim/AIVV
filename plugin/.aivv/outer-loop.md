@@ -4,16 +4,6 @@
 
 Shared home for the reverse-chain (`/aivv-fix` → `/aivv`) outer-loop mechanism. Referenced from [`skills/aivv-fix/SKILL.md`](../skills/aivv-fix/SKILL.md) Step 6.5 and from `/aivv`'s argument-parsing reference (the `--outer-cycle` / `--root-review-id` flag semantics).
 
-## OUTER_LOOP_MIN_DEV constant
-
-```
-OUTER_LOOP_MIN_DEV = 113
-```
-
-Minimum dev cycle required for the outer-loop reverse-chain. The pre-dispatch canary probe reads `.claude-plugin/marketplace.json` `version` field (semver `0.1.0-dev.NN`), extracts the NN integer, and asserts `NN >= OUTER_LOOP_MIN_DEV`. If the assertion fails, the reverse-chain halts with a version warning.
-
-**Why version-probe instead of literal-content-probe:** the literal `--root-review-id=` token only exists in the version that ships outer-loop, making the canary chicken-and-egg during the Stage-4 IV&V bootstrap. Semver-based check is cleanly decidable: stale plugin cache reports lower dev.NN than the current `marketplace.json`, so the canary correctly distinguishes "old cached skill" from "current version." (Rationale per round-2 F002 of the design spec.)
-
 ## State file schema
 
 Outer-loop state is persisted at `<state_dir>/outer-loop-<root_review_id>.json`.
@@ -120,16 +110,6 @@ cycles, each earlier cycle runs Step 7 as the chain unwinds, latest cycle first.
 **`--target=<dir>` propagation:** propagate verbatim if set on the originating /aivv-fix invocation.
 **`--dry-run` propagation:** propagate verbatim if set.
 **All other args NOT propagated:** findings for the next cycle come from /aivv's fresh re-review of current code state, not from the prior /aivv-fix invocation's argument string.
-
-## Pre-dispatch canary probe procedure
-
-1. Read `.claude-plugin/marketplace.json` via host's read primitive.
-2. Parse JSON. Extract the AIVV version via the nested path `.plugins[] | select(.name == "aivv") | .version` (or `.plugins[0].version` for single-plugin marketplace files). **There is NO top-level `version` field** — the version lives under `.plugins[].version`. Example: `jq -r '.plugins[] | select(.name == "aivv") | .version' .claude-plugin/marketplace.json` → `"0.1.0-dev.114"`.
-3. Parse the dev.NN integer from the semver string (e.g., `"0.1.0-dev.114"` → `114`). If parse fails (version field absent, unexpected format, jq unavailable), surface warning and proceed anyway (conservative degradation: log `{"code": "outer_loop_canary_parse_failure", ...}` + proceed; the canary's purpose is to catch STALE cache, not to block on unexpected formats).
-4. If `NN >= OUTER_LOOP_MIN_DEV` (113): proceed with Skill handoff.
-5. If `NN < OUTER_LOOP_MIN_DEV`: halt and surface:
-   > "Outer-loop reverse-chain requires AIVV ≥ 0.1.0-dev.113; cached version is 0.1.0-dev.{NN}. Restart Claude Code and re-run after upgrading to dev.113+."
-   Set `capability_degradations: ["outer_loop_min_dev_not_met"]` in fix-log.
 
 ## Termination banners
 
