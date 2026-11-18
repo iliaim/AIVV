@@ -103,7 +103,8 @@ DISPOSITION, computed separately and carried by `recommended_next_step`
 
 Severity inference (when not explicitly stated) follows a four-pass rule under
 `severity_model: legacy_4pass`, and the two-track discriminator + impact×likelihood
-model under `severity_model: impact_likelihood`.
+model under `severity_model: impact_likelihood`. `legacy_4pass` is the default;
+`impact_likelihood` applies only when a config opts in.
 
 ### Two-track discriminator (under `severity_model: impact_likelihood`)
 
@@ -147,18 +148,18 @@ configured `impact_likelihood` matrix remains authoritative for final severity.
 For software behavior findings, severity inference under the legacy model still
 follows the four-pass rule:
 
-1. **Blast-radius pass** (overrides tone) — behavior is gated on the resolved `severity_model` config key (preferences.md Step 1.5; defaults to `legacy_4pass` for v1–v4 configs and absent-key reads):
-   - **Under `severity_model: legacy_4pass`** (the shipped default — current behavior, UNCHANGED): financial/security/data/availability concerns → CRITICAL regardless of wording.
-   - **Under `severity_model: impact_likelihood`**: the same financial/security/data/availability blast-radius surface sets **IMPACT = high — an IMPACT FLOOR (CATASTROPHIC/SEVERE candidate), NOT an automatic CRITICAL**. The final tier still requires the LIKELIHOOD check before any CRITICAL is assigned (the impact×likelihood model — see the 4×4 impact-by-likelihood cell-map that lands with the likelihood field; the severity-model rationale lives in the project's severity-model decision records). This branch is under active rollout; `legacy_4pass` remains the default so the shipped severity behavior does not change until a config opts in.
+1. **Blast-radius pass** (overrides tone) — behavior is gated on the resolved `severity_model` config key:
+   - **Under `severity_model: legacy_4pass`**: financial/security/data/availability concerns → CRITICAL regardless of wording.
+   - **Under `severity_model: impact_likelihood`**: the same financial/security/data/availability blast-radius surface sets **IMPACT = high — an IMPACT FLOOR (CATASTROPHIC/SEVERE candidate), NOT an automatic CRITICAL**. The final tier still requires the LIKELIHOOD check before any CRITICAL is assigned (see the impact×likelihood cell-map below).
 2. **Tone/keyword compatibility pass (`legacy_4pass` only)**: "broken"/"crash"/"blocker" → CRITICAL; "wrong"/"bug" → MAJOR; "minor"/"small" → MINOR. Under `impact_likelihood`, tone/keywords are weak priors only: they may suggest a harm mode to investigate, but MUST NOT assign `severity`, `impact_tier`, or `likelihood` without concrete harm, reachability/exposure evidence, and any active lens anchors when available. No-context findings are assessed through the discriminator and impact×likelihood model; if evidence is insufficient, ask for clarification or mark the evidence unknown rather than choosing MAJOR from absence of context.
 3. **Source-class compatibility pass**: rules from the L4 source class (aesthetic/style guidance — Refactoring UI, Material Design tonality, Tailwind defaults, etc., as opposed to L1 legal/safety, L2 cognitive/HCI laws, L3 platform conventions) default to POLISH under `legacy_4pass` unless overridden by an applicable L1 source. Under `impact_likelihood`, source class is evidence for the discriminator and policy/disposition floors; source names or keywords alone do not assign severity. The four-layer source-precedence model (L1 > L2 > L3 > L4) governs cross-source contradictions: when sources disagree, the higher-numbered layer always defers to the lower-numbered layer.
 4. **Improvement-articulation pass**: if a finding does NOT clearly impact users at the current real-world inputs, the reviewer MUST articulate (a) the verified present need, (b) the specific improvement, and (c) positive net value after added complexity and maintenance cost. If all three are established → POLISH with reasoning embedded. If any is missing → DROP the finding (per existing prevention rule for `cosmetic-edge-case-not-manifest-at-current-data` subsection above). Hypothetical future use alone is insufficient.
 
-POLISH renders expanded by default in `/aivv` output (per `skills/aivv/SKILL.md` Step 6 templates + rendering rules; explicit `polish_collapsed: true` still collapses it). Calibration records POLISH findings with `severity: "POLISH"` (per `.aivv/schemas/finding.json` enum + `.aivv/calibration/README.md` severity row). Per-rule tracking via the optional `rule_id` field (shipped dev.41 T3) applies to all severity tiers; POLISH-vs-MINOR separation in the per-rule FP/TP aggregator is achieved by layering a `severity` filter (one-line jq addition).
+POLISH rendering and calibration recording are configured in [configuration.md](configuration.md) ("POLISH tier").
 
 ### Impact × likelihood cell-map (defect track, under `severity_model: impact_likelihood`)
 
-When the resolved `severity_model` config key is `impact_likelihood` (still NOT the shipped default — `legacy_4pass` remains the default, so the four-pass rule above governs unless a config opts in), a defect's tier is looked up from its `impact_tier` × `likelihood` pair (the two optional fields on `.aivv/schemas/finding.json`) using this conservative cell-map:
+When the resolved `severity_model` config key is `impact_likelihood`, a defect's tier is looked up from its `impact_tier` × `likelihood` pair (the two optional fields on `.aivv/schemas/finding.json`) using this conservative cell-map:
 
 | IMPACT \ LIKELIHOOD | CERTAIN | PROBABLE | POSSIBLE | UNLIKELY |
 |---|---|---|---|---|
@@ -169,7 +170,7 @@ When the resolved `severity_model` config key is `impact_likelihood` (still NOT 
 
 Reading the table:
 
-- **This is the DEFECT-track lookup only.** It applies under `severity_model: impact_likelihood`. The default `legacy_4pass` continues to use the four-pass rule above — adding this table does not change shipped behavior (non-breaking; the model is under active rollout).
+- **This is the DEFECT-track lookup only.** It applies under `severity_model: impact_likelihood`; `legacy_4pass` uses the four-pass rule above.
 - **POLISH is absent from this table by design.** POLISH is the IMPROVEMENT track — a no-harm betterment with verified present need and positive net value (for example, current clarity or ergonomics) that never enters the defect matrix. A finding is either a defect (lands in a cell above) or an improvement (POLISH), never both.
 - **Catastrophic floor.** CATASTROPHIC never drops below MAJOR — the lowest CATASTROPHIC cell is CATASTROPHIC × UNLIKELY = MAJOR (the floor). This is the mechanism that prevents catastrophic-but-rare defects from being trivialized into MINOR/DROP, i.e. it stops "significant things getting undermined."
 - **NEGLIGIBLE × UNLIKELY = DROP.** A cosmetic, no-functional-harm issue on a rarely-hit path is noise — not worth surfacing. This is the only DROP cell.
@@ -179,49 +180,16 @@ Reading the table:
 
 **Worked example — CATASTROPHIC × UNLIKELY → MAJOR (the catastrophic floor, working as intended).** Consider a data-loss bug reachable only on an admin-only maintenance path that is exercised roughly once a quarter. Impact is CATASTROPHIC (data loss), but likelihood is UNLIKELY (rare path, narrow trigger). With the shipped default cell-map, this yields **MAJOR**, not CRITICAL. This is the likelihood axis doing exactly its job — a defect that genuinely almost never fires is genuinely lower-priority than one that fires on every request — while the catastrophic floor still prevents trivialization by refusing to let any CATASTROPHIC cell fall below MAJOR. MAJOR here is the correct, intended outcome: it is NOT an under-rating bug. A team that wants every catastrophic-impact defect to floor at CRITICAL regardless of likelihood can express that by tightening the CATASTROPHIC row through `severity_cell_map` — a stricter team policy, not the shipped default.
 
-### Project Context deployment layer
+### Project context: exposure and legal applicability
 
-When project config declares `project_context.deployment`, use it as the EXPOSURE
-input to the likelihood axis for every lens:
-
-- `personal`: exposure starts low. A reachable defect in a personal-only tool
-  should usually land at `UNLIKELY` or `POSSIBLE` unless the common path triggers
-  it every run or the local data/harm is still severe.
-- `internal`: exposure starts medium. Consider the number of internal users,
-  operational criticality, and whether the path is routine or admin-only.
-- `public`: exposure can be high. Public, unauthenticated, customer-facing, or
-  internet-reachable paths may be `PROBABLE` or `CERTAIN` when the trigger is on
-  an ordinary path.
-
-Undeclared deployment is not a reason to inflate to CRITICAL and not a reason to
-drop the finding. State the exposure assumption explicitly, prefer `POSSIBLE`
-when evidence is incomplete, and recommend declaring project context when it
-would materially change the result.
-
-### Project Context legal-applicability layer
-
-When project config declares `project_context.data_classes`,
-`project_context.jurisdictions`, or `project_context.compliance_targets`, use
-those values to decide whether hard-statute legal rules are applicable,
-inapplicable, or undeclared-context findings:
-
-- `data_classes` influences impact and legal applicability. PII, children,
-  payments, health, financial, credentials, or confidential data can raise the
-  impact ceiling when the reviewed change touches that data class.
-- `jurisdictions` identifies market, user, customer, or deployment regions.
-  For example, GDPR-specific COMP-LEGAL findings need EU context plus relevant
-  personal-data handling before a legal floor is treated as applicable.
-- `compliance_targets` records declared contractual or organizational targets.
-  A declared target (for example `gdpr`, `ccpa`, `coppa`, `ada`,
-  `section-508`, `eaa`, `wcag-aa`) can turn an otherwise advisory standard into
-  a required DISPOSITION floor.
-
-Undeclared context is not a drop rule and not an automatic CRITICAL rule. Surface
-the finding with the applicability assumption and recommend declaring context
-when it would change severity or DISPOSITION. If declared context makes the cited
-authority inapplicable, render the L1 citation for transparency but route the
-finding as a context note / POLISH or lower-priority DISPOSITION rather than
-borrowing the applicable-statute floor.
+Declared `project_context` feeds the likelihood axis (deployment exposure) and
+legal applicability (`data_classes`, `jurisdictions`, `compliance_targets`). The
+reviewer rules live in [severity-confidence.md](../skills/methodology/references/severity-confidence.md)
+("Impact × likelihood and project context"); the keys are documented in
+[configuration.md](configuration.md). Undeclared context is neither a drop rule
+nor an automatic CRITICAL rule: state the assumption, prefer `POSSIBLE` when
+exposure evidence is incomplete, and recommend declaring context when it would
+change severity or DISPOSITION.
 
 ### Reviewer-prompt language for the Improvement-articulation pass
 
