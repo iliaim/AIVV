@@ -27,7 +27,7 @@ The minimum test in this gate is defect-reproduction and verification evidence, 
 
 4. **Apply the fix** (Step 5 EXECUTE).
 
-5. **Verify the test passes.** Run it again. If it still fails: the fix did not address the root cause. Return to Step 3 INVESTIGATE only if the shared `rework_retry_count` has room; increment it once and append a `red-green` retry event. This consumes the same invocation-wide budget as challenge and Step 6 verification re-entry. `cycle_count` and `challenge_iterations` remain diagnostic counters only. At the cap, report the finding unresolved and do not re-author.
+5. **Verify the test passes.** Run it again. If it still fails: the fix did not address the root cause. Return to Step 3 INVESTIGATE only if the shared rework budget in [challenge-loop.md](challenge-loop.md) has room, recording one `red-green` retry event; otherwise report the finding unresolved and do not re-author.
 
 6. **Log the test** in the eventual Step 5 `session_changes.changes_summary[]` entry with `type: "verification-method"` and `change: "Added failing test <test_name> before the fix; passes after fix."` after the write and test evidence are recorded. Also persist `red_green_evidence`:
    - Use `red_green_evidence.claim: "prevention"` only when the log contains both the right-reason pre-fix failure and the post-fix pass.

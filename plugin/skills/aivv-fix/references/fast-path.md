@@ -12,7 +12,7 @@ A finding may use the fast path only when ALL conditions are true:
 
 - Single finding or batch with one shared self-contained root cause.
 - `category == "code-bug"` or `category == "documentation-gap"` with fully known verbatim content.
-- Severity is MINOR or POLISH, OR `recommended_next_step == "defer-with-rationale"` / `"document"` / absent legacy equivalent below MAJOR.
+- Severity is MINOR or POLISH. A CRITICAL or MAJOR finding never uses the fast path, whatever its `recommended_next_step`.
 - One file and one localized location are involved.
 - The root cause is directly visible from the cited file/line or the supplied review evidence.
 - The proposed fix is mechanical and unambiguous.

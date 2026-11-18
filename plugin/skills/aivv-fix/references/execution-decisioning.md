@@ -36,11 +36,7 @@ The ledger prevents later steps from re-deriving decisions from prose. When Step
 
 ## Route Boundaries
 
-- **Auto-eligible** means policy is `auto`, `fix_confidence == "high"`, write intents are fresh and validated, no unresolved CHALLENGE concern exists, no L1/manual-review guard fires, no high-blast-radius/shared-interface pause fires, and no architectural decision is required.
-- **Decision queue** means user choice is required because policy is `ask`, policy `skip` is blocked by a safety floor, confidence is medium/low, a trade-off exists, a shared interface or >3 files are touched, L1/manual-review applies, or severity/disposition requires visibility.
-- **Architecture decision queue** means architectural remediation is required or not structurally disproved. Do not downgrade it to ordinary tactical editing unless the selected local option removes the class root cause or explicit architecture-specific approval is recorded.
-- **Skipped by policy** is allowed only below safety floors. `fix_apply_policy.* = skip` cannot hide CRITICAL/MAJOR findings, `fix-now` / `investigate-first` findings, active containment candidates, or L1-source/manual-review findings.
-- **Dangerously-auto-approved** is available only after `--dangerously-auto-apply` is confirmed with `DANGEROUSLY AUTO APPLY` or `AIVV_DANGEROUSLY_AUTO_APPLY=1`. It bypasses the W10 decision prompt, not dry-run, unsupported risky paths, stale write intents, missing write intents, architectural approval, or verifier obligations.
+Each finding gets exactly one final route: Auto-eligible, Decision queue, Architecture decision queue, Skipped by policy, or Dangerously-auto-approved. Their definitions, the severity/disposition safety floors, and the `--dangerously-auto-apply` bypass list live in [apply-policy-and-gates.md](apply-policy-and-gates.md) (W10 batched apply-policy decision queue).
 
 ## Branch Dispatch Rules
 

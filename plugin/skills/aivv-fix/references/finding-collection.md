@@ -1,10 +1,12 @@
 # Step 1 COLLECT — conversation signal scan, fingerprinting, and de-duplication
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 1 COLLECT. The inline skeleton keeps the source selector and the source-parsing subsections for `--review-id`, task ID, and literal text; this reference is the canonical home for the conversation Signal 0–4 scan, the severity inference model, the wont-fix registry pre-filter, and the de-duplication rules. The canonical fingerprint formula lives in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md) `compute_fingerprint(location, description)` and "Canonical Fingerprint Formula".
+Canonical home for the conversation Signal 0–4 scan, the severity inference model, the wont-fix registry pre-filter, and the de-duplication rules. The canonical fingerprint formula lives in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md) `compute_fingerprint(location, description)` and "Canonical Fingerprint Formula".
+
+**Task ID** (`[A-Z]+-\d{4}-\d{4}`, `FixSession.source = "task_file"`) — an optional external integration: findings come from the task file's `review_tracking.open_issues`, located by the project's own task-file convention; resolved items are written back per Task integration in [execution-branches.md](execution-branches.md).
 
 **No argument (or blank)** — Extract from current session by scanning signal types in priority order. `FixSession.source = "conversation"`.
 
-**Signal 0 — Machine-readable findings sidecar (JSONL)** (highest confidence, deterministic): `aivv:reviewer` emits a trailing fenced ```jsonl block AFTER each prose review (see `.aivv/schemas/finding.json` + `.aivv/schemas/README.md` for the emission contract, shipped in dev.6). When this signal is present, use it instead of LLM-interpreting Signal 1. Mechanics:
+**Signal 0 — Machine-readable findings sidecar (JSONL)** (highest confidence, deterministic): `aivv:reviewer` emits a trailing fenced ```jsonl block AFTER each prose review (see `.aivv/schemas/finding.json` + `.aivv/schemas/README.md` for the emission contract). When this signal is present, use it instead of LLM-interpreting Signal 1. Mechanics:
 
 1. Scan conversation history for the most recent `/aivv` output. If the reviewer produced a fenced block of the form ` ```jsonl ... ``` ` (single-reviewer case) or multiple such blocks (N≥2 case), extract each block's raw text.
 2. Parse each line as JSON; each object validates against the envelope schema (`id`, `severity`, `confidence`, `category`, `summary` required; `file`, `scope_ref`, `line`, `reviewer`, `lens`, `devils_advocate` optional). Location is exactly one of: `file` when it is a non-empty string; `scope_ref` when `scope_ref.kind` and `scope_ref.ref` are non-empty strings; otherwise `null` and the finding requires clarification before execution.
@@ -48,8 +50,8 @@ provisional finding-derived target or cwd-local `.aivv/state`. Take the most rec
 - **Availability**: outages, data loss, corruption, silent failure of core user flows
 
 The pass behavior is gated on the resolved `severity_model` config key (resolved per the Step 1.5 counterpart above; defaults to `legacy_4pass` for v1–v4 configs and absent-key reads):
-- **Under `severity_model: legacy_4pass`** (the shipped default — current behavior, UNCHANGED): regardless of tone keywords, mark the finding **CRITICAL** when the affected surface is in any category above.
-- **Under `severity_model: impact_likelihood`**: the same blast-radius surface sets **IMPACT = high — an IMPACT FLOOR (CATASTROPHIC/SEVERE candidate), NOT an automatic CRITICAL**. The final tier still requires the LIKELIHOOD check before CRITICAL is assigned (the impact×likelihood model; severity-model rationale lives in the project's severity-model decision records). This branch is under active rollout; `legacy_4pass` stays the default so shipped behavior is unchanged until a config opts in.
+- **Under `severity_model: legacy_4pass`** (the default): regardless of tone keywords, mark the finding **CRITICAL** when the affected surface is in any category above.
+- **Under `severity_model: impact_likelihood`**: the same blast-radius surface sets **IMPACT = high — an IMPACT FLOOR (CATASTROPHIC/SEVERE candidate), NOT an automatic CRITICAL**. The final tier still requires the LIKELIHOOD check before CRITICAL is assigned (see the impact×likelihood model in [`.aivv/methodology.md`](../../../.aivv/methodology.md)).
 
 > Example: *"Small thing, but the payment total is off by a cent"* → under `legacy_4pass`, CRITICAL — blast-radius (payment) wins over the tone keyword ("small"). Under `impact_likelihood`, this sets the IMPACT FLOOR to high (CATASTROPHIC/SEVERE candidate); the final CRITICAL tier still depends on the likelihood check.
 

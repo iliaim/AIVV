@@ -1,6 +1,6 @@
 # Step 4.5 CHALLENGE — trigger, dispatch, and verdict handling
 
-Detail relocated from `skills/aivv-fix/SKILL.md` Step 4.5 CHALLENGE. The inline skeleton keeps the step intro (when CHALLENGE runs relative to Step 4.4 / the W10 Auto-eligible gate) and a one-line pointer. This reference is the canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder construction), and the 4.5.3 verdict handling + counter semantics. The challenger **prompt** itself lives in [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md). The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
+Canonical home for the 4.5.1 trigger evaluation, the 4.5.2 dispatch (placeholder construction), and the 4.5.3 verdict handling + counter semantics. The challenger **prompt** itself lives in [fix-challenger-prompt-template.md](fix-challenger-prompt-template.md). The route effect of APPROVE/REVISE/REJECT is summarized in [execution-decisioning.md](execution-decisioning.md).
 
 ## 4.5.1 — Trigger evaluation (per batch)
 
@@ -68,7 +68,7 @@ After parsing the challenger's JSON verdict and recording the decision, mark tha
 
 **APPROVE:** proceed to Step 5 EXECUTE. The red run already happened at Step 4.4.5 (or is deferred to Step 5 by its user-decision rule).
 
-**REVISE:** only when a concern identifies a specific defect, cites evidence that supports it, and gives a concrete correction inside `authorized_scope`. If the shared retry budget has room, record one retry event, append the concern to the investigator prompt, discard affected write intents (undoing an early test write per [red-green-gate.md](red-green-gate.md)), and re-enter Step 3. If the budget is exhausted, leave those findings unresolved and report them. `--dangerously-auto-apply` does not bypass this rule or the retry budget.
+**REVISE:** only when a concern identifies a specific defect, cites evidence that supports it, and gives a concrete correction inside `authorized_scope`. If the shared retry budget has room, record one retry event, append the concern to the investigator prompt, discard affected write intents (undoing an early test write per [red-green-gate.md](red-green-gate.md)), and re-enter Step 3. If the budget is exhausted, leave those findings unresolved and report them. `--dangerously-auto-apply` does not change this or the retry budget (see Dangerous bypass route in [apply-policy-and-gates.md](apply-policy-and-gates.md)).
 
 **REJECT:** only when evidence shows the proposed fix direction is wrong and the challenger supplies a concrete alternative inside `authorized_scope`. If the shared retry budget has room, record one retry event and investigate that alternative as a candidate implementation. An out-of-scope alternative is not adopted; report the finding unresolved. If the budget is exhausted, do not re-enter Step 3.
 

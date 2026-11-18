@@ -13,9 +13,9 @@ Read from `skills/aivv-fix/SKILL.md` before executing Branch A/B/C/D/E/F fixes. 
 - Branch F improvement (behaviour-preserving betterment)
 - Prevention and task integration
 
-_The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 (the root-cause verification preamble) lives there; items 2–4 below extend it._
+For each approved fix, in priority order (CRITICAL first), after the session-change tracking in [fix-log-contract.md](fix-log-contract.md):
 
-2. **Apply the strategic fix — dispatch by finding category**: Review each approved finding's `category` field from Step 2a (the user-facing triage column is labeled "Type" for readability; the machine field is `category` per `.aivv/schemas/finding.json`) and route to the appropriate branch below. The "verify root cause" check applies to ALL branches — a fix that addresses symptom-not-cause is not acceptable regardless of category.
+1. **Apply the strategic fix — dispatch by finding category**: Review each approved finding's `category` field from Step 2a (the user-facing triage column is labeled "Type" for readability; the machine field is `category` per `.aivv/schemas/finding.json`) and route to the appropriate branch below. The "verify root cause" check applies to ALL branches — a fix that addresses symptom-not-cause is not acceptable regardless of category.
 
    **Root-cause verification (applies to every branch):**
    - State the root cause explicitly: *"The root cause is X. This fix eliminates X by doing Y."*
@@ -43,7 +43,7 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
    → Route to Branch E. Banner: `CLARIFICATION_NEEDED:empirical_verification_required` — "Investigation could not empirically verify root cause for [F_ID]. [If visual]: run `/aivv --runtime --emit-runtime-probes`, execute the generated probes, ingest Playwright JSON with `/aivv --ingest-runtime-results <path>`, then re-run `/aivv-fix`. [If code]: Perform manual investigation and re-run `/aivv-fix`. This finding is recorded in `session_changes.findings_deferred` at routing time and appears under deferred findings in the Step 7 summary until verification is supplied." Append finding ID to `session_changes.findings_deferred` at routing time.
 
    **Priority 3 — L1-source override (A11Y-\* / COMP-LEGAL-\* / DP-LEGAL-\*):**
-   L1-source detection fires at finding-collection layer (upstream of routing here). Branch E routing does NOT suppress the L1-source forced-SHOW behavior. The finding is forced-shown to the user at its assigned severity — **severity is preserved, NOT forced to CRITICAL** — with the Branch E banner. This matches the canonical L1-source rule in `polish-and-l1-source-policy.md` plus `/aivv` Step 6 severity-threshold rendering, where CRITICAL+L1 / MAJOR+L1 / MINOR+L1 / POLISH+L1 all render at their own severity; the prior "forced-CRITICAL severity" wording here was the sole outlier contradicting that rule (a correctness alignment, not a model change).
+   L1-source detection fires at finding-collection layer (upstream of routing here). Branch E routing does NOT suppress the L1-source forced-SHOW behavior. The finding is forced-shown to the user at its assigned severity — **severity is preserved, NOT forced to CRITICAL** — with the Branch E banner. This matches the canonical L1-source rule in `polish-and-l1-source-policy.md`, where CRITICAL+L1 / MAJOR+L1 / MINOR+L1 / POLISH+L1 all render at their own severity.
 
    **Priority 4 — confident, evidence present:**
    If `verification_method` ∈ {`code-trace`, `test-execution`, `grep-pattern-match`, `external-doc-lookup`} AND `confidence` ∈ {`high`, `medium`} AND `verification_evidence` is non-empty:
@@ -80,11 +80,11 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
    - Return to the user with the specific unresolved question(s). Once the user clarifies, the finding's `category` gets re-classified (typically promotes to `code-bug` / `design-flaw` / etc., OR drops as non-issue) and Step 5 re-enters with the corrected branch.
    - If the user chooses to defer the clarification: append the finding ID to `session_changes.findings_deferred` (top-level array, declared in the schema) and skip to the next finding. Deferred findings are reported separately from `findings_addressed` in Step 7.
 
-   **Branch F — `improvement` (dev.146+):**
+   **Branch F — `improvement`:**
    - The finding is a behaviour-preserving betterment (clarity, complexity reduction, redundancy removal, ergonomics), not a defect. The bar to apply is higher than for a defect: the change must demonstrably preserve behaviour AND stay scoped.
    - **Apply decision:** improvement findings render as POLISH.
      - **Policy resolution:** resolve `fix_apply_policy.improvement` through normal precedence. If explicit modern improvement policy is absent but legacy `apply_polish_mode` is explicit, map the legacy key (`always` → `auto`, `ask` → `ask`, `never` → `skip`); if neither is explicit, bind the golden schema default.
-     - **Per-value semantics:** `auto` means eligible for automatic application only when `fix_confidence == high` and Step 4 confidence/challenge/consequence gates clear (see `skills/aivv-fix/SKILL.md` Step 4 W10 classifier); `ask` routes to the batched decision queue; `skip` skips unless severity/disposition safety floors require escalation.
+     - **Per-value semantics:** `auto` means eligible for automatic application only when `fix_confidence == high` and Step 4 confidence/challenge/consequence gates clear (see the W10 classifier in [apply-policy-and-gates.md](apply-policy-and-gates.md)); `ask` routes to the batched decision queue; `skip` skips unless severity/disposition safety floors require escalation.
      - **Quick Wins:** expressed with optional `value: high` + `effort: trivial` metadata, not by borrowing MINOR severity. They are never auto-applied silently when the resolved policy is `ask`.
    - **Invasive improvements defer and never auto-apply:** if the proposal adds an abstraction/layer/dependency/configuration state, generalizes behavior beyond the current requirement, introduces enforcement machinery, changes a shared interface, or materially widens the file/region footprint, route it to the decision queue with default choice `defer-with-rationale`. A user may explicitly select application after seeing the net-value case; neither schema-default policy, explicit `fix_apply_policy.improvement=auto`, `--apply-all-polish`, nor Quick Win metadata makes it auto-eligible.
    - **Guard CQ-002 (behaviour preservation):** existing tests MUST pass unmodified after the edit. Never alter a test to make a simplification "pass" — if a test must change to accommodate the edit, the change is not behaviour-preserving and the finding is mis-categorized (re-triage as `code-bug` / `design-flaw`).
@@ -93,7 +93,7 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
    - Improvement edits use the same Step 4.4 `write_intents[]` materialization, detector, Step 4.5 inert snapshot, and Step 5.4 pre-write validation contract as Branch A.
    - **Log each change** to `session_changes.changes_summary` with `category: "improvement"` and `type: "code-edit"`.
 
-3. **Execute the prevention decision**: If `prevention_plan.mechanism == "none-new"`, create no prevention artifact; record its bounded `rationale` and evidence in the fix log, then continue to task integration. The minimum defect-reproducing regression test required by Step 4.4.5 is verification evidence and may still be written even when prevention is `none-new`; it is not a prevention artifact. For any additional or generalized prevention mechanism, first verify the investigator supplied a valid `eligibility_basis` and concrete `eligibility_evidence` establishing confirmed recurrence, systemic failure class, high-impact safety/security exposure, or failure of an existing control. Missing evidence routes back to Step 4.5 as an unjustified-complexity revision; do not write the artifact. When eligible, implement the proposed prevention. Path conventions are project- and host-dependent — first check the project's existing convention via its `maintainer guidance`/`AGENTS.md`/contributing doc; otherwise use the closest match below:
+2. **Execute the prevention decision**: If `prevention_plan.mechanism == "none-new"`, create no prevention artifact; record its bounded `rationale` and evidence in the fix log, then continue to task integration. The minimum defect-reproducing regression test required by Step 4.4.5 is verification evidence and may still be written even when prevention is `none-new`; it is not a prevention artifact. For any additional or generalized prevention mechanism, first verify the investigator supplied a valid `eligibility_basis` and concrete `eligibility_evidence` establishing confirmed recurrence, systemic failure class, high-impact safety/security exposure, or failure of an existing control. Missing evidence routes back to Step 4.5 as an unjustified-complexity revision; do not write the artifact. When eligible, implement the proposed prevention. Path conventions are project- and host-dependent — first check the project's existing convention via its `maintainer guidance`/`AGENTS.md`/contributing doc; otherwise use the closest match below:
    - `hook` → host's hook directory (`.claude/hooks/` on Claude Code projects; equivalent on other hosts) or project-level git hook (`.husky/`, `.git/hooks/`)
    - `validator` → `scripts/validators/`, `tools/`, or equivalent project-script directory
    - `test` → project's test directory (`tests/`, `test/`, `spec/`, language-conventional)
@@ -103,7 +103,7 @@ _The numbered list below continues `skills/aivv-fix/SKILL.md` Step 5 — item 1 
 
 Preserve the existing convention if one is found; do NOT impose `.claude/` paths on projects that don't already use them.
 
-4. **Task integration**: If source was a task file (`/aivv-fix TASK-XXXX`):
+3. **Task integration**: If source was a task file (`/aivv-fix TASK-XXXX`):
    - Update `review_tracking.resolved_issues` with structured entries:
      ```
      "F001 [CRITICAL]: SQL injection — Root cause: missing input validation guardrail. Fixed: added validate_input() decorator to all API endpoints. Prevention: pre-commit hook checks for raw request.json usage."
@@ -121,7 +121,7 @@ Lifecycle write-back rules:
 - Local issue workflow updates may write only schema-backed fields: `status`, `updated_at` when the record schema supports it, `links`, `closure_decision` when `status: "closed"`, `timeline`, and `sync.status`.
 - Verifier failure reopens RCA investigation by moving the lifecycle record back to an investigation state and adding a `fix_log` link to the failed fix log.
 - The convergence cap writes a problem-level or architecture-level recommendation into the lifecycle record rather than looping silently.
-- GitHub updates are drafted through the Slice 2 sync helper:
+- GitHub updates are drafted through the sync helper:
   ```bash
   node "$AIVV_ROOT/tools/incident-github-sync.mjs" plan --issue "<issue-record>" --repo "<owner>/<repo>"
   node "$AIVV_ROOT/tools/incident-github-sync.mjs" apply --issue "<issue-record>" --repo "<owner>/<repo>" --confirm
@@ -134,11 +134,11 @@ Lifecycle write-back rules:
 
 ## Dangerous auto-apply audit (when `dangerously_auto_apply_confirmed == true`)
 
-When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply` with `{confirmed: true, confirmation_source, bypassed_gates: [...], applied_count: 0}` before the first write, if Step 4.4 has not already recorded it. Invasive improvements remain deferred pending an explicit per-finding apply decision and are excluded from this route. For every eligible finding applied through the dangerous route, increment `applied_count` and include `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on that finding's `changes_summary` entry. At the end of Step 5, emit a loud audit banner:
+When `dangerously_auto_apply_confirmed == true`, initialize `session_changes.dangerously_auto_apply` with `{confirmed: true, confirmation_source, bypassed_gates: [...], applied_count: 0}` before the first write, if Step 4.4 has not already recorded it. Which findings are eligible, and which gates still apply, is defined under Dangerous bypass route in [apply-policy-and-gates.md](apply-policy-and-gates.md). For every eligible finding applied through the dangerous route, increment `applied_count` and include `dangerously_auto_apply: true` plus `bypassed_gates: [...]` on that finding's `changes_summary` entry. At the end of Step 5, emit a loud audit banner:
 
 ```text
 [aivv-fix] DANGEROUSLY AUTO-APPLIED <N> fix(es)
-[aivv-fix] Bypassed gates: CHALLENGE, L1-source/manual-review refusal, high-blast-radius pause, low-confidence escalation, batched decision surface
+[aivv-fix] Bypassed user prompts: CHALLENGE, L1-source/manual-review refusal, high-blast-radius pause, low-confidence escalation, batched decision surface (the challenger and all other gates still ran)
 [aivv-fix] Confirmation source: <interactive-exact-phrase | env:AIVV_DANGEROUSLY_AUTO_APPLY>
 ```
 

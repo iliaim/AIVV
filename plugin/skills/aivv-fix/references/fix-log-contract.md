@@ -14,12 +14,10 @@ Read from `skills/aivv-fix/SKILL.md` before writing or recovering `session_chang
 Every new fix log carries the immutable `authorized_scope` snapshot captured at
 Step 1.9 and these shared retry fields:
 
-- `rework_retry_count`: starts at 0; increments once before each semantic
-  re-authoring or verification re-entry.
-- `max_rework_retries`: the resolved `max_rework_retries` setting (default 3), fixed
-  for the invocation. It is a soft limit; see [challenge-loop.md](challenge-loop.md).
-  Stamp the resolved value when the log is created (pass it in the `fix_log` seed of
-  `aivv-fix-records.mjs`, which otherwise stamps 3).
+- `rework_retry_count` and `max_rework_retries`: the shared rework budget defined
+  in [challenge-loop.md](challenge-loop.md). Stamp the resolved `max_rework_retries`
+  when the log is created (pass it in the `fix_log` seed of `aivv-fix-records.mjs`,
+  which otherwise stamps 3).
 - `rework_retry_history`: append-only entries with retry number, gate, affected
   finding IDs, evidenced defect, and evidence locator; an entry past the limit also carries
   `beyond_limit_reason`.
@@ -69,7 +67,7 @@ the storage helper, checks that its `id` matches `source_review_id`, and checks
 that every selected root finding exists in the source review. Keep the source
 ID and relative path immutable through the fix invocation.
 
-**Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents and any Step 4.5 challenge; but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
+**Change Readiness Gate:** after Step 5.0 target resolution, pre-write banner, dry-run handling, and fix-log session initialization; after write intents, the Step 5 pre-loops below, and any Step 4.5 challenge (including one a pre-loop demotion re-triggers); but before any Step 5 write dispatch, record `change_readiness` for every applied non-dry-run fix log.
 
 Trivial fixes still record readiness. They normally use `risk_tier: "low"` and `approval_mode: "auto"` only when W10 classifies them as auto-eligible and no consequence gate applies.
 
@@ -133,34 +131,7 @@ the cached external context. Never rename or backfill legacy originals; import
 explicitly before continuing their mutable workflows. Publish staged candidates
 through the shared storage mutation helper so import cannot race writes.
 
-**Dry-run gate:** if the invocation included the `--dry-run` flag, HALT here. Do NOT apply any fixes, do NOT create a session log, do NOT dispatch the verifier in Step 6, do NOT write calibration records in Step 7. Emit a dry-run report to the user:
-
-```
-## Dry-run Complete — No Fixes Applied
-
-Investigation results have been presented above (Step 4). If the plan looks good:
-- Re-run `/aivv-fix` WITHOUT `--dry-run` to apply fixes
-- Or re-run with a narrower argument (specific task ID or literal finding) to scope down
-
-Nothing was written to disk. Session log, fix changes, verifier dispatch, and calibration writes are all skipped in dry-run.
-```
-
-If `--dangerously-auto-apply` was confirmed on the same dry-run invocation, add this block before the final "Nothing was written" sentence:
-
-```text
-## Dangerous Auto-Apply Preview
-
-Would dangerously auto-apply: <N> finding(s)
-Confirmation source: <interactive-exact-phrase | env:AIVV_DANGEROUSLY_AUTO_APPLY>
-
-| ID | Category | Bypassed gates/reasons | Proposed action |
-|----|----------|------------------------|-----------------|
-| F006 | design-flaw | high-blast-radius; batched-decision | Update public API adapter |
-```
-
-Use the same dangerous-route classification that Step 4 assigned before the dry-run halt. If `<N>` is zero, still emit the block with `0` so the run log shows that the bypass was armed but did not affect any finding.
-
-Then terminate the skill (do NOT proceed to Steps 5 sub-items, 6, or 7).
+**Dry-run gate:** a `--dry-run` invocation stops at the SKILL.md Step 4.3 halt and never reaches Step 5. If control reaches Step 5 while `dry_run == true`, report a contract violation and halt without writing anything.
 
 **Non-dry-run session initialization:** after the dry-run gate has passed, initialize the fix-log session object before any readiness prompt or write dispatch. The initialized object buffers `change_readiness` decisions and persists them in the eventual fix log using the atomic full-object write semantics below.
 
@@ -195,7 +166,7 @@ recorded boundary; report it as an out-of-scope observation only when its
 existence is already known from in-scope evidence. This gate overrides broad
 search examples below.
 
-1. **Verdict presence (fail-closed).** If the finding has neither a non-empty `root_cause_analysis.class_signature` nor a valid `root_cause_analysis.class_assessment`, the verdict is **missing**: do not fix the finding on this pass. A targeted re-investigation is allowed only if the shared invocation-wide `rework_retry_count` has room; append a `class-verdict` retry event before re-entering Step 3. At the cap, report the finding unresolved with reason `rework-retry-budget-exhausted`; do not move it to a new decision queue or ask to reopen scope. This pre-execution re-entry consumes the same three-retry budget as challenge, pre-write, stale-intent, red-green, and verifier rework. Exempt categories — `improvement`, `documentation-gap`, `clarification-needed`, `process-violation` — are skipped by the class-verdict gate; if one emits a `class_signature`, it still flows through the variant scan in step 4.
+1. **Verdict presence (fail-closed).** If the finding has neither a non-empty `root_cause_analysis.class_signature` nor a valid `root_cause_analysis.class_assessment`, the verdict is **missing**: do not fix the finding on this pass. A targeted re-investigation is allowed only if the shared invocation-wide `rework_retry_count` has room; append a `class-verdict` retry event before re-entering Step 3. At the cap, report the finding unresolved with reason `rework-retry-budget-exhausted`; do not move it to a new decision queue or ask to reopen scope. This re-entry draws on the shared rework budget. Exempt categories — `improvement`, `documentation-gap`, `clarification-needed`, `process-violation` — are skipped by the class-verdict gate; if one emits a `class_signature`, it still flows through the variant scan in step 4.
 
 2. **`class_assessment` completeness (fail-closed).** A `class_assessment` is valid only when it is a JSON object carrying all three sub-fields: `self_contained == true` (the literal boolean), a non-empty `justification`, and a non-empty `searched_pattern_negative` (non-empty = ≥1 non-whitespace character; whitespace-only or non-string does NOT count). An assessment that is not an object, or has any missing/blank/wrong-typed sub-field, is **not a valid verdict** → treated as missing in step 1 (re-investigation). If a finding emits BOTH `class_signature` and a valid `class_assessment`, `class_signature` governs and the assessment is ignored (per the json-schema.md contract) — proceed to step 4, skip step 3.
 
@@ -390,7 +361,7 @@ For each approved fix (in priority order: CRITICAL first):
    - Initialize only after the Step 4.3 dry-run halt, through the shared storage mutation helper. A plan-stage log has no `changes_summary` entries and no `findings_addressed` yet; a review-sourced log must gain both before it can be marked `completed`.
    - Reuse the invocation ID bound after Step 1.0 recovery selection and create the session file with `status: "in-progress"` and `cycle_count: 1`. Include any evidence-backed rework retries already consumed in memory before this first durable write; the first persisted snapshot becomes the transition baseline.
    - After every in-memory `session_changes` mutation, stage the complete candidate in private scratch and validate it with `node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fix-log <candidate> --context "$storage_context_file" --new` for the first write or `--update` thereafter. The validator reads the exact persisted record itself; do not supply a model-authored or stale prior snapshot. Then publish to `<state_dir>/fix-<invocation_id>.json` under the shared target operation lock. Never write active state with a host Write/apply_patch operation outside the helper; this would race import. Invocation-specific names preserve the existing independent-session model.
-   - **JSON emission canonical form (dev.26+):** to ensure byte-stable output across orchestrator agent invocations and across hosts, follow the same canonical-form rules documented in [/aivv Step 7.5](../../aivv/SKILL.md#step-75-write-review-log-orchestrator-side-unconditional) ("JSON emission canonical form" subsection). Briefly: 2-space indent, key order matches the **Schema** example above (top-to-bottom), exactly one trailing `\n`, raw UTF-8 (no `\u` escapes for non-ASCII), absent optional fields are OMITTED (not `null`), empty arrays as `[]`, all timestamps in UTC `Z` form, paths in POSIX forward-slash form even on Windows. Maintainer-side schema-fixture validation (run by AIVV's own pre-release validator) embodies the canonical form for fix-log shape; if your output differs from a freshly-emitted dev.26+ fix log's shape (modulo per-invocation ID/timestamp/finding values), you have drifted from canonical.
+   - **JSON emission canonical form:** to ensure byte-stable output across orchestrator agent invocations and across hosts, follow the same canonical-form rules documented in [/aivv Step 7.5](../../aivv/SKILL.md#step-75-write-review-log-orchestrator-side-unconditional) ("JSON emission canonical form" subsection). Briefly: 2-space indent, key order matches the **Schema** example above (top-to-bottom), exactly one trailing `\n`, raw UTF-8 (no `\u` escapes for non-ASCII), absent optional fields are OMITTED (not `null`), empty arrays as `[]`, all timestamps in UTC `Z` form, paths in POSIX forward-slash form even on Windows. Maintainer-side schema-fixture validation (run by AIVV's own pre-release validator) embodies the canonical form for fix-log shape; if your output differs from a freshly-emitted fix log's shape (modulo per-invocation ID/timestamp/finding values), you have drifted from canonical.
    - The first Step 6 verifier dispatch uses `cycle_count: 1`. When an evidence-backed verifier defect qualifies for re-entry, increment `rework_retry_count`, append its `verification` retry event, and increment `cycle_count` together in one validated update before returning to Step 3. The next Step 6 verifier uses that already-incremented value; do not increment it again at dispatch. The shared `rework_retry_count` is the sole semantic rework cap.
    - Set `status: "completed"` and `completed_at` at the end of Step 7.
    - **Later decisions on a finished log.** A `completed` or `failed` log accepts one kind of `--update`: recording a decision made after the run on a finding it left `deferred` or `needs_evidence` (for example, the owner approves a deferred deletion days later and it is done). Change that entry in place: new `disposition`, `decided_by`, `rationale`, `decided_at`, and `supersedes` holding an exact copy of the entry it replaces. Add any new evidence after the existing `objective_evidence` entries, with new IDs, for that finding only; a `closed`, `closed_with_residual_risk` or `false_positive` decision needs it (`false_positive` needs a `refuted` outcome, and `closed_with_residual_risk` also needs `residual_risk`). `status`, `completed_at` and every other field stay as they were. Validate with `--update` and publish through the storage helper as usual. Anything else, such as reopening a closed finding, is a new invocation.

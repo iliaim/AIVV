@@ -13,7 +13,7 @@ Read from `skills/aivv-fix/SKILL.md` before materializing write intents or runni
 
 ### Step 4.4: MATERIALIZE WRITE INTENTS — inspectable proposed bytes
 
-Before Step 4.4.5 can write a failing test, before Step 4.5 CHALLENGE can dispatch, and before Step 5 can mention or use any host write primitive, every write-capable Branch A/B/C-localized/D fix in the approved batch MUST materialize `write_intents[]`, including the failing-test intent from [red-green-gate.md](red-green-gate.md). Branch B documentation writes MUST also materialize `write_intents[]` because `verbatim_doc_content` is proposed write content. `write_intents[]` is the only approved pre-write surface for generated content; do not ask challengers, validators, or host write tools to infer pending bytes from `fix_proposal.description`.
+Before Step 4.4.5 can write a failing test, before Step 4.5 CHALLENGE can dispatch, and before Step 5 can mention or use any host write primitive, every write-capable Branch `A`/`B`/`C-fallthrough-A`/`D` fix in the approved batch MUST materialize `write_intents[]`, including the failing-test intent from [red-green-gate.md](red-green-gate.md). Branch B documentation writes MUST also materialize `write_intents[]` because `verbatim_doc_content` is proposed write content. `write_intents[]` is the only approved pre-write surface for generated content; do not ask challengers, validators, or host write tools to infer pending bytes from `fix_proposal.description`.
 
 If a write-capable branch has empty `write_intents[]`, missing `write_intents[]`, or an intent whose proposed bytes cannot be made inspectable before write, HALT as `no-pre-write-inspectable-intent`. Re-enter Step 3 only if the missing/uninspectable intent is a specific investigator-output defect, the missing material can be concretely supplied inside `authorized_scope`, and the shared retry budget has room; append one `investigator-output` retry event first. Otherwise report the finding unresolved. Do not continue to Step 4.5 challenger dispatch, Step 5.4 validation, or any host write primitive.
 
@@ -44,8 +44,8 @@ B4 is text-write safety only. Any proposed intent whose old/new content contains
 
 Stale-intent invalidation:
 - Immediately before a host write primitive, recompute the pending write bytes and compare with the approved `content_sha`. If they differ, HALT as `stale-write-intent-content-mismatch`. The validator performs this comparison on every fixture pass, for the intent's top-level `content_sha` and each `proposed_edits[].content_sha`. When the bytes are unchanged since approval and only the recorded hash was computed wrongly, correct the hash (the halt `detail` shows the recomputed value); that is a record correction, not a re-authoring. If the bytes themselves changed after the challenger saw them, it is a changed intent: discard it and re-challenge under the next rule.
-- If an investigator re-runs, Step 4.5 returns an actionable REVISE/REJECT, the target preimage changes, or proposed bytes change for any reason (except a test-setup repair under [red-green-gate.md](red-green-gate.md) step 2, which changes only the test's own intent), discard affected intents. Re-enter Step 3 only if `rework_retry_count < max_rework_retries`, or past that with a recorded `beyond_limit_reason` per [challenge-loop.md](challenge-loop.md); increment the shared counter once and append a retry-history entry before re-authoring. Regenerated intents re-run detector, Step 4.5 eligibility, and Step 5.4.
-- `rework_retry_count` is the sole semantic re-authoring and verification budget: `max_rework_retries` (a setting, default 3; soft limit per [challenge-loop.md](challenge-loop.md)) across the entire invocation, including stale-intent regeneration and Step 5.4 re-authoring. `challenge_iterations`, `pre_write_validation_iterations`, `stale_intent_regenerations`, `class_verdict_reinvestigation_iterations`, and `cycle_count` remain stage diagnostics and cannot grant extra retries.
+- If an investigator re-runs, Step 4.5 returns an actionable REVISE/REJECT, the target preimage changes, or proposed bytes change for any reason (except a test-setup repair under [red-green-gate.md](red-green-gate.md) step 2, which changes only the test's own intent), discard affected intents. Re-enter Step 3 only when the shared rework budget in [challenge-loop.md](challenge-loop.md) has room, recording one retry event before re-authoring. Regenerated intents re-run detector, Step 4.5 eligibility, and Step 5.4.
+- Stale-intent regeneration and Step 5.4 re-authoring draw on the same shared budget. `challenge_iterations`, `pre_write_validation_iterations`, `stale_intent_regenerations`, `class_verdict_reinvestigation_iterations`, and `cycle_count` remain stage diagnostics and cannot grant extra retries.
 - If a changed preimage cannot be safely regenerated within the remaining budget, halt the affected write and report the finding unresolved. Do not write stale bytes, ask to reopen scope, or reset the shared budget.
 
 Bypass invalidation:
@@ -85,40 +85,9 @@ Readiness consumes the materialized write intents from this reference. If `revis
 
 **Trigger:** every approved Step 4.4 `write_intents[]` entry whose `pre_write_assertions` is non-empty, or whose detector-required assertions are missing. Runs BEFORE the Edit/Write/apply host write primitive in Step 5 Branch A/B/C-fallthrough/D.
 
-**Default-ON.** No opt-in gate. Step 5.4 does NOT execute external code (only `jq`, `grep`, simple bash) and produces zero runtime side effects beyond the orchestrator process.
+**Default-ON.** No opt-in gate. Step 5.4 runs only the shipped validator; it executes no project code.
 
-**Per-assertion algorithm:**
-
-For each `write_intents[].pre_write_assertions[i]`:
-
-1. **`jq-parses` (kind):**
-   - Extract the `block_id`-th fenced ```json or ```jsonschema block from `verbatim_doc_content`.
-   - Run `printf '%s' "<extracted_block>" | jq empty 2>&1`.
-   - On non-zero exit → HALT this Edit; emit warning `pre-write-validate-jq-empty-failed-block<N>` and a `pre_write_validator_caught` calibration record. Re-author only when the output identifies a specific fixable content defect, the correction is inside `authorized_scope`, and the shared retry budget has room. Would have caught dev.123 N1 — `"verification_method.command_args": {...}` parses as syntactically valid JSON but `jq` empty does NOT flag the dotted-key class. **Therefore `jq-parses` MUST be paired with `schema-coherence` (next sub-check) — `jq-parses` alone is insufficient.**
-
-2. **`schema-coherence` (kind):**
-   - Read `args.parent_schema_path` (a `.aivv/schemas/*.json` path).
-   - Walk `args.expected_nest_path` (a dotted path: e.g., `properties.changes_summary.items.properties`).
-   - Confirm the new property name in the proposed block is a SINGLE key under the parent path, NOT a dotted string (catches the N1 defect class).
-   - Implementation:
-     ```bash
-     # Pseudo-shell; orchestrator implements in Bash+jq:
-     parent_keys=$(jq -r "$expected_nest_path | keys[]" "$parent_schema_path")
-     proposed_keys=$(printf '%s' "$extracted_block" | jq -r 'keys[]')
-     for key in $proposed_keys; do
-       if [[ "$key" == *.* ]]; then
-         echo "schema-coherence FAIL: proposed key '$key' contains dotted string (invalid JSON Schema nesting)" >&2
-         exit 1
-       fi
-     done
-     ```
-   - On failure → HALT + re-route per `jq-parses` failure path.
-
-3. **`line-cite-valid` (kind):**
-   - Read `args.file` and `args.cite_form` (e.g., `L428` or `L428-L432`).
-   - Extract the cited line range from current `args.file` state.
-   - `grep -qF -- "$expected_snippet"` against the extracted range.
-   - On non-match → **HALT this Edit; emit warning `pre-write-validate-l-n-citation-mismatch`** with a `pre_write_validator_caught` calibration record. Re-author only when the mismatch is a specific fixable citation defect inside `authorized_scope` and the shared retry budget has room. **Do NOT auto-rewrite** the citation. Rationale (per F006 / alpha IV&V 2026-05-22): the dev.97+ practical-sequence pattern-anchoring is an AUTHOR-TIME discipline, not an orchestrator-time auto-rewrite. Automatic pattern-anchor extraction from an arbitrary snippet is non-trivial and unspecified; silent bad rewrites are harder to detect than the original L<N> drift (and would import the "discipline-fix-surface-becomes-new-violation-surface" meta-pattern documented for dev.91→102). The investigator must author a pattern-anchored correction before any write.
+**Run the validator:** immediately before each host write, run `node "$AIVV_ROOT/tools/pre-write-validator.mjs" --fixture <write-intent-batch.json> --context "$storage_context_file"` with the fixture described under "Detector and assertion registry" above. It executes every required assertion (`jq-parses`, `schema-coherence`, `line-cite-valid`, `shell-syntax-valid`) and reports one JSON verdict; a halt names its `reason`. On a halt, follow "On HALT" below. Never auto-rewrite a citation that fails `line-cite-valid`; the investigator must author a pattern-anchored correction before any write.
 
 **On all checks PASS:** emit no warnings; proceed to readiness/pre-write approval and then Edit dispatch. Step 5.5 runs only after writes have been applied.
 
@@ -126,6 +95,6 @@ For each `write_intents[].pre_write_assertions[i]`:
 
 **Calibration emit:** every Step 5.4 catch writes a `pre_write_validator_caught` calibration record with `{finding_id, validator_check, would_have_been_n_class}` fields.
 
-**AC-X1 coverage (per F-M3 Option B resolution):** Step 5.4 = the deterministic catch layer. Step 4.5 keeps its semantic focus (root-cause-vs-symptom, regression risk, hidden side effects). Defense-in-depth: 4.5 catches LLM-judgment-class defects upstream; 5.4 catches syntax/structure-class defects downstream. The verifier in Step 6 remains the post-edit safety net.
+**Layering:** Step 5.4 is the deterministic catch layer for syntax/structure defects. Step 4.5 keeps its semantic focus (root-cause-vs-symptom, regression risk, hidden side effects). The verifier in Step 6 remains the post-edit safety net.
 
 ---
