@@ -151,7 +151,7 @@ After establishing the root cause and confidence level, assess how the root caus
 - `runtime-observation` — root cause involves visual/behavioral/DOM state requiring a running application. Under the read-only investigator constraint, this MUST be `unable-to-verify` unless the user provided DevTools output or browser screenshots in the finding context.
 - `test-execution` — a repro test confirmed the root cause. Set `verification_evidence` to the test name or a ≤120-char output snippet.
 - `grep-pattern-match` — root cause is a pattern-class finding. Set `verification_evidence` to the regex + match count summary (≤120 chars).
-- `external-doc-lookup` — code violates a spec, API, or RFC. Set `verification_evidence` to the cited URL. Store the verbatim quote from that source in `root_cause_analysis.evidence[]`, not in `verification_evidence` (per dev.91+ Discipline 1: character-exact match required — word substitutions and dropped qualifiers count as non-verbatim).
+- `external-doc-lookup` — code violates a spec, API, or RFC. Set `verification_evidence` to the cited URL. Store the verbatim quote from that source in `root_cause_analysis.evidence[]`, not in `verification_evidence` (character-exact match required — word substitutions and dropped qualifiers count as non-verbatim).
 - `unable-to-verify` — you cannot empirically confirm the root cause. MUST set `confidence: low` and populate `confidence_gap` and `confidence_gap_shape`. Do NOT write speculative hypotheses as confirmed root causes — if you cannot verify, set `unable-to-verify` and let the orchestrator route to Branch E.
 
 These fields are required on every `documentation-gap` finding's `root_cause_analysis`. Optional for other categories.

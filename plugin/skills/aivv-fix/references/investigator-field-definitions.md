@@ -31,8 +31,8 @@ The `domain` field identifies which review lens this finding belongs to. It is *
 | `visual` | Visual/UI/a11y review findings (`/aivv --lens=visual`; static review baseline plus optional B3 runtime evidence emit/ingest) |
 | `ux` | UX heuristic-walkthrough + microcopy + interaction-state findings (`/aivv --lens=ux`) |
 | `polish` | Improvement-articulation / value-add suggestions (`/aivv --lens=polish`); subject to the Improvement-articulation gate per `.aivv/methodology.md` |
-| `perf` | Performance findings (planned future lens — Tier 2/3) |
-| `a11y` | Pure-a11y findings, distinct from `visual` lens's UI-a11y coverage (planned future lens — Tier 2/3) |
+| `perf` | Performance findings (planned future lens) |
+| `a11y` | Pure-a11y findings, distinct from `visual` lens's UI-a11y coverage (planned future lens) |
 
 Mirrors `.aivv/schemas/finding.json` envelope `lens` enum. The forward-look entries (`perf`, `a11y`) are accepted today so findings written by adventurous early-adopter setups remain compatible when those lenses graduate to shipped status; the orchestrator does not currently dispatch reviewers with those lens names.
 
@@ -334,7 +334,7 @@ When `verification_method` is emitted in nested-object form (rather than as a ba
     "command_args": {
       "type": "array",
       "items": {"type": "string"},
-      "description": "Optional advisory argv strings for Step 5.7 execution. When non-empty, becomes argv[1:] verbatim. When absent/empty, default to argv[1] = <target_project>. Nested-object form (NOT dotted-key) per dev.123 IV&V N1 cycle-2 corrective."
+      "description": "Optional advisory argv strings for Step 5.7 execution. When non-empty, becomes argv[1:] verbatim. When absent/empty, default to argv[1] = <target_project>. Nested-object form (NOT dotted-key)."
     }
   }
 }

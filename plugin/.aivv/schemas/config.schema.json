@@ -214,7 +214,7 @@
         "off"
       ],
       "default": "ask",
-      "description": "Smart lens detection (dev.154). Default/wizard ask reports optional ceiling candidates without adding them or blocking the requested review; manual-provenance ask requests a choice when interactive. smart adds relevant lenses within scope and announces the final method; off retains detect/report behavior. See review-shape-resolution.md for the mode contract."
+      "description": "Smart lens detection. Default/wizard ask reports optional ceiling candidates without adding them or blocking the requested review; manual-provenance ask requests a choice when interactive. smart adds relevant lenses within scope and announces the final method; off retains detect/report behavior. See review-shape-resolution.md for the mode contract."
     },
     "severity_model": {
       "type": "string",

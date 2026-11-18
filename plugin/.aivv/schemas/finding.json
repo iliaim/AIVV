@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://aivv.dev/schemas/finding.json",
   "title": "AIVV Finding Envelope",
-  "description": "Machine-parseable envelope for a single IV&V finding. Emitted as JSONL by aivv:reviewer AFTER the prose review. Consumed by /aivv-fix Step 1 COLLECT, wont-fix registry fingerprinting, and multi-reviewer consensus dedup. Envelope only — the full investigator schema (skills/aivv-fix/references/json-schema.md) extends this with root-cause analysis, codebase scan, fix proposal, and prevention mechanism fields. Citation evidence per dev.18 reviewer-grounding methodology may be carried in two forms: the typed `grounded_by` array (preferred, dev.31+) or as legacy free-form `grounded_by:{<source_type>:<source_ref>}` substrings inside `summary` (accepted during the migration window). Readers MUST handle both forms.",
+  "description": "Machine-parseable envelope for a single IV&V finding. Emitted as JSONL by aivv:reviewer AFTER the prose review. Consumed by /aivv-fix Step 1 COLLECT, wont-fix registry fingerprinting, and multi-reviewer consensus dedup. Envelope only — the full investigator schema (skills/aivv-fix/references/json-schema.md) extends this with root-cause analysis, codebase scan, fix proposal, and prevention mechanism fields. Citation evidence per the reviewer-grounding methodology may be carried in two forms: the typed `grounded_by` array (preferred) or as legacy free-form `grounded_by:{<source_type>:<source_ref>}` substrings inside `summary` (accepted during the migration window). Readers MUST handle both forms.",
   "type": "object",
   "required": ["id", "severity", "confidence", "category", "summary"],
   "additionalProperties": false,
@@ -15,7 +15,7 @@
     "severity": {
       "type": "string",
       "enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH"],
-      "description": "Severity classification. CRITICAL: immediate blocker or safety issue. MAJOR: real issue requiring fix. MINOR: low-impact, may defer. POLISH (dev.39+): improvement opportunity / value-add suggestion (NOT a defect tier — orthogonal to CRITICAL/MAJOR/MINOR). Reviewer must establish verified present need, a specific Improvement, and positive net Value per the Improvement-articulation pass in .aivv/methodology.md; if any is missing, drop the finding rather than emit POLISH."
+      "description": "Severity classification. CRITICAL: immediate blocker or safety issue. MAJOR: real issue requiring fix. MINOR: low-impact, may defer. POLISH: improvement opportunity / value-add suggestion (NOT a defect tier — orthogonal to CRITICAL/MAJOR/MINOR). Reviewer must establish verified present need, a specific Improvement, and positive net Value per the Improvement-articulation pass in skills/methodology/references/severity-confidence.md; if any is missing, drop the finding rather than emit POLISH."
     },
     "confidence": {
       "type": "string",
@@ -42,7 +42,7 @@
         "clarification-needed",
         "improvement"
       ],
-      "description": "Finding category aligned with /aivv-fix Step 2 triage classification. `improvement` (dev.146+): a behaviour-preserving betterment (clarity, complexity reduction, redundancy removal, ergonomics) rather than a defect — orthogonal to defect severity. Renders as POLISH and may be prioritized by optional `value`/`effort` metadata (Quick Wins); a behaviour-preserving betterment is never a defect tier. Routes to Step 5 Branch F (scoped simplification, behaviour-preserving)."
+      "description": "Finding category aligned with /aivv-fix Step 2 triage classification. `improvement`: a behaviour-preserving betterment (clarity, complexity reduction, redundancy removal, ergonomics) rather than a defect — orthogonal to defect severity. Renders as POLISH and may be prioritized by optional `value`/`effort` metadata (Quick Wins); a behaviour-preserving betterment is never a defect tier. Routes to Step 5 Branch F (scoped simplification, behaviour-preserving)."
     },
     "summary": {
       "type": "string",
@@ -166,7 +166,7 @@
       "type": "string",
       "enum": ["general", "code", "sec", "visual", "ux", "polish", "compliance", "i18n", "user-journey", "perf", "a11y"],
       "default": "code",
-      "description": "Review lens. Shipped lenses (one entry per lens file under .aivv/lenses/): general (broad goal-fit, evidence, design, and risk review), code (default for legacy findings), sec (security; dev.22+), visual (UI/a11y/component correctness; dev.22+), ux (heuristic walkthrough + microcopy + interaction states; dev.43+), polish (improvement-articulation / value-add; dev.43+), compliance (WCAG AAA + ARIA APG full + legal-risk subset; dev.105), i18n (translation discipline + CLDR + Intl.* + RTL; dev.105), user-journey (UJ-* rules; dev.121). Forward-look planned lenses retained for compatibility with calibration corpora that may pre-emit them: perf (performance review; planned Tier 2/3), a11y (pure-a11y split distinct from visual lens's UI-a11y; planned Tier 2/3). Findings without this field continue to default to 'code'."
+      "description": "Review lens. Shipped lenses (one entry per lens file under .aivv/lenses/): general (broad goal-fit, evidence, design, and risk review), code (default for legacy findings), sec (security), visual (UI/a11y/component correctness), ux (heuristic walkthrough + microcopy + interaction states), polish (improvement-articulation / value-add), compliance (WCAG AAA + ARIA APG full + legal-risk subset), i18n (translation discipline + CLDR + Intl.* + RTL), user-journey (UJ-* rules). Forward-look planned lenses retained for compatibility with calibration corpora that may pre-emit them: perf (performance review; planned), a11y (pure-a11y split distinct from visual lens's UI-a11y; planned). Findings without this field continue to default to 'code'."
     },
     "rule_id": {
       "type": "string",
@@ -180,7 +180,7 @@
     },
     "grounded_by": {
       "type": "array",
-      "description": "Structured citation evidence backing the finding (graduated to typed field in dev.31; previously a free-form substring in `summary` per dev.18 reviewer-grounding methodology). PREFERRED form for dev.31+ emissions. The legacy `grounded_by:{<source_type>:<source_ref>}` substring form inside `summary` remains accepted during the migration window — readers MUST handle both forms. Absence is valid: not every finding rests on a groundable claim.",
+      "description": "Structured citation evidence backing the finding, per the reviewer-grounding methodology. PREFERRED form for new emissions. The legacy `grounded_by:{<source_type>:<source_ref>}` substring form inside `summary` remains accepted during the migration window — readers MUST handle both forms. Absence is valid: not every finding rests on a groundable claim.",
       "items": {
         "type": "object",
         "required": ["source_type", "source_ref"],

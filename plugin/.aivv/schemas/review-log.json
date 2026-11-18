@@ -426,7 +426,7 @@
       "items": {"type": "string"}
     },
     "workspace_sha_start": {
-      "description": "Workspace state capture before reviewer dispatch. Pre-dev.25: hex SHA256 from snapshot_workspace_sha(). Dev.25+: raw stdout of `git status --porcelain=v1 -z; git diff --no-color --no-ext-diff HEAD`. Either form is a comparable string identifying workspace state. Set when can_enforce_readonly is partial/unsupported; null/omitted otherwise. Field name retained for backward-compat per OQ4.",
+      "description": "Workspace state capture before reviewer dispatch. Pre-dev.25: hex SHA256 from snapshot_workspace_sha(). Dev.25+: raw stdout of `git status --porcelain=v1 -z; git diff --no-color --no-ext-diff HEAD`. Either form is a comparable string identifying workspace state. Set when can_enforce_readonly is partial/unsupported; null/omitted otherwise. Field name retained for backward-compat.",
       "anyOf": [{"type": "string"}, {"type": "null"}]
     },
     "workspace_sha_end": {
@@ -485,7 +485,7 @@
         "required": ["ref", "fingerprint", "severity", "description"],
         "properties": {
           "ref": {"type": "string", "pattern": "^F[0-9]{3,}$"},
-          "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$", "description": "Hex fingerprint identifier. dev.25+: SHA-1 (40 hex) from `git hash-object --stdin --no-filters`. pre-dev.25: SHA-256 (64 hex) from Python hashlib. Both accepted during the migration window (through dev.26)."},
+          "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{40}$|^[0-9a-f]{64}$", "description": "Hex fingerprint identifier. dev.25+: SHA-1 (40 hex) from `git hash-object --stdin --no-filters`. pre-dev.25: SHA-256 (64 hex) from Python hashlib. Both accepted so legacy records still validate."},
           "severity": {"enum": ["CRITICAL", "MAJOR", "MINOR", "POLISH"]},
           "file": {"type": "string", "pattern": "\\S"},
           "line": {"type": "integer"},
@@ -644,7 +644,7 @@
   },
   "allOf": [
     {
-      "$comment": "Cross-property constraint (dev.40, F006): if top-level lens is a single string (homogeneous review), then findings[].lens MUST NOT be present. Schema-enforces the prose rule in skills/aivv/SKILL.md Step 7.5 'OMIT findings[].lens entirely in homogeneous-lens reviews'.",
+      "$comment": "Cross-property constraint: if top-level lens is a single string (homogeneous review), then findings[].lens MUST NOT be present. Schema-enforces the prose rule in skills/aivv/SKILL.md Step 7.5 'OMIT findings[].lens entirely in homogeneous-lens reviews'.",
       "if": {
         "properties": {"lens": {"type": "string"}},
         "required": ["lens"]
@@ -662,7 +662,7 @@
       }
     },
     {
-      "$comment": "Cross-property constraint (dev.40, F005): when top-level lens is an array (multi-lens dispatch), the array length must equal the reviewers integer (1:1 positional assignment per /aivv Step 1.4 lens-composition rule). Catches hand-edited or buggy logs where reviewers=3 but lens.length=2.",
+      "$comment": "Cross-property constraint: when top-level lens is an array (multi-lens dispatch), the array length must equal the reviewers integer (1:1 positional assignment per /aivv Step 1.4 lens-composition rule). Catches hand-edited or buggy logs where reviewers=3 but lens.length=2.",
       "if": {
         "properties": {"lens": {"type": "array"}},
         "required": ["lens"]

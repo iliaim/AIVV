@@ -12,7 +12,7 @@ The evidence `kind` values used across findings, fixes, and lifecycle records ar
 | [`review-log.json`](review-log.json) | Session record for a completed `/aivv` run (reviewers, lens, finding refs, status) | `/aivv` orchestrator | `/aivv-fix` Step 1 COLLECT, session index queries |
 | [`fix-log.json`](fix-log.json) | Session record for a completed `/aivv-fix` run (findings addressed, dispositions, wont-fix entries) | `/aivv-fix` orchestrator | Session index queries, audit trail |
 | [`index.json`](index.json) | Manifest of all AIVV session logs under `.aivv/state/` | `/aivv` + `/aivv-fix` orchestrators | Session lookup, cross-session dedup |
-| [`calibration.json`](calibration.json) | Envelope for a single calibration record (one JSONL line in a `.aivv/calibration/<lens>/<invocation-id>.jsonl` shard, or a legacy `<lens>.jsonl`) | `/aivv` Step 7 + `/aivv-fix` Step 7 | `/aivv-calibrate` (dev.31+), read-side analytics |
+| [`calibration.json`](calibration.json) | Envelope for a single calibration record (one JSONL line in a `.aivv/calibration/<lens>/<invocation-id>.jsonl` shard, or a legacy `<lens>.jsonl`) | `/aivv` Step 7 + `/aivv-fix` Step 7 | `/aivv-calibrate`, read-side analytics |
 | [`config.schema.json`](config.schema.json) | Golden additive user-preferences schema; current authoring target for config defaults and valid keys | `/aivv --config-init`, `/aivv --config-set`, `/aivv --setup`, first-run auto-create | `/aivv` Step 1.5 preference resolution |
 | [`incident.json`](incident.json) | Incident lifecycle record for observed AIVV failures | `tools/incident-state.mjs` (Slice 1A writer) | `aivv-view`, lifecycle helper validation |
 | [`problem.json`](problem.json) | Problem-cluster lifecycle record for recurring/systemic AIVV failure classes | Problem/local lifecycle helpers | aivv-view, local issue mirrors, future `/aivv-fix` lifecycle routing |
@@ -24,7 +24,7 @@ The evidence `kind` values used across findings, fixes, and lifecycle records ar
 | [`remediation-request.json`](remediation-request.json) | Immutable, user-selected local Action Inbox remediation request | `tools/aivv-action-inbox.mjs serve` | `/aivv-fix --action-request=<uuid>` claim-and-revalidate route |
 | [`remediation-claim.json`](remediation-claim.json) | Exclusive claim for one Action Inbox remediation request | `tools/aivv-action-inbox.mjs claim` | `/aivv-fix --action-request=<uuid>` audit trail |
 
-[`.aivv/calibration/README.md`](../calibration/README.md) remains the prose-source-of-truth for human readers (when-to-record guidance, jq one-liners, interpretation notes); `calibration.json` is the machine-readable contract — `oneOf` discriminator over `kind` enforces kind-specific required fields with suffix-tolerant convergence-kind matching per dev.31 policy.
+[`.aivv/calibration/README.md`](../calibration/README.md) remains the prose-source-of-truth for human readers (when-to-record guidance, jq one-liners, interpretation notes); `calibration.json` is the machine-readable contract — `oneOf` discriminator over `kind` enforces kind-specific required fields with suffix-tolerant convergence-kind matching.
 
 ## Relationship to the full investigator schema
 
