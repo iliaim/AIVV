@@ -228,16 +228,6 @@ export function validateStorage(context, options = {}) {
   }
   return context;
 }
-export function contextForStateDirectory(stateDir) {
-  const absolute = path.resolve(stateDir);
-  const metadata = path.join(path.dirname(absolute), 'target.json');
-  let saved;
-  try { saved = JSON.parse(fs.readFileSync(metadata, 'utf8')); }
-  catch { fail('STORAGE_STATE_DIR_UNBOUND', 'selected state directory has no current target binding'); }
-  const context = resolveStorage({ target: saved.identity?.target });
-  if (path.resolve(context.state_dir) !== absolute) fail('STORAGE_STATE_DIR_UNBOUND', 'selected state directory is not canonical for the observed target instance');
-  return validateStorage(context);
-}
 export function ensureReportCache(context) {
   if (context.cache_root.startsWith(`${context.root}${path.sep}`)) validateContainedPath(context.cache_root, context.root);
   ensurePrivateDirectory(context.reports_dir, context.cache_root); return context;
