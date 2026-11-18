@@ -67,7 +67,7 @@ change-scope axis above. Scale your verification effort to the tier:
 | `fast` | Quick scan for correctness; surface MAJOR+ only. |
 | `balanced` | Standard review of the applicable baseline questions (today's default behavior). |
 | `thorough` | Trace applicable edge cases, claims, and verification evidence; surface down to MINOR. |
-| `exhaustive` | Maximal evidence coverage + replication within scope. **For each load-bearing finding (MAJOR+ or merge-gating), append a `grounded_by` block** naming the specific read/grep/trace that grounds it: `grounded_by: { source: <read\|grep\|trace\|webfetch\|spec>, ref: <file:line \| grep-pattern \| url>, confidence: <high\|med> }`. This is traceability (you cannot execute under Tier-3 scope), not a claim that independent verification ran. POLISH/MINOR findings are exempt. The articulation gate still applies — a finding you cannot ground is DROPPED, not emitted unjustified. No tier requires scoring unrelated checklist categories. |
+| `exhaustive` | Maximal evidence coverage + replication within scope. **For each load-bearing finding (MAJOR+ or merge-gating), add a `grounded_by` array entry** naming the specific read/grep/trace that grounds it, in the schema form from [source-grounding.md](references/source-grounding.md): `grounded_by: [{ source_type: internal-repo, source_ref: <file:line \| grep-pattern> }]`, or `websearch`/`webfetch`/`context7` with a URL or library id for external sources. This is traceability (you cannot execute under Tier-3 scope), not a claim that independent verification ran. POLISH/MINOR findings are exempt. The articulation gate still applies — a finding you cannot ground is DROPPED, not emitted unjustified. No tier requires scoring unrelated checklist categories. |
 
 ## Output Format
 
