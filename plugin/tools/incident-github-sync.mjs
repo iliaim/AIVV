@@ -6,10 +6,8 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { sha256, validateLocalIssueRecord } from "./incident-state.mjs";
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_CONFIG = {
   issue_sync_mode: "confirm-github",
   issue_sync_public_repo_policy: "block-sensitive"
@@ -128,22 +126,6 @@ function parseRepo(value) {
   const match = /^([^/]+)\/([^/]+)$/.exec(value || "");
   if (!match) return null;
   return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
-}
-
-function parseGithubRemote(value) {
-  const https = /^https:\/\/github\.com\/([^/]+)\/(.+?)(?:\.git)?$/.exec(value || "");
-  if (https) return { owner: https[1], repo: https[2].replace(/\.git$/, "") };
-  const ssh = /^git@github\.com:([^/]+)\/(.+?)(?:\.git)?$/.exec(value || "");
-  if (ssh) return { owner: ssh[1], repo: ssh[2].replace(/\.git$/, "") };
-  return null;
-}
-
-function resolveRepo(repoArg) {
-  if (repoArg) return parseRepo(repoArg);
-  // Installed-plugin limitation: cwd REPO_ROOT resolves the plugin checkout's own origin remote, not the target project's — pass --repo explicitly when reviewing another project.
-  const remote = spawnSync("git", ["remote", "get-url", "origin"], { cwd: REPO_ROOT, encoding: "utf8" });
-  if (remote.status !== 0) return null;
-  return parseGithubRemote(remote.stdout.trim());
 }
 
 function parseGhJson(result, fallback) {
@@ -281,7 +263,7 @@ function planIssue(issue, options) {
 
   const ghAvailable = assertGhAvailable();
   if (!ghAvailable.ok) return { ...base, status: "blocked", reason: ghAvailable.reason };
-  const repo = resolveRepo(options.repo);
+  const repo = parseRepo(options.repo);
   if (!repo) return { ...base, status: "blocked", reason: "repo-unresolved" };
   const visibility = repoVisibility(repo);
   if (!visibility.ok) return { ...base, status: "blocked", reason: visibility.reason };
@@ -461,7 +443,7 @@ function applyIssue(issue, issueFile, options) {
     return { result: { status: "blocked", reason: "confirmation-required", operation: plan.operation }, status: 2 };
   }
 
-  const repo = resolveRepo(options.repo);
+  const repo = parseRepo(options.repo);
   if (!repo) return { result: { status: "blocked", reason: "repo-unresolved" }, status: 0 };
   if (plan.operation === "closure-recommendation") {
     return applyClosureRecommendation(issue, issueFile, options, repo, plan);
@@ -524,6 +506,10 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const command = args._[0];
   if (!command || !args.issue) writeJson({ status: "invalid-args", reason: "missing-command-or-issue" }, 64);
+  // --repo is required: there is no safe default (the plugin's own checkout is never the target project).
+  if (["plan", "apply"].includes(command) && !parseRepo(args.repo)) {
+    writeJson({ status: "invalid-args", reason: "missing-or-invalid-repo" }, 64);
+  }
 
   let issue;
   try {
