@@ -310,10 +310,9 @@ function resolveRuntimeRoot(skillDir) {
   throw new Error("Unable to resolve AIVV runtime root; provide AIVV_ROOT or a loaded skill directory.");
 }
 
-function resolveIndexedDependencies(root, profile) {
+function resolveIndexedDependencies(root) {
   const requiredLines = new Map();
   const problems = [];
-  if (!new Set(["aivv", "aivv-fix"]).has(profile)) return { dependencies: [], problems };
   const indexPath = ".aivv/standards/index.json";
   let index;
   try {
@@ -361,30 +360,51 @@ try {
   const skillDir = process.env.SKILL_BASE_DIR || "";
   if (mode === "--print") {
     console.log(resolveRuntimeRoot(process.argv[3] || skillDir));
-  } else if (mode === "--preflight") {
+  } else if (mode === "--preflight" || mode === "--preflight-install") {
+    const installing = mode === "--preflight-install";
     const profile = process.argv[3];
-    const requirements = PREFLIGHT_FILES[profile];
-    if (!requirements) {
+    const requirements = installing
+      ? [".aivv/runtime-root.mjs", ...Object.values(PREFLIGHT_FILES).flat()]
+      : PREFLIGHT_FILES[profile];
+    if (installing && !process.argv[3]) {
+      console.error("Usage: runtime-root.mjs --preflight-install <runtime-root>");
+      process.exit(2);
+    }
+    if (!Array.isArray(requirements)) {
       console.error("Usage: runtime-root.mjs --preflight <aivv|aivv-fix|aivv-view|aivv-calibrate> [skill-directory]");
       process.exit(2);
     }
     let root;
+    let physicalInstallRoot;
     try {
-      root = resolveRuntimeRoot(process.argv[4] || skillDir);
+      root = installing ? path.resolve(process.argv[3]) : resolveRuntimeRoot(process.argv[4] || skillDir);
+      if (installing) physicalInstallRoot = fs.realpathSync(root);
     } catch (error) {
       console.error(`[AIVV] AIVV_INSTALLATION_INCOMPLETE: could not resolve the selected runtime root: ${error instanceof Error ? error.message : String(error)}. Repair or reinstall this AIVV installation, restart the host, and retry in a new invocation.`);
       process.exit(3);
     }
-    const indexed = resolveIndexedDependencies(root, profile);
+    const indexed = installing || profile === "aivv" || profile === "aivv-fix"
+      ? resolveIndexedDependencies(root)
+      : { dependencies: [], problems: [] };
     const allRequirements = [...new Set([...requirements, ...indexed.dependencies])];
+    const externalFiles = [];
     const missing = allRequirements.filter((relativePath) => {
       try {
-        return !fs.statSync(path.join(root, relativePath)).isFile();
+        const file = path.join(root, relativePath);
+        if (!fs.statSync(file).isFile()) return true;
+        if (installing) {
+          // A staged runtime cannot depend on files in the installation it replaces.
+          const resolvedPath = path.relative(physicalInstallRoot, fs.realpathSync(file));
+          if (resolvedPath === ".." || resolvedPath.startsWith(`..${path.sep}`) || path.isAbsolute(resolvedPath)) {
+            externalFiles.push(file);
+          }
+        }
+        return false;
       } catch {
         return true;
       }
     });
-    if (missing.length > 0 || indexed.problems.length > 0) {
+    if (missing.length > 0 || indexed.problems.length > 0 || externalFiles.length > 0) {
       const formatIssues = (label, issues) => {
         const examples = issues.slice(0, 3).join(", ");
         const remainder = issues.length > 3 ? `, and ${issues.length - 3} more` : "";
@@ -396,7 +416,10 @@ try {
       const problemsText = indexed.problems.length > 0
         ? formatIssues("invalid indexed references", indexed.problems)
         : "";
-      const detail = [missingText, problemsText].filter(Boolean).join("; ");
+      const externalText = externalFiles.length > 0
+        ? formatIssues("required files linked outside the runtime", externalFiles)
+        : "";
+      const detail = [missingText, problemsText, externalText].filter(Boolean).join("; ");
       console.error(`[AIVV] AIVV_INSTALLATION_INCOMPLETE: selected runtime root ${root} has ${detail}. Repair or reinstall this AIVV installation, restart the host, and retry in a new invocation. No alternate runtime root was used.`);
       process.exit(3);
     }
@@ -404,6 +427,7 @@ try {
   } else {
     console.error("Usage: runtime-root.mjs --print [skill-directory]");
     console.error("   or: runtime-root.mjs --preflight <aivv|aivv-fix|aivv-view|aivv-calibrate> [skill-directory]");
+    console.error("   or: runtime-root.mjs --preflight-install <runtime-root>");
     process.exit(2);
   }
 } catch (error) {

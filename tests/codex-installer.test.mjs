@@ -1,31 +1,17 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'aivv-codex-installer-'));
+const temporaryRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'aivv-codex-installer-')));
+const canonicalPluginRoot = path.join(repoRoot, 'plugin');
 const pluginRoot = path.join(temporaryRoot, 'plugin-source');
-
-function createPluginFixture() {
-  mkdirSync(path.join(pluginRoot, '.aivv/prompts'), { recursive: true });
-  mkdirSync(path.join(pluginRoot, 'skills'), { recursive: true });
-  mkdirSync(path.join(pluginRoot, 'tools'), { recursive: true });
-  writeFileSync(path.join(pluginRoot, '.aivv/prompts/reviewer-role.md'), '# Reviewer role\n');
-  writeFileSync(path.join(pluginRoot, '.aivv/prompts/investigator-role.md'), '# Investigator role\n');
-  writeFileSync(path.join(pluginRoot, '.aivv/methodology.md'), 'AIVV runtime support\n');
-  writeFileSync(path.join(pluginRoot, 'tools/dispatch.mjs'), 'export {};\n');
-
-  for (const name of ['aivv', 'aivv-fix', 'aivv-calibrate', 'aivv-view', 'methodology']) {
-    const skillDir = path.join(pluginRoot, 'skills', name);
-    mkdirSync(skillDir, { recursive: true });
-    writeFileSync(path.join(skillDir, 'SKILL.md'), `---\nname: ${name}\ndescription: test fixture\n---\n`);
-  }
-}
+const continuityFile = '.aivv/session-continuity.md';
 
 function available(command, args = ['--version']) {
   return spawnSync(command, args, { encoding: 'utf8' }).status === 0;
@@ -39,14 +25,15 @@ function createRunners() {
   if (available('bash')) {
     runners.push({
       name: 'shell',
-      invoke(codexRoot, home, args) {
+      invoke(codexRoot, home, args, source) {
         return spawnSync('bash', [shellScript, ...args], {
           encoding: 'utf8',
           env: {
             ...process.env,
             HOME: home,
             AIVV_CODEX_ROOT_OVERRIDE: codexRoot,
-            AIVV_PLUGIN_SOURCE_ROOT: pluginRoot,
+            AIVV_PLUGIN_SOURCE_ROOT: source,
+            AIVV_ROOT: canonicalPluginRoot,
           },
         });
       },
@@ -59,7 +46,7 @@ function createRunners() {
   if (powerShell) {
     runners.push({
       name: 'powershell',
-      invoke(codexRoot, home, args) {
+      invoke(codexRoot, home, args, source) {
         const powerShellArgs = args.map((arg) => ({
           '--scope': '-Scope',
           '--force': '-Force',
@@ -72,7 +59,8 @@ function createRunners() {
             HOME: home,
             USERPROFILE: home,
             AIVV_CODEX_ROOT_OVERRIDE: codexRoot,
-            AIVV_PLUGIN_SOURCE_ROOT: pluginRoot,
+            AIVV_PLUGIN_SOURCE_ROOT: source,
+            AIVV_ROOT: canonicalPluginRoot,
           },
         });
       },
@@ -82,9 +70,33 @@ function createRunners() {
   return runners;
 }
 
-function run(runner, codexRoot, home, args = []) {
-  const result = runner.invoke(codexRoot, home, args);
+function run(runner, codexRoot, home, args, source = pluginRoot) {
+  const result = runner.invoke(codexRoot, home, args, source);
   return { ...result, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
+}
+
+function verifyInstalledRuntime(codexRoot) {
+  const runtimeRoot = path.join(codexRoot, 'aivv-runtime');
+  assert.deepEqual(readFileSync(path.join(runtimeRoot, continuityFile)),
+    readFileSync(path.join(canonicalPluginRoot, continuityFile)));
+
+  for (const profile of ['aivv', 'aivv-fix', 'aivv-view', 'aivv-calibrate']) {
+    const skillDir = path.join(codexRoot, 'skills', profile);
+    const resolver = path.join(skillDir, '.aivv/runtime-root.mjs');
+    const result = spawnSync(process.execPath, [resolver, '--preflight', profile, skillDir], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        AIVV_ROOT: '',
+        AIVV_RUNTIME_ROOT_HELPER: '',
+        CLAUDE_PLUGIN_ROOT: '',
+        PLUGIN_ROOT: '',
+        CODEX_HOME: codexRoot,
+      },
+    });
+    assert.equal(result.status, 0, `${profile} installed preflight failed: ${result.stderr}`);
+    assert.equal(result.stdout.trim(), runtimeRoot, `${profile} must select the installed standalone runtime`);
+  }
 }
 
 function verifyRunner(runner) {
@@ -107,7 +119,7 @@ function verifyRunner(runner) {
   assert.equal(fresh.status, 0, `${runner.name}: fresh install failed: ${fresh.output}`);
   assert.doesNotMatch(fresh.output, /Backed up existing AIVV destinations/);
   assert.match(readFileSync(reviewerProfile, 'utf8'), /sandbox_mode = "read-only"/);
-  assert.ok(existsSync(path.join(codexRoot, 'aivv-runtime/tools/dispatch.mjs')));
+  verifyInstalledRuntime(codexRoot);
 
   const localSkillEdit = path.join(codexRoot, 'skills/aivv/LOCAL.md');
   writeFileSync(localSkillEdit, 'keep this local edit in the backup\n');
@@ -122,6 +134,40 @@ function verifyRunner(runner) {
   const legacyMethodology = path.join(codexRoot, 'skills/methodology/LOCAL.md');
   mkdirSync(path.dirname(legacyMethodology), { recursive: true });
   writeFileSync(legacyMethodology, 'legacy content\n');
+
+  const sourceContinuity = path.join(pluginRoot, continuityFile);
+  const before = readdirSync(codexRoot);
+  function verifyRejectedUpgrade(diagnostic) {
+    const result = run(runner, codexRoot, home, ['--scope', 'user', '--force']);
+    assert.notEqual(result.status, 0, `${runner.name}: incomplete runtime must fail even with --force`);
+    assert.match(result.output, diagnostic);
+    assert.deepEqual(readdirSync(codexRoot), before, 'an incomplete runtime must fail before backup or replacement');
+    assert.equal(readFileSync(reviewerProfile, 'utf8'), 'custom reviewer profile\n');
+    assert.equal(readFileSync(localSkillEdit, 'utf8'), 'keep this local edit in the backup\n');
+    verifyInstalledRuntime(codexRoot);
+  }
+
+  unlinkSync(sourceContinuity);
+  try {
+    verifyRejectedUpgrade(/AIVV_INSTALLATION_INCOMPLETE.*session-continuity\.md/);
+
+    // Bash preserves symbolic links when copying. This target is available
+    // in the source tree but is absent from the copied runtime.
+    if (runner.name === 'shell' && process.platform !== 'win32') {
+      copyFileSync(path.join(canonicalPluginRoot, continuityFile), path.join(pluginRoot, 'outside-runtime.md'));
+      symlinkSync('../outside-runtime.md', sourceContinuity);
+      verifyRejectedUpgrade(/AIVV_INSTALLATION_INCOMPLETE.*\.aivv-install-stage.*session-continuity\.md/);
+
+      unlinkSync(sourceContinuity);
+      symlinkSync(localSkillEdit, sourceContinuity);
+      verifyRejectedUpgrade(/required files linked outside the runtime.*session-continuity\.md/);
+    }
+  } finally {
+    rmSync(sourceContinuity, { force: true });
+    copyFileSync(path.join(canonicalPluginRoot, continuityFile), sourceContinuity);
+  }
+
+  unlinkSync(path.join(codexRoot, 'aivv-runtime', continuityFile));
 
   const upgraded = run(runner, codexRoot, home, ['--scope', 'user', '--force', '--remove-legacy-methodology']);
   assert.equal(upgraded.status, 0, `${runner.name}: backed-up upgrade failed: ${upgraded.output}`);
@@ -140,16 +186,23 @@ function verifyRunner(runner) {
   assert.equal(existsSync(legacyMethodology), false, 'the requested legacy removal should still happen');
   assert.equal(readFileSync(unrelatedSkill, 'utf8'), 'leave unrelated skills alone\n');
   assert.match(readFileSync(reviewerProfile, 'utf8'), /sandbox_mode = "read-only"/);
-  assert.ok(existsSync(path.join(codexRoot, 'aivv-runtime/tools/dispatch.mjs')));
+  verifyInstalledRuntime(codexRoot);
+
+  // An override can point at the runtime being replaced. Snapshot it before
+  // removing any destination paths that also serve as inputs.
+  const inPlace = run(runner, codexRoot, home, ['--force'], path.join(codexRoot, 'aivv-runtime'));
+  assert.equal(inPlace.status, 0, `${runner.name}: upgrade from the installed runtime failed: ${inPlace.output}`);
+  verifyInstalledRuntime(codexRoot);
 }
 
 try {
-  createPluginFixture();
+  cpSync(canonicalPluginRoot, pluginRoot, { recursive: true });
   const runners = createRunners();
-  assert.ok(runners.length > 0, 'a Bash or PowerShell runtime is required to test the Codex installer');
+  const requiredRunner = process.platform === 'win32' ? 'powershell' : 'shell';
+  assert.ok(runners.some((runner) => runner.name === requiredRunner), `${requiredRunner} is required to test the Codex installer`);
   for (const runner of runners) verifyRunner(runner);
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
 }
 
-console.log('Codex installer: refuses silent replacement and backs up AIVV paths before upgrades');
+console.log('Codex installer: validates runtime sources and installed skills, and backs up AIVV paths before upgrades');
