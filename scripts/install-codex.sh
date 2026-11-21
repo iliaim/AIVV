@@ -165,28 +165,6 @@ if [ "${#conflicts[@]}" -gt 0 ]; then
   exit 1
 fi
 
-backup_root=""
-if [ "${#backup_paths[@]}" -gt 0 ]; then
-  mkdir -p "$codex_root"
-  backup_root="$(mktemp -d "${codex_root}/.aivv-install-backup.XXXXXX")"
-  for rel_path in "${backup_paths[@]}"; do
-    source="${codex_root}/${rel_path}"
-    backup_destination="${backup_root}/previous/${rel_path}"
-    mkdir -p "$(dirname "$backup_destination")"
-    cp -R "$source" "$backup_destination"
-  done
-  {
-    printf 'Original Codex root: %s\n' "$codex_root"
-    cat <<'EOF'
-Each entry under previous/ mirrors its original relative path under the Codex root.
-To restore an entry, copy it back to that same relative path.
-EOF
-  } > "${backup_root}/README.txt"
-  echo "Backed up existing AIVV destinations to $backup_root"
-fi
-
-mkdir -p "$skills_dest" "$agents_dest" "$runtime_dest"
-
 copy_skill() {
   local source_name="$1"
   local dest_name="$2"
@@ -195,24 +173,16 @@ copy_skill() {
   shift 4
   local deps=("$@")
 
-  local source="${plugin_source_root}/skills/${source_name}"
-  local dest="${skills_dest}/${dest_name}"
-
-  if [ ! -d "$source" ]; then
-    echo "Missing source skill: $source" >&2
-    exit 1
-  fi
-
-  if [ -e "$dest" ]; then
-    if [ "$force" != "true" ]; then
-      echo "Destination exists: $dest (rerun with --force to replace)" >&2
-      exit 1
-    fi
-    rm -rf "$dest"
-  fi
+  local source="${staged_runtime}/skills/${source_name}"
+  local dest="${staging_root}/skills/${dest_name}"
 
   cp -R "$source" "$dest"
-  cp -R "${plugin_source_root}/.aivv" "${dest}/.aivv"
+  cp -R "${staged_runtime}/.aivv" "${dest}/.aivv"
+
+  if [ ! -f "${dest}/SKILL.md" ] || [ ! -f "${dest}/.aivv/runtime-root.mjs" ]; then
+    echo "Incomplete staged Codex skill: $dest" >&2
+    exit 1
+  fi
 
   if [ "$rename_frontmatter" = "true" ]; then
     awk '
@@ -237,28 +207,6 @@ copy_skill() {
       printf '  - %s\n' "$dep"
     done
   } > "${dest}/agents/openai.yaml"
-}
-
-copy_support_dir() {
-  local rel_path="$1"
-  local source="${plugin_source_root}/${rel_path}"
-  local dest="${runtime_dest}/${rel_path}"
-
-  if [ ! -d "$source" ]; then
-    echo "Missing support directory: $source" >&2
-    exit 1
-  fi
-
-  if [ -e "$dest" ]; then
-    if [ "$force" != "true" ]; then
-      echo "Support destination exists: $dest (rerun with --force to replace)" >&2
-      exit 1
-    fi
-    rm -rf "$dest"
-  fi
-
-  mkdir -p "$(dirname "$dest")"
-  cp -R "$source" "$dest"
 }
 
 remove_legacy_support_dir() {
@@ -310,6 +258,18 @@ EOF
   } > "$out_path"
 }
 
+# Assemble and validate the replacement before backing up or replacing live paths.
+mkdir -p "$codex_root"
+staging_root="$(mktemp -d "${codex_root}/.aivv-install-stage.XXXXXX")"
+trap 'rm -rf -- "$staging_root"' EXIT
+staged_runtime="${staging_root}/aivv-runtime"
+mkdir -p "${staging_root}/skills" "${staging_root}/agents" "$staged_runtime"
+
+for rel_path in "${support_paths[@]}"; do
+  cp -R "${plugin_source_root}/${rel_path}" "${staged_runtime}/${rel_path}"
+done
+node "$runtime_root_helper" --preflight-install "$staged_runtime" >/dev/null
+
 copy_skill "aivv" "aivv" "AIVV IV&V review orchestration skill" false \
   apply_patch shell_command spawn_agent
 copy_skill "aivv-fix" "aivv-fix" "AIVV finding investigation and remediation skill" false \
@@ -321,32 +281,59 @@ copy_skill "aivv-view" "aivv-view" "AIVV read-only findings viewer skill" false 
 copy_skill "methodology" "aivv-methodology" "AIVV methodology support skill" true \
   shell_command
 
+write_agent_toml \
+  "aivv-reviewer" \
+  "AIVV general advisory reviewer for session work, artifacts, plans, and decisions. Read-only." \
+  "${staged_runtime}/.aivv/prompts/reviewer-role.md" \
+  "${staging_root}/agents/aivv-reviewer.toml"
+
+write_agent_toml \
+  "aivv-investigator" \
+  "AIVV root-cause investigator for review findings. Read-only." \
+  "${staged_runtime}/.aivv/prompts/investigator-role.md" \
+  "${staging_root}/agents/aivv-investigator.toml"
+
+backup_root=""
+if [ "${#backup_paths[@]}" -gt 0 ]; then
+  backup_root="$(mktemp -d "${codex_root}/.aivv-install-backup.XXXXXX")"
+  for rel_path in "${backup_paths[@]}"; do
+    source="${codex_root}/${rel_path}"
+    backup_destination="${backup_root}/previous/${rel_path}"
+    mkdir -p "$(dirname "$backup_destination")"
+    cp -R "$source" "$backup_destination"
+  done
+  {
+    printf 'Original Codex root: %s\n' "$codex_root"
+    cat <<'EOF'
+Each entry under previous/ mirrors its original relative path under the Codex root.
+To restore an entry, copy it back to that same relative path.
+EOF
+  } > "${backup_root}/README.txt"
+  echo "Backed up existing AIVV destinations to $backup_root"
+fi
+
+mkdir -p "$skills_dest" "$agents_dest" "$runtime_dest"
+for rel_path in "${replacement_paths[@]}"; do
+  destination="${codex_root}/${rel_path}"
+  if path_exists "$destination"; then
+    if [ "$force" != "true" ]; then
+      echo "Destination exists: $destination (rerun with --force to replace)" >&2
+      exit 1
+    fi
+    rm -rf -- "$destination"
+  fi
+  mv -- "${staging_root}/${rel_path}" "$destination"
+done
+
 if [ "$force" = "true" ]; then
   remove_legacy_support_dir "${skills_dest}/.aivv" "methodology.md"
   remove_legacy_support_dir "${skills_dest}/skills" "aivv/SKILL.md"
   remove_legacy_support_dir "${skills_dest}/tools" "dispatch.mjs"
 fi
 
-copy_support_dir ".aivv"
-copy_support_dir "skills"
-copy_support_dir "tools"
-node "$runtime_root_helper" --preflight-install "$runtime_dest" >/dev/null
-
 if [ "$remove_legacy_methodology" = "true" ] && path_exists "${skills_dest}/methodology"; then
   rm -rf "${skills_dest}/methodology"
 fi
-
-write_agent_toml \
-  "aivv-reviewer" \
-  "AIVV general advisory reviewer for session work, artifacts, plans, and decisions. Read-only." \
-  "${plugin_source_root}/.aivv/prompts/reviewer-role.md" \
-  "${agents_dest}/aivv-reviewer.toml"
-
-write_agent_toml \
-  "aivv-investigator" \
-  "AIVV root-cause investigator for review findings. Read-only." \
-  "${plugin_source_root}/.aivv/prompts/investigator-role.md" \
-  "${agents_dest}/aivv-investigator.toml"
 
 echo "Installed AIVV Codex skills into $skills_dest"
 echo "Installed AIVV Codex subagents into $agents_dest"

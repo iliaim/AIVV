@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -25,14 +25,14 @@ function createRunners() {
   if (available('bash')) {
     runners.push({
       name: 'shell',
-      invoke(codexRoot, home, args) {
+      invoke(codexRoot, home, args, source) {
         return spawnSync('bash', [shellScript, ...args], {
           encoding: 'utf8',
           env: {
             ...process.env,
             HOME: home,
             AIVV_CODEX_ROOT_OVERRIDE: codexRoot,
-            AIVV_PLUGIN_SOURCE_ROOT: pluginRoot,
+            AIVV_PLUGIN_SOURCE_ROOT: source,
             AIVV_ROOT: canonicalPluginRoot,
           },
         });
@@ -46,7 +46,7 @@ function createRunners() {
   if (powerShell) {
     runners.push({
       name: 'powershell',
-      invoke(codexRoot, home, args) {
+      invoke(codexRoot, home, args, source) {
         const powerShellArgs = args.map((arg) => ({
           '--scope': '-Scope',
           '--force': '-Force',
@@ -59,7 +59,7 @@ function createRunners() {
             HOME: home,
             USERPROFILE: home,
             AIVV_CODEX_ROOT_OVERRIDE: codexRoot,
-            AIVV_PLUGIN_SOURCE_ROOT: pluginRoot,
+            AIVV_PLUGIN_SOURCE_ROOT: source,
             AIVV_ROOT: canonicalPluginRoot,
           },
         });
@@ -70,8 +70,8 @@ function createRunners() {
   return runners;
 }
 
-function run(runner, codexRoot, home, args = []) {
-  const result = runner.invoke(codexRoot, home, args);
+function run(runner, codexRoot, home, args, source = pluginRoot) {
+  const result = runner.invoke(codexRoot, home, args, source);
   return { ...result, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
@@ -108,18 +108,6 @@ function verifyRunner(runner) {
   mkdirSync(path.dirname(reviewerProfile), { recursive: true });
   writeFileSync(reviewerProfile, 'local reviewer profile\n');
 
-  const sourceContinuity = path.join(pluginRoot, continuityFile);
-  unlinkSync(sourceContinuity);
-  try {
-    const incomplete = run(runner, codexRoot, home, ['--scope', 'user', '--force']);
-    assert.notEqual(incomplete.status, 0, `${runner.name}: incomplete source must fail even with --force`);
-    assert.match(incomplete.output, /AIVV_INSTALLATION_INCOMPLETE.*session-continuity\.md/);
-    assert.equal(readFileSync(reviewerProfile, 'utf8'), 'local reviewer profile\n');
-    assert.deepEqual(readdirSync(codexRoot), ['agents'], 'source preflight must run before backup or installation');
-  } finally {
-    copyFileSync(path.join(canonicalPluginRoot, continuityFile), sourceContinuity);
-  }
-
   const rejected = run(runner, codexRoot, home, ['--scope', 'user']);
   assert.notEqual(rejected.status, 0, `${runner.name}: existing profile must require --force`);
   assert.match(rejected.output, /Existing AIVV destinations found; no files were changed:/);
@@ -146,6 +134,39 @@ function verifyRunner(runner) {
   const legacyMethodology = path.join(codexRoot, 'skills/methodology/LOCAL.md');
   mkdirSync(path.dirname(legacyMethodology), { recursive: true });
   writeFileSync(legacyMethodology, 'legacy content\n');
+
+  const sourceContinuity = path.join(pluginRoot, continuityFile);
+  const before = readdirSync(codexRoot);
+  function verifyRejectedUpgrade(diagnostic) {
+    const result = run(runner, codexRoot, home, ['--scope', 'user', '--force']);
+    assert.notEqual(result.status, 0, `${runner.name}: incomplete runtime must fail even with --force`);
+    assert.match(result.output, diagnostic);
+    assert.deepEqual(readdirSync(codexRoot), before, 'an incomplete runtime must fail before backup or replacement');
+    assert.equal(readFileSync(reviewerProfile, 'utf8'), 'custom reviewer profile\n');
+    assert.equal(readFileSync(localSkillEdit, 'utf8'), 'keep this local edit in the backup\n');
+    verifyInstalledRuntime(codexRoot);
+  }
+
+  unlinkSync(sourceContinuity);
+  try {
+    verifyRejectedUpgrade(/AIVV_INSTALLATION_INCOMPLETE.*session-continuity\.md/);
+
+    // Bash preserves symbolic links when copying. This target is available
+    // in the source tree but is absent from the copied runtime.
+    if (runner.name === 'shell' && process.platform !== 'win32') {
+      copyFileSync(path.join(canonicalPluginRoot, continuityFile), path.join(pluginRoot, 'outside-runtime.md'));
+      symlinkSync('../outside-runtime.md', sourceContinuity);
+      verifyRejectedUpgrade(/AIVV_INSTALLATION_INCOMPLETE.*\.aivv-install-stage.*session-continuity\.md/);
+
+      unlinkSync(sourceContinuity);
+      symlinkSync(localSkillEdit, sourceContinuity);
+      verifyRejectedUpgrade(/required files linked outside the runtime.*session-continuity\.md/);
+    }
+  } finally {
+    rmSync(sourceContinuity, { force: true });
+    copyFileSync(path.join(canonicalPluginRoot, continuityFile), sourceContinuity);
+  }
+
   unlinkSync(path.join(codexRoot, 'aivv-runtime', continuityFile));
 
   const upgraded = run(runner, codexRoot, home, ['--scope', 'user', '--force', '--remove-legacy-methodology']);
@@ -166,12 +187,19 @@ function verifyRunner(runner) {
   assert.equal(readFileSync(unrelatedSkill, 'utf8'), 'leave unrelated skills alone\n');
   assert.match(readFileSync(reviewerProfile, 'utf8'), /sandbox_mode = "read-only"/);
   verifyInstalledRuntime(codexRoot);
+
+  // An override can point at the runtime being replaced. Snapshot it before
+  // removing any destination paths that also serve as inputs.
+  const inPlace = run(runner, codexRoot, home, ['--force'], path.join(codexRoot, 'aivv-runtime'));
+  assert.equal(inPlace.status, 0, `${runner.name}: upgrade from the installed runtime failed: ${inPlace.output}`);
+  verifyInstalledRuntime(codexRoot);
 }
 
 try {
   cpSync(canonicalPluginRoot, pluginRoot, { recursive: true });
   const runners = createRunners();
-  assert.ok(runners.length > 0, 'a Bash or PowerShell runtime is required to test the Codex installer');
+  const requiredRunner = process.platform === 'win32' ? 'powershell' : 'shell';
+  assert.ok(runners.some((runner) => runner.name === requiredRunner), `${requiredRunner} is required to test the Codex installer`);
   for (const runner of runners) verifyRunner(runner);
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });

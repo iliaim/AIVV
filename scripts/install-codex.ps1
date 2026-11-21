@@ -127,29 +127,6 @@ if ($Conflicts.Count -gt 0) {
   throw "Existing AIVV destinations found; no files were changed:`n$ConflictList`nRerun with -Force to back up and replace them."
 }
 
-$BackupRoot = $null
-if ($BackupRelativePaths.Count -gt 0) {
-  $BackupId = "$([DateTime]::UtcNow.ToString('yyyyMMddTHHmmss'))-$PID-$([Guid]::NewGuid().ToString('N'))"
-  $BackupRoot = Join-Path $CodexRoot ".aivv-install-backup-$BackupId"
-  New-Item -ItemType Directory -Path $BackupRoot | Out-Null
-
-  foreach ($RelativePath in $BackupRelativePaths) {
-    $Source = Join-Path $CodexRoot $RelativePath
-    $BackupDestination = Join-Path (Join-Path $BackupRoot "previous") $RelativePath
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $BackupDestination) | Out-Null
-    Copy-Item -Recurse -Force -LiteralPath $Source -Destination $BackupDestination
-  }
-
-  @(
-    "Original Codex root: $CodexRoot",
-    "Each entry under previous/ mirrors its original relative path under the Codex root.",
-    "To restore an entry, copy it back to that same relative path."
-  ) | Set-Content -LiteralPath (Join-Path $BackupRoot "README.txt") -Encoding utf8
-  Write-Host "Backed up existing AIVV destinations to $BackupRoot"
-}
-
-New-Item -ItemType Directory -Force -Path $SkillsDest, $AgentsDest, $RuntimeDest | Out-Null
-
 function Copy-CodexSkill {
   param(
     [string] $SourceName,
@@ -159,22 +136,16 @@ function Copy-CodexSkill {
     [switch] $RenameFrontmatter
   )
 
-  $Source = Join-Path $PluginSourceRoot "skills\$SourceName"
-  $Dest = Join-Path $SkillsDest $DestName
+  $Source = Join-Path $StagedRuntime "skills\$SourceName"
+  $Dest = Join-Path $StagedSkills $DestName
 
-  if (-not (Test-Path $Source)) {
-    throw "Missing source skill: $Source"
+  Copy-Item -Recurse -Force -LiteralPath $Source -Destination $Dest
+  Copy-Item -Recurse -Force -LiteralPath (Join-Path $StagedRuntime ".aivv") -Destination (Join-Path $Dest ".aivv")
+
+  if (-not (Test-Path -LiteralPath (Join-Path $Dest "SKILL.md") -PathType Leaf) -or
+      -not (Test-Path -LiteralPath (Join-Path $Dest ".aivv/runtime-root.mjs") -PathType Leaf)) {
+    throw "Incomplete staged Codex skill: $Dest"
   }
-
-  if (Test-Path $Dest) {
-    if (-not $Force) {
-      throw "Destination exists: $Dest (rerun with -Force to replace)"
-    }
-    Remove-Item -Recurse -Force -LiteralPath $Dest
-  }
-
-  Copy-Item -Recurse -LiteralPath $Source -Destination $Dest
-  Copy-Item -Recurse -LiteralPath (Join-Path $PluginSourceRoot ".aivv") -Destination (Join-Path $Dest ".aivv")
 
   if ($RenameFrontmatter) {
     $SkillFile = Join-Path $Dest "SKILL.md"
@@ -194,29 +165,6 @@ function Copy-CodexSkill {
   ) + ($ToolDependencies | ForEach-Object { "  - $_" })
 
   Set-Content -LiteralPath (Join-Path $MetaDir "openai.yaml") -Value $Yaml -Encoding utf8
-}
-
-function Copy-CodexSupportDirectory {
-  param(
-    [string] $RelativePath
-  )
-
-  $Source = Join-Path $PluginSourceRoot $RelativePath
-  $Dest = Join-Path $RuntimeDest $RelativePath
-
-  if (-not (Test-Path $Source)) {
-    throw "Missing support directory: $Source"
-  }
-
-  if (Test-Path $Dest) {
-    if (-not $Force) {
-      throw "Support destination exists: $Dest (rerun with -Force to replace)"
-    }
-    Remove-Item -Recurse -Force -LiteralPath $Dest
-  }
-
-  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Dest) | Out-Null
-  Copy-Item -Recurse -LiteralPath $Source -Destination $Dest
 }
 
 function Remove-LegacySupportDirectory {
@@ -278,66 +226,111 @@ $Body
   Set-Content -LiteralPath $OutPath -Value $Toml -Encoding utf8
 }
 
-Copy-CodexSkill `
-  -SourceName "aivv" `
-  -DestName "aivv" `
-  -Description "AIVV IV&V review orchestration skill" `
-  -ToolDependencies @("apply_patch", "shell_command", "spawn_agent")
+# Assemble and validate the replacement before backing up or replacing live paths.
+New-Item -ItemType Directory -Force -Path $CodexRoot | Out-Null
+$StageId = [Guid]::NewGuid().ToString('N')
+$StagingRoot = Join-Path $CodexRoot ".aivv-install-stage-$StageId"
+New-Item -ItemType Directory -Path $StagingRoot | Out-Null
+try {
+  $StagedRuntime = Join-Path $StagingRoot "aivv-runtime"
+  $StagedSkills = Join-Path $StagingRoot "skills"
+  $StagedAgents = Join-Path $StagingRoot "agents"
+  New-Item -ItemType Directory -Path $StagedRuntime, $StagedSkills, $StagedAgents | Out-Null
 
-Copy-CodexSkill `
-  -SourceName "aivv-fix" `
-  -DestName "aivv-fix" `
-  -Description "AIVV finding investigation and remediation skill" `
-  -ToolDependencies @("apply_patch", "shell_command", "spawn_agent")
-
-Copy-CodexSkill `
-  -SourceName "aivv-calibrate" `
-  -DestName "aivv-calibrate" `
-  -Description "AIVV calibration corpus visualization skill (read-only)" `
-  -ToolDependencies @("shell_command")
-
-Copy-CodexSkill `
-  -SourceName "aivv-view" `
-  -DestName "aivv-view" `
-  -Description "AIVV read-only findings viewer skill" `
-  -ToolDependencies @("shell_command")
-
-Copy-CodexSkill `
-  -SourceName "methodology" `
-  -DestName "aivv-methodology" `
-  -Description "AIVV methodology support skill" `
-  -ToolDependencies @("shell_command") `
-  -RenameFrontmatter
-
-if ($Force) {
-  Remove-LegacySupportDirectory -Path (Join-Path $SkillsDest ".aivv") -Marker "methodology.md"
-  Remove-LegacySupportDirectory -Path (Join-Path $SkillsDest "skills") -Marker "aivv/SKILL.md"
-  Remove-LegacySupportDirectory -Path (Join-Path $SkillsDest "tools") -Marker "dispatch.mjs"
-}
-
-Copy-CodexSupportDirectory -RelativePath ".aivv"
-Copy-CodexSupportDirectory -RelativePath "skills"
-Copy-CodexSupportDirectory -RelativePath "tools"
-Test-AivvRuntime $RuntimeDest
-
-if ($RemoveLegacyMethodology) {
-  $Legacy = Join-Path $SkillsDest "methodology"
-  if (Test-Path $Legacy) {
-    Remove-Item -Recurse -Force -LiteralPath $Legacy
+  foreach ($RelativePath in @(".aivv", "skills", "tools")) {
+    $Source = Join-Path $PluginSourceRoot $RelativePath
+    Copy-Item -Recurse -Force -LiteralPath $Source -Destination (Join-Path $StagedRuntime $RelativePath)
   }
+  Test-AivvRuntime $StagedRuntime
+
+  Copy-CodexSkill `
+    -SourceName "aivv" `
+    -DestName "aivv" `
+    -Description "AIVV IV&V review orchestration skill" `
+    -ToolDependencies @("apply_patch", "shell_command", "spawn_agent")
+
+  Copy-CodexSkill `
+    -SourceName "aivv-fix" `
+    -DestName "aivv-fix" `
+    -Description "AIVV finding investigation and remediation skill" `
+    -ToolDependencies @("apply_patch", "shell_command", "spawn_agent")
+
+  Copy-CodexSkill `
+    -SourceName "aivv-calibrate" `
+    -DestName "aivv-calibrate" `
+    -Description "AIVV calibration corpus visualization skill (read-only)" `
+    -ToolDependencies @("shell_command")
+
+  Copy-CodexSkill `
+    -SourceName "aivv-view" `
+    -DestName "aivv-view" `
+    -Description "AIVV read-only findings viewer skill" `
+    -ToolDependencies @("shell_command")
+
+  Copy-CodexSkill `
+    -SourceName "methodology" `
+    -DestName "aivv-methodology" `
+    -Description "AIVV methodology support skill" `
+    -ToolDependencies @("shell_command") `
+    -RenameFrontmatter
+
+  New-CodexAgentToml `
+    -Name "aivv-reviewer" `
+    -Description "AIVV general advisory reviewer for session work, artifacts, plans, and decisions. Read-only." `
+    -PromptPath (Join-Path $StagedRuntime ".aivv\prompts\reviewer-role.md") `
+    -OutPath (Join-Path $StagedAgents "aivv-reviewer.toml")
+
+  New-CodexAgentToml `
+    -Name "aivv-investigator" `
+    -Description "AIVV root-cause investigator for review findings. Read-only." `
+    -PromptPath (Join-Path $StagedRuntime ".aivv\prompts\investigator-role.md") `
+    -OutPath (Join-Path $StagedAgents "aivv-investigator.toml")
+
+  $BackupRoot = $null
+  if ($BackupRelativePaths.Count -gt 0) {
+    $BackupId = "$([DateTime]::UtcNow.ToString('yyyyMMddTHHmmss'))-$PID-$([Guid]::NewGuid().ToString('N'))"
+    $BackupRoot = Join-Path $CodexRoot ".aivv-install-backup-$BackupId"
+    New-Item -ItemType Directory -Path $BackupRoot | Out-Null
+
+    foreach ($RelativePath in $BackupRelativePaths) {
+      $Source = Join-Path $CodexRoot $RelativePath
+      $BackupDestination = Join-Path (Join-Path $BackupRoot "previous") $RelativePath
+      New-Item -ItemType Directory -Force -Path (Split-Path -Parent $BackupDestination) | Out-Null
+      Copy-Item -Recurse -Force -LiteralPath $Source -Destination $BackupDestination
+    }
+
+    @(
+      "Original Codex root: $CodexRoot",
+      "Each entry under previous/ mirrors its original relative path under the Codex root.",
+      "To restore an entry, copy it back to that same relative path."
+    ) | Set-Content -LiteralPath (Join-Path $BackupRoot "README.txt") -Encoding utf8
+    Write-Host "Backed up existing AIVV destinations to $BackupRoot"
+  }
+
+  New-Item -ItemType Directory -Force -Path $SkillsDest, $AgentsDest, $RuntimeDest | Out-Null
+  foreach ($RelativePath in $ReplacementRelativePaths) {
+    $Destination = Join-Path $CodexRoot $RelativePath
+    if (Test-Path -LiteralPath $Destination) {
+      if (-not $Force) {
+        throw "Destination exists: $Destination (rerun with -Force to replace)"
+      }
+      Remove-Item -Recurse -Force -LiteralPath $Destination
+    }
+    Move-Item -Force -LiteralPath (Join-Path $StagingRoot $RelativePath) -Destination $Destination
+  }
+
+  if ($Force) {
+    Remove-LegacySupportDirectory -Path (Join-Path $SkillsDest ".aivv") -Marker "methodology.md"
+    Remove-LegacySupportDirectory -Path (Join-Path $SkillsDest "skills") -Marker "aivv/SKILL.md"
+    Remove-LegacySupportDirectory -Path (Join-Path $SkillsDest "tools") -Marker "dispatch.mjs"
+  }
+
+  if ($RemoveLegacyMethodology -and (Test-Path -LiteralPath $LegacyMethodology)) {
+    Remove-Item -Recurse -Force -LiteralPath $LegacyMethodology
+  }
+} finally {
+  Remove-Item -Recurse -Force -LiteralPath $StagingRoot
 }
-
-New-CodexAgentToml `
-  -Name "aivv-reviewer" `
-  -Description "AIVV general advisory reviewer for session work, artifacts, plans, and decisions. Read-only." `
-  -PromptPath (Join-Path $PluginSourceRoot ".aivv\prompts\reviewer-role.md") `
-  -OutPath (Join-Path $AgentsDest "aivv-reviewer.toml")
-
-New-CodexAgentToml `
-  -Name "aivv-investigator" `
-  -Description "AIVV root-cause investigator for review findings. Read-only." `
-  -PromptPath (Join-Path $PluginSourceRoot ".aivv\prompts\investigator-role.md") `
-  -OutPath (Join-Path $AgentsDest "aivv-investigator.toml")
 
 Write-Host "Installed AIVV Codex skills into $SkillsDest"
 Write-Host "Installed AIVV Codex subagents into $AgentsDest"

@@ -53,7 +53,7 @@ Clone the repository, make sure `node` is on `PATH`, and run the installer for y
 
 Restart Codex after installation. See [the adapter notes](plugin/.aivv/platform-adapters/codex.md) for the current capability boundary.
 
-The installer checks the source against all four AIVV runtime preflight profiles before changing files and validates the copied runtime before reporting success. If it finds an existing destination, it stops and lists the conflicts.
+The installer checks the source and stages a complete replacement before backing up or replacing installed files. The staged runtime must pass all four AIVV preflight profiles using its own files. If the installer finds an existing destination, it stops and lists the conflicts unless you use the force option.
 
 To upgrade or repair a standalone `aivv-runtime` reported as incomplete, rerun the installer from a complete, current AIVV checkout with the same scope and Codex root as the existing installation. Add `--force` (PowerShell `-Force`) and restart Codex after it succeeds. The installer backs up existing AIVV destinations under the selected Codex root and prints the backup path. The `previous/` directory preserves each original path for recovering local edits.
 
