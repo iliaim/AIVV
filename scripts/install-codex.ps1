@@ -9,6 +9,8 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
+# Use the installer's own requirements, including for an overridden source.
+$RuntimeRootHelper = Join-Path $RepoRoot "plugin/.aivv/runtime-root.mjs"
 $PluginSourceRoot = if ($env:AIVV_PLUGIN_SOURCE_ROOT) {
   $env:AIVV_PLUGIN_SOURCE_ROOT
 } else {
@@ -48,6 +50,17 @@ foreach ($RelativePath in $RequiredSourceFiles) {
     throw "Cannot embed triple-single-quote sequence in TOML developer_instructions: $Source"
   }
 }
+
+function Test-AivvRuntime {
+  param([string] $RuntimePath)
+
+  & node $RuntimeRootHelper --preflight-install $RuntimePath | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    throw "AIVV runtime preflight failed for $RuntimePath"
+  }
+}
+
+Test-AivvRuntime $PluginSourceRoot
 
 if ($Scope -eq "user" -and $env:CODEX_HOME) {
   $CodexRoot = $env:CODEX_HOME
@@ -305,6 +318,7 @@ if ($Force) {
 Copy-CodexSupportDirectory -RelativePath ".aivv"
 Copy-CodexSupportDirectory -RelativePath "skills"
 Copy-CodexSupportDirectory -RelativePath "tools"
+Test-AivvRuntime $RuntimeDest
 
 if ($RemoveLegacyMethodology) {
   $Legacy = Join-Path $SkillsDest "methodology"

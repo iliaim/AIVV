@@ -35,11 +35,13 @@ Start a new Codex chat and ask: `Review the changes in this repository with AIVV
 
 The native plugin packages AIVV's skills and support files. AIVV's custom read-only reviewer and investigator `.toml` profiles still require the installer below. The [adapter notes](plugin/.aivv/platform-adapters/codex.md) record the verified coverage and limits.
 
+The plugin and the standalone `aivv-runtime` have separate update paths. If you use the standalone installation alongside the plugin, rerun the [Codex agent profiles installer](#codex-agent-profiles) from the matching AIVV checkout when updating the plugin.
+
 Codex skips bundled plugin hooks until a user reviews and trusts the current hook definition. Review `plugin/hooks/hooks.json` and `plugin/tools/investigator-bash-guard.mjs` before enabling the AIVV hook. If the hook is not trusted, Codex still enforces the profile's read-only sandbox, but the additional command allowlist from the hook is not active.
 
 ## Codex agent profiles
 
-Clone the repository and run the installer for your shell:
+Clone the repository, make sure `node` is on `PATH`, and run the installer for your shell.
 
 ```bash
 ./scripts/install-codex.sh --scope user
@@ -51,7 +53,9 @@ Clone the repository and run the installer for your shell:
 
 Restart Codex after installation. See [the adapter notes](plugin/.aivv/platform-adapters/codex.md) for the current capability boundary.
 
-The installer checks all AIVV destinations before changing files. If it finds an existing destination, it stops and lists the conflicts. To upgrade, rerun with `--force` (PowerShell: `-Force`). The installer first copies every existing AIVV destination to a hidden `.aivv-install-backup.*` directory under the selected Codex root and prints its path. The `previous/` directory preserves each original path, so local edits can be restored from that backup; the installer does not merge local edits into the new files.
+The installer checks the source against all four AIVV runtime preflight profiles before changing files and validates the copied runtime before reporting success. If it finds an existing destination, it stops and lists the conflicts.
+
+To upgrade or repair a standalone `aivv-runtime` reported as incomplete, rerun the installer from a complete, current AIVV checkout with the same scope and Codex root as the existing installation. Add `--force` (PowerShell `-Force`) and restart Codex after it succeeds. The installer backs up existing AIVV destinations under the selected Codex root and prints the backup path. The `previous/` directory preserves each original path for recovering local edits.
 
 ## Hermes Agent (experimental local skills-only route)
 

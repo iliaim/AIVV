@@ -1,31 +1,17 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'aivv-codex-installer-'));
+const temporaryRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'aivv-codex-installer-')));
+const canonicalPluginRoot = path.join(repoRoot, 'plugin');
 const pluginRoot = path.join(temporaryRoot, 'plugin-source');
-
-function createPluginFixture() {
-  mkdirSync(path.join(pluginRoot, '.aivv/prompts'), { recursive: true });
-  mkdirSync(path.join(pluginRoot, 'skills'), { recursive: true });
-  mkdirSync(path.join(pluginRoot, 'tools'), { recursive: true });
-  writeFileSync(path.join(pluginRoot, '.aivv/prompts/reviewer-role.md'), '# Reviewer role\n');
-  writeFileSync(path.join(pluginRoot, '.aivv/prompts/investigator-role.md'), '# Investigator role\n');
-  writeFileSync(path.join(pluginRoot, '.aivv/methodology.md'), 'AIVV runtime support\n');
-  writeFileSync(path.join(pluginRoot, 'tools/dispatch.mjs'), 'export {};\n');
-
-  for (const name of ['aivv', 'aivv-fix', 'aivv-calibrate', 'aivv-view', 'methodology']) {
-    const skillDir = path.join(pluginRoot, 'skills', name);
-    mkdirSync(skillDir, { recursive: true });
-    writeFileSync(path.join(skillDir, 'SKILL.md'), `---\nname: ${name}\ndescription: test fixture\n---\n`);
-  }
-}
+const continuityFile = '.aivv/session-continuity.md';
 
 function available(command, args = ['--version']) {
   return spawnSync(command, args, { encoding: 'utf8' }).status === 0;
@@ -47,6 +33,7 @@ function createRunners() {
             HOME: home,
             AIVV_CODEX_ROOT_OVERRIDE: codexRoot,
             AIVV_PLUGIN_SOURCE_ROOT: pluginRoot,
+            AIVV_ROOT: canonicalPluginRoot,
           },
         });
       },
@@ -73,6 +60,7 @@ function createRunners() {
             USERPROFILE: home,
             AIVV_CODEX_ROOT_OVERRIDE: codexRoot,
             AIVV_PLUGIN_SOURCE_ROOT: pluginRoot,
+            AIVV_ROOT: canonicalPluginRoot,
           },
         });
       },
@@ -87,6 +75,30 @@ function run(runner, codexRoot, home, args = []) {
   return { ...result, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
 
+function verifyInstalledRuntime(codexRoot) {
+  const runtimeRoot = path.join(codexRoot, 'aivv-runtime');
+  assert.deepEqual(readFileSync(path.join(runtimeRoot, continuityFile)),
+    readFileSync(path.join(canonicalPluginRoot, continuityFile)));
+
+  for (const profile of ['aivv', 'aivv-fix', 'aivv-view', 'aivv-calibrate']) {
+    const skillDir = path.join(codexRoot, 'skills', profile);
+    const resolver = path.join(skillDir, '.aivv/runtime-root.mjs');
+    const result = spawnSync(process.execPath, [resolver, '--preflight', profile, skillDir], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        AIVV_ROOT: '',
+        AIVV_RUNTIME_ROOT_HELPER: '',
+        CLAUDE_PLUGIN_ROOT: '',
+        PLUGIN_ROOT: '',
+        CODEX_HOME: codexRoot,
+      },
+    });
+    assert.equal(result.status, 0, `${profile} installed preflight failed: ${result.stderr}`);
+    assert.equal(result.stdout.trim(), runtimeRoot, `${profile} must select the installed standalone runtime`);
+  }
+}
+
 function verifyRunner(runner) {
   const runnerRoot = path.join(temporaryRoot, runner.name);
   const codexRoot = path.join(runnerRoot, 'codex-home');
@@ -95,6 +107,18 @@ function verifyRunner(runner) {
 
   mkdirSync(path.dirname(reviewerProfile), { recursive: true });
   writeFileSync(reviewerProfile, 'local reviewer profile\n');
+
+  const sourceContinuity = path.join(pluginRoot, continuityFile);
+  unlinkSync(sourceContinuity);
+  try {
+    const incomplete = run(runner, codexRoot, home, ['--scope', 'user', '--force']);
+    assert.notEqual(incomplete.status, 0, `${runner.name}: incomplete source must fail even with --force`);
+    assert.match(incomplete.output, /AIVV_INSTALLATION_INCOMPLETE.*session-continuity\.md/);
+    assert.equal(readFileSync(reviewerProfile, 'utf8'), 'local reviewer profile\n');
+    assert.deepEqual(readdirSync(codexRoot), ['agents'], 'source preflight must run before backup or installation');
+  } finally {
+    copyFileSync(path.join(canonicalPluginRoot, continuityFile), sourceContinuity);
+  }
 
   const rejected = run(runner, codexRoot, home, ['--scope', 'user']);
   assert.notEqual(rejected.status, 0, `${runner.name}: existing profile must require --force`);
@@ -107,7 +131,7 @@ function verifyRunner(runner) {
   assert.equal(fresh.status, 0, `${runner.name}: fresh install failed: ${fresh.output}`);
   assert.doesNotMatch(fresh.output, /Backed up existing AIVV destinations/);
   assert.match(readFileSync(reviewerProfile, 'utf8'), /sandbox_mode = "read-only"/);
-  assert.ok(existsSync(path.join(codexRoot, 'aivv-runtime/tools/dispatch.mjs')));
+  verifyInstalledRuntime(codexRoot);
 
   const localSkillEdit = path.join(codexRoot, 'skills/aivv/LOCAL.md');
   writeFileSync(localSkillEdit, 'keep this local edit in the backup\n');
@@ -122,6 +146,7 @@ function verifyRunner(runner) {
   const legacyMethodology = path.join(codexRoot, 'skills/methodology/LOCAL.md');
   mkdirSync(path.dirname(legacyMethodology), { recursive: true });
   writeFileSync(legacyMethodology, 'legacy content\n');
+  unlinkSync(path.join(codexRoot, 'aivv-runtime', continuityFile));
 
   const upgraded = run(runner, codexRoot, home, ['--scope', 'user', '--force', '--remove-legacy-methodology']);
   assert.equal(upgraded.status, 0, `${runner.name}: backed-up upgrade failed: ${upgraded.output}`);
@@ -140,11 +165,11 @@ function verifyRunner(runner) {
   assert.equal(existsSync(legacyMethodology), false, 'the requested legacy removal should still happen');
   assert.equal(readFileSync(unrelatedSkill, 'utf8'), 'leave unrelated skills alone\n');
   assert.match(readFileSync(reviewerProfile, 'utf8'), /sandbox_mode = "read-only"/);
-  assert.ok(existsSync(path.join(codexRoot, 'aivv-runtime/tools/dispatch.mjs')));
+  verifyInstalledRuntime(codexRoot);
 }
 
 try {
-  createPluginFixture();
+  cpSync(canonicalPluginRoot, pluginRoot, { recursive: true });
   const runners = createRunners();
   assert.ok(runners.length > 0, 'a Bash or PowerShell runtime is required to test the Codex installer');
   for (const runner of runners) verifyRunner(runner);
@@ -152,4 +177,4 @@ try {
   rmSync(temporaryRoot, { recursive: true, force: true });
 }
 
-console.log('Codex installer: refuses silent replacement and backs up AIVV paths before upgrades');
+console.log('Codex installer: validates runtime sources and installed skills, and backs up AIVV paths before upgrades');

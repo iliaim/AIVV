@@ -49,6 +49,8 @@ fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 plugin_source_root="${AIVV_PLUGIN_SOURCE_ROOT:-${repo_root}/plugin}"
+# Use the installer's own requirements, including for an overridden source.
+runtime_root_helper="${repo_root}/plugin/.aivv/runtime-root.mjs"
 
 if [ ! -d "$plugin_source_root/skills" ] || [ ! -d "$plugin_source_root/.aivv" ]; then
   echo "AIVV plugin source root is incomplete: $plugin_source_root" >&2
@@ -85,6 +87,8 @@ for source in "${required_source_files[@]}"; do
     exit 1
   fi
 done
+
+node "$runtime_root_helper" --preflight-install "$plugin_source_root" >/dev/null
 
 if [ "$scope" = "user" ] && [ -n "${CODEX_HOME:-}" ]; then
   codex_root="$CODEX_HOME"
@@ -326,6 +330,7 @@ fi
 copy_support_dir ".aivv"
 copy_support_dir "skills"
 copy_support_dir "tools"
+node "$runtime_root_helper" --preflight-install "$runtime_dest" >/dev/null
 
 if [ "$remove_legacy_methodology" = "true" ] && path_exists "${skills_dest}/methodology"; then
   rm -rf "${skills_dest}/methodology"
