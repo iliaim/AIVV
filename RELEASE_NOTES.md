@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.6.3 — reliable Codex runtime repair
+
+- The standalone Codex installer validates the source and staged runtime against all AIVV preflight profiles before replacing installed files. Incomplete runtimes, including a missing `session-continuity.md`, now fail before an upgrade can replace the existing installation.
+- Forced upgrades can use the installed standalone runtime as their source because the replacement is staged before live paths are changed.
+
 ## 0.6.2 — lighter /aivv-fix reading load
 
 - `/aivv-fix`'s SKILL.md is 17 KB instead of 39 KB, so the whole file survives context compaction (Claude Code keeps the first 5,000 tokens of a skill). The rules that hold for the whole run are in a "Standing rules" block at the top; each step points to the reference that owns it.
