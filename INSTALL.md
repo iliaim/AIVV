@@ -22,6 +22,36 @@ Restart Claude Code, confirm AIVV appears in `/plugin`, and run `/aivv` in a rep
 
 To update, run `/plugin update aivv`. To remove AIVV, run `/plugin uninstall aivv`.
 
+## Antigravity (AGY)
+
+Install the portable AIVV plugin directly into Antigravity using the `agy` CLI:
+
+```bash
+git clone --branch main https://github.com/iliaim/AIVV.git AIVV
+agy plugin validate ./AIVV/plugin --json
+agy plugin install ./AIVV/plugin
+agy plugin enable aivv
+agy plugin list
+```
+
+Start a new Antigravity session (or reload plugins) and run `/aivv` or `/aivv-fix` in any repository you want reviewed.
+
+### Notes and maintenance
+
+- **Read-only isolation:** Antigravity enforces read-only isolation natively via its built-in `research` subagent (`invoke_subagent` with `TypeName: "research"`). The Claude Code-specific `agents/*.md` and `hooks/hooks.json` files are intentionally unused by Antigravity; `agy plugin validate` reports frontmatter errors on `agents/*.md` and a warning on `hooks/hooks.json` while confirming all 5 canonical skills load cleanly.
+- **Skill visibility:** Antigravity loads all `skills/*/SKILL.md` directories in the plugin, so the support-only `methodology` skill also appears alongside `/aivv`, `/aivv-fix`, `/aivv-view`, and `/aivv-calibrate`.
+- **Requirements:** `git` and `node` on `PATH` (plus `jq` 1.6+ for `/aivv-view`). See the [Antigravity adapter](plugin/.aivv/platform-adapters/antigravity.md) for tool mappings, capability flags, and lifecycle details.
+- **Update:** pull the latest AIVV checkout and reinstall:
+
+  ```bash
+  git -C /path/to/AIVV pull --ff-only origin main
+  agy plugin uninstall aivv
+  agy plugin install /path/to/AIVV/plugin
+  agy plugin enable aivv
+  ```
+
+- **Uninstall:** run `agy plugin uninstall aivv`.
+
 ## Codex plugin
 
 From Codex CLI, add the AIVV marketplace and install the plugin:

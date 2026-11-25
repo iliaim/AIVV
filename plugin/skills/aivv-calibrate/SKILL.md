@@ -28,6 +28,10 @@ Run the helper with the host's shell tool; host capabilities are in
 [.aivv/runtime-contract.md](../../.aivv/runtime-contract.md) and the active
 platform adapter.
 
+<!-- ANTIGRAVITY-SPECIFIC --> In Antigravity, load
+[antigravity.md](../../.aivv/platform-adapters/antigravity.md) for `run_command`
+and `AIVV_ROOT` pinning details.
+
 <!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, load the host adapter with
 `read_file` from `${HERMES_SKILL_DIR}/../../.aivv/platform-adapters/hermes-agent.md`
 before using host-specific operations. Do not open that sibling path with
