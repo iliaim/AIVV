@@ -125,6 +125,12 @@ if known, otherwise `model:"inherited"` and
 <!-- Codex-SPECIFIC --> Codex dispatch uses reviewer TOML; if tools are hidden,
 run preflight above.
 
+<!-- ANTIGRAVITY-SPECIFIC --> Antigravity dispatch uses `invoke_subagent` with
+`TypeName: "research"` (built-in read-only sandbox, no network access, no parent
+conversation history) and reactive wakeup (no polling); close consumed handles
+via `manage_subagents(Action: "kill", ConversationIds: [...])`. See
+[antigravity.md](../../../.aivv/platform-adapters/antigravity.md).
+
 ## Case B: N >= 2
 
 Dispatch all N native reviewers in parallel; sequential dispatch invalidates the

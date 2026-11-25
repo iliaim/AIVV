@@ -47,6 +47,9 @@ On Claude Code: `Agent` tool with `subagent_type: aivv:reviewer` and the built f
 
 On Codex: subagent dispatch via `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` with the fix-challenger prompt. Same cold-context requirement.
 
+<!-- ANTIGRAVITY-SPECIFIC -->
+On Antigravity: `invoke_subagent` with `TypeName: "research"` and the built fix-challenger prompt. Cold read-only context; reactive wakeup (no polling); close consumed handle via `manage_subagents`.
+
 **Dispatch granularity:** per-batch. One challenger sees all approved findings in the batch plus their fix proposals. Independent batches may be challenged in parallel (same rules as Step 3 investigator parallel dispatch).
 
 **Prompt construction:** build it per [Building subagent prompts](investigation-dispatch.md#building-subagent-prompts) with template `fix-challenger`. Fill:

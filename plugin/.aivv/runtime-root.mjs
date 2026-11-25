@@ -8,6 +8,7 @@ const contractRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const PREFLIGHT_FILES = {
   aivv: [
     "skills/aivv/SKILL.md",
+    ".aivv/platform-adapters/antigravity.md",
     ".aivv/platform-adapters/hermes-agent.md",
     ".aivv/runtime-root.md",
     ".aivv/runtime-contract.md",
@@ -88,6 +89,7 @@ const PREFLIGHT_FILES = {
   ],
   "aivv-fix": [
     "skills/aivv-fix/SKILL.md",
+    ".aivv/platform-adapters/antigravity.md",
     ".aivv/platform-adapters/hermes-agent.md",
     "skills/aivv/SKILL.md",
     ".aivv/runtime-root.md",
@@ -172,6 +174,7 @@ const PREFLIGHT_FILES = {
   ],
   "aivv-view": [
     "skills/aivv-view/SKILL.md",
+    ".aivv/platform-adapters/antigravity.md",
     ".aivv/platform-adapters/hermes-agent.md",
     ".aivv/runtime-root.md",
     ".aivv/runtime-contract.md",
@@ -210,6 +213,7 @@ const PREFLIGHT_FILES = {
   ],
   "aivv-calibrate": [
     "skills/aivv-calibrate/SKILL.md",
+    ".aivv/platform-adapters/antigravity.md",
     ".aivv/platform-adapters/hermes-agent.md",
     "skills/aivv/SKILL.md",
     "skills/aivv-fix/SKILL.md",

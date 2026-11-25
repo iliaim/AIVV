@@ -104,6 +104,10 @@ runtime-evidence flags, and multi-model provider overrides.
 `Skill`.
 <!-- Codex-SPECIFIC --> Codex uses `update_plan` when exposed, shell/`rg`,
 reviewer TOML, and same-agent continuation into `/aivv-fix --review-id=<id>`.
+<!-- ANTIGRAVITY-SPECIFIC --> Antigravity uses `update_steps`, `read_file`/`run_command`,
+`invoke_subagent` with `TypeName: "research"` for read-only cold reviewers (reactive wakeup, no polling),
+`manage_subagents` for cleanup, and in-session continuation into `/aivv-fix --review-id=<id>`; see
+[antigravity.md](../../.aivv/platform-adapters/antigravity.md).
 
 <!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, first load the host adapter with
 `read_file` using the substituted absolute path

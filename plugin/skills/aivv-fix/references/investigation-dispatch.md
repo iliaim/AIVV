@@ -90,14 +90,14 @@ The investigator must prove or disprove each reason with file/grep evidence.
 
 Shared operations are the same as `/aivv`: see the Host notes paragraph at the end of the [`/aivv` skill](../../aivv/SKILL.md), the Adapter Operations table in [`.aivv/runtime-contract.md`](../../../.aivv/runtime-contract.md), and the per-host adapters in [`.aivv/platform-adapters/`](../../../.aivv/platform-adapters/). Additional `/aivv-fix`-specific operations:
 
-<!-- CLAUDE-CODE-SPECIFIC: the table below names Claude Code tool surfaces (Agent / subagent_type) explicitly; Codex column maps to Codex equivalents. -->
+<!-- CLAUDE-CODE-SPECIFIC: the table below names Claude Code tool surfaces (Agent / subagent_type) explicitly; Codex and Antigravity columns map to their native equivalents. -->
 
-| Adapter operation | Claude Code | Codex |
-|---|---|---|
-| Spawn cold investigator subagent | `Agent` tool with `subagent_type: aivv:investigator` | Subagent dispatch using TOML at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml` |
-| Spawn cold verifier subagent | `Agent` tool with `subagent_type: aivv:reviewer` (Step 6) | Subagent dispatch using `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` |
-| Apply edits | `Edit`/`Write` tools | `apply_patch` |
-| Prevention paths | `.claude/hooks/`, `.claude/patterns/`, `.claude/rules/`, or project equivalents | Project-equivalent hook/pattern/rule directories (no `.claude/` assumption); see project conventions |
+| Adapter operation | Claude Code | Codex | Antigravity |
+|---|---|---|---|
+| Spawn cold investigator subagent | `Agent` tool with `subagent_type: aivv:investigator` | Subagent dispatch using TOML at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml` | `invoke_subagent` with `TypeName: "research"` (built-in read-only sandbox; reactive wakeup) |
+| Spawn cold verifier subagent | `Agent` tool with `subagent_type: aivv:reviewer` (Step 6) | Subagent dispatch using `<codex-home>/agents/aivv-reviewer.toml` or `<target>/.codex/agents/aivv-reviewer.toml` | `invoke_subagent` with `TypeName: "research"` (Step 6; close via `manage_subagents`) |
+| Apply edits | `Edit`/`Write` tools | `apply_patch` | `edit_file`/`write_file` tools |
+| Prevention paths | `.claude/hooks/`, `.claude/patterns/`, `.claude/rules/`, or project equivalents | Project-equivalent hook/pattern/rule directories (no `.claude/` assumption); see project conventions | Project-equivalent hook/pattern/rule directories (no `.claude/` assumption); see project conventions |
 
 ### Spawning rules (for batches that require investigation)
 
@@ -130,6 +130,9 @@ If `can_spawn_cold_agents` is unavailable (e.g., Codex `agents.max_depth=0`), fa
 On Claude Code: dispatch via the `Agent` tool with `subagent_type: aivv:investigator`. For parallel batches, emit all Agent calls in a single assistant message. The `aivv:investigator` agent has its frontmatter set so the role + methodology preload before the prompt arrives.
 
 On Codex: dispatch a subagent declared at `<codex-home>/agents/aivv-investigator.toml` or `<target>/.codex/agents/aivv-investigator.toml`; multiple subagents run in parallel under `agents.max_threads`. The TOML's `developer_instructions` already contains the portable role. If the callable dispatch surface is not initially visible, perform the [Codex dispatch preflight](codex-dispatch-preflight.md) before falling back.
+
+<!-- ANTIGRAVITY-SPECIFIC -->
+On Antigravity: dispatch via `invoke_subagent` with `TypeName: "research"` (built-in read-only sandbox, no parent conversation history) and a task-specific `Role`. For parallel batches, emit up to 3 `invoke_subagent` calls in a single assistant turn and wait via reactive wakeup (do not poll). The investigator reads `$AIVV_ROOT/.aivv/prompts/investigator-role.md` from the prompt. Close consumed handles via `manage_subagents(Action: "kill", ConversationIds: [...])`. See [antigravity.md](../../../.aivv/platform-adapters/antigravity.md).
 
 Wait for all investigators (and any inline analyses) to complete before proceeding.
 

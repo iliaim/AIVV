@@ -20,11 +20,13 @@ These hold for the whole run. After a context compaction, re-read this block and
 - **The fix log is the record.** Never rely on `git diff` or `git log` to learn what this run changed: the persisted fix log (`session_changes`) is the source of truth, and other agents may commit in parallel. After a compaction, stop, or Resume, re-read the persisted fix log ([fix-log-contract.md](references/fix-log-contract.md)) instead of rebuilding the plan from memory.
 - **One rework budget.** Every fix-plan re-authoring and verification re-entry draws on one invocation-wide budget ([challenge-loop.md](references/challenge-loop.md)). When it is spent, report unresolved findings with the retry history and stop; do not reopen scope or ask for another approval.
 - **Close what you spawn.** Track and close every subagent handle per [Subagent handles](references/investigation-dispatch.md#subagent-handles).
-- **Write capability.** A route needs only the capabilities it uses (read, reviewer dispatch, or write); a write route needs the host's write facility (Claude Code: `Edit`/`Write`/`Bash`; Codex: `apply_patch`/`shell_command`). Check the route before stopping for missing write access; never cross a write gate without it: stop before the first write, name the missing facility, and report any read-only result.
+- **Write capability.** A route needs only the capabilities it uses (read, reviewer dispatch, or write); a write route needs the host's write facility (Claude Code: `Edit`/`Write`/`Bash`; Codex: `apply_patch`/`shell_command`; Antigravity: `edit_file`/`write_file`/`run_command`). Check the route before stopping for missing write access; never cross a write gate without it: stop before the first write, name the missing facility, and report any read-only result.
 - **No shortcuts.** Do not skip same-file batching or auto-proceed on architectural changes.
 - **Progress and hand-back.** Track progress per Track Progress below; every ending follows the Hand back section of [`.aivv/session-continuity.md`](../../.aivv/session-continuity.md).
 
 ## Host notes
+
+<!-- ANTIGRAVITY-SPECIFIC --> In Antigravity, load [antigravity.md](../../.aivv/platform-adapters/antigravity.md) for tool mappings (`read_file`, `edit_file`, `write_file`, `run_command`, `update_steps`, `invoke_subagent` with `TypeName: "research"` for read-only investigators/challengers/verifiers, and `manage_subagents` for handle cleanup).
 
 <!-- HERMES-AGENT-SPECIFIC --> In Hermes Agent, load the host adapter with `read_file` from `${HERMES_SKILL_DIR}/../../.aivv/platform-adapters/hermes-agent.md` before using host-specific operations. Do not open that sibling path with `skill_view` because Hermes rejects parent traversal. If the template token is unexpanded, stop with `AIVV_INSTALLATION_INCOMPLETE`.
 
